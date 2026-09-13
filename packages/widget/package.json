@@ -1,0 +1,16 @@
+{
+  "name": "@vouchreel/widget",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "main": "dist/widget.js",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "lint": "eslint .",
+    "test": "node --version"
+  },
+  "devDependencies": {
+    "esbuild": "latest",
+    "typescript": "latest"
+  }
+}
