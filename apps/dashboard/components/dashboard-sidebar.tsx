@@ -23,7 +23,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
   const navItems = [
     {
       label: "Spaces",
-      href: "/",
+      href: "/spaces",
       icon: (
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -109,7 +109,10 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive =
+            item.href === "/spaces"
+              ? pathname === "/spaces" || pathname.startsWith("/spaces/")
+              : pathname === item.href;
           return (
             <Link
               key={item.href}
