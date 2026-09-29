@@ -1,8 +1,6 @@
-import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth/session";
-import { db } from "@/lib/db";
-import { plans, subscriptions } from "@/lib/db/schema";
+import { getUserSubscription } from "@/lib/payments/subscription";
 import { BillingManager } from "./billing-manager";
 
 export const dynamic = "force-dynamic";
@@ -10,17 +8,14 @@ export const dynamic = "force-dynamic";
 export default async function BillingSettingsPage() {
   const session = await requireSession();
 
-  // Find user's active subscription
-  const userSub = await db.query.subscriptions.findFirst({
-    where: eq(subscriptions.userId, session.user.id),
+  // Find user's active subscription and plan
+  const subData = await getUserSubscription(session.user.id).catch((err) => {
+    console.error("Failed to load user subscription/plan:", err);
+    return null;
   });
 
-  let plan = null;
-  if (userSub?.planId) {
-    plan = await db.query.plans.findFirst({
-      where: eq(plans.id, userSub.planId),
-    });
-  }
+  const userSub = subData?.subscription || null;
+  const plan = subData?.plan || null;
 
   // If no plan, fallback to Free
   const planName = plan?.name || "Free";
