@@ -8,6 +8,7 @@ import {
   integer,
   jsonb,
   pgEnum,
+  index,
 } from "drizzle-orm/pg-core";
 
 // ─── Enums ──────────────────────────────────────────────────────────────────
@@ -224,7 +225,10 @@ export const events = pgTable("events", {
     .defaultNow()
     .notNull(),
   metadata: jsonb("metadata").$type<Record<string, unknown>>(),
-});
+}, (table) => [
+  index("events_space_type_ts_idx").on(table.spaceId, table.eventType, table.timestamp),
+  index("events_space_testimonial_type_idx").on(table.spaceId, table.testimonialId, table.eventType),
+]);
 
 /**
  * Conversion goals — defines what counts as a conversion for analytics.
