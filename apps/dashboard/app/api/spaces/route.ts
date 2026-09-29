@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, widgetConfigs, testimonials } from "@/lib/db/schema";
 import { createSpaceSchema } from "@/lib/validations/spaces";
+import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 
 /**
  * GET /api/spaces
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
     // Create default widget configuration for the space
     await db.insert(widgetConfigs).values({
       spaceId: newSpace.id,
+      ...DEFAULT_WIDGET_CONFIG,
     });
 
     return NextResponse.json(

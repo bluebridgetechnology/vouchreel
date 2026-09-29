@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vouchreel Embed Widget — Interactive Test Bench</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding-bottom: 120px;
+    }
+
+    header {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      margin-left: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+
+    nav a:hover {
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 0 24px;
+    }
+
+    .testbench-panel {
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      color: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 40px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+
+    .testbench-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .testbench-desc {
+      font-size: 13px;
+      opacity: 0.85;
+      margin-bottom: 16px;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-item label {
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+
+    select, button, input {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      outline: none;
+    }
+
+    select option {
+      background-color: #1e1b4b;
+      color: #ffffff;
+    }
+
+    button.btn-primary {
+      background-color: #6366f1;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+
+    button.btn-primary:hover {
+      background-color: #4f46e5;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 40px 0;
+    }
+
+    .hero h1 {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      color: #0f172a;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 28px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .card h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .scroll-filler {
+      margin-top: 60px;
+      padding: 40px 24px;
+      background-color: var(--card-bg);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body data-vouchreel-tags="saas,b2b,ecommerce">
+
+  <header>
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      </svg>
+      Acme Cloud Inc.
+    </div>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#testimonials">Testimonials</a>
+      <a href="/checkout/success">Demo Goal Page</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <!-- Test Bench Controller Panel -->
+    <div class="testbench-panel">
+      <div class="testbench-title">
+        <span>⚙️</span> Vouchreel Widget Simulator
+      </div>
+      <p class="testbench-desc">
+        This mock page demonstrates the isolated Shadow DOM embed widget with live trigger activations, position switching, and video players.
+      </p>
+
+      <div class="controls-grid">
+        <div class="control-item">
+          <label for="posSelect">Widget Position</label>
+          <select id="posSelect">
+            <option value="bottom-right">Bottom Right (Floating)</option>
+            <option value="bottom-left">Bottom Left (Floating)</option>
+            <option value="bottom-bar">Bottom Bar (Full-Width)</option>
+            <option value="story-strip">Story Strip (Bubbles)</option>
+          </select>
+        </div>
+
+        <div class="control-item">
+          <label for="themeSelect">Theme Mode</label>
+          <select id="themeSelect">
+            <option value="light">Light Mode</option>
+            <option value="dark">Dark Mode</option>
+          </select>
+        </div>
+
+        <div class="control-item">
+          <label for="triggerSelect">Simulate Trigger</label>
+          <select id="triggerSelect">
+            <option value="immediate">Immediate</option>
+            <option value="delay">Delay (3s)</option>
+            <option value="exit-intent">Exit Intent</option>
+            <option value="scroll-depth">Scroll Depth (50%)</option>
+          </select>
+        </div>
+
+        <div class="control-item" style="justify-content: flex-end;">
+          <button id="reloadWidgetBtn" class="btn-primary" type="button">Apply & Reload Widget</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Host Website Content -->
+    <section class="hero">
+      <h1>Turn video reviews into revenue</h1>
+      <p>Collect, manage, and display video testimonials that increase conversions without impacting your site speed.</p>
+      <button class="btn-primary" style="padding: 12px 24px; font-size: 15px; cursor: pointer;">
+        Get Started Free
+      </button>
+    </section>
+
+    <div class="cards-grid">
+      <div class="card">
+        <h3>⚡ Zero CSS Leaks</h3>
+        <p>Runs entirely inside an open Shadow DOM. Host page styles and CSS frameworks cannot distort the widget.</p>
+      </div>
+      <div class="card">
+        <h3>🔒 Privacy by Default</h3>
+        <p>Uses YouTube nocookie domain and never downloads third-party player iframes until the visitor interacts.</p>
+      </div>
+      <div class="card">
+        <h3>📱 Adaptive Mobile Layout</h3>
+        <p>Automatically renders a sleek, touch-friendly bottom-sheet on mobile devices with smooth animations.</p>
+      </div>
+    </div>
+
+    <!-- Scroll test area for scroll-depth trigger testing -->
+    <div class="scroll-filler" style="height: 600px; display: flex; flex-direction: column; justify-content: center;">
+      <p><strong>Scroll down to test scroll-depth trigger (50%)</strong></p>
+      <p style="margin-top: 10px;">Keep scrolling...</p>
+    </div>
+
+    <div class="scroll-filler" style="height: 600px; display: flex; flex-direction: column; justify-content: center;">
+      <p>Scroll sentinel zone reached.</p>
+    </div>
+  </div>
+
+  <!-- Mock Data Provider for Standalone Testing -->
+  <script>
+    // If running in test mode without the backend running, mock the /api/widget response
+    const originalFetch = window.fetch;
+    window.fetch = async function(url, options) {
+      if (typeof url === 'string' && url.includes('/api/widget/demo-embed-key')) {
+        const params = new URLSearchParams(window.location.search);
+        const position = params.get('pos') || 'bottom-right';
+        const mode = params.get('theme') || 'light';
+        const trigger = params.get('trigger') || 'delay';
+
+        return new Response(JSON.stringify({
+          spaceId: 'demo-space-uuid',
+          config: {
+            position: position,
+            theme: {
+              primaryColor: '#6366f1',
+              accentColor: '#ffffff',
+              mode: mode,
+              borderRadius: 14
+            },
+            trigger: {
+              type: trigger === 'immediate' ? 'delay' : trigger,
+              value: { seconds: trigger === 'immediate' ? 0.1 : 3, percentage: 50, count: 1 }
+            },
+            pagesIncluded: ['*'],
+            pagesExcluded: [],
+            autoplayPreview: true
+          },
+          testimonials: [
+            {
+              id: 't-1',
+              videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+              platform: 'youtube',
+              thumbnailUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=60',
+              title: 'Increased our sales by 35% in week one',
+              quote: 'Vouchreel was seamless to embed. Visitors watch our real customers and trust our product instantly.',
+              customerName: 'Sarah Jenkins',
+              customerCompany: 'Growth Director at ScaleFlow',
+              durationSeconds: 90,
+              matchRules: { mode: 'all' }
+            },
+            {
+              id: 't-2',
+              videoUrl: 'https://vimeo.com/76979871',
+              platform: 'vimeo',
+              thumbnailUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=60',
+              title: 'Best testimonial widget we have used',
+              quote: 'The bottom-sheet on mobile is gorgeous. Our mobile conversion rate jumped immediately.',
+              customerName: 'Marcus Vance',
+              customerCompany: 'Founder, CloudPulse',
+              durationSeconds: 65,
+              matchRules: { mode: 'all' }
+            }
+          ],
+          conversionGoals: [
+            { id: 'g-1', goalType: 'url-match', goalValue: '/checkout/success' }
+          ]
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (typeof url === 'string' && url.includes('/api/events')) {
+        console.log('[Test Bench] Analytics beacon received:', options?.body);
+        return new Response(JSON.stringify({ success: true, count: 1 }), { status: 201 });
+      }
+
+      return originalFetch(url, options);
+    };
+
+    // Controller script
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('pos')) document.getElementById('posSelect').value = params.get('pos');
+      if (params.get('theme')) document.getElementById('themeSelect').value = params.get('theme');
+      if (params.get('trigger')) document.getElementById('triggerSelect').value = params.get('trigger');
+
+      document.getElementById('reloadWidgetBtn').addEventListener('click', () => {
+        sessionStorage.clear(); // Clear dismissal for fresh test
+        const pos = document.getElementById('posSelect').value;
+        const theme = document.getElementById('themeSelect').value;
+        const trigger = document.getElementById('triggerSelect').value;
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('pos', pos);
+        url.searchParams.set('theme', theme);
+        url.searchParams.set('trigger', trigger);
+        window.location.href = url.toString();
+      });
+    });
+  </script>
+
+  <!-- Embed Widget Script Tag -->
+  <script async src="../dist/vouchreel-widget.js" data-key="demo-embed-key" data-api="http://localhost:3000"></script>
+</body>
+</html>
