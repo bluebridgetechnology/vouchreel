@@ -17,6 +17,7 @@ export const platformEnum = pgEnum("platform", [
   "youtube",
   "vimeo",
   "mp4",
+  "text",
 ]);
 
 export const widgetPositionEnum = pgEnum("widget_position", [
@@ -67,6 +68,36 @@ export const planIntervalEnum = pgEnum("plan_interval", [
   "month",
   "year",
 ]);
+
+export const incentiveTypeEnum = pgEnum("incentive_type", [
+  "none",
+  "discount",
+  "custom",
+]);
+
+export const submissionTypeEnum = pgEnum("submission_type", [
+  "video",
+  "text",
+]);
+
+export const submissionStatusEnum = pgEnum("submission_status", [
+  "pending",
+  "approved",
+  "rejected",
+]);
+
+export const processingStatusEnum = pgEnum("processing_status", [
+  "none",
+  "pending",
+  "processing",
+  "done",
+  "failed",
+]);
+
+export interface CollectionFormBranding {
+  accentColor?: string;
+  logoUrl?: string;
+}
 
 // ─── BetterAuth Tables ──────────────────────────────────────────────────────
 
@@ -164,7 +195,7 @@ export const testimonials = pgTable("testimonials", {
   spaceId: uuid("space_id")
     .notNull()
     .references(() => spaces.id, { onDelete: "cascade" }),
-  videoUrl: text("video_url").notNull(),
+  videoUrl: text("video_url"),
   platform: platformEnum("platform").notNull(),
   thumbnailUrl: text("thumbnail_url"),
   title: text("title"),
@@ -294,6 +325,59 @@ export const adminSettings = pgTable("admin_settings", {
   value: jsonb("value").$type<unknown>().notNull(),
 });
 
+/**
+ * Collection forms — owners share a link (/collect/{slug}) so their
+ * customers can submit testimonials directly (video recording, upload, text).
+ */
+export const collectionForms = pgTable("collection_forms", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  spaceId: uuid("space_id")
+    .notNull()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  promptText: text("prompt_text").notNull(),
+  incentiveType: incentiveTypeEnum("incentive_type").default("none").notNull(),
+  incentiveValue: text("incentive_value"),
+  branding: jsonb("branding")
+    .$type<CollectionFormBranding>()
+    .default({})
+    .notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  slug: text("slug").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index("collection_forms_space_idx").on(table.spaceId),
+]);
+
+/**
+ * Submissions — customer testimonial submissions awaiting owner review.
+ * Video submissions are transcoded asynchronously (see lib/transcode.ts).
+ */
+export const submissions = pgTable("submissions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  formId: uuid("form_id")
+    .notNull()
+    .references(() => collectionForms.id, { onDelete: "cascade" }),
+  type: submissionTypeEnum("type").notNull(),
+  videoUrl: text("video_url"),
+  text: text("text"),
+  customerName: text("customer_name").notNull(),
+  customerEmail: text("customer_email").notNull(),
+  status: submissionStatusEnum("status").default("pending").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
+  durationSeconds: integer("duration_seconds"),
+  processingStatus: processingStatusEnum("processing_status")
+    .default("none")
+    .notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index("submissions_form_status_idx").on(table.formId, table.status),
+]);
+
 // ─── Relations ──────────────────────────────────────────────────────────────
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -326,6 +410,25 @@ export const spacesRelations = relations(spaces, ({ many, one }) => ({
   widgetConfig: one(widgetConfigs),
   events: many(events),
   conversionGoals: many(conversionGoals),
+  collectionForms: many(collectionForms),
+}));
+
+export const collectionFormsRelations = relations(
+  collectionForms,
+  ({ one, many }) => ({
+    space: one(spaces, {
+      fields: [collectionForms.spaceId],
+      references: [spaces.id],
+    }),
+    submissions: many(submissions),
+  })
+);
+
+export const submissionsRelations = relations(submissions, ({ one }) => ({
+  form: one(collectionForms, {
+    fields: [submissions.formId],
+    references: [collectionForms.id],
+  }),
 }));
 
 export const testimonialsRelations = relations(testimonials, ({ one }) => ({

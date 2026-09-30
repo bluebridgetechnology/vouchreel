@@ -31,7 +31,7 @@ CMD ["npx", "drizzle-kit", "migrate"]
 
 # ---- runner: minimal production image ----
 FROM node:24-alpine AS runner
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat ffmpeg
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -17,12 +17,28 @@ export function SpaceNavTabs({
 }: SpaceNavTabsProps) {
   const pathname = usePathname();
   const [copied, setCopied] = useState(false);
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/spaces/${spaceId}/collection-forms`)
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (data?.collectionForms) setPendingCount(data.collectionForms.reduce((total: number, form: { pendingSubmissionCount?: number }) => total + Number(form.pendingSubmissionCount || 0), 0));
+      })
+      .catch(() => undefined);
+  }, [spaceId]);
 
   const tabs = [
     {
       label: "Testimonials",
       href: `/spaces/${spaceId}/testimonials`,
       active: pathname.startsWith(`/spaces/${spaceId}/testimonials`),
+    },
+    {
+      label: "Collect",
+      href: `/spaces/${spaceId}/collect`,
+      active: pathname.startsWith(`/spaces/${spaceId}/collect`),
+      badge: pendingCount,
     },
     {
       label: "Widget",
@@ -99,6 +115,11 @@ export function SpaceNavTabs({
               }`}
             >
               {tab.label}
+              {tab.badge !== null && tab.badge !== undefined && tab.badge > 0 && (
+                <span className="ml-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                  {tab.badge}
+                </span>
+              )}
             </Link>
           ))}
         </nav>

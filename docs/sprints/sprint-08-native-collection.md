@@ -11,35 +11,35 @@
 
 ### Task 8.1 — Collection Form Database Schema
 
-- [ ] Add `collectionForms` table: `id`, `spaceId` FK, `title`, `promptText`, `incentiveType` (enum: none/discount/custom), `incentiveValue`, `branding` (jsonb), `isActive`, `slug` (unique), `createdAt`
-- [ ] Add `submissions` table: `id`, `formId` FK, `type` (enum: video/text), `videoUrl` (nullable), `text` (nullable), `customerName`, `customerEmail`, `status` (enum: pending/approved/rejected), `createdAt`
-- [ ] Run migration
+- [x] Add `collectionForms` table: `id`, `spaceId` FK, `title`, `promptText`, `incentiveType` (enum: none/discount/custom), `incentiveValue`, `branding` (jsonb), `isActive`, `slug` (unique), `createdAt`
+- [x] Add `submissions` table: `id`, `formId` FK, `type` (enum: video/text), `videoUrl` (nullable), `text` (nullable), `customerName`, `customerEmail`, `status` (enum: pending/approved/rejected), `createdAt`
+- [x] Run migration
 
 **Expected Outcomes:**
-- [ ] New tables exist with correct schema
-- [ ] Foreign keys and enums are correct
+- [x] New tables exist with correct schema
+- [x] Foreign keys and enums are correct
 
 ---
 
 ### Task 8.2 — Collection Form Builder UI
 
-- [ ] Create `apps/dashboard/app/(dashboard)/spaces/[id]/collect/page.tsx`
+- [x] Create `apps/dashboard/app/(dashboard)/spaces/[id]/collect/page.tsx`
   - Create / edit collection form: title, prompt text, incentive config, branding
   - Generate shareable link (`/collect/{slug}`)
   - Generate embeddable form snippet
   - List submissions with approve/reject actions
-- [ ] API routes for CRUD on collection forms and submissions
+- [x] API routes for CRUD on collection forms and submissions
 
 **Expected Outcomes:**
-- [ ] Owner can create a collection form with custom prompt
-- [ ] Shareable link is generated
-- [ ] Submissions are listed with approve/reject
+- [x] Owner can create a collection form with custom prompt
+- [x] Shareable link is generated
+- [x] Submissions are listed with approve/reject
 
 ---
 
 ### Task 8.3 — Public Collection Page (Video Recording)
 
-- [ ] Create `apps/dashboard/app/collect/[slug]/page.tsx` — public, no auth required
+- [x] Create `apps/dashboard/app/collect/[slug]/page.tsx` — public, no auth required
   - MediaRecorder API integration for webcam recording
   - Record button, stop, preview, re-record
   - File size limits (e.g., max 100 MB / 5 minutes)
@@ -50,52 +50,52 @@
   - Thank you page with optional incentive display
 
 **Expected Outcomes:**
-- [ ] Customer can record video via webcam in-browser
-- [ ] Customer can upload a video file
-- [ ] Customer can leave a text testimonial
-- [ ] Uploads go through the pluggable storage adapter
-- [ ] Submission appears in owner's dashboard as "pending"
+- [/] Customer can record video via webcam in-browser
+- [/] Customer can upload a video file
+- [x] Customer can leave a text testimonial
+- [/] Uploads go through the pluggable storage adapter
+- [x] Submission appears in owner's dashboard as "pending"
 
 ---
 
 ### Task 8.4 — Video Transcoding Pipeline
 
-- [ ] Set up a transcoding job runner (serverless function or background job)
-- [ ] On video upload: transcode to web-friendly format (H.264/MP4)
-- [ ] Generate thumbnail from video
-- [ ] Normalize resolution and bitrate
-- [ ] Update submission record with processed video URL
+- [x] Set up a transcoding job runner (serverless function or background job)
+- [x] On video upload: transcode to web-friendly format (H.264/MP4)
+- [x] Generate thumbnail from video
+- [x] Normalize resolution and bitrate
+- [x] Update submission record with processed video URL
 
 **Expected Outcomes:**
-- [ ] Uploaded videos are transcoded to consistent format
-- [ ] Thumbnails are auto-generated
-- [ ] Transcoding runs asynchronously without blocking the upload
+- [/] Uploaded videos are transcoded to consistent format
+- [/] Thumbnails are auto-generated
+- [x] Transcoding runs asynchronously without blocking the upload
 
 ---
 
 ### Task 8.5 — Submission Review & Approval Flow
 
-- [ ] Submission review UI: play video, read text, approve/reject
-- [ ] On approve: auto-create a testimonial in the space from the submission data
-- [ ] Notify owner of new submissions (in-app notification or email)
+- [x] Submission review UI: play video, read text, approve/reject
+- [x] On approve: auto-create a testimonial in the space from the submission data
+- [x] Notify owner of new submissions (in-app notification or email)
 
 **Expected Outcomes:**
-- [ ] Approved submissions become testimonials in the space
-- [ ] Rejected submissions are marked but data retained
-- [ ] Owner is notified of new submissions
+- [x] Approved submissions become testimonials in the space
+- [x] Rejected submissions are marked but data retained
+- [x] Owner is notified of new submissions
 
 ---
 
 ## Sprint 8 — Verification Checklist
 
-- [ ] Collection form can be created with custom prompt and incentive
-- [ ] Shareable link works and shows the collection form
-- [ ] Webcam recording works in Chrome, Firefox, Safari
-- [ ] File upload works with progress indicator
-- [ ] Text testimonial submission works
-- [ ] Submissions appear in dashboard as pending
-- [ ] Approve converts submission to testimonial
-- [ ] Video transcoding produces web-ready output
-- [ ] Thumbnails are auto-generated
-- [ ] `turbo build` passes
-- [ ] `turbo test` passes
+- [x] Collection form can be created with custom prompt and incentive
+- [x] Shareable link works and shows the collection form
+- [/] Webcam recording works in Chrome, Firefox, Safari
+- [/] File upload works with progress indicator
+- [x] Text testimonial submission works
+- [x] Submissions appear in dashboard as pending
+- [x] Approve converts submission to testimonial
+- [/] Video transcoding produces web-ready output
+- [/] Thumbnails are auto-generated
+- [x] `turbo build` passes
+- [x] `turbo test` passes
