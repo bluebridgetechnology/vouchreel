@@ -28,7 +28,7 @@ export default function SignupPage() {
       if (result.error) {
         setError(result.error.message || "Could not create account");
       } else {
-        router.push("/");
+        router.push("/dashboard");
         router.refresh();
       }
     } catch {

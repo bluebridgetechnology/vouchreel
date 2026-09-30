@@ -4,28 +4,36 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "@/lib/auth/auth-client";
 
-interface DashboardSidebarProps {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    image?: string | null;
-    role?: string | null;
-  };
+interface DashboardUser {
+  id: string;
+  name: string;
+  email: string;
+  image?: string | null;
+  role?: string | null;
 }
 
-export function DashboardSidebar({ user }: DashboardSidebarProps) {
-  const pathname = usePathname();
+interface DashboardSidebarProps {
+  user: DashboardUser;
+}
 
+function isAdminUser(user: DashboardUser) {
   const role = (user.role || "").toLowerCase().trim();
-  const isAdmin = role === "owner" || role === "admin";
+  return role === "owner" || role === "admin";
+}
 
-  const navItems = [
+function isItemActive(pathname: string, href: string) {
+  return href === "/spaces"
+    ? pathname === "/spaces" || pathname.startsWith("/spaces/")
+    : pathname === href;
+}
+
+function getNavItems(isAdmin: boolean) {
+  return [
     {
       label: "Spaces",
       href: "/spaces",
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      icon: (className: string) => (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -38,8 +46,8 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
     {
       label: "Billing",
       href: "/settings/billing",
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      icon: (className: string) => (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -52,8 +60,8 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
     {
       label: "Settings",
       href: "/settings",
-      icon: (
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      icon: (className: string) => (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -69,8 +77,8 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           {
             label: "Admin",
             href: "/admin",
-            icon: (
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            icon: (className: string) => (
+              <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -83,22 +91,27 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         ]
       : []),
   ];
+}
 
-  async function handleSignOut() {
-    await signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          window.location.href = "/login";
-        },
+async function handleSignOut() {
+  await signOut({
+    fetchOptions: {
+      onSuccess: () => {
+        window.location.href = "/login";
       },
-    });
-  }
+    },
+  });
+}
+
+export function DashboardSidebar({ user }: DashboardSidebarProps) {
+  const pathname = usePathname();
+  const navItems = getNavItems(isAdminUser(user));
 
   return (
-    <aside className="flex w-64 flex-col border-r bg-card">
+    <aside className="hidden w-64 flex-col border-r bg-card lg:flex">
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
             <span className="text-sm font-bold text-primary-foreground">V</span>
           </div>
@@ -109,10 +122,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
-          const isActive =
-            item.href === "/spaces"
-              ? pathname === "/spaces" || pathname.startsWith("/spaces/")
-              : pathname === item.href;
+          const isActive = isItemActive(pathname, item.href);
           return (
             <Link
               key={item.href}
@@ -123,7 +133,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               }`}
             >
-              {item.icon}
+              {item.icon("h-5 w-5")}
               {item.label}
             </Link>
           );
@@ -157,5 +167,56 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         </button>
       </div>
     </aside>
+  );
+}
+
+export function DashboardMobileHeader({ user }: DashboardSidebarProps) {
+  const pathname = usePathname();
+  const navItems = getNavItems(isAdminUser(user));
+
+  return (
+    <header className="sticky top-0 z-40 flex items-center gap-2 border-b bg-card px-3 py-2 lg:hidden">
+      <Link href="/dashboard" className="flex shrink-0 items-center gap-1.5">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
+          <span className="text-xs font-bold text-primary-foreground">V</span>
+        </div>
+        <span className="text-sm font-semibold">Vouchreel</span>
+      </Link>
+
+      <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+        {navItems.map((item) => {
+          const isActive = isItemActive(pathname, item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              }`}
+            >
+              {item.icon("h-4 w-4")}
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <button
+        onClick={handleSignOut}
+        aria-label="Sign out"
+        className="flex shrink-0 items-center rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+      >
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
+          />
+        </svg>
+      </button>
+    </header>
   );
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { eq, and, asc, max } from "drizzle-orm";
+import { apiError } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, testimonials } from "@/lib/db/schema";
@@ -20,11 +21,20 @@ async function verifySpaceOwner(spaceId: string, userId: string) {
     .where(eq(spaces.id, spaceId));
 
   if (!space) {
-    return { error: "Space not found", status: 404 };
+    return {
+      error: { code: "NOT_FOUND" as const, message: "Space not found" },
+      status: 404 as const,
+    };
   }
 
   if (space.ownerId !== userId) {
-    return { error: "Forbidden: You do not own this space", status: 403 };
+    return {
+      error: {
+        code: "FORBIDDEN" as const,
+        message: "Forbidden: You do not own this space",
+      },
+      status: 403 as const,
+    };
   }
 
   return { space };
@@ -37,15 +47,16 @@ async function verifySpaceOwner(spaceId: string, userId: string) {
 export async function GET(request: Request, { params }: RouteParams) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
   const { id } = await params;
   const authResult = await verifySpaceOwner(id, session.user.id);
   if (authResult.error) {
-    return NextResponse.json(
-      { error: authResult.error },
-      { status: authResult.status }
+    return apiError(
+      authResult.status,
+      authResult.error.code,
+      authResult.error.message
     );
   }
 
@@ -67,10 +78,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     return NextResponse.json({ testimonials: items });
   } catch (error) {
     console.error("Failed to fetch testimonials:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch testimonials" },
-      { status: 500 }
-    );
+    return apiError(500, "INTERNAL_ERROR", "Failed to fetch testimonials");
   }
 }
 
@@ -81,15 +89,16 @@ export async function GET(request: Request, { params }: RouteParams) {
 export async function POST(request: Request, { params }: RouteParams) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
   const { id } = await params;
   const authResult = await verifySpaceOwner(id, session.user.id);
   if (authResult.error) {
-    return NextResponse.json(
-      { error: authResult.error },
-      { status: authResult.status }
+    return apiError(
+      authResult.status,
+      authResult.error.code,
+      authResult.error.message
     );
   }
 
@@ -98,13 +107,9 @@ export async function POST(request: Request, { params }: RouteParams) {
     const validated = createTestimonialSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        {
-          error: "Validation failed",
-          details: validated.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
+      return apiError(400, "VALIDATION_ERROR", "Validation failed", {
+        details: validated.error.flatten().fieldErrors,
+      });
     }
 
     const data = validated.data;
@@ -116,9 +121,10 @@ export async function POST(request: Request, { params }: RouteParams) {
         const parsed = validateUrl(data.videoUrl);
         platform = detectPlatform(parsed);
       } catch (err) {
-        return NextResponse.json(
-          { error: err instanceof Error ? err.message : "Invalid video URL" },
-          { status: 400 }
+        return apiError(
+          400,
+          "BAD_REQUEST",
+          err instanceof Error ? err.message : "Invalid video URL"
         );
       }
     }
@@ -179,9 +185,6 @@ export async function POST(request: Request, { params }: RouteParams) {
     );
   } catch (error) {
     console.error("Failed to create testimonial:", error);
-    return NextResponse.json(
-      { error: "Failed to create testimonial" },
-      { status: 500 }
-    );
+    return apiError(500, "INTERNAL_ERROR", "Failed to create testimonial");
   }
 }

@@ -28,10 +28,24 @@ describe("Analytics Events API Route", () => {
   });
 
   it("handles OPTIONS preflight with CORS headers", async () => {
-    const res = await optionsEvents();
+    // sendBeacon sends credentialed cross-origin requests, so the origin must be
+    // reflected (wildcard is rejected by browsers for credentials mode "include")
+    const req = new Request("http://localhost/api/events", {
+      method: "OPTIONS",
+      headers: { Origin: "https://customer-site.example" },
+    });
+    const res = await optionsEvents(req);
+    expect(res.status).toBe(204);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://customer-site.example");
+    expect(res.headers.get("Access-Control-Allow-Credentials")).toBe("true");
+    expect(res.headers.get("Vary")).toBe("Origin");
+    expect(res.headers.get("Access-Control-Allow-Methods")).toContain("POST");
+  });
+
+  it("falls back to wildcard CORS when no Origin header is present", async () => {
+    const res = await optionsEvents(new Request("http://localhost/api/events", { method: "OPTIONS" }));
     expect(res.status).toBe(204);
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
-    expect(res.headers.get("Access-Control-Allow-Methods")).toContain("POST");
   });
 
   it("returns 400 on empty body", async () => {
@@ -43,7 +57,7 @@ describe("Analytics Events API Route", () => {
     const res = await postEvents(req);
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.error).toBe("Request body cannot be empty");
+    expect(json.error.message).toBe("Request body cannot be empty");
   });
 
   it("returns 400 on invalid schema payload", async () => {
@@ -55,7 +69,7 @@ describe("Analytics Events API Route", () => {
     const res = await postEvents(req);
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.error).toBe("Validation failed");
+    expect(json.error.message).toBe("Validation failed");
   });
 
   it("returns 429 when rate limit is exceeded", async () => {
@@ -83,7 +97,8 @@ describe("Analytics Events API Route", () => {
     const res = await postEvents(req);
     expect(res.status).toBe(429);
     const json = await res.json();
-    expect(json.error).toContain("Rate limit exceeded");
+    expect(json.error.code).toBe("RATE_LIMITED");
+    expect(json.error.message).toContain("Rate limit exceeded");
   });
 
   it("returns 404 when spaceId does not exist", async () => {
@@ -111,7 +126,7 @@ describe("Analytics Events API Route", () => {
     const res = await postEvents(req);
     expect(res.status).toBe(404);
     const json = await res.json();
-    expect(json.error).toContain("Space not found");
+    expect(json.error.message).toContain("Space not found");
   });
 
   it("records valid batched events successfully", async () => {

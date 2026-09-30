@@ -18,7 +18,7 @@ describe("oEmbed Route Handler", () => {
 
     expect(res.status).toBe(400);
     const json = await res.json();
-    expect(json.error).toContain("Missing required 'url' query parameter");
+    expect(json.error.message).toContain("Missing required 'url' query parameter");
   });
 
   it("returns 429 when rate limit is exceeded", async () => {
@@ -33,7 +33,7 @@ describe("oEmbed Route Handler", () => {
 
     expect(res.status).toBe(429);
     const json = await res.json();
-    expect(json.error).toContain("Too many requests");
+    expect(json.error.message).toContain("Too many requests");
   });
 
   it("returns normalized metadata when oEmbed succeeds", async () => {
@@ -77,6 +77,6 @@ describe("oEmbed Route Handler", () => {
 
     expect(res.status).toBe(404);
     const json = await res.json();
-    expect(json.error).toBe("YouTube video not found or is private");
+    expect(json.error.message).toBe("YouTube video not found or is private");
   });
 });

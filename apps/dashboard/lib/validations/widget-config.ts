@@ -25,7 +25,7 @@ export const widgetThemeSchema = z.object({
   primaryColor: z
     .string()
     .trim()
-    .regex(hexColorRegex, "Primary color must be a valid hex color (e.g. #6366f1)"),
+    .regex(hexColorRegex, "Primary color must be a valid hex color (e.g. #4f46e5)"),
   accentColor: z
     .string()
     .trim()
@@ -111,7 +111,7 @@ export interface WidgetConfigRecord {
 export const DEFAULT_WIDGET_CONFIG: Omit<WidgetConfigRecord, "id" | "spaceId" | "createdAt"> = {
   position: "bottom-right",
   theme: {
-    primaryColor: "#6366f1",
+    primaryColor: "#4f46e5",
     accentColor: "#ffffff",
     mode: "light",
     borderRadius: 12,

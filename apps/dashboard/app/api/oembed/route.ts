@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { getOEmbedMetadata, OEmbedError } from "@/lib/oembed";
 import { rateLimit } from "@/lib/rate-limit";
+import {
+  apiError,
+  badRequest,
+  internalError,
+  type ApiErrorCode,
+} from "@/lib/api/errors";
 
 /**
  * GET /api/oembed?url=...
@@ -21,10 +27,11 @@ export async function GET(request: Request) {
   });
 
   if (!rateLimitResult.success) {
-    return NextResponse.json(
-      { error: "Too many requests. Please try again later." },
+    return apiError(
+      429,
+      "RATE_LIMITED",
+      "Too many requests. Please try again later.",
       {
-        status: 429,
         headers: {
           "Retry-After": Math.ceil(
             (rateLimitResult.reset - Date.now()) / 1000
@@ -38,10 +45,7 @@ export async function GET(request: Request) {
   const url = searchParams.get("url");
 
   if (!url || typeof url !== "string" || !url.trim()) {
-    return NextResponse.json(
-      { error: "Missing required 'url' query parameter" },
-      { status: 400 }
-    );
+    return badRequest("Missing required 'url' query parameter");
   }
 
   try {
@@ -54,16 +58,23 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     if (error instanceof OEmbedError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.statusCode }
-      );
+      const code: ApiErrorCode =
+        error.statusCode === 401
+          ? "UNAUTHORIZED"
+          : error.statusCode === 403
+            ? "FORBIDDEN"
+            : error.statusCode === 404
+              ? "NOT_FOUND"
+              : error.statusCode === 429
+                ? "RATE_LIMITED"
+                : error.statusCode >= 500
+                  ? "INTERNAL_ERROR"
+                  : "BAD_REQUEST";
+
+      return apiError(error.statusCode, code, error.message);
     }
 
     console.error("Unexpected oEmbed proxy error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch video metadata" },
-      { status: 500 }
-    );
+    return internalError("Failed to fetch video metadata");
   }
 }

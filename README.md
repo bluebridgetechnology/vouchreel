@@ -28,7 +28,10 @@ npm run db:start
 # 5. Run database migrations
 npm run db:migrate
 
-# 6. Start the development server
+# 6. Build the embed widget once (required for embedding it locally)
+npm run widget:build
+
+# 7. Start the development server
 npm run dev
 ```
 
@@ -48,7 +51,9 @@ vouchreel/
 ├── drizzle/
 │   └── migrations/         # SQL migration files
 ├── turbo.json              # Turborepo configuration
-├── docker-compose.yml      # Local PostgreSQL
+├── docker-compose.yml      # Local Postgres + Dockerized app
+├── docker-compose.production.yml  # Production overrides (VPS)
+├── Dockerfile              # Multi-stage production image
 └── .env.example            # Environment variable template
 ```
 
@@ -60,7 +65,8 @@ vouchreel/
 | `npm run build` | Build all packages |
 | `npm run lint` | Lint all packages |
 | `npm run test` | Run tests across all packages |
-| `npm run db:start` | Start local PostgreSQL via Docker |
+| `npm run widget:build` | Build the embed widget bundle (outputs to `packages/widget/dist/` and `apps/dashboard/public/widget/`) |
+| `npm run db:start` | Start local PostgreSQL via Docker (`docker compose up -d postgres`) |
 | `npm run db:migrate` | Run database migrations |
 
 ### Dashboard-specific scripts
@@ -75,7 +81,7 @@ Run from `apps/dashboard/`:
 
 ## Tech Stack
 
-- **Frontend**: Next.js 16 (App Router) + Tailwind CSS + shadcn/ui
+- **Frontend**: Next.js 16 (App Router) + Tailwind CSS v4
 - **Database**: PostgreSQL + Drizzle ORM
 - **Auth**: BetterAuth (email/password + Google OAuth)
 - **Payments**: Stripe + Dodo Payments (admin-switchable)
@@ -85,7 +91,13 @@ Run from `apps/dashboard/`:
 
 ## Environment Variables
 
-See [.env.example](.env.example) for all required variables with documentation.
+See [.env.example](.env.example) for all variables with documentation, and [.env.production.example](.env.production.example) for production/VPS deployments.
+
+## Documentation
+
+- [Deployment Guide](docs/deployment.md) — VPS (Docker Compose) and Vercel deployments, widget CDN
+- [Widget Integration Guide](docs/widget-integration.md) — for site owners embedding the widget
+- [Implementation Plan](docs/implementation-plan.md) — architecture and sprint roadmap
 
 ## License
 

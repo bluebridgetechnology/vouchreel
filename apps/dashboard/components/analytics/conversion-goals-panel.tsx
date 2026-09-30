@@ -42,8 +42,8 @@ export function ConversionGoalsPanel({
       });
       const data = await res.json();
       if (!res.ok) {
-        const detail = data?.details?.goalValue?.[0];
-        throw new Error(detail || data?.error || "Failed to create goal");
+        const detail = data?.error?.details?.goalValue?.[0];
+        throw new Error(detail || data?.error?.message || "Failed to create goal");
       }
       onGoalsChanged([...goals, data.goal]);
       setGoalValue("");

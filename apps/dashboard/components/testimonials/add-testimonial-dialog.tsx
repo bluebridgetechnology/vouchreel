@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MatchRules } from "@/lib/validations/testimonials";
 import { MatchRulesEditor } from "./match-rules-editor";
 
@@ -42,6 +42,17 @@ export function AddTestimonialDialog({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   async function handleFetchMetadata(urlToFetch?: string) {
@@ -56,7 +67,7 @@ export function AddTestimonialDialog({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Could not fetch video metadata");
+        throw new Error(data?.error?.message || "Could not fetch video metadata");
       }
 
       setTitle(data.title || "");
@@ -109,7 +120,7 @@ export function AddTestimonialDialog({
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to create testimonial");
+        throw new Error(data?.error?.message || "Failed to create testimonial");
       }
 
       onSuccess(data.testimonial);
@@ -130,10 +141,16 @@ export function AddTestimonialDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
-      <div className="relative my-8 w-full max-w-2xl rounded-xl border bg-card p-6 shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-testimonial-title"
+        className="relative my-8 w-full max-w-2xl rounded-xl border bg-card p-6 shadow-2xl"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
+          aria-label="Close dialog"
           className="absolute right-4 top-4 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -142,7 +159,9 @@ export function AddTestimonialDialog({
         </button>
 
         <div className="space-y-1">
-          <h2 className="text-xl font-bold tracking-tight">Add Video Testimonial</h2>
+          <h2 id="add-testimonial-title" className="text-xl font-bold tracking-tight">
+            Add Video Testimonial
+          </h2>
           <p className="text-xs text-muted-foreground">
             Paste a YouTube, Vimeo, or MP4 link. Metadata will be fetched automatically.
           </p>
@@ -157,11 +176,15 @@ export function AddTestimonialDialog({
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           {/* Video URL Input */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-foreground">
+            <label
+              htmlFor="add-video-url"
+              className="text-xs font-semibold text-foreground"
+            >
               Video URL <span className="text-destructive">*</span>
             </label>
             <div className="flex gap-2">
               <input
+                id="add-video-url"
                 type="url"
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
@@ -221,6 +244,7 @@ export function AddTestimonialDialog({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Testimonial Title"
+                  aria-label="Testimonial title"
                   className="w-full rounded border bg-background px-2.5 py-1 text-xs font-semibold focus:border-primary focus:outline-none"
                 />
                 <p className="text-[11px] text-muted-foreground">
@@ -233,10 +257,14 @@ export function AddTestimonialDialog({
           {/* Customer Name & Company */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
+              <label
+                htmlFor="add-customer-name"
+                className="text-xs font-semibold text-foreground"
+              >
                 Customer Name
               </label>
               <input
+                id="add-customer-name"
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
@@ -245,10 +273,14 @@ export function AddTestimonialDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
+              <label
+                htmlFor="add-customer-company"
+                className="text-xs font-semibold text-foreground"
+              >
                 Customer Company / Role
               </label>
               <input
+                id="add-customer-company"
                 type="text"
                 value={customerCompany}
                 onChange={(e) => setCustomerCompany(e.target.value)}
@@ -260,10 +292,14 @@ export function AddTestimonialDialog({
 
           {/* Quote / Highlight Soundbite */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
+            <label
+              htmlFor="add-quote"
+              className="text-xs font-semibold text-foreground"
+            >
               Quote / Highlight Soundbite
             </label>
             <textarea
+              id="add-quote"
               rows={2}
               value={quote}
               onChange={(e) => setQuote(e.target.value)}
@@ -274,11 +310,15 @@ export function AddTestimonialDialog({
 
           {/* Tags */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-foreground">
+            <label
+              htmlFor="add-tag-input"
+              className="text-xs font-semibold text-foreground"
+            >
               Tags
             </label>
             <div className="flex gap-2">
               <input
+                id="add-tag-input"
                 type="text"
                 value={newTagInput}
                 onChange={(e) => setNewTagInput(e.target.value)}
@@ -310,6 +350,7 @@ export function AddTestimonialDialog({
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(t)}
+                      aria-label={`Remove tag ${t}`}
                       className="text-muted-foreground hover:text-destructive"
                     >
                       ×

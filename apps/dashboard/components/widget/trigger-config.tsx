@@ -81,10 +81,14 @@ export function TriggerConfig({
       <div className="space-y-4 rounded-xl border bg-card p-4 sm:p-5">
         {/* Trigger Selection Dropdown */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-foreground">
+          <label
+            htmlFor="trigger-event-type"
+            className="text-xs font-semibold text-foreground"
+          >
             Trigger Event
           </label>
           <select
+            id="trigger-event-type"
             value={triggerType}
             onChange={(e) => handleTypeSelect(e.target.value as TriggerType)}
             className="w-full rounded-md border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -107,7 +111,10 @@ export function TriggerConfig({
         {triggerType === "delay" && (
           <div className="space-y-2 rounded-lg border border-dashed p-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-foreground">
+              <label
+                htmlFor="trigger-delay-seconds"
+                className="text-xs font-medium text-foreground"
+              >
                 Delay Duration (Seconds)
               </label>
               <span className="font-mono text-xs font-semibold text-primary">
@@ -116,6 +123,7 @@ export function TriggerConfig({
             </div>
             <div className="flex items-center gap-3">
               <input
+                id="trigger-delay-seconds"
                 type="range"
                 min={1}
                 max={60}
@@ -130,6 +138,7 @@ export function TriggerConfig({
                 type="number"
                 min={1}
                 max={300}
+                aria-label="Delay duration in seconds"
                 value={Number(triggerValue.seconds) || 5}
                 onChange={(e) =>
                   handleValueUpdate("seconds", Math.max(1, Number(e.target.value)))
@@ -146,7 +155,10 @@ export function TriggerConfig({
         {triggerType === "scroll-depth" && (
           <div className="space-y-2 rounded-lg border border-dashed p-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-foreground">
+              <label
+                htmlFor="trigger-scroll-percentage"
+                className="text-xs font-medium text-foreground"
+              >
                 Scroll Percentage
               </label>
               <span className="font-mono text-xs font-semibold text-primary">
@@ -155,6 +167,7 @@ export function TriggerConfig({
             </div>
             <div className="flex items-center gap-3">
               <input
+                id="trigger-scroll-percentage"
                 type="range"
                 min={5}
                 max={100}
@@ -169,6 +182,7 @@ export function TriggerConfig({
                 type="number"
                 min={1}
                 max={100}
+                aria-label="Scroll percentage threshold"
                 value={Number(triggerValue.percentage) || 50}
                 onChange={(e) =>
                   handleValueUpdate("percentage", Math.max(1, Math.min(100, Number(e.target.value))))
@@ -185,7 +199,10 @@ export function TriggerConfig({
         {triggerType === "pageview-count" && (
           <div className="space-y-2 rounded-lg border border-dashed p-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-foreground">
+              <label
+                htmlFor="trigger-pageview-count"
+                className="text-xs font-medium text-foreground"
+              >
                 Pageviews Before Trigger
               </label>
               <span className="font-mono text-xs font-semibold text-primary">
@@ -194,6 +211,7 @@ export function TriggerConfig({
             </div>
             <div className="flex items-center gap-3">
               <input
+                id="trigger-pageview-count"
                 type="range"
                 min={1}
                 max={10}
@@ -208,6 +226,7 @@ export function TriggerConfig({
                 type="number"
                 min={1}
                 max={50}
+                aria-label="Pageviews before trigger"
                 value={Number(triggerValue.count) || 2}
                 onChange={(e) =>
                   handleValueUpdate("count", Math.max(1, Number(e.target.value)))

@@ -4,12 +4,33 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { events, spaces } from "@/lib/db/schema";
 import { rateLimit } from "@/lib/rate-limit";
+import {
+  apiError,
+  badRequest,
+  validationError,
+  notFound,
+  internalError,
+} from "@/lib/api/errors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-};
+// navigator.sendBeacon sends cross-origin requests with credentials mode "include",
+// for which browsers reject `Access-Control-Allow-Origin: *`. Reflect the request
+// origin (embeds run on arbitrary customer domains, so there is no allowlist).
+function corsHeadersFor(request: Request): Record<string, string> {
+  const base = {
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+  const origin = request.headers.get("origin");
+  if (!origin) {
+    return { "Access-Control-Allow-Origin": "*", ...base };
+  }
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Credentials": "true",
+    Vary: "Origin",
+    ...base,
+  };
+}
 
 const uuidRegex =
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
@@ -39,10 +60,10 @@ const eventsPayloadSchema = z.object({
  * OPTIONS /api/events
  * Preflight handler for CORS.
  */
-export async function OPTIONS() {
+export async function OPTIONS(request: Request) {
   return new NextResponse(null, {
     status: 204,
-    headers: corsHeaders,
+    headers: corsHeadersFor(request),
   });
 }
 
@@ -53,31 +74,24 @@ export async function OPTIONS() {
  * and records events into the database.
  */
 export async function POST(request: Request) {
+  const corsHeaders = corsHeadersFor(request);
   let body: unknown;
   try {
     const text = await request.text();
     if (!text) {
-      return NextResponse.json(
-        { error: "Request body cannot be empty" },
-        { status: 400, headers: corsHeaders }
-      );
+      return badRequest("Request body cannot be empty", corsHeaders);
     }
     body = JSON.parse(text);
   } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON payload" },
-      { status: 400, headers: corsHeaders }
-    );
+    return badRequest("Invalid JSON payload", corsHeaders);
   }
 
   const parsed = eventsPayloadSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: "Validation failed",
-        details: parsed.error.flatten().fieldErrors,
-      },
-      { status: 400, headers: corsHeaders }
+    return validationError(
+      "Validation failed",
+      parsed.error.flatten().fieldErrors,
+      corsHeaders
     );
   }
 
@@ -102,13 +116,12 @@ export async function POST(request: Request) {
     });
 
     if (!limit.success) {
-      return NextResponse.json(
+      return apiError(
+        429,
+        "RATE_LIMITED",
+        "Rate limit exceeded. Maximum 100 events per 10 minutes.",
         {
-          error: "Rate limit exceeded. Maximum 100 events per 10 minutes.",
-          reset: limit.reset,
-        },
-        {
-          status: 429,
+          details: { reset: limit.reset },
           headers: {
             ...corsHeaders,
             "Retry-After": Math.ceil((limit.reset - Date.now()) / 1000).toString(),
@@ -127,10 +140,7 @@ export async function POST(request: Request) {
       .where(eq(spaces.id, spaceId));
 
     if (!space) {
-      return NextResponse.json(
-        { error: `Space not found: ${spaceId}` },
-        { status: 404, headers: corsHeaders }
-      );
+      return notFound(`Space not found: ${spaceId}`, corsHeaders);
     }
   }
 
@@ -163,9 +173,6 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Failed to insert events:", error);
-    return NextResponse.json(
-      { error: "Failed to store events" },
-      { status: 500, headers: corsHeaders }
-    );
+    return internalError("Failed to store events", corsHeaders);
   }
 }

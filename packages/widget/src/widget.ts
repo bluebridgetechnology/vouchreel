@@ -41,6 +41,9 @@ export class VouchreelWidget {
   private isExpanded = false;
   private isMounted = false;
   private keydownListener: ((e: KeyboardEvent) => void) | null = null;
+  private liveRegion: HTMLElement | null = null;
+  private previouslyFocusedEl: HTMLElement | null = null;
+  private restoreFocusOnRender = false;
 
   constructor(options: WidgetOptions) {
     this.embedKey = options.embedKey;
@@ -60,6 +63,8 @@ export class VouchreelWidget {
     this.hostElement = document.createElement("div");
     this.hostElement.id = `vouchreel-widget-${this.embedKey}`;
     this.hostElement.className = "vouchreel-host-container";
+    this.hostElement.setAttribute("role", "region");
+    this.hostElement.setAttribute("aria-label", "Customer video testimonials");
 
     // Attach Shadow DOM
     this.shadowRoot = this.hostElement.attachShadow({ mode: "open" });
@@ -91,6 +96,22 @@ export class VouchreelWidget {
     }
 
     this.shadowRoot.appendChild(this.rootWrapper);
+
+    // Remove the entrance class once it finishes so the wrapper's computed
+    // transform is `none`; otherwise it remains a containing block for the
+    // fixed-position backdrop/modal (breaking the mobile bottom-sheet).
+    this.rootWrapper.addEventListener("animationend", (e) => {
+      if (e.target === this.rootWrapper && this.rootWrapper) {
+        this.rootWrapper.classList.remove("vr-animate-enter");
+      }
+    });
+
+    // Visually hidden live region so screen readers announce the widget appearing
+    this.liveRegion = document.createElement("div");
+    this.liveRegion.className = "vr-sr-only";
+    this.liveRegion.setAttribute("role", "status");
+    this.shadowRoot.appendChild(this.liveRegion);
+
     document.body.appendChild(this.hostElement);
     this.isMounted = true;
 
@@ -102,8 +123,9 @@ export class VouchreelWidget {
 
     // Render collapsed state
     this.renderCollapsed();
+    this.announce("Video testimonial widget is now available.");
 
-    // Listen for Escape key to close/dismiss
+    // Listen for Escape key to close/dismiss + Tab focus trap while expanded
     this.keydownListener = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (this.isExpanded) {
@@ -111,9 +133,53 @@ export class VouchreelWidget {
         } else {
           this.dismiss();
         }
+      } else if (e.key === "Tab" && this.isExpanded) {
+        this.trapFocus(e);
       }
     };
     document.addEventListener("keydown", this.keydownListener);
+  }
+
+  /**
+   * Announces a message via the hidden live region (cleared first so repeat
+   * announcements are picked up by screen readers).
+   */
+  private announce(message: string): void {
+    if (!this.liveRegion) return;
+    this.liveRegion.textContent = "";
+    setTimeout(() => {
+      if (this.liveRegion) {
+        this.liveRegion.textContent = message;
+      }
+    }, 100);
+  }
+
+  /**
+   * Keeps keyboard focus inside the expanded dialog while it is open.
+   */
+  private trapFocus(e: KeyboardEvent): void {
+    if (!this.shadowRoot) return;
+    const focusables = Array.from(
+      this.shadowRoot.querySelectorAll<HTMLElement>(
+        'button, a[href], iframe, video[controls], [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((el) => !el.hasAttribute("disabled") && el.getClientRects().length > 0);
+    if (focusables.length === 0) return;
+
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = this.shadowRoot.activeElement as HTMLElement | null;
+
+    if (!active) {
+      e.preventDefault();
+      first.focus();
+    } else if (e.shiftKey && active === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
   }
 
   /**
@@ -140,6 +206,15 @@ export class VouchreelWidget {
     const card = document.createElement("div");
     card.className = "vr-collapsed-card";
 
+    // Open button: whole card area is keyboard-accessible
+    const openBtn = document.createElement("button");
+    openBtn.type = "button";
+    openBtn.className = "vr-open-btn";
+    openBtn.setAttribute(
+      "aria-label",
+      `Play video testimonial${current.customerName ? ` from ${current.customerName}` : ""}`
+    );
+
     // Media preview thumbnail
     const thumbWrap = document.createElement("div");
     thumbWrap.className = "vr-thumb-wrapper";
@@ -151,16 +226,17 @@ export class VouchreelWidget {
       thumbWrap.appendChild(img);
     }
 
-    // Play icon badge
+    // Play icon badge (decorative — the open button carries the label)
     const playBadge = document.createElement("div");
     playBadge.className = "vr-play-badge";
+    playBadge.setAttribute("aria-hidden", "true");
     playBadge.innerHTML = `
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M8 5v14l11-7z"/>
       </svg>
     `;
     thumbWrap.appendChild(playBadge);
-    card.appendChild(thumbWrap);
+    openBtn.appendChild(thumbWrap);
 
     // Text details
     const info = document.createElement("div");
@@ -177,7 +253,15 @@ export class VouchreelWidget {
       quote.textContent = `"${current.quote}"`;
       info.appendChild(quote);
     }
-    card.appendChild(info);
+    openBtn.appendChild(info);
+
+    openBtn.addEventListener("click", () => {
+      if (this.analytics) {
+        this.analytics.track("click", current.id);
+      }
+      this.expand(this.currentIndex);
+    });
+    card.appendChild(openBtn);
 
     // Dismiss button
     const closeBtn = document.createElement("button");
@@ -196,15 +280,26 @@ export class VouchreelWidget {
     });
     card.appendChild(closeBtn);
 
-    // On card click: expand
-    card.addEventListener("click", () => {
-      if (this.analytics) {
-        this.analytics.track("click", current.id);
-      }
-      this.expand(this.currentIndex);
-    });
-
     this.rootWrapper.appendChild(card);
+
+    this.maybeRestoreFocus();
+  }
+
+  /**
+   * Returns focus to the collapsed control after the dialog closes.
+   */
+  private maybeRestoreFocus(): void {
+    if (!this.restoreFocusOnRender || !this.rootWrapper) return;
+    this.restoreFocusOnRender = false;
+    const target = this.rootWrapper.querySelector<HTMLElement>(
+      ".vr-open-btn, .vr-story-item"
+    );
+    if (target) {
+      target.focus();
+    } else if (this.previouslyFocusedEl) {
+      this.previouslyFocusedEl.focus();
+    }
+    this.previouslyFocusedEl = null;
   }
 
   /**
@@ -217,8 +312,13 @@ export class VouchreelWidget {
     stripWrapper.className = "vr-strip-wrapper";
 
     this.testimonials.slice(0, 5).forEach((item, idx) => {
-      const storyItem = document.createElement("div");
+      const storyItem = document.createElement("button");
+      storyItem.type = "button";
       storyItem.className = "vr-story-item";
+      storyItem.setAttribute(
+        "aria-label",
+        `Play video testimonial${item.customerName ? ` from ${item.customerName}` : ""}`
+      );
       storyItem.setAttribute("title", item.customerName || item.title || "Testimonial");
 
       if (item.thumbnailUrl) {
@@ -257,6 +357,8 @@ export class VouchreelWidget {
     stripWrapper.appendChild(closeBtn);
 
     this.rootWrapper.appendChild(stripWrapper);
+
+    this.maybeRestoreFocus();
   }
 
   /**
@@ -264,6 +366,9 @@ export class VouchreelWidget {
    */
   public expand(index: number = 0): void {
     if (!this.rootWrapper) return;
+    if (!this.isExpanded && this.shadowRoot) {
+      this.previouslyFocusedEl = this.shadowRoot.activeElement as HTMLElement | null;
+    }
     this.isExpanded = true;
     this.currentIndex = index;
 
@@ -275,16 +380,27 @@ export class VouchreelWidget {
     // Backdrop
     const backdrop = document.createElement("div");
     backdrop.className = "vr-backdrop";
+    backdrop.setAttribute("aria-hidden", "true");
     backdrop.addEventListener("click", () => this.collapse());
     this.rootWrapper.appendChild(backdrop);
 
     // Modal dialog
     const modal = document.createElement("div");
     modal.className = `vr-expanded-modal vr-pos-${this.config.position || "bottom-right"}`;
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute(
+      "aria-label",
+      current.customerName
+        ? `Video testimonial from ${current.customerName}`
+        : "Video testimonial player"
+    );
+    modal.tabIndex = -1;
 
-    // Mobile drag grabber
+    // Mobile drag grabber (decorative)
     const grabber = document.createElement("div");
     grabber.className = "vr-sheet-grabber";
+    grabber.setAttribute("aria-hidden", "true");
     modal.appendChild(grabber);
 
     // Close button (X)
@@ -392,6 +508,9 @@ export class VouchreelWidget {
     modal.appendChild(poweredBy);
 
     this.rootWrapper.appendChild(modal);
+
+    // Move focus into the dialog so screen readers and keyboards follow it
+    modal.focus();
   }
 
   /**
@@ -418,6 +537,7 @@ export class VouchreelWidget {
    */
   public collapse(): void {
     if (!this.isExpanded) return;
+    this.restoreFocusOnRender = true;
     this.renderCollapsed();
   }
 

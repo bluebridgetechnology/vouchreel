@@ -2,9 +2,9 @@ import Link from "next/link";
 
 export default function CheckoutCancelPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center px-4 py-20 text-center">
       <div className="max-w-md w-full rounded-2xl border bg-card p-8 shadow-sm">
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
           <svg
             className="h-8 w-8"
             fill="none"
@@ -34,7 +34,7 @@ export default function CheckoutCancelPage() {
             Return to Pricing
           </Link>
           <Link
-            href="/"
+            href="/dashboard"
             className="w-full rounded-lg border bg-secondary py-2.5 px-4 text-sm font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors"
           >
             Back to Dashboard

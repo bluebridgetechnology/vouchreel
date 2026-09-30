@@ -46,7 +46,7 @@ export default function OnboardingPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to create space");
+        throw new Error(data?.error?.message || "Failed to create space");
       }
 
       setSpaceId(data.space.id);
@@ -73,7 +73,7 @@ export default function OnboardingPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to fetch video preview");
+        throw new Error(data?.error?.message || "Failed to fetch video preview");
       }
 
       setOembedTitle(data.title || "");
@@ -110,7 +110,7 @@ export default function OnboardingPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to add testimonial");
+        throw new Error(data?.error?.message || "Failed to add testimonial");
       }
 
       setStep(3);
@@ -121,7 +121,10 @@ export default function OnboardingPage() {
     }
   }
 
-  const embedSnippet = `<script src="https://cdn.vouchreel.com/widget.js" data-vouchreel-space="${embedKey || "YOUR_EMBED_KEY"}" async></script>`;
+  const widgetBaseUrl =
+    process.env.NEXT_PUBLIC_WIDGET_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const embedSnippet = `<script async src="${widgetBaseUrl}/widget/${embedKey || "YOUR_EMBED_KEY"}.js"></script>`;
 
   function handleCopySnippet() {
     navigator.clipboard.writeText(embedSnippet);
@@ -139,6 +142,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="mx-auto max-w-2xl py-8">
+      <h1 className="sr-only">Set up your Vouchreel account</h1>
       {/* Stepper Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -161,7 +165,7 @@ export default function OnboardingPage() {
                   {step > s.num ? "✓" : s.num}
                 </div>
                 <span
-                  className={`text-xs font-semibold ${
+                  className={`sr-only text-xs font-semibold sm:not-sr-only ${
                     step === s.num ? "text-foreground" : "text-muted-foreground"
                   }`}
                 >
@@ -256,11 +260,15 @@ export default function OnboardingPage() {
 
           <form onSubmit={handleAddTestimonial} className="mt-6 space-y-4">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-foreground">
+              <label
+                htmlFor="onboarding-video-url"
+                className="text-xs font-semibold text-foreground"
+              >
                 Video URL
               </label>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <input
+                  id="onboarding-video-url"
                   type="url"
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
@@ -304,10 +312,14 @@ export default function OnboardingPage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">
+                <label
+                  htmlFor="onboarding-customer-name"
+                  className="text-xs font-semibold text-foreground"
+                >
                   Customer Name (Optional)
                 </label>
                 <input
+                  id="onboarding-customer-name"
                   type="text"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
@@ -317,10 +329,14 @@ export default function OnboardingPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">
+                <label
+                  htmlFor="onboarding-quote"
+                  className="text-xs font-semibold text-foreground"
+                >
                   Key Soundbite / Quote (Optional)
                 </label>
                 <input
+                  id="onboarding-quote"
                   type="text"
                   value={quote}
                   onChange={(e) => setQuote(e.target.value)}

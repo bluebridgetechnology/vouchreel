@@ -31,7 +31,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to update settings");
+        throw new Error(data?.error?.message || "Failed to update settings");
       }
 
       setMessage({
@@ -65,6 +65,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
     <div className="space-y-8 max-w-3xl">
       {message && (
         <div
+          role="status"
           className={`rounded-lg border p-4 text-sm ${
             message.type === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/50 dark:text-emerald-300"

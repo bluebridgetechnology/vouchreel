@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { eq, and } from "drizzle-orm";
+import { apiError } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, testimonials } from "@/lib/db/schema";
@@ -23,11 +24,20 @@ async function verifySpaceAndTestimonial(
     .where(eq(spaces.id, spaceId));
 
   if (!space) {
-    return { error: "Space not found", status: 404 };
+    return {
+      error: { code: "NOT_FOUND" as const, message: "Space not found" },
+      status: 404 as const,
+    };
   }
 
   if (space.ownerId !== userId) {
-    return { error: "Forbidden: You do not own this space", status: 403 };
+    return {
+      error: {
+        code: "FORBIDDEN" as const,
+        message: "Forbidden: You do not own this space",
+      },
+      status: 403 as const,
+    };
   }
 
   const [testimonial] = await db
@@ -41,7 +51,10 @@ async function verifySpaceAndTestimonial(
     );
 
   if (!testimonial) {
-    return { error: "Testimonial not found", status: 404 };
+    return {
+      error: { code: "NOT_FOUND" as const, message: "Testimonial not found" },
+      status: 404 as const,
+    };
   }
 
   return { space, testimonial };
@@ -53,15 +66,16 @@ async function verifySpaceAndTestimonial(
 export async function GET(request: Request, { params }: RouteParams) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
   const { id, tid } = await params;
   const result = await verifySpaceAndTestimonial(id, tid, session.user.id);
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error },
-      { status: result.status }
+    return apiError(
+      result.status,
+      result.error.code,
+      result.error.message
     );
   }
 
@@ -74,15 +88,16 @@ export async function GET(request: Request, { params }: RouteParams) {
 export async function PUT(request: Request, { params }: RouteParams) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
   const { id, tid } = await params;
   const result = await verifySpaceAndTestimonial(id, tid, session.user.id);
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error },
-      { status: result.status }
+    return apiError(
+      result.status,
+      result.error.code,
+      result.error.message
     );
   }
 
@@ -91,13 +106,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
     const validated = updateTestimonialSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        {
-          error: "Validation failed",
-          details: validated.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
+      return apiError(400, "VALIDATION_ERROR", "Validation failed", {
+        details: validated.error.flatten().fieldErrors,
+      });
     }
 
     const data = validated.data;
@@ -130,10 +141,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
     return NextResponse.json({ testimonial: updated });
   } catch (error) {
     console.error("Failed to update testimonial:", error);
-    return NextResponse.json(
-      { error: "Failed to update testimonial" },
-      { status: 500 }
-    );
+    return apiError(500, "INTERNAL_ERROR", "Failed to update testimonial");
   }
 }
 
@@ -144,15 +152,16 @@ export async function PUT(request: Request, { params }: RouteParams) {
 export async function DELETE(request: Request, { params }: RouteParams) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
   const { id, tid } = await params;
   const result = await verifySpaceAndTestimonial(id, tid, session.user.id);
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error },
-      { status: result.status }
+    return apiError(
+      result.status,
+      result.error.code,
+      result.error.message
     );
   }
 
@@ -171,9 +180,6 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     return NextResponse.json({ success: true, id: tid });
   } catch (error) {
     console.error("Failed to soft-delete testimonial:", error);
-    return NextResponse.json(
-      { error: "Failed to delete testimonial" },
-      { status: 500 }
-    );
+    return apiError(500, "INTERNAL_ERROR", "Failed to delete testimonial");
   }
 }

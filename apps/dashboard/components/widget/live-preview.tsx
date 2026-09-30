@@ -346,6 +346,7 @@ export function LivePreview({
                   {/* Close Preview Button */}
                   <button
                     type="button"
+                    aria-label="Close preview modal"
                     onClick={() => setIsExpanded(false)}
                     className="absolute right-2.5 top-2.5 z-40 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
                     title="Close preview modal"
@@ -443,6 +444,9 @@ export function LivePreview({
 
         <button
           type="button"
+          role="switch"
+          aria-checked={autoplayPreview}
+          aria-label="Autoplay video previews"
           onClick={() => onAutoplayChange?.(!autoplayPreview)}
           className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
             autoplayPreview ? "bg-primary" : "bg-muted"

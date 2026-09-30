@@ -3,6 +3,7 @@ import { eq, and, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { spaces, testimonials, widgetConfigs, conversionGoals } from "@/lib/db/schema";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
+import { badRequest, notFound, internalError } from "@/lib/api/errors";
 
 interface RouteParams {
   params: Promise<{ embedKey: string }>;
@@ -34,10 +35,7 @@ export async function GET(request: Request, { params }: RouteParams) {
   const { embedKey } = await params;
 
   if (!embedKey || typeof embedKey !== "string") {
-    return NextResponse.json(
-      { error: "Invalid embed key" },
-      { status: 400, headers: corsHeaders }
-    );
+    return badRequest("Invalid embed key", corsHeaders);
   }
 
   try {
@@ -51,10 +49,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       .where(eq(spaces.embedKey, embedKey));
 
     if (!space) {
-      return NextResponse.json(
-        { error: "Widget not found" },
-        { status: 404, headers: corsHeaders }
-      );
+      return notFound("Widget not found", corsHeaders);
     }
 
     // Fetch widget configuration
@@ -144,9 +139,6 @@ export async function GET(request: Request, { params }: RouteParams) {
     );
   } catch (error) {
     console.error("Error fetching widget data:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500, headers: corsHeaders }
-    );
+    return internalError("Internal server error", corsHeaders);
   }
 }

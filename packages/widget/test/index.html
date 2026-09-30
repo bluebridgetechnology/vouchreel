@@ -4,6 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vouchreel Embed Widget — Interactive Test Bench</title>
+  <script>
+    // Test-bench timing probe: records when the widget host element first appears
+    // and timestamps fetch calls + DOMContentLoaded for performance measurement.
+    window.__widgetTiming = { fetchCalls: [] };
+    document.addEventListener("DOMContentLoaded", function () {
+      performance.mark("dcl");
+    });
+    var _f = window.fetch;
+    Object.defineProperty(window, "fetch", {
+      configurable: true,
+      get: function () {
+        return _f;
+      },
+      set: function (fn) {
+        _f = function () {
+          var t = Math.round(performance.now());
+          var args = arguments;
+          var r = fn.apply(this, args);
+          if (r && typeof r.then === "function") {
+            r.then(function () {
+              window.__widgetTiming.fetchCalls.push({
+                t: t,
+                done: Math.round(performance.now()),
+                url: String(args[0]).slice(-48),
+              });
+            });
+          }
+          return r;
+        };
+      },
+    });
+    setInterval(function () {
+      if (window.__widgetTiming.hostSeenAt == null) {
+        var host = document.getElementById("vouchreel-widget-demo-embed-key");
+        if (host) {
+          window.__widgetTiming.hostSeenAt = Math.round(performance.now());
+        }
+      }
+    }, 25);
+  </script>
   <style>
     :root {
       --bg: #f8fafc;
@@ -127,7 +167,7 @@
     }
 
     button.btn-primary {
-      background-color: #6366f1;
+      background-color: #4f46e5;
       border: none;
       font-weight: 600;
       cursor: pointer;
@@ -135,7 +175,7 @@
     }
 
     button.btn-primary:hover {
-      background-color: #4f46e5;
+      background-color: #4338ca;
     }
 
     .hero {

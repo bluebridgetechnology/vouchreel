@@ -10,7 +10,7 @@ export default async function AdminPage() {
 
   const role = ((session.user as any).role || "").toLowerCase().trim();
   if (role !== "owner" && role !== "admin") {
-    redirect("/");
+    redirect("/dashboard");
   }
 
   const activeProvider = await getActivePaymentProviderName();

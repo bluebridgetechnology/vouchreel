@@ -76,7 +76,10 @@ export function PageTargeting({
         {/* Included Pages */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-foreground">
+            <label
+              htmlFor="pages-included-input"
+              className="text-xs font-semibold text-foreground"
+            >
               Included URL Patterns
             </label>
             <span className="text-[11px] text-muted-foreground">
@@ -86,6 +89,7 @@ export function PageTargeting({
 
           <div className="flex gap-2">
             <input
+              id="pages-included-input"
               type="text"
               value={includeInput}
               onChange={(e) => setIncludeInput(e.target.value)}
@@ -139,7 +143,10 @@ export function PageTargeting({
         {/* Excluded Pages */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-foreground">
+            <label
+              htmlFor="pages-excluded-input"
+              className="text-xs font-semibold text-foreground"
+            >
               Excluded URL Patterns
             </label>
             <span className="text-[11px] text-muted-foreground">
@@ -149,6 +156,7 @@ export function PageTargeting({
 
           <div className="flex gap-2">
             <input
+              id="pages-excluded-input"
               type="text"
               value={excludeInput}
               onChange={(e) => setExcludeInput(e.target.value)}

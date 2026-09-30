@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
@@ -12,6 +11,27 @@ services:
       POSTGRES_DB: vouchreel
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U vouchreel -d vouchreel']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vouchreel-app
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://vouchreel:vouchreel@postgres:5432/vouchreel
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pgdata:

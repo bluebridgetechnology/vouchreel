@@ -33,7 +33,7 @@ describe("Widget Data Public API Route", () => {
 
     expect(res.status).toBe(404);
     const json = await res.json();
-    expect(json.error).toBe("Widget not found");
+    expect(json.error.message).toBe("Widget not found");
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
   });
 

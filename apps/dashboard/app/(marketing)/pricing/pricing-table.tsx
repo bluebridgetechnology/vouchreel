@@ -68,7 +68,7 @@ export function PricingTable({
       const data = await res.json();
 
       if (!res.ok || !data.url) {
-        throw new Error(data.error || "Failed to initiate checkout");
+        throw new Error(data?.error?.message || "Failed to initiate checkout");
       }
 
       window.location.href = data.url;
@@ -105,7 +105,7 @@ export function PricingTable({
             }`}
           >
             Yearly billing
-            <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+            <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
               Save ~17%
             </span>
           </button>

@@ -76,7 +76,10 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
           {/* Primary Color */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-foreground">
+              <label
+                htmlFor="widget-primary-hex"
+                className="text-xs font-semibold text-foreground"
+              >
                 Primary Brand Color
               </label>
               <span className="font-mono text-[11px] text-muted-foreground">
@@ -89,14 +92,16 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
                   type="color"
                   value={value.primaryColor}
                   onChange={(e) => handlePrimaryChange(e.target.value)}
+                  aria-label="Primary brand color picker"
                   className="absolute -inset-2 h-14 w-14 cursor-pointer border-0 p-0"
                 />
               </div>
               <input
+                id="widget-primary-hex"
                 type="text"
                 value={value.primaryColor}
                 onChange={(e) => handlePrimaryChange(e.target.value)}
-                placeholder="#6366f1"
+                placeholder="#4f46e5"
                 className="w-full rounded-md border bg-background px-3 py-1.5 font-mono text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
@@ -123,7 +128,10 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
           {/* Accent Color */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-foreground">
+              <label
+                htmlFor="widget-accent-hex"
+                className="text-xs font-semibold text-foreground"
+              >
                 Accent / Text Color
               </label>
               <span className="font-mono text-[11px] text-muted-foreground">
@@ -136,10 +144,12 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
                   type="color"
                   value={value.accentColor}
                   onChange={(e) => handleAccentChange(e.target.value)}
+                  aria-label="Accent text color picker"
                   className="absolute -inset-2 h-14 w-14 cursor-pointer border-0 p-0"
                 />
               </div>
               <input
+                id="widget-accent-hex"
                 type="text"
                 value={value.accentColor}
                 onChange={(e) => handleAccentChange(e.target.value)}
@@ -174,10 +184,10 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {/* Light / Dark Mode Toggle */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-foreground">
+            <span id="display-mode-label" className="text-xs font-semibold text-foreground">
               Display Mode
-            </label>
-            <div className="grid grid-cols-2 gap-2">
+            </span>
+            <div role="group" aria-labelledby="display-mode-label" className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => handleModeChange("light")}
@@ -216,7 +226,10 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
           {/* Border Radius Slider */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-foreground">
+              <label
+                htmlFor="widget-border-radius"
+                className="text-xs font-semibold text-foreground"
+              >
                 Corner Radius
               </label>
               <span className="rounded bg-muted px-2 py-0.5 font-mono text-[11px] font-semibold text-foreground">
@@ -226,6 +239,7 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
 
             <div className="space-y-3 pt-1">
               <input
+                id="widget-border-radius"
                 type="range"
                 min={0}
                 max={24}

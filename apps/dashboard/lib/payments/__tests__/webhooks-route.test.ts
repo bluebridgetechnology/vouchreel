@@ -52,7 +52,7 @@ describe("Webhook Route Handlers", () => {
       expect(response.status).toBe(400);
 
       const json = await response.json();
-      expect(json.error).toBe("Missing signature");
+      expect(json.error.message).toBe("Missing signature");
     });
 
     it("returns 200 when webhook processing succeeds", async () => {
@@ -82,7 +82,7 @@ describe("Webhook Route Handlers", () => {
       expect(response.status).toBe(400);
 
       const json = await response.json();
-      expect(json.error).toBe("Missing signature");
+      expect(json.error.message).toBe("Missing signature");
     });
 
     it("returns 200 when webhook processing succeeds", async () => {

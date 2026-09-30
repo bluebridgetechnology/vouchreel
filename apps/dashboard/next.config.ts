@@ -1,7 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Produces .next/standalone for the Docker runner stage (see Dockerfile).
+  output: 'standalone',
 };
 
 export default nextConfig;

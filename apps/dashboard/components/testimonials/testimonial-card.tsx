@@ -74,6 +74,7 @@ export function TestimonialCard({
         {...attributes}
         {...listeners}
         type="button"
+        aria-label="Drag to reorder"
         title="Drag to reorder"
         className="cursor-grab p-1 text-muted-foreground hover:text-foreground active:cursor-grabbing self-center sm:self-auto"
       >
@@ -126,7 +127,7 @@ export function TestimonialCard({
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
                 testimonial.isActive
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                   : "bg-muted text-muted-foreground"
               }`}
             >

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { StripeProvider } from "@/lib/payments/stripe";
+import { badRequest, internalError } from "@/lib/api/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -9,10 +10,7 @@ export async function POST(request: Request) {
     const result = await provider.handleWebhook(request);
 
     if (!result.received) {
-      return NextResponse.json(
-        { error: result.error || "Failed to process Stripe webhook" },
-        { status: 400 }
-      );
+      return badRequest(result.error || "Failed to process Stripe webhook");
     }
 
     return NextResponse.json({
@@ -22,6 +20,6 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return internalError(message);
   }
 }

@@ -7,6 +7,13 @@ import {
   DEFAULT_WIDGET_CONFIG,
   updateWidgetConfigSchema,
 } from "@/lib/validations/widget-config";
+import {
+  unauthorized,
+  forbidden,
+  notFound,
+  validationError,
+  internalError,
+} from "@/lib/api/errors";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -20,7 +27,7 @@ interface RouteParams {
 export async function GET(request: Request, { params }: RouteParams) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return unauthorized("Unauthorized");
   }
 
   const { id } = await params;
@@ -32,14 +39,11 @@ export async function GET(request: Request, { params }: RouteParams) {
       .where(eq(spaces.id, id));
 
     if (!space) {
-      return NextResponse.json({ error: "Space not found" }, { status: 404 });
+      return notFound("Space not found");
     }
 
     if (space.ownerId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Forbidden: You do not own this space" },
-        { status: 403 }
-      );
+      return forbidden("Forbidden: You do not own this space");
     }
 
     const [existingConfig] = await db
@@ -101,10 +105,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     });
   } catch (error) {
     console.error("Failed to fetch widget config:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch widget config" },
-      { status: 500 }
-    );
+    return internalError("Failed to fetch widget config");
   }
 }
 
@@ -115,7 +116,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 export async function PUT(request: Request, { params }: RouteParams) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return unauthorized("Unauthorized");
   }
 
   const { id } = await params;
@@ -127,26 +128,20 @@ export async function PUT(request: Request, { params }: RouteParams) {
       .where(eq(spaces.id, id));
 
     if (!space) {
-      return NextResponse.json({ error: "Space not found" }, { status: 404 });
+      return notFound("Space not found");
     }
 
     if (space.ownerId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Forbidden: You do not own this space" },
-        { status: 403 }
-      );
+      return forbidden("Forbidden: You do not own this space");
     }
 
     const body = await request.json();
     const validated = updateWidgetConfigSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        {
-          error: "Validation failed",
-          details: validated.error.flatten().fieldErrors,
-        },
-        { status: 400 }
+      return validationError(
+        "Validation failed",
+        validated.error.flatten().fieldErrors
       );
     }
 
@@ -195,9 +190,6 @@ export async function PUT(request: Request, { params }: RouteParams) {
     });
   } catch (error) {
     console.error("Failed to update widget config:", error);
-    return NextResponse.json(
-      { error: "Failed to update widget config" },
-      { status: 500 }
-    );
+    return internalError("Failed to update widget config");
   }
 }

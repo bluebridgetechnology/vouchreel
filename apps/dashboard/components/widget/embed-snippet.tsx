@@ -101,14 +101,18 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
               Script Snippet
             </span>
             {copied && (
-              <span className="text-xs font-semibold text-emerald-600 animate-fade-in">
+              <span className="text-xs font-semibold text-emerald-700 animate-fade-in">
                 ✓ Copied to clipboard!
               </span>
             )}
           </div>
 
           <div className="relative flex items-center rounded-lg border bg-neutral-950 p-3 font-mono text-xs text-neutral-100 shadow-inner">
-            <code className="block flex-1 overflow-x-auto pr-16 select-all font-mono text-[11px] leading-relaxed text-emerald-400">
+            <code
+              tabIndex={0}
+              aria-label="Embed script snippet"
+              className="block flex-1 overflow-x-auto pr-16 select-all font-mono text-[11px] leading-relaxed text-emerald-400"
+            >
               {snippet}
             </code>
 

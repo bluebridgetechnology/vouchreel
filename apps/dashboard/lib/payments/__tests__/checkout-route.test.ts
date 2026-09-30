@@ -162,7 +162,7 @@ describe("Checkout and Customer Portal Route Handlers", () => {
       expect(res.status).toBe(400);
 
       const json = await res.json();
-      expect(json.error).toContain("No active paid subscription found");
+      expect(json.error.message).toContain("No active paid subscription found");
     });
 
     it("returns customer portal URL when user has subscription", async () => {

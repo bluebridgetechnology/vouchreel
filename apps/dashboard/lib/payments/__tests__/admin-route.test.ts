@@ -105,7 +105,7 @@ describe("Admin Settings Route Handlers", () => {
       expect(response.status).toBe(400);
 
       const json = await response.json();
-      expect(json.error).toContain("Must be either 'stripe' or 'dodo'");
+      expect(json.error.message).toContain("Must be either 'stripe' or 'dodo'");
     });
 
     it("successfully updates payment provider to dodo", async () => {

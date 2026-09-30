@@ -2,9 +2,9 @@ import Link from "next/link";
 
 export default function CheckoutSuccessPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center px-4 py-20 text-center">
       <div className="max-w-md w-full rounded-2xl border bg-card p-8 shadow-sm">
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
           <svg
             className="h-8 w-8"
             fill="none"
@@ -30,7 +30,7 @@ export default function CheckoutSuccessPage() {
 
         <div className="mt-8 flex flex-col gap-3">
           <Link
-            href="/"
+            href="/dashboard"
             className="w-full rounded-lg bg-primary py-2.5 px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             Go to Spaces Dashboard

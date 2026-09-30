@@ -19,7 +19,7 @@
 
 /* Base theme custom properties */
 .vr-theme-root {
-  --vr-primary: #6366f1;
+  --vr-primary: #4f46e5;
   --vr-accent: #ffffff;
   --vr-radius: 12px;
   --vr-bg: #ffffff;
@@ -63,8 +63,20 @@
 .vr-pos-story-strip {
   position: fixed;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+}
+
+/* Centered without `transform`: a transformed ancestor becomes the containing
+   block for fixed-position descendants, which would misplace the backdrop/modal. */
+.vr-theme-root.vr-pos-story-strip {
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.vr-theme-root.vr-pos-story-strip > * {
+  pointer-events: auto;
 }
 
 /* Animation utilities */
@@ -83,7 +95,9 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    /* `none`, not an identity transform: with `forwards` fill an identity
+       matrix would keep the wrapper a containing block for fixed descendants. */
+    transform: none;
   }
 }
 
@@ -119,6 +133,23 @@
 .vr-collapsed-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 14px 28px -4px rgba(0, 0, 0, 0.18);
+}
+
+/* Full-card open control (keyboard accessible) */
+.vr-open-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .vr-thumb-wrapper {
@@ -233,6 +264,10 @@
   max-width: 500px;
 }
 
+.vr-pos-bottom-bar .vr-open-btn {
+  justify-content: center;
+}
+
 /* Story Strip Position Styles */
 .vr-pos-story-strip .vr-strip-wrapper {
   display: flex;
@@ -255,6 +290,8 @@
   cursor: pointer;
   overflow: hidden;
   transition: transform 0.2s;
+  background: transparent;
+  font: inherit;
 }
 
 .vr-story-item:hover {
@@ -524,6 +561,35 @@
   color: var(--vr-text-muted);
   padding-bottom: 8px;
   opacity: 0.8;
+}
+
+/* Visually hidden but exposed to screen readers */
+.vr-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Visible keyboard focus for all interactive controls */
+.vr-open-btn:focus-visible,
+.vr-close-btn:focus-visible,
+.vr-modal-close-btn:focus-visible,
+.vr-nav-btn:focus-visible,
+.vr-player-play-btn:focus-visible,
+.vr-story-item:focus-visible {
+  outline: 2px solid var(--vr-primary);
+  outline-offset: 2px;
+}
+
+/* Programmatic focus target for the dialog — no visible ring needed */
+.vr-expanded-modal:focus {
+  outline: none;
 }
 
 /* Reduced Motion Support */

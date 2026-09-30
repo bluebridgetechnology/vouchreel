@@ -27,7 +27,7 @@ export default function NewSpacePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to create space");
+        throw new Error(data?.error?.message || "Failed to create space");
       }
 
       router.push(`/spaces/${data.space.id}/testimonials`);

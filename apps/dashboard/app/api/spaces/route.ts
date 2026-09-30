@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { nanoid } from "nanoid";
-import { eq, desc, count } from "drizzle-orm";
+import { apiError } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { spaces, widgetConfigs, testimonials } from "@/lib/db/schema";
+import { spaces, widgetConfigs } from "@/lib/db/schema";
 import { createSpaceSchema } from "@/lib/validations/spaces";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
+import { getSpacesWithCounts } from "@/lib/spaces/queries";
 
 /**
  * GET /api/spaces
@@ -14,45 +15,15 @@ import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 export async function GET() {
   const session = await getSession();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
   try {
-    // Fetch spaces owned by this user
-    const userSpaces = await db
-      .select({
-        id: spaces.id,
-        name: spaces.name,
-        ownerId: spaces.ownerId,
-        embedKey: spaces.embedKey,
-        createdAt: spaces.createdAt,
-      })
-      .from(spaces)
-      .where(eq(spaces.ownerId, session.user.id))
-      .orderBy(desc(spaces.createdAt));
-
-    // Fetch testimonial count per space
-    const spacesWithCounts = await Promise.all(
-      userSpaces.map(async (space) => {
-        const [testimonialCount] = await db
-          .select({ value: count() })
-          .from(testimonials)
-          .where(eq(testimonials.spaceId, space.id));
-
-        return {
-          ...space,
-          testimonialCount: testimonialCount?.value ?? 0,
-        };
-      })
-    );
-
+    const spacesWithCounts = await getSpacesWithCounts(session.user.id);
     return NextResponse.json({ spaces: spacesWithCounts });
   } catch (error) {
     console.error("Failed to fetch spaces:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch spaces" },
-      { status: 500 }
-    );
+    return apiError(500, "INTERNAL_ERROR", "Failed to fetch spaces");
   }
 }
 
@@ -63,7 +34,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
   try {
@@ -71,13 +42,9 @@ export async function POST(request: Request) {
     const validated = createSpaceSchema.safeParse(body);
 
     if (!validated.success) {
-      return NextResponse.json(
-        {
-          error: "Validation failed",
-          details: validated.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
+      return apiError(400, "VALIDATION_ERROR", "Validation failed", {
+        details: validated.error.flatten().fieldErrors,
+      });
     }
 
     const embedKey = nanoid(12);
@@ -109,9 +76,6 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Failed to create space:", error);
-    return NextResponse.json(
-      { error: "Failed to create space" },
-      { status: 500 }
-    );
+    return apiError(500, "INTERNAL_ERROR", "Failed to create space");
   }
 }

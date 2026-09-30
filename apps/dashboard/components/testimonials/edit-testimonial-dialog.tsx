@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MatchRules } from "@/lib/validations/testimonials";
 import { MatchRulesEditor } from "./match-rules-editor";
 
@@ -36,6 +36,17 @@ export function EditTestimonialDialog({
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -76,7 +87,7 @@ export function EditTestimonialDialog({
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to update testimonial");
+        throw new Error(data?.error?.message || "Failed to update testimonial");
       }
 
       onSuccess(data.testimonial);
@@ -90,10 +101,16 @@ export function EditTestimonialDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
-      <div className="relative my-8 w-full max-w-2xl rounded-xl border bg-card p-6 shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-testimonial-title"
+        className="relative my-8 w-full max-w-2xl rounded-xl border bg-card p-6 shadow-2xl"
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
+          aria-label="Close dialog"
           className="absolute right-4 top-4 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,7 +119,9 @@ export function EditTestimonialDialog({
         </button>
 
         <div className="space-y-1">
-          <h2 className="text-xl font-bold tracking-tight">Edit Testimonial</h2>
+          <h2 id="edit-testimonial-title" className="text-xl font-bold tracking-tight">
+            Edit Testimonial
+          </h2>
           <p className="text-xs text-muted-foreground">
             Update metadata, customer details, status, and contextual page matching.
           </p>
@@ -125,6 +144,9 @@ export function EditTestimonialDialog({
             </div>
             <button
               type="button"
+              role="switch"
+              aria-checked={isActive}
+              aria-label="Active status"
               onClick={() => setIsActive(!isActive)}
               className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                 isActive ? "bg-primary" : "bg-muted"
@@ -140,10 +162,14 @@ export function EditTestimonialDialog({
 
           {/* Title */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
+            <label
+              htmlFor="edit-testimonial-name"
+              className="text-xs font-semibold text-foreground"
+            >
               Title
             </label>
             <input
+              id="edit-testimonial-name"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -154,10 +180,14 @@ export function EditTestimonialDialog({
           {/* Customer Name & Company */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
+              <label
+                htmlFor="edit-customer-name"
+                className="text-xs font-semibold text-foreground"
+              >
                 Customer Name
               </label>
               <input
+                id="edit-customer-name"
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
@@ -165,10 +195,14 @@ export function EditTestimonialDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
+              <label
+                htmlFor="edit-customer-company"
+                className="text-xs font-semibold text-foreground"
+              >
                 Customer Company / Role
               </label>
               <input
+                id="edit-customer-company"
                 type="text"
                 value={customerCompany}
                 onChange={(e) => setCustomerCompany(e.target.value)}
@@ -179,10 +213,14 @@ export function EditTestimonialDialog({
 
           {/* Quote */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
+            <label
+              htmlFor="edit-quote"
+              className="text-xs font-semibold text-foreground"
+            >
               Quote / Highlight Soundbite
             </label>
             <textarea
+              id="edit-quote"
               rows={2}
               value={quote}
               onChange={(e) => setQuote(e.target.value)}
@@ -192,11 +230,15 @@ export function EditTestimonialDialog({
 
           {/* Tags */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-foreground">
+            <label
+              htmlFor="edit-tag-input"
+              className="text-xs font-semibold text-foreground"
+            >
               Tags
             </label>
             <div className="flex gap-2">
               <input
+                id="edit-tag-input"
                 type="text"
                 value={newTagInput}
                 onChange={(e) => setNewTagInput(e.target.value)}
@@ -228,6 +270,7 @@ export function EditTestimonialDialog({
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(t)}
+                      aria-label={`Remove tag ${t}`}
                       className="text-muted-foreground hover:text-destructive"
                     >
                       ×

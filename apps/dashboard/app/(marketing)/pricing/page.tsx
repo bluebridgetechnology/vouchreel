@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import Link from "next/link";
 import { db } from "@/lib/db";
 import { plans, subscriptions } from "@/lib/db/schema";
 import { seedPlans } from "@/lib/db/seed-plans";
@@ -7,6 +6,13 @@ import { getSession } from "@/lib/auth/session";
 import { PricingTable, PlanItem } from "./pricing-table";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "Pricing",
+  description:
+    "Simple, transparent pricing for Vouchreel. Collect and showcase video testimonials on any plan — start free, upgrade when you grow.",
+  alternates: { canonical: "/pricing" },
+};
 
 export default async function PricingPage() {
   const session = await getSession();
@@ -42,74 +48,34 @@ export default async function PricingPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header Navigation */}
-      <header className="border-b bg-card/60 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <span className="text-sm font-bold text-primary-foreground">V</span>
-            </div>
-            <span className="text-lg font-semibold tracking-tight">Vouchreel</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            {session?.user ? (
-              <Link
-                href="/"
-                className="rounded-md bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors"
-              >
-                Go to Dashboard
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  href="/signup"
-                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-                >
-                  Get started
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+    <div className="mx-auto w-full max-w-7xl px-6 py-20">
+      <div className="mx-auto mb-16 max-w-3xl text-center">
+        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
+          Simple, transparent pricing
+        </h1>
+        <p className="text-muted-foreground mt-4 text-lg">
+          Paste a video link and showcase genuine video testimonials on your website in seconds.
+          Choose the plan that best fits your business.
+        </p>
+      </div>
 
-      {/* Main Content */}
-      <main className="py-20 px-6 max-w-7xl mx-auto">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-            Simple, transparent pricing
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Paste a video link and showcase genuine video testimonials on your website in seconds.
-            Choose the plan that best fits your business.
-          </p>
-        </div>
+      <PricingTable
+        plans={plainPlans}
+        user={session?.user ? { id: session.user.id, email: session.user.email } : null}
+        currentPlanId={currentPlanId}
+      />
 
-        <PricingTable
-          plans={plainPlans}
-          user={session?.user ? { id: session.user.id, email: session.user.email } : null}
-          currentPlanId={currentPlanId}
-        />
-
-        {/* FAQ / Guarantee */}
-        <div className="mt-24 border-t pt-16 text-center max-w-2xl mx-auto">
-          <h3 className="text-lg font-semibold">Have questions or need a custom setup?</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Contact support at{" "}
-            <a href="mailto:support@vouchreel.com" className="text-primary underline">
-              support@vouchreel.com
-            </a>{" "}
-            and we'll be happy to help. All paid plans come with a 14-day money-back guarantee.
-          </p>
-        </div>
-      </main>
+      {/* FAQ / Guarantee */}
+      <div className="mx-auto mt-24 max-w-2xl border-t pt-16 text-center">
+        <h3 className="text-lg font-semibold">Have questions or need a custom setup?</h3>
+        <p className="text-muted-foreground mt-2 text-sm">
+          Contact support at{" "}
+          <a href="mailto:support@vouchreel.com" className="text-primary underline">
+            support@vouchreel.com
+          </a>{" "}
+          and we&apos;ll be happy to help. All paid plans come with a 14-day money-back guarantee.
+        </p>
+      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { plans, subscriptions } from "@/lib/db/schema";
 import { getPaymentProvider } from "@/lib/payments";
+import { unauthorized, badRequest, notFound, internalError } from "@/lib/api/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -12,20 +13,14 @@ export async function POST(request: Request) {
     const session = await getSession();
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Authentication required to checkout" },
-        { status: 401 }
-      );
+      return unauthorized("Authentication required to checkout");
     }
 
     const body = await request.json();
     const { planId } = body;
 
     if (!planId || typeof planId !== "string") {
-      return NextResponse.json(
-        { error: "Invalid or missing planId" },
-        { status: 400 }
-      );
+      return badRequest("Invalid or missing planId");
     }
 
     const plan = await db.query.plans.findFirst({
@@ -33,10 +28,7 @@ export async function POST(request: Request) {
     });
 
     if (!plan) {
-      return NextResponse.json(
-        { error: `Plan not found: ${planId}` },
-        { status: 404 }
-      );
+      return notFound(`Plan not found: ${planId}`);
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -91,6 +83,6 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("Checkout creation error:", err);
     const message = err instanceof Error ? err.message : "Failed to create checkout session";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return internalError(message);
   }
 }

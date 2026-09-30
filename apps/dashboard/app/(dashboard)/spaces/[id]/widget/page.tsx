@@ -120,7 +120,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to update widget settings");
+        throw new Error(data?.error?.message || "Failed to update widget settings");
       }
 
       setIsDirty(false);
@@ -173,7 +173,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
               Widget Customization
             </h2>
             {isDirty && (
-              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 border border-amber-500/20">
+              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-500/20">
                 Unsaved changes
               </span>
             )}

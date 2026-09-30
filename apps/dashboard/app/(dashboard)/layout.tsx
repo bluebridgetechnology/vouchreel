@@ -1,5 +1,5 @@
 import { requireSession } from "@/lib/auth/session";
-import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { DashboardSidebar, DashboardMobileHeader } from "@/components/dashboard-sidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -11,9 +11,10 @@ export default async function DashboardLayout({
   const session = await requireSession();
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col lg:flex-row">
+      <DashboardMobileHeader user={session.user} />
       <DashboardSidebar user={session.user} />
-      <main className="flex-1 p-6 lg:p-8">{children}</main>
+      <main className="min-w-0 flex-1 p-6 lg:p-8">{children}</main>
     </div>
   );
 }

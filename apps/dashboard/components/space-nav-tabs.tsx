@@ -70,7 +70,7 @@ export function SpaceNavTabs({
           >
             <span>{embedKey}</span>
             {copied ? (
-              <span className="text-[11px] font-semibold text-green-600">Copied!</span>
+              <span className="text-[11px] font-semibold text-green-700">Copied!</span>
             ) : (
               <svg className="h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path

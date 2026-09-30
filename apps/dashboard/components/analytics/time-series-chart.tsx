@@ -67,7 +67,7 @@ export function TimeSeriesChart({ points }: TimeSeriesChartProps) {
             type="monotone"
             dataKey="plays"
             name="Plays"
-            stroke="#22c55e"
+            stroke="#16a34a"
             strokeWidth={2}
             dot={false}
           />

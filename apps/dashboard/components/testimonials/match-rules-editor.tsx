@@ -76,16 +76,20 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
   return (
     <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
       <div className="space-y-1">
-        <label className="text-sm font-semibold text-foreground">
+        <span id="match-rules-label" className="block text-sm font-semibold text-foreground">
           Contextual Page Matching Rules
-        </label>
+        </span>
         <p className="text-xs text-muted-foreground">
           Control which pages on your website will display this testimonial.
         </p>
       </div>
 
       {/* Mode selection radio / segmented switch */}
-      <div className="grid grid-cols-2 gap-2 rounded-lg border bg-muted/40 p-1">
+      <div
+        role="group"
+        aria-labelledby="match-rules-label"
+        className="grid grid-cols-2 gap-2 rounded-lg border bg-muted/40 p-1"
+      >
         <button
           type="button"
           onClick={() => setMode("all")}
@@ -115,11 +119,15 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
         <div className="space-y-4 pt-2">
           {/* URL Patterns */}
           <div className="space-y-2">
-            <label className="text-xs font-medium text-foreground">
+            <label
+              htmlFor="match-url-pattern-input"
+              className="text-xs font-medium text-foreground"
+            >
               URL Patterns (Glob syntax)
             </label>
             <div className="flex gap-2">
               <input
+                id="match-url-pattern-input"
                 type="text"
                 value={newPattern}
                 onChange={(e) => {
@@ -158,6 +166,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                     <button
                       type="button"
                       onClick={() => handleRemovePattern(p)}
+                      aria-label={`Remove pattern ${p}`}
                       className="text-muted-foreground hover:text-destructive"
                     >
                       ×
@@ -174,11 +183,15 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
 
           {/* Tag matching */}
           <div className="space-y-2">
-            <label className="text-xs font-medium text-foreground">
+            <label
+              htmlFor="match-tag-input"
+              className="text-xs font-medium text-foreground"
+            >
               Match by Page Tags (Optional)
             </label>
             <div className="flex gap-2">
               <input
+                id="match-tag-input"
                 type="text"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
@@ -210,6 +223,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(t)}
+                      aria-label={`Remove tag ${t}`}
                       className="text-muted-foreground hover:text-destructive"
                     >
                       ×

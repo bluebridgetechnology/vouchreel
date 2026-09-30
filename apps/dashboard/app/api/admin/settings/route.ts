@@ -4,6 +4,12 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { adminSettings } from "@/lib/db/schema";
 import { getActivePaymentProviderName } from "@/lib/payments";
+import {
+  unauthorized,
+  forbidden,
+  badRequest,
+  internalError,
+} from "@/lib/api/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +28,11 @@ export async function GET() {
     const session = await getSession();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized("Unauthorized");
     }
 
     if (!isAdmin((session.user as any).role)) {
-      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+      return forbidden("Forbidden: Admin access required");
     }
 
     const activeProvider = await getActivePaymentProviderName();
@@ -36,7 +42,7 @@ export async function GET() {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to fetch admin settings";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return internalError(msg);
   }
 }
 
@@ -49,11 +55,11 @@ export async function PUT(request: Request) {
     const session = await getSession();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return unauthorized("Unauthorized");
     }
 
     if (!isAdmin((session.user as any).role)) {
-      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
+      return forbidden("Forbidden: Admin access required");
     }
 
     const body = await request.json();
@@ -63,12 +69,8 @@ export async function PUT(request: Request) {
       !payment_provider ||
       (payment_provider !== "stripe" && payment_provider !== "dodo")
     ) {
-      return NextResponse.json(
-        {
-          error:
-            "Invalid payment_provider. Must be either 'stripe' or 'dodo'.",
-        },
-        { status: 400 }
+      return badRequest(
+        "Invalid payment_provider. Must be either 'stripe' or 'dodo'."
       );
     }
 
@@ -95,6 +97,6 @@ export async function PUT(request: Request) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to update admin settings";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return internalError(msg);
   }
 }

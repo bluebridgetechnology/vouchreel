@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -40,6 +40,41 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
   const [editingTestimonial, setEditingTestimonial] = useState<TestimonialItem | null>(null);
   const [deletingTestimonial, setDeletingTestimonial] = useState<TestimonialItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
+
+  function captureFocus() {
+    lastFocusedRef.current = document.activeElement as HTMLElement | null;
+  }
+
+  function openAddDialog() {
+    captureFocus();
+    setIsAddOpen(true);
+  }
+
+  function closeAddDialog() {
+    setIsAddOpen(false);
+    lastFocusedRef.current?.focus();
+  }
+
+  function openEditDialog(t: TestimonialItem) {
+    captureFocus();
+    setEditingTestimonial(t);
+  }
+
+  function closeEditDialog() {
+    setEditingTestimonial(null);
+    lastFocusedRef.current?.focus();
+  }
+
+  function openDeleteDialog(t: TestimonialItem) {
+    captureFocus();
+    setDeletingTestimonial(t);
+  }
+
+  function closeDeleteDialog() {
+    setDeletingTestimonial(null);
+    lastFocusedRef.current?.focus();
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -71,6 +106,20 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
   useEffect(() => {
     fetchTestimonials();
   }, [spaceId]);
+
+  useEffect(() => {
+    if (!deletingTestimonial) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && !deleteLoading) {
+        setDeletingTestimonial(null);
+        lastFocusedRef.current?.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [deletingTestimonial, deleteLoading]);
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -156,7 +205,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
       setTestimonials((prev) =>
         prev.filter((t) => t.id !== deletingTestimonial.id)
       );
-      setDeletingTestimonial(null);
+      closeDeleteDialog();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to delete testimonial");
     } finally {
@@ -178,7 +227,8 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
         </div>
 
         <button
-          onClick={() => setIsAddOpen(true)}
+          type="button"
+          onClick={openAddDialog}
           className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow transition-colors hover:bg-primary/90"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,7 +277,8 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
             Paste a YouTube, Vimeo, or MP4 link to add your first customer testimonial.
           </p>
           <button
-            onClick={() => setIsAddOpen(true)}
+            type="button"
+            onClick={openAddDialog}
             className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90"
           >
             Add your first testimonial
@@ -249,8 +300,8 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
                 <TestimonialCard
                   key={testimonial.id}
                   testimonial={testimonial}
-                  onEdit={(t) => setEditingTestimonial(t)}
-                  onDelete={(t) => setDeletingTestimonial(t)}
+                  onEdit={openEditDialog}
+                  onDelete={openDeleteDialog}
                   onToggleActive={handleToggleActive}
                 />
               ))}
@@ -263,7 +314,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
       <AddTestimonialDialog
         spaceId={spaceId}
         isOpen={isAddOpen}
-        onClose={() => setIsAddOpen(false)}
+        onClose={closeAddDialog}
         onSuccess={(newTestimonial) => {
           setTestimonials((prev) => [...prev, newTestimonial]);
         }}
@@ -275,7 +326,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
           spaceId={spaceId}
           testimonial={editingTestimonial}
           isOpen={true}
-          onClose={() => setEditingTestimonial(null)}
+          onClose={closeEditDialog}
           onSuccess={(updated) => {
             setTestimonials((prev) =>
               prev.map((t) => (t.id === updated.id ? updated : t))
@@ -286,12 +337,24 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
 
       {/* Delete Confirmation Dialog */}
       {deletingTestimonial && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-testimonial-title"
+          aria-describedby="delete-testimonial-desc"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        >
           <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-destructive">
+            <h3
+              id="delete-testimonial-title"
+              className="text-lg font-bold text-destructive"
+            >
               Delete Testimonial
             </h3>
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p
+              id="delete-testimonial-desc"
+              className="mt-2 text-xs text-muted-foreground"
+            >
               Are you sure you want to delete this testimonial? It will no longer be displayed in your website widget.
             </p>
             {deletingTestimonial.title && (
@@ -302,7 +365,8 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
             <div className="mt-6 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setDeletingTestimonial(null)}
+                onClick={closeDeleteDialog}
+                autoFocus
                 className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
               >
                 Cancel

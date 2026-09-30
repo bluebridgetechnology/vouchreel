@@ -180,7 +180,7 @@ describe("Widget Config API Routes", () => {
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.widgetConfig.position).toBe("bottom-right");
-      expect(json.widgetConfig.theme.primaryColor).toBe("#6366f1");
+      expect(json.widgetConfig.theme.primaryColor).toBe("#4f46e5");
       expect(json.widgetConfig.triggerType).toBe("delay");
       expect(json.widgetConfig.autoplayPreview).toBe(true);
       expect(json.space.embedKey).toBe("emb_abc");
@@ -261,8 +261,8 @@ describe("Widget Config API Routes", () => {
 
       expect(res.status).toBe(400);
       const json = await res.json();
-      expect(json.error).toBe("Validation failed");
-      expect(json.details).toBeDefined();
+      expect(json.error.message).toBe("Validation failed");
+      expect(json.error.details).toBeDefined();
     });
 
     it("updates widget config successfully for owner", async () => {

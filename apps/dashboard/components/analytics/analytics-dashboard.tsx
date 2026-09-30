@@ -1,8 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { TimeSeriesChart, TimeSeriesPoint } from "./time-series-chart";
+import dynamic from "next/dynamic";
+import type { TimeSeriesPoint } from "./time-series-chart";
 import { ConversionGoalsPanel, ConversionGoal } from "./conversion-goals-panel";
+
+const TimeSeriesChart = dynamic(
+  () => import("./time-series-chart").then((m) => m.TimeSeriesChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-72 w-full animate-pulse rounded-lg bg-muted" />
+    ),
+  }
+);
 
 export interface OverviewStats {
   impressions: number;
@@ -418,7 +429,7 @@ function StatCard({
         {trend && (
           <span
             className={`text-[10px] font-semibold ${
-              trend.startsWith("-") ? "text-red-500" : "text-green-600"
+              trend.startsWith("-") ? "text-red-700" : "text-green-700"
             }`}
           >
             {trend}
