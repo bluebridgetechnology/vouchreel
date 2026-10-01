@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
+import { toggleStyle } from "@/components/ui/toggle";
 
 export interface ConversionGoal {
   id: string;
@@ -82,40 +86,32 @@ export function ConversionGoalsPanel({
   }
 
   return (
-    <div className="rounded-xl border bg-card p-4">
-      <h3 className="text-sm font-semibold">Conversion Goals</h3>
-      <p className="mt-1 text-xs text-muted-foreground">
+    <div className="rounded-card border bg-surface p-4">
+      <h3 className="text-sm font-medium">Conversion Goals</h3>
+      <p className="mt-1 text-xs text-text-muted">
         Track whether visitors who see your testimonials end up converting.
       </p>
 
       {error && (
-        <div className="mt-3 rounded-md bg-destructive/10 p-3 text-xs text-destructive">
+        <div className="mt-3 rounded-control bg-danger-soft p-3 text-xs text-danger-foreground">
           {error}
         </div>
       )}
 
       {/* Create form */}
       <form onSubmit={handleCreate} className="mt-4 space-y-3">
-        <div className="flex gap-1 rounded-md border p-0.5 text-xs">
+        <div className="flex gap-1 rounded-control border p-0.5 text-xs">
           <button
             type="button"
             onClick={() => setGoalType("url-match")}
-            className={`rounded px-3 py-1.5 font-medium ${
-              goalType === "url-match"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent"
-            }`}
+            className={cn("rounded-control px-3 py-1.5 font-medium", toggleStyle("solid", goalType === "url-match"))}
           >
             URL match
           </button>
           <button
             type="button"
             onClick={() => setGoalType("pixel")}
-            className={`rounded px-3 py-1.5 font-medium ${
-              goalType === "pixel"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent"
-            }`}
+            className={cn("rounded-control px-3 py-1.5 font-medium", toggleStyle("solid", goalType === "pixel"))}
           >
             Conversion pixel
           </button>
@@ -130,19 +126,19 @@ export function ConversionGoalsPanel({
                 ? "/thank-you or /order-confirmation/*"
                 : "Goal name, e.g. Purchase complete"
             }
-            className="flex-1 rounded-md border bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-primary"
+            className={cn(inputClass, "flex-1 text-xs")}
             required
           />
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className={buttonVariants({ variant: "primary", size: "sm" })}
           >
             {submitting ? "Creating..." : "Create Goal"}
           </button>
         </div>
         {goalType === "url-match" && (
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-2xs text-text-muted">
             The widget fires a conversion whenever a visitor lands on a matching URL.
             Use * as a wildcard (e.g. /checkout/*).
           </p>
@@ -152,24 +148,24 @@ export function ConversionGoalsPanel({
       {/* Goal list */}
       <div className="mt-4 space-y-2">
         {goals.length === 0 ? (
-          <p className="rounded-md bg-muted/40 p-4 text-center text-xs text-muted-foreground">
+          <p className="rounded-control bg-surface-sunken/40 p-4 text-center text-xs text-text-muted">
             No conversion goals yet. Create one above to start measuring ROI.
           </p>
         ) : (
           goals.map((goal) => (
             <div
               key={goal.id}
-              className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-2 rounded-card border p-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+                  <span className="rounded-control bg-surface-sunken px-1.5 py-0.5 text-2xs font-medium uppercase text-text-muted">
                     {goal.goalType}
                   </span>
                   <p className="truncate text-xs font-medium">{goal.goalValue}</p>
                 </div>
                 {goal.goalType === "pixel" && (
-                  <code className="mt-1 block truncate rounded bg-muted/60 px-2 py-1 text-[10px] text-muted-foreground">
+                  <code className="mt-1 block truncate rounded-control bg-surface-sunken/60 px-2 py-1 text-2xs text-text-muted">
                     {pixelSnippet(goal.id)}
                   </code>
                 )}
@@ -178,14 +174,14 @@ export function ConversionGoalsPanel({
                 {goal.goalType === "pixel" && (
                   <button
                     onClick={() => handleCopy(goal)}
-                    className="rounded-md border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+                    className={buttonVariants({ variant: "outline", size: "sm" })}
                   >
                     {copiedGoalId === goal.id ? "Copied!" : "Copy snippet"}
                   </button>
                 )}
                 <button
                   onClick={() => handleDelete(goal.id)}
-                  className="rounded-md border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
+                  className={buttonVariants({ variant: "outline-danger", size: "sm" })}
                 >
                   Delete
                 </button>

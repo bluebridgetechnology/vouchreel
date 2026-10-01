@@ -1,91 +1,70 @@
 import Link from "next/link";
+import { Container } from "@/components/ui/layout";
+import { Logo } from "@/components/marketing/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
+
+const columns = [
+  {
+    title: "Product",
+    links: [
+      { href: "/#features", label: "Features" },
+      { href: "/#how-it-works", label: "How it works" },
+      { href: "/pricing", label: "Pricing" },
+    ],
+  },
+  {
+    title: "Account",
+    links: [
+      { href: "/signup", label: "Create account" },
+      { href: "/login", label: "Sign in" },
+      { href: "/dashboard", label: "Dashboard" },
+    ],
+  },
+];
 
 export function SiteFooter() {
   return (
-    <footer className="border-t bg-card/40">
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="space-y-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2"
-            aria-label="Vouchreel home"
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <span className="text-sm font-bold text-primary-foreground">
-                V
-              </span>
-            </span>
-            <span className="text-lg font-semibold tracking-tight">
-              Vouchreel
-            </span>
-          </Link>
-          <p className="text-sm text-muted-foreground">
-            Video testimonials that turn visitors into customers.
+    <footer className="bg-surface-sunken">
+      <Container className="grid gap-12 py-16 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
+        <div className="space-y-4">
+          <Logo />
+          <p className="max-w-xs text-sm text-text-muted">
+            Video testimonials that turn visitors into customers. Collect with one link, embed anywhere.
           </p>
         </div>
 
-        <nav aria-label="Product">
-          <h2 className="text-sm font-semibold">Product</h2>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li>
-              <Link href="/#features" className="hover:text-foreground">
-                Features
-              </Link>
-            </li>
-            <li>
-              <Link href="/#how-it-works" className="hover:text-foreground">
-                How it works
-              </Link>
-            </li>
-            <li>
-              <Link href="/pricing" className="hover:text-foreground">
-                Pricing
-              </Link>
-            </li>
-          </ul>
-        </nav>
-
-        <nav aria-label="Account">
-          <h2 className="text-sm font-semibold">Account</h2>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li>
-              <Link href="/signup" className="hover:text-foreground">
-                Create account
-              </Link>
-            </li>
-            <li>
-              <Link href="/login" className="hover:text-foreground">
-                Sign in
-              </Link>
-            </li>
-            <li>
-              <Link href="/dashboard" className="hover:text-foreground">
-                Dashboard
-              </Link>
-            </li>
-          </ul>
-        </nav>
+        {columns.map((col) => (
+          <nav key={col.title} aria-label={col.title}>
+            <h2 className="text-sm font-medium">{col.title}</h2>
+            <ul className="mt-4 space-y-2.5 text-sm text-text-muted">
+              {col.links.map((l) => (
+                <li key={l.href}>
+                  <Link href={l.href} className="transition-colors hover:text-text">
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))}
 
         <div>
-          <h2 className="text-sm font-semibold">Support</h2>
-          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+          <h2 className="text-sm font-medium">Support</h2>
+          <ul className="mt-4 space-y-2.5 text-sm text-text-muted">
             <li>
-              <a
-                href="mailto:support@vouchreel.com"
-                className="hover:text-foreground"
-              >
+              <a href="mailto:support@vouchreel.com" className="transition-colors hover:text-text">
                 support@vouchreel.com
               </a>
             </li>
           </ul>
         </div>
-      </div>
+      </Container>
 
       <div className="border-t">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 py-6 text-xs text-muted-foreground sm:flex-row">
+        <Container className="flex flex-col items-center justify-between gap-4 py-6 text-xs text-text-subtle sm:flex-row">
           <p>© {new Date().getFullYear()} Vouchreel. All rights reserved.</p>
-          <p>Made for teams who let their customers do the talking.</p>
-        </div>
+          <ThemeToggle />
+        </Container>
       </div>
     </footer>
   );

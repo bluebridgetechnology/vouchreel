@@ -1,6 +1,8 @@
 "use client";
 
 import { WidgetTemplate, WIDGET_TEMPLATES } from "@/lib/validations/widget-config";
+import { cn } from "@/lib/utils";
+import { toggleStyle } from "@/components/ui/toggle";
 
 interface TemplatePickerProps {
   value?: WidgetTemplate;
@@ -106,12 +108,12 @@ export function TemplatePicker({
   ];
 
   return (
-    <div className="rounded-xl border bg-card p-6 shadow-xs space-y-4">
+    <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-xs space-y-4">
       <div className="space-y-1">
-        <h3 className="text-base font-semibold text-foreground">
+        <h3 className="text-base font-medium text-text">
           Display Template
         </h3>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-text-muted">
           Choose how testimonials and text reviews are presented on your site. All
           templates automatically blend video proof and verified Google/Trustpilot reviews.
         </p>
@@ -125,46 +127,42 @@ export function TemplatePicker({
               key={tmpl.id}
               type="button"
               onClick={() => onChange(tmpl.id)}
-              className={`relative flex flex-col justify-between rounded-xl border p-4 text-left transition-all hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary ${
-                isSelected
-                  ? "border-primary bg-primary/5 shadow-xs ring-1 ring-primary"
-                  : "border-border bg-card/60"
-              }`}
+              className={cn("relative flex flex-col justify-between rounded-card border p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-brand", toggleStyle("choice", isSelected))}
             >
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div
-                    className={`rounded-lg p-2 ${
+                    className={`rounded-card p-2 ${
                       isSelected
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
+                        ? "bg-brand text-text-on-accent"
+                        : "bg-surface-sunken text-text-muted"
                     }`}
                   >
                     {tmpl.icon}
                   </div>
                   {tmpl.badge && (
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                    <span className="rounded-pill bg-brand-soft px-2 py-0.5 text-2xs font-medium text-brand">
                       {tmpl.badge}
                     </span>
                   )}
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-sm text-foreground">
+                  <h4 className="font-medium text-sm text-text">
                     {tmpl.title}
                   </h4>
-                  <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                  <p className="mt-1 text-xs text-text-muted leading-relaxed">
                     {tmpl.description}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-3 pt-2 border-t flex items-center justify-between text-[11px]">
-                <span className={isSelected ? "font-semibold text-primary" : "text-muted-foreground"}>
+              <div className="mt-3 pt-2 border-t flex items-center justify-between text-2xs">
+                <span className={isSelected ? "font-medium text-brand" : "text-text-muted"}>
                   {isSelected ? "Active Template" : "Select Template"}
                 </span>
                 {isSelected && (
-                  <svg className="h-4 w-4 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="h-4 w-4 text-brand" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
                       d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"

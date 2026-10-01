@@ -1,6 +1,8 @@
 "use client";
 
 import { TriggerType } from "@/lib/validations/widget-config";
+import { cn } from "@/lib/utils";
+import { inputClass } from "@/components/ui/input";
 
 interface TriggerConfigProps {
   triggerType: TriggerType;
@@ -72,18 +74,18 @@ export function TriggerConfig({
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-foreground">Behavior & Triggers</h3>
-        <p className="text-xs text-muted-foreground">
+        <h3 className="text-sm font-medium text-text">Behavior & Triggers</h3>
+        <p className="text-xs text-text-muted">
           Define when and how the widget should present itself to website visitors.
         </p>
       </div>
 
-      <div className="space-y-4 rounded-xl border bg-card p-4 sm:p-5">
+      <div className="space-y-4 rounded-card border bg-surface p-4 sm:p-5">
         {/* Trigger Selection Dropdown */}
         <div className="space-y-1.5">
           <label
             htmlFor="trigger-event-type"
-            className="text-xs font-semibold text-foreground"
+            className="text-xs font-medium text-text"
           >
             Trigger Event
           </label>
@@ -91,7 +93,7 @@ export function TriggerConfig({
             id="trigger-event-type"
             value={triggerType}
             onChange={(e) => handleTypeSelect(e.target.value as TriggerType)}
-            className="w-full rounded-md border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className={cn(inputClass, "w-full text-xs")}
           >
             {TRIGGER_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>
@@ -102,22 +104,22 @@ export function TriggerConfig({
         </div>
 
         {/* Informational Callout */}
-        <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
-          <p className="font-medium text-foreground">{currentMeta.label}</p>
-          <p className="mt-0.5 text-[11px] leading-relaxed">{currentMeta.description}</p>
+        <div className="rounded-card bg-surface-sunken/40 p-3 text-xs text-text-muted">
+          <p className="font-medium text-text">{currentMeta.label}</p>
+          <p className="mt-0.5 text-2xs leading-relaxed">{currentMeta.description}</p>
         </div>
 
         {/* Dynamic Parameter Forms */}
         {triggerType === "delay" && (
-          <div className="space-y-2 rounded-lg border border-dashed p-3">
+          <div className="space-y-2 rounded-card border border-dashed p-3">
             <div className="flex items-center justify-between">
               <label
                 htmlFor="trigger-delay-seconds"
-                className="text-xs font-medium text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Delay Duration (Seconds)
               </label>
-              <span className="font-mono text-xs font-semibold text-primary">
+              <span className="font-mono text-xs font-medium text-brand">
                 {Number(triggerValue.seconds) || 5}s
               </span>
             </div>
@@ -143,25 +145,25 @@ export function TriggerConfig({
                 onChange={(e) =>
                   handleValueUpdate("seconds", Math.max(1, Number(e.target.value)))
                 }
-                className="w-16 rounded-md border bg-background px-2 py-1 text-center font-mono text-xs focus:border-primary focus:outline-none"
+                className={cn(inputClass, "w-16 font-mono text-xs")}
               />
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-text-muted">
               Recommended: 3–10 seconds to give visitors time to scan your headline.
             </p>
           </div>
         )}
 
         {triggerType === "scroll-depth" && (
-          <div className="space-y-2 rounded-lg border border-dashed p-3">
+          <div className="space-y-2 rounded-card border border-dashed p-3">
             <div className="flex items-center justify-between">
               <label
                 htmlFor="trigger-scroll-percentage"
-                className="text-xs font-medium text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Scroll Percentage
               </label>
-              <span className="font-mono text-xs font-semibold text-primary">
+              <span className="font-mono text-xs font-medium text-brand">
                 {Number(triggerValue.percentage) || 50}%
               </span>
             </div>
@@ -187,25 +189,25 @@ export function TriggerConfig({
                 onChange={(e) =>
                   handleValueUpdate("percentage", Math.max(1, Math.min(100, Number(e.target.value))))
                 }
-                className="w-16 rounded-md border bg-background px-2 py-1 text-center font-mono text-xs focus:border-primary focus:outline-none"
+                className={cn(inputClass, "w-16 font-mono text-xs")}
               />
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-text-muted">
               Triggers when user reaches this percentage of the total page height.
             </p>
           </div>
         )}
 
         {triggerType === "pageview-count" && (
-          <div className="space-y-2 rounded-lg border border-dashed p-3">
+          <div className="space-y-2 rounded-card border border-dashed p-3">
             <div className="flex items-center justify-between">
               <label
                 htmlFor="trigger-pageview-count"
-                className="text-xs font-medium text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Pageviews Before Trigger
               </label>
-              <span className="font-mono text-xs font-semibold text-primary">
+              <span className="font-mono text-xs font-medium text-brand">
                 {Number(triggerValue.count) || 2} views
               </span>
             </div>
@@ -231,18 +233,18 @@ export function TriggerConfig({
                 onChange={(e) =>
                   handleValueUpdate("count", Math.max(1, Number(e.target.value)))
                 }
-                className="w-16 rounded-md border bg-background px-2 py-1 text-center font-mono text-xs focus:border-primary focus:outline-none"
+                className={cn(inputClass, "w-16 font-mono text-xs")}
               />
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-text-muted">
               Waits until the visitor has browsed through at least this many pages.
             </p>
           </div>
         )}
 
         {triggerType === "exit-intent" && (
-          <div className="flex items-center gap-2 rounded-lg border border-border/80 bg-muted/20 p-3 text-xs text-muted-foreground">
-            <svg className="h-4 w-4 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center gap-2 rounded-card border border-border/80 bg-surface-sunken/20 p-3 text-xs text-text-muted">
+            <svg className="h-4 w-4 text-brand shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>No additional configuration needed. Exit intent fires automatically on mouseleave to the top browser bar.</span>
@@ -250,8 +252,8 @@ export function TriggerConfig({
         )}
 
         {triggerType === "returning-visitor" && (
-          <div className="flex items-center gap-2 rounded-lg border border-border/80 bg-muted/20 p-3 text-xs text-muted-foreground">
-            <svg className="h-4 w-4 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center gap-2 rounded-card border border-border/80 bg-surface-sunken/20 p-3 text-xs text-text-muted">
+            <svg className="h-4 w-4 text-brand shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>No additional configuration needed. Returning visitors are recognized across sessions via local cookies.</span>

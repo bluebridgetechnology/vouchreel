@@ -5,6 +5,8 @@ import { teamMembers, teamInvites, user } from "@/lib/db/schema";
 import { eq, and, isNotNull, gt } from "drizzle-orm";
 import { canAccess } from "@/lib/auth/feature-gate";
 import { TeamManager } from "./team-manager";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -100,36 +102,36 @@ export default async function TeamSettingsPage() {
       <div className="flex items-center gap-4 border-b pb-4 overflow-x-auto">
         <Link
           href="/settings"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           General
         </Link>
-        <span className="text-sm font-medium text-primary border-b-2 border-primary pb-4 -mb-4">
+        <span className="text-sm font-medium text-brand border-b-2 border-brand pb-4 -mb-4">
           Team Members
         </span>
         <Link
           href="/settings/billing"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           Billing & Subscription
         </Link>
         <Link
           href="/settings/api-keys"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           API Keys
         </Link>
         <Link
           href="/settings/webhooks"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           Webhooks
         </Link>
       </div>
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Team Management</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <h1 className="text-3xl font-medium tracking-tight">Team Management</h1>
+        <p className="text-text-muted mt-1 text-sm">
           Manage account members, configure role permissions, and invite collaborators.
         </p>
       </div>

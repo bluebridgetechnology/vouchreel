@@ -19,6 +19,7 @@ import {
   type SocialPlatform,
   type WatermarkPosition,
 } from "./presets";
+import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 
 export interface FiltergraphOptions {
   framing: FramingMode;
@@ -330,7 +331,7 @@ export async function renderSocialExport(exportId: string): Promise<void> {
       outputPath,
       logoPath,
       framing: settings?.defaultFraming || "blur",
-      brandColor: settings?.brandColor || "#6366f1",
+      brandColor: settings?.brandColor || DEFAULT_BRAND_HEX,
       customerName: testimonial.customerName,
       customerCompany: testimonial.customerCompany,
       quote: testimonial.quote,

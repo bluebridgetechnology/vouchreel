@@ -1,5 +1,7 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { FunnelStep, OverviewStats, PerTestimonialStats } from "./queries";
+import { DEFAULT_BRAND_HEX } from "@/lib/brand";
+import { REPORT_PALETTE as P } from "./report-theme";
 
 export interface ReportBranding {
   isWhiteLabeled: boolean;
@@ -20,7 +22,7 @@ export interface ExecutiveReportData {
 }
 
 function hexToRgb(hex?: string) {
-  if (!hex) return rgb(0.31, 0.27, 0.9); // default indigo
+  if (!hex) return hexToRgb(DEFAULT_BRAND_HEX);
   const clean = hex.replace("#", "");
   const num = parseInt(
     clean.length === 3
@@ -31,7 +33,7 @@ function hexToRgb(hex?: string) {
       : clean,
     16
   );
-  if (isNaN(num)) return rgb(0.31, 0.27, 0.9);
+  if (isNaN(num)) return hexToRgb(DEFAULT_BRAND_HEX);
   const r = ((num >> 16) & 255) / 255;
   const g = ((num >> 8) & 255) / 255;
   const b = (num & 255) / 255;
@@ -68,11 +70,11 @@ export async function generateExecutivePdf(
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
   const primaryColor = hexToRgb(data.branding.brandColor);
-  const darkColor = rgb(0.06, 0.09, 0.16);
-  const mutedColor = rgb(0.39, 0.45, 0.55);
-  const cardBg = rgb(0.97, 0.98, 0.99);
-  const borderCol = rgb(0.88, 0.91, 0.94);
-  const headerBg = rgb(0.94, 0.96, 0.98);
+  const darkColor = hexToRgb(P.text);
+  const mutedColor = hexToRgb(P.textMuted);
+  const cardBg = hexToRgb(P.canvas);
+  const borderCol = hexToRgb(P.border);
+  const headerBg = hexToRgb(P.sunken);
 
   const startX = 40;
   const contentWidth = 515;
@@ -293,7 +295,7 @@ export async function generateExecutivePdf(
         y: rowY + 5,
         size: 8,
         font,
-        color: step.dropOffPercent && step.dropOffPercent > 0 ? rgb(0.8, 0.2, 0.2) : mutedColor,
+        color: step.dropOffPercent && step.dropOffPercent > 0 ? hexToRgb(P.danger) : mutedColor,
       }
     );
   });
@@ -458,7 +460,7 @@ export function generateExecutiveHtml(data: ExecutiveReportData): string {
     ? data.branding.brandName || data.spaceName
     : "VouchReel";
 
-  const brandColor = data.branding.brandColor || "#4f46e5";
+  const brandColor = data.branding.brandColor || DEFAULT_BRAND_HEX;
 
   const playRate =
     data.stats.impressions > 0
@@ -481,24 +483,24 @@ export function generateExecutiveHtml(data: ExecutiveReportData): string {
   <style>
     @page { size: A4 portrait; margin: 15mm; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { background: #f8fafc; color: #0f172a; padding: 24px; max-width: 800px; margin: 0 auto; }
-    .report-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .header { border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; }
-    .title { font-size: 24px; font-weight: 700; color: #0f172a; }
-    .subtitle { font-size: 12px; color: #64748b; margin-top: 6px; }
+    body { background: ${P.canvas}; color: ${P.text}; padding: 24px; max-width: 800px; margin: 0 auto; }
+    .report-card { background: ${P.surface}; border: 1px solid ${P.border}; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .header { border-bottom: 2px solid ${P.sunken}; padding-bottom: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .title { font-size: 24px; font-weight: 700; color: ${P.text}; }
+    .subtitle { font-size: 12px; color: ${P.textMuted}; margin-top: 6px; }
     .badge { background: ${brandColor}15; color: ${brandColor}; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; }
-    .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; margin: 24px 0 12px; }
+    .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: ${P.textMuted}; margin: 24px 0 12px; }
     .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }
-    .kpi-label { font-size: 11px; color: #64748b; font-weight: 500; }
-    .kpi-value { font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 4px; }
+    .kpi-card { background: ${P.canvas}; border: 1px solid ${P.border}; border-radius: 8px; padding: 14px; }
+    .kpi-label { font-size: 11px; color: ${P.textMuted}; font-weight: 500; }
+    .kpi-value { font-size: 22px; font-weight: 700; color: ${P.text}; margin-top: 4px; }
     table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
-    th { text-align: left; padding: 8px 12px; background: #f1f5f9; color: #475569; font-weight: 600; border-bottom: 1px solid #cbd5e1; }
-    td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
-    .dropoff-negative { color: #dc2626; font-weight: 500; }
-    .footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
+    th { text-align: left; padding: 8px 12px; background: ${P.sunken}; color: ${P.textMuted}; font-weight: 600; border-bottom: 1px solid ${P.borderStrong}; }
+    td { padding: 10px 12px; border-bottom: 1px solid ${P.sunken}; }
+    .dropoff-negative { color: ${P.danger}; font-weight: 500; }
+    .footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid ${P.border}; display: flex; justify-content: space-between; font-size: 11px; color: ${P.textSubtle}; }
     @media print {
-      body { background: #ffffff; padding: 0; }
+      body { background: ${P.surface}; padding: 0; }
       .report-card { border: none; box-shadow: none; padding: 0; }
       .no-print { display: none; }
     }
@@ -589,7 +591,7 @@ export function generateExecutiveHtml(data: ExecutiveReportData): string {
       <tbody>
         ${
           sortedTestimonials.length === 0
-            ? `<tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 20px;">No events recorded in this period.</td></tr>`
+            ? `<tr><td colspan="5" style="text-align: center; color: ${P.textSubtle}; padding: 20px;">No events recorded in this period.</td></tr>`
             : sortedTestimonials
                 .map(
                   (t) => `<tr>

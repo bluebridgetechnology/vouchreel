@@ -12,15 +12,26 @@ if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
 }
 
+// Widget CSS is inlined as a string. Minify it (strips comments and whitespace) so the
+// documented design-token block costs nothing in the shipped bundle.
+const minifyCss = {
+  name: "minify-css-text",
+  setup(build) {
+    build.onLoad({ filter: /\.css$/ }, async (args) => {
+      const source = await fs.promises.readFile(args.path, "utf8");
+      const { code } = await esbuild.transform(source, { loader: "css", minify: true });
+      return { contents: code, loader: "text" };
+    });
+  },
+};
+
 await esbuild.build({
   entryPoints: [entryPoint],
   bundle: true,
   minify: true,
   format: "iife",
   globalName: "Vouchreel",
-  loader: {
-    ".css": "text",
-  },
+  plugins: [minifyCss],
   outfile: outFile,
   legalComments: "none",
 });

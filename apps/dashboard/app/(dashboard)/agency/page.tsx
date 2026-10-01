@@ -30,8 +30,8 @@ export default async function AgencyDashboardPage() {
   return (
     <div className="max-w-6xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Agency Cockpit</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <h1 className="text-3xl font-medium tracking-tight">Agency Cockpit</h1>
+        <p className="text-text-muted mt-1 text-sm">
           Multi-space overview, aggregate conversion tracking, and 1-click executive reporting for all your clients.
         </p>
       </div>

@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 export default function NewSpacePage() {
   const router = useRouter();
@@ -44,7 +47,7 @@ export default function NewSpacePage() {
       <div>
         <Link
           href="/spaces"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-xs")}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 19.5 8.25 12l7.5-7.5" />
@@ -54,16 +57,16 @@ export default function NewSpacePage() {
       </div>
 
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Create a new space</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-2xl font-medium tracking-tight">Create a new space</h1>
+        <p className="text-sm text-text-muted">
           Spaces organize your video testimonials for a specific website, product, or landing page.
         </p>
       </div>
 
-      <div className="rounded-lg border bg-card p-6 shadow-sm">
+      <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger-foreground">
               {error}
             </div>
           )}
@@ -78,11 +81,11 @@ export default function NewSpacePage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Marketing Website, SaaS Landing Page"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className={cn(inputClass, "w-full text-sm")}
               required
               autoFocus
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-muted">
               A unique embed key will be generated automatically for this space.
             </p>
           </div>
@@ -90,14 +93,14 @@ export default function NewSpacePage() {
           <div className="flex items-center justify-end gap-3 pt-2">
             <Link
               href="/spaces"
-              className="rounded-md border bg-background px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent"
+              className={buttonVariants({ variant: "outline", size: "md" })}
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={loading || !name.trim()}
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50"
+              className={buttonVariants({ variant: "primary", size: "md" })}
             >
               {loading ? "Creating..." : "Create Space"}
             </button>

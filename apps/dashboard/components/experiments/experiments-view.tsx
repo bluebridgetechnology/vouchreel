@@ -11,6 +11,11 @@ import {
   TRIGGER_TYPES,
 } from "@/lib/validations/widget-config";
 import type { ExperimentWithStats, VariantStats } from "@/lib/experiments/queries";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
+import { toggleStyle } from "@/components/ui/toggle";
+import { ModalOverlay } from "@/components/ui/modal";
 
 interface ExperimentsViewProps {
   spaceId: string;
@@ -269,10 +274,10 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-2xl font-medium tracking-tight text-text">
             A/B Testing Experiments
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-text-muted">
             Optimize conversion rates by deterministically testing widget triggers, positions, and templates.
           </p>
         </div>
@@ -282,7 +287,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
             resetForm();
             setIsCreateOpen(true);
           }}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
+          className={buttonVariants({ variant: "primary", size: "sm" })}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -295,16 +300,16 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
       {feedback && (
         <div
           role="status"
-          className={`flex items-center justify-between rounded-xl border p-4 text-xs font-medium ${
+          className={`flex items-center justify-between rounded-card border p-4 text-xs font-medium ${
             feedback.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/50 dark:text-emerald-300"
-              : "border-destructive/20 bg-destructive/10 text-destructive"
+              ? "border-success/30 bg-success-soft text-success-foreground"
+              : "border-danger/20 bg-danger-soft text-danger-foreground"
           }`}
         >
           <span>{feedback.text}</span>
           <button
             onClick={() => setFeedback(null)}
-            className="text-xs opacity-70 hover:opacity-100"
+            className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-xs")}
           >
             ✕
           </button>
@@ -317,7 +322,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
           <div className="flex items-center justify-between">
             <button
               onClick={() => setSelectedExp(null)}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+              className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-xs")}
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -330,7 +335,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 <button
                   disabled={actionLoading}
                   onClick={() => handleStatusChange(selectedExp.id, "running")}
-                  className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow hover:bg-emerald-700 disabled:opacity-50"
+                  className={buttonVariants({ variant: "success", size: "sm" })}
                 >
                   Start Experiment
                 </button>
@@ -339,7 +344,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 <button
                   disabled={actionLoading}
                   onClick={() => handleStatusChange(selectedExp.id, "completed")}
-                  className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white shadow hover:bg-amber-700 disabled:opacity-50"
+                  className={buttonVariants({ variant: "warning", size: "sm" })}
                 >
                   Stop Experiment
                 </button>
@@ -348,7 +353,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 <button
                   disabled={actionLoading}
                   onClick={() => handleStatusChange(selectedExp.id, "running")}
-                  className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted disabled:opacity-50"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   Resume Experiment
                 </button>
@@ -356,7 +361,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               <button
                 disabled={actionLoading}
                 onClick={() => handleDelete(selectedExp.id)}
-                className="rounded-lg border border-destructive/20 text-destructive px-3 py-1.5 text-xs font-semibold hover:bg-destructive/10 disabled:opacity-50"
+                className={buttonVariants({ variant: "outline-danger", size: "sm" })}
               >
                 Delete
               </button>
@@ -364,27 +369,27 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
           </div>
 
           {/* Experiment Title & Header Card */}
-          <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-bold text-foreground">{selectedExp.name}</h3>
+                  <h3 className="text-xl font-medium text-text">{selectedExp.name}</h3>
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${
+                    className={`rounded-pill px-2.5 py-0.5 text-2xs font-medium uppercase tracking-wider ${
                       selectedExp.status === "running"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        ? "bg-success-soft text-success-foreground"
                         : selectedExp.status === "completed"
-                        ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        ? "bg-brand-soft text-brand"
+                        : "bg-warning-soft text-warning-foreground"
                     }`}
                   >
                     {selectedExp.status}
                   </span>
-                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground uppercase">
+                  <span className="rounded-pill bg-surface-sunken px-2.5 py-0.5 text-2xs font-medium text-text-muted uppercase">
                     {selectedExp.type}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-text-muted">
                   Traffic Allocation: {selectedExp.trafficSplit?.join("% / ")}% • Created on{" "}
                   {new Date(selectedExp.createdAt).toLocaleDateString()}
                   {selectedExp.startedAt && ` • Started ${new Date(selectedExp.startedAt).toLocaleDateString()}`}
@@ -395,20 +400,20 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               {/* Total overview badges */}
               <div className="flex items-center gap-4 text-right">
                 <div>
-                  <div className="text-xs text-muted-foreground">Total Impressions</div>
-                  <div className="text-lg font-bold text-foreground">
+                  <div className="text-xs text-text-muted">Total Impressions</div>
+                  <div className="text-lg font-medium text-text">
                     {selectedExp.totalImpressions.toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Conversions</div>
-                  <div className="text-lg font-bold text-foreground">
+                  <div className="text-xs text-text-muted">Conversions</div>
+                  <div className="text-lg font-medium text-text">
                     {selectedExp.totalConversions.toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Overall CR</div>
-                  <div className="text-lg font-bold text-primary">
+                  <div className="text-xs text-text-muted">Overall CR</div>
+                  <div className="text-lg font-medium text-brand">
                     {selectedExp.overallConversionRate}%
                   </div>
                 </div>
@@ -425,17 +430,17 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
             if (!sig.sampleSizeMet) {
               return (
-                <div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50/70 p-5 dark:border-blue-900/40 dark:bg-blue-950/30">
-                  <div className="rounded-lg bg-blue-100 p-2 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                <div className="flex items-start gap-3 rounded-card border border-info/30 bg-info-soft p-5">
+                  <div className="rounded-card bg-info-soft p-2 text-info-foreground">
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-blue-900 dark:text-blue-200">
+                    <h4 className="text-sm font-medium text-info-foreground">
                       Collecting Sample Data
                     </h4>
-                    <p className="mt-0.5 text-xs text-blue-700 dark:text-blue-300">
+                    <p className="mt-0.5 text-xs text-info-foreground">
                       A minimum of 30 impressions and 3 conversions per variant are required before calculating statistical significance. Current: Control ({selectedExp.variants[0]?.impressions}/30 impressions, {selectedExp.variants[0]?.conversions}/3 conversions), Variant B ({variantB?.impressions}/30 impressions, {variantB?.conversions}/3 conversions).
                     </p>
                   </div>
@@ -445,15 +450,15 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
             if (sig.isSignificant) {
               return (
-                <div className="flex items-start gap-3 rounded-2xl border border-emerald-300 bg-emerald-50/90 p-5 shadow-sm dark:border-emerald-800 dark:bg-emerald-950/50">
-                  <div className="rounded-lg bg-emerald-100 p-2 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300">
+                <div className="flex items-start gap-3 rounded-card border border-success/30 bg-success-soft p-5 shadow-sm">
+                  <div className="rounded-card bg-success-soft p-2 text-success-foreground">
                     <span className="text-xl">🏆</span>
                   </div>
                   <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-emerald-950 dark:text-emerald-200">
+                    <h4 className="text-sm font-medium text-success-foreground">
                       {sig.confidence}% Confidence — Statistically Significant Winner Detected!
                     </h4>
-                    <p className="text-xs text-emerald-800 dark:text-emerald-300">
+                    <p className="text-xs text-success-foreground">
                       {sig.message} (z-score: {sig.zScore}, p-value: {sig.pValue}). You can apply this variant to roll it out permanently to all visitors.
                     </p>
                   </div>
@@ -462,17 +467,17 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
             }
 
             return (
-              <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50/70 p-5 dark:border-amber-900/40 dark:bg-amber-950/30">
-                <div className="rounded-lg bg-amber-100 p-2 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+              <div className="flex items-start gap-3 rounded-card border border-warning/30 bg-warning-soft p-5">
+                <div className="rounded-card bg-warning-soft p-2 text-warning-foreground">
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                  <h4 className="text-sm font-medium text-warning-foreground">
                     No Significant Winner Yet
                   </h4>
-                  <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">
+                  <p className="mt-0.5 text-xs text-warning-foreground">
                     {sig.message} (Current confidence: {sig.confidence ?? "<95"}%, p-value: {sig.pValue}). Keep the experiment running to reach 95% statistical confidence.
                   </p>
                 </div>
@@ -489,61 +494,61 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               return (
                 <div
                   key={variant.id}
-                  className={`rounded-2xl border bg-card p-6 shadow-sm space-y-5 transition-all ${
-                    isWinner ? "border-purple-400 ring-2 ring-purple-400/30" : ""
+                  className={`rounded-card border bg-surface p-6 shadow-sm space-y-5 transition-all ${
+                    isWinner ? "border-brand ring-2 ring-brand/30" : ""
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2">
                         <span
-                          className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          className={`rounded-control px-2 py-0.5 text-2xs font-medium uppercase tracking-wider ${
                             isControl
-                              ? "bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-200"
-                              : "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
+                              ? "bg-surface-sunken text-text"
+                              : "bg-info-soft text-info-foreground"
                           }`}
                         >
                           {isControl ? "Control (Variant A)" : `Variant ${String.fromCharCode(65 + idx)}`}
                         </span>
                         {isWinner && (
-                          <span className="rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
+                          <span className="rounded-control bg-brand-soft px-2 py-0.5 text-2xs font-medium text-brand">
                             ★ Winner
                           </span>
                         )}
                       </div>
-                      <h4 className="text-base font-bold text-foreground mt-1">
+                      <h4 className="text-base font-medium text-text mt-1">
                         {variant.name}
                       </h4>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-xs font-semibold text-muted-foreground">
+                      <span className="text-xs font-medium text-text-muted">
                         {variant.trafficSplit}% Traffic
                       </span>
                     </div>
                   </div>
 
                   {/* Primary KPI: Conversion Rate & Uplift */}
-                  <div className="rounded-xl bg-muted/40 p-4 flex items-center justify-between">
+                  <div className="rounded-card bg-surface-sunken/40 p-4 flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-medium text-muted-foreground">
+                      <div className="text-xs font-medium text-text-muted">
                         Conversion Rate
                       </div>
-                      <div className="text-2xl font-black text-foreground mt-0.5">
+                      <div className="text-2xl font-medium text-text mt-0.5">
                         {variant.conversionRate}%
                       </div>
                     </div>
 
                     {!isControl && variant.significance?.sampleSizeMet && (
                       <div className="text-right">
-                        <div className="text-[11px] font-medium text-muted-foreground">
+                        <div className="text-2xs font-medium text-text-muted">
                           Uplift vs Control
                         </div>
                         <div
-                          className={`inline-flex items-center gap-0.5 text-base font-bold ${
+                          className={`inline-flex items-center gap-0.5 text-base font-medium ${
                             variant.significance.relativeUplift >= 0
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-rose-600 dark:text-rose-400"
+                              ? "text-success-foreground"
+                              : "text-danger-foreground"
                           }`}
                         >
                           {variant.significance.relativeUplift >= 0 ? "+" : ""}
@@ -554,38 +559,38 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   </div>
 
                   {/* Configuration Inspector */}
-                  <div className="space-y-1.5 text-xs border rounded-xl p-3 bg-background">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <div className="space-y-1.5 text-xs border rounded-card p-3 bg-surface">
+                    <span className="text-2xs font-medium uppercase tracking-wider text-text-muted">
                       Variant Configuration
                     </span>
-                    <pre className="font-mono text-[11px] text-muted-foreground overflow-x-auto whitespace-pre-wrap">
+                    <pre className="font-mono text-2xs text-text-muted overflow-x-auto whitespace-pre-wrap">
                       {JSON.stringify(variant.config, null, 2)}
                     </pre>
                   </div>
 
                   {/* Detailed metrics breakdown */}
                   <div className="grid grid-cols-4 gap-2 pt-2 border-t text-center">
-                    <div className="p-2 rounded-lg bg-muted/20">
-                      <div className="text-[10px] font-medium text-muted-foreground">Impressions</div>
-                      <div className="text-sm font-bold text-foreground mt-0.5">
+                    <div className="p-2 rounded-card bg-surface-sunken/20">
+                      <div className="text-2xs font-medium text-text-muted">Impressions</div>
+                      <div className="text-sm font-medium text-text mt-0.5">
                         {variant.impressions.toLocaleString()}
                       </div>
                     </div>
-                    <div className="p-2 rounded-lg bg-muted/20">
-                      <div className="text-[10px] font-medium text-muted-foreground">Plays ({variant.playRate}%)</div>
-                      <div className="text-sm font-bold text-foreground mt-0.5">
+                    <div className="p-2 rounded-card bg-surface-sunken/20">
+                      <div className="text-2xs font-medium text-text-muted">Plays ({variant.playRate}%)</div>
+                      <div className="text-sm font-medium text-text mt-0.5">
                         {variant.plays.toLocaleString()}
                       </div>
                     </div>
-                    <div className="p-2 rounded-lg bg-muted/20">
-                      <div className="text-[10px] font-medium text-muted-foreground">Clicks ({variant.clickThroughRate}%)</div>
-                      <div className="text-sm font-bold text-foreground mt-0.5">
+                    <div className="p-2 rounded-card bg-surface-sunken/20">
+                      <div className="text-2xs font-medium text-text-muted">Clicks ({variant.clickThroughRate}%)</div>
+                      <div className="text-sm font-medium text-text mt-0.5">
                         {variant.clicks.toLocaleString()}
                       </div>
                     </div>
-                    <div className="p-2 rounded-lg bg-muted/20">
-                      <div className="text-[10px] font-medium text-muted-foreground">Conversions</div>
-                      <div className="text-sm font-bold text-primary mt-0.5">
+                    <div className="p-2 rounded-card bg-surface-sunken/20">
+                      <div className="text-2xs font-medium text-text-muted">Conversions</div>
+                      <div className="text-sm font-medium text-brand mt-0.5">
                         {variant.conversions.toLocaleString()}
                       </div>
                     </div>
@@ -596,11 +601,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                     <button
                       disabled={actionLoading || isWinner}
                       onClick={() => handleApplyWinner(selectedExp.id, idx, variant.name)}
-                      className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition shadow-sm ${
-                        isWinner
-                          ? "bg-purple-600 text-white opacity-80 cursor-default"
-                          : "bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
-                      }`}
+                      className={cn(buttonVariants({ variant: isWinner ? "soft" : "primary", size: "md" }), "w-full text-xs", isWinner && "cursor-default")}
                     >
                       {isWinner ? "✓ Applied as Widget Winner" : "Apply as Winner to Widget"}
                     </button>
@@ -631,11 +632,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 <button
                   key={key}
                   onClick={() => setFilter(key)}
-                  className={`rounded-lg px-3 py-1.5 transition ${
-                    filter === key
-                      ? "bg-primary text-primary-foreground font-bold"
-                      : "text-muted-foreground hover:bg-muted"
-                  }`}
+                  className={cn("rounded-control px-3 py-1.5 transition", toggleStyle("solid", filter === key))}
                 >
                   {label} ({count})
                 </button>
@@ -644,18 +641,18 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
           </div>
 
           {loading ? (
-            <div className="py-16 text-center text-xs text-muted-foreground">
+            <div className="py-16 text-center text-xs text-text-muted">
               Loading experiments...
             </div>
           ) : filteredExperiments.length === 0 ? (
-            <div className="rounded-2xl border border-dashed p-12 text-center space-y-3">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <div className="rounded-card border border-dashed p-12 text-center space-y-3">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-brand-soft text-brand">
                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
-              <h3 className="text-base font-bold text-foreground">No experiments found</h3>
-              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              <h3 className="text-base font-medium text-text">No experiments found</h3>
+              <p className="text-xs text-text-muted max-w-sm mx-auto">
                 Create an experiment to start testing different triggers, positions, or templates on your visitors.
               </p>
               <button
@@ -663,7 +660,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   resetForm();
                   setIsCreateOpen(true);
                 }}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow hover:opacity-90"
+                className={cn(buttonVariants({ variant: "primary", size: "sm" }), "mt-2")}
               >
                 Create Experiment
               </button>
@@ -673,28 +670,28 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               {filteredExperiments.map((exp) => (
                 <div
                   key={exp.id}
-                  className="rounded-2xl border bg-card p-5 shadow-sm hover:border-primary/50 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                  className="rounded-card border bg-surface p-5 shadow-sm hover:border-brand/50 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
                 >
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-base text-foreground">{exp.name}</span>
+                      <span className="font-medium text-base text-text">{exp.name}</span>
                       <span
-                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                        className={`rounded-pill px-2.5 py-0.5 text-2xs font-medium uppercase tracking-wider ${
                           exp.status === "running"
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            ? "bg-success-soft text-success-foreground"
                             : exp.status === "completed"
-                            ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                            ? "bg-brand-soft text-brand"
+                            : "bg-warning-soft text-warning-foreground"
                         }`}
                       >
                         {exp.status}
                       </span>
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase">
+                      <span className="rounded-pill bg-surface-sunken px-2 py-0.5 text-2xs font-medium text-text-muted uppercase">
                         {exp.type}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-4 text-xs text-text-muted">
                       <span>Traffic Split: {exp.trafficSplit?.join("/")}%</span>
                       <span>•</span>
                       <span>{exp.variants?.length || 0} variants</span>
@@ -708,20 +705,20 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   {/* Summary performance stats */}
                   <div className="flex items-center gap-6 text-center">
                     <div>
-                      <div className="text-[10px] uppercase font-bold text-muted-foreground">Impressions</div>
-                      <div className="text-sm font-bold text-foreground">
+                      <div className="text-2xs uppercase font-medium text-text-muted">Impressions</div>
+                      <div className="text-sm font-medium text-text">
                         {exp.totalImpressions.toLocaleString()}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase font-bold text-muted-foreground">Conversions</div>
-                      <div className="text-sm font-bold text-foreground">
+                      <div className="text-2xs uppercase font-medium text-text-muted">Conversions</div>
+                      <div className="text-sm font-medium text-text">
                         {exp.totalConversions.toLocaleString()}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] uppercase font-bold text-muted-foreground">CR</div>
-                      <div className="text-sm font-bold text-primary">
+                      <div className="text-2xs uppercase font-medium text-text-muted">CR</div>
+                      <div className="text-sm font-medium text-brand">
                         {exp.overallConversionRate}%
                       </div>
                     </div>
@@ -731,7 +728,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   <div className="flex items-center gap-2 self-end md:self-center">
                     <button
                       onClick={() => setSelectedExp(exp)}
-                      className="rounded-lg bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow hover:opacity-90"
+                      className={buttonVariants({ variant: "primary", size: "sm" })}
                     >
                       View Results
                     </button>
@@ -739,7 +736,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       <button
                         disabled={actionLoading}
                         onClick={() => handleStatusChange(exp.id, "running")}
-                        className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                        className={buttonVariants({ variant: "success", size: "sm" })}
                       >
                         Start
                       </button>
@@ -748,7 +745,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       <button
                         disabled={actionLoading}
                         onClick={() => handleStatusChange(exp.id, "completed")}
-                        className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-muted disabled:opacity-50"
+                        className={buttonVariants({ variant: "outline", size: "sm" })}
                       >
                         Complete
                       </button>
@@ -763,18 +760,18 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
       {/* Create Experiment Modal Dialog */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="w-full max-w-xl rounded-2xl border bg-card p-6 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-150 my-8">
+        <ModalOverlay label="Create experiment" onClose={() => setIsCreateOpen(false)}>
+          <div className="w-full max-w-xl rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-6 animate-in fade-in zoom-in-95 duration-150 my-8">
             <div className="flex items-center justify-between border-b pb-4">
               <div>
-                <h3 className="text-lg font-bold text-foreground">Create New Experiment</h3>
-                <p className="text-xs text-muted-foreground">
+                <h3 className="text-lg font-medium text-text">Create New Experiment</h3>
+                <p className="text-xs text-text-muted">
                   A/B test two variations to determine which drives higher visitor conversions.
                 </p>
               </div>
               <button
                 onClick={() => setIsCreateOpen(false)}
-                className="text-muted-foreground hover:text-foreground text-sm font-bold p-1"
+                className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
               >
                 ✕
               </button>
@@ -783,7 +780,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
             <div className="space-y-4">
               {/* Experiment Name */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <label className="text-xs font-medium uppercase tracking-wider text-text-muted">
                   Experiment Name
                 </label>
                 <input
@@ -791,13 +788,13 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Exit Intent vs 5s Delay"
-                  className="w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className={cn(inputClass, "w-full text-xs")}
                 />
               </div>
 
               {/* Experiment Type Selector */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <label className="text-xs font-medium uppercase tracking-wider text-text-muted">
                   Experiment Type
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -806,14 +803,10 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       key={t}
                       type="button"
                       onClick={() => handleTypeChange(t)}
-                      className={`rounded-xl border p-3 text-left transition-all ${
-                        formData.type === t
-                          ? "border-primary bg-primary/10 ring-2 ring-primary"
-                          : "border-border hover:bg-muted/50"
-                      }`}
+                      className={cn("rounded-card border p-3 text-left transition-all", toggleStyle("choice", formData.type === t))}
                     >
-                      <div className="font-bold text-xs uppercase text-foreground">{t}</div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5 capitalize">
+                      <div className="font-medium text-xs uppercase text-text">{t}</div>
+                      <div className="text-2xs text-text-muted mt-0.5 capitalize">
                         Test {t}s
                       </div>
                     </button>
@@ -822,12 +815,12 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               </div>
 
               {/* Traffic Split */}
-              <div className="space-y-2 rounded-xl border bg-muted/20 p-4">
+              <div className="space-y-2 rounded-card border bg-surface-sunken/20 p-4">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold uppercase tracking-wider text-muted-foreground">
+                  <span className="font-medium uppercase tracking-wider text-text-muted">
                     Traffic Split
                   </span>
-                  <span className="font-bold text-foreground">
+                  <span className="font-medium text-text">
                     {formData.split}% Control / {100 - formData.split}% Variant B
                   </span>
                 </div>
@@ -848,11 +841,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       key={preset}
                       type="button"
                       onClick={() => setFormData({ ...formData, split: preset })}
-                      className={`rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition ${
-                        formData.split === preset
-                          ? "bg-primary text-primary-foreground font-bold"
-                          : "bg-card text-muted-foreground hover:text-foreground"
-                      }`}
+                      className={cn("rounded-control border px-2.5 py-1 text-2xs font-medium transition", toggleStyle("solid", formData.split === preset))}
                     >
                       {preset} / {100 - preset}
                     </button>
@@ -863,12 +852,12 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               {/* Variant Configurations */}
               <div className="space-y-4 pt-1">
                 {/* Variant 0 (Control) */}
-                <div className="rounded-xl border p-3.5 space-y-3 bg-card">
+                <div className="rounded-card border p-3.5 space-y-3 bg-surface">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-foreground">
+                    <span className="text-xs font-medium text-text">
                       Variant A (Control)
                     </span>
-                    <span className="text-[10px] font-semibold text-muted-foreground">
+                    <span className="text-2xs font-medium text-text-muted">
                       {formData.split}% Traffic
                     </span>
                   </div>
@@ -878,13 +867,13 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                     value={formData.controlName}
                     onChange={(e) => setFormData({ ...formData, controlName: e.target.value })}
                     placeholder="Control Name"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground"
+                    className={cn(inputClass, "w-full text-xs")}
                   />
 
                   {formData.type === "trigger" && (
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label className="text-[10px] text-muted-foreground">Trigger</label>
+                        <label className="text-2xs text-text-muted">Trigger</label>
                         <select
                           value={(formData.controlConfig.type as string) || "delay"}
                           onChange={(e) =>
@@ -897,7 +886,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                               },
                             })
                           }
-                          className="w-full rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs"
+                          className={cn(inputClass, "w-full text-xs")}
                         >
                           {TRIGGER_TYPES.map((trig) => (
                             <option key={trig} value={trig}>
@@ -908,7 +897,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       </div>
                       {formData.controlConfig.type === "delay" && (
                         <div>
-                          <label className="text-[10px] text-muted-foreground">Delay (sec)</label>
+                          <label className="text-2xs text-text-muted">Delay (sec)</label>
                           <input
                             type="number"
                             min="1"
@@ -925,7 +914,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                                 },
                               })
                             }
-                            className="w-full rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs"
+                            className={cn(inputClass, "w-full text-xs")}
                           />
                         </div>
                       )}
@@ -934,7 +923,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
                   {formData.type === "position" && (
                     <div>
-                      <label className="text-[10px] text-muted-foreground">Position</label>
+                      <label className="text-2xs text-text-muted">Position</label>
                       <select
                         value={(formData.controlConfig.position as string) || "bottom-right"}
                         onChange={(e) =>
@@ -943,7 +932,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                             controlConfig: { position: e.target.value },
                           })
                         }
-                        className="w-full rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs"
+                        className={cn(inputClass, "w-full text-xs")}
                       >
                         {WIDGET_POSITIONS.map((pos) => (
                           <option key={pos} value={pos}>
@@ -956,7 +945,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
                   {formData.type === "template" && (
                     <div>
-                      <label className="text-[10px] text-muted-foreground">Template</label>
+                      <label className="text-2xs text-text-muted">Template</label>
                       <select
                         value={(formData.controlConfig.template as string) || "floating-card"}
                         onChange={(e) =>
@@ -965,7 +954,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                             controlConfig: { template: e.target.value },
                           })
                         }
-                        className="w-full rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs"
+                        className={cn(inputClass, "w-full text-xs")}
                       >
                         {WIDGET_TEMPLATES.map((tmpl) => (
                           <option key={tmpl} value={tmpl}>
@@ -978,12 +967,12 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 </div>
 
                 {/* Variant 1 (Variant B) */}
-                <div className="rounded-xl border p-3.5 space-y-3 bg-card border-primary/40">
+                <div className="rounded-card border p-3.5 space-y-3 bg-surface border-brand/40">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-foreground">
+                    <span className="text-xs font-medium text-text">
                       Variant B (Test Variant)
                     </span>
-                    <span className="text-[10px] font-semibold text-primary">
+                    <span className="text-2xs font-medium text-brand">
                       {100 - formData.split}% Traffic
                     </span>
                   </div>
@@ -993,13 +982,13 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                     value={formData.variantName}
                     onChange={(e) => setFormData({ ...formData, variantName: e.target.value })}
                     placeholder="Variant B Name"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground"
+                    className={cn(inputClass, "w-full text-xs")}
                   />
 
                   {formData.type === "trigger" && (
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label className="text-[10px] text-muted-foreground">Trigger</label>
+                        <label className="text-2xs text-text-muted">Trigger</label>
                         <select
                           value={(formData.variantConfig.type as string) || "exit-intent"}
                           onChange={(e) =>
@@ -1012,7 +1001,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                               },
                             })
                           }
-                          className="w-full rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs"
+                          className={cn(inputClass, "w-full text-xs")}
                         >
                           {TRIGGER_TYPES.map((trig) => (
                             <option key={trig} value={trig}>
@@ -1023,7 +1012,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       </div>
                       {formData.variantConfig.type === "delay" && (
                         <div>
-                          <label className="text-[10px] text-muted-foreground">Delay (sec)</label>
+                          <label className="text-2xs text-text-muted">Delay (sec)</label>
                           <input
                             type="number"
                             min="1"
@@ -1040,7 +1029,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                                 },
                               })
                             }
-                            className="w-full rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs"
+                            className={cn(inputClass, "w-full text-xs")}
                           />
                         </div>
                       )}
@@ -1049,7 +1038,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
                   {formData.type === "position" && (
                     <div>
-                      <label className="text-[10px] text-muted-foreground">Position</label>
+                      <label className="text-2xs text-text-muted">Position</label>
                       <select
                         value={(formData.variantConfig.position as string) || "bottom-left"}
                         onChange={(e) =>
@@ -1058,7 +1047,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                             variantConfig: { position: e.target.value },
                           })
                         }
-                        className="w-full rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs"
+                        className={cn(inputClass, "w-full text-xs")}
                       >
                         {WIDGET_POSITIONS.map((pos) => (
                           <option key={pos} value={pos}>
@@ -1071,7 +1060,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
                   {formData.type === "template" && (
                     <div>
-                      <label className="text-[10px] text-muted-foreground">Template</label>
+                      <label className="text-2xs text-text-muted">Template</label>
                       <select
                         value={(formData.variantConfig.template as string) || "wall-of-love"}
                         onChange={(e) =>
@@ -1080,7 +1069,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                             variantConfig: { template: e.target.value },
                           })
                         }
-                        className="w-full rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs"
+                        className={cn(inputClass, "w-full text-xs")}
                       >
                         {WIDGET_TEMPLATES.map((tmpl) => (
                           <option key={tmpl} value={tmpl}>
@@ -1100,7 +1089,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 type="button"
                 disabled={actionLoading}
                 onClick={() => setIsCreateOpen(false)}
-                className="rounded-xl border px-4 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Cancel
               </button>
@@ -1108,7 +1097,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 type="button"
                 disabled={actionLoading}
                 onClick={() => handleCreate(false)}
-                className="rounded-xl border border-input bg-background px-4 py-2 text-xs font-bold text-foreground hover:bg-muted disabled:opacity-50"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Save as Draft
               </button>
@@ -1116,13 +1105,13 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 type="button"
                 disabled={actionLoading}
                 onClick={() => handleCreate(true)}
-                className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow hover:opacity-90 disabled:opacity-50"
+                className={buttonVariants({ variant: "primary", size: "sm" })}
               >
                 {actionLoading ? "Creating..." : "Create & Start Now"}
               </button>
             </div>
           </div>
-        </div>
+        </ModalOverlay>
       )}
     </div>
   );

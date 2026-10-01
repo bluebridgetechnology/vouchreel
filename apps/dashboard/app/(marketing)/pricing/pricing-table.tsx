@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 export interface PlanItem {
   id: string;
@@ -18,27 +24,26 @@ interface PricingTableProps {
   currentPlanId?: string | null;
 }
 
-export function PricingTable({
-  plans,
-  user,
-  currentPlanId,
-}: PricingTableProps) {
+const descriptions: Record<string, string> = {
+  free: "Perfect for side projects and evaluating Vouchreel.",
+  pro: "Everything you need to collect and showcase high-converting videos.",
+  agency: "For agencies and teams managing multiple client brands with white-label proof.",
+};
+const fallbackDescription = "For fast-growing companies and agencies demanding maximum power.";
+
+export function PricingTable({ plans, user, currentPlanId }: PricingTableProps) {
   const [interval, setInterval] = useState<"month" | "year">("month");
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
 
   // Filter active plans by chosen interval
-  const filteredPlans = plans.filter(
-    (p) => p.isActive && (p.price === 0 || p.interval === interval)
-  );
+  const filteredPlans = plans.filter((p) => p.isActive && (p.price === 0 || p.interval === interval));
 
   // Group by unique plan tier name (Free, Pro, Agency / Business)
   const tierOrder = ["Free", "Pro", "Agency", "Business"];
   const displayPlans = tierOrder
-    .map((tierName) =>
-      filteredPlans.find((p) => p.name.toLowerCase() === tierName.toLowerCase())
-    )
+    .map((tierName) => filteredPlans.find((p) => p.name.toLowerCase() === tierName.toLowerCase()))
     .filter(Boolean) as PlanItem[];
 
   async function handleSelectPlan(plan: PlanItem) {
@@ -81,153 +86,102 @@ export function PricingTable({
 
   return (
     <div className="w-full">
-      {/* Interval Toggle */}
-      <div className="flex justify-center mb-10">
-        <div className="relative flex items-center rounded-full bg-muted p-1 border">
-          <button
-            type="button"
-            onClick={() => setInterval("month")}
-            className={`rounded-full px-5 py-2 text-sm font-medium transition-all ${
-              interval === "month"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Monthly billing
-          </button>
-          <button
-            type="button"
-            onClick={() => setInterval("year")}
-            className={`flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-medium transition-all ${
-              interval === "year"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Yearly billing
-            <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              Save ~17%
-            </span>
-          </button>
-        </div>
+      {/* Interval toggle */}
+      <div className="mb-12 flex justify-center">
+        <Tabs value={interval} onValueChange={(v) => setInterval(v as "month" | "year")}>
+          <TabsList>
+            <TabsTrigger value="month" className="h-9 px-5">
+              Monthly billing
+            </TabsTrigger>
+            <TabsTrigger value="year" className="h-9 px-5">
+              Yearly billing
+              <Badge variant="success" className="px-2 py-0 text-2xs">
+                Save ~17%
+              </Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       {errorMessage && (
-        <div className="mx-auto mb-8 max-w-md rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-center text-sm text-destructive">
+        <div
+          role="alert"
+          className="mx-auto mb-8 max-w-md rounded-card bg-danger-soft p-4 text-center text-sm text-danger-foreground"
+        >
           {errorMessage}
         </div>
       )}
 
-      {/* Cards Grid */}
-      <div className="grid gap-8 lg:grid-cols-3 max-w-6xl mx-auto">
+      {/* Cards grid */}
+      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-3">
         {displayPlans.map((plan) => {
           const isPro = plan.name.toLowerCase() === "pro";
           const isCurrent = currentPlanId === plan.id;
           const isLoading = loadingPlanId === plan.id;
 
-          const formattedPrice =
-            plan.price === 0
-              ? "$0"
-              : `$${(plan.price / 100).toFixed(0)}`;
-
-          const priceSubtext =
-            plan.price === 0
-              ? "forever free"
-              : interval === "year"
-              ? "/year"
-              : "/month";
+          const formattedPrice = plan.price === 0 ? "$0" : `$${(plan.price / 100).toFixed(0)}`;
+          const priceSubtext = plan.price === 0 ? "forever free" : interval === "year" ? "/year" : "/month";
 
           return (
-            <div
+            <Card
               key={plan.id}
-              className={`relative flex flex-col justify-between rounded-2xl border bg-card p-8 shadow-sm transition-all hover:shadow-md ${
-                isPro
-                  ? "border-primary ring-2 ring-primary ring-offset-2"
-                  : "border-border"
-              }`}
+              variant={isPro ? "inverse" : "default"}
+              padding="lg"
+              className={cn("relative flex flex-col justify-between", isPro && "shadow-float")}
             >
               {isPro && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3.5 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
-                  Most Popular
-                </div>
+                <Badge variant="brand" className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-text-on-accent">
+                  Most popular
+                </Badge>
               )}
 
               <div>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold">{plan.name}</h3>
-                  {isCurrent && (
-                    <span className="rounded-md bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-                      Current Plan
-                    </span>
-                  )}
+                  <h2 className="text-xl font-medium">{plan.name}</h2>
+                  {isCurrent && <Badge variant="brand">Current plan</Badge>}
                 </div>
 
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {plan.name === "Free"
-                    ? "Perfect for side projects and evaluating Vouchreel."
-                    : plan.name === "Pro"
-                    ? "Everything you need to collect and showcase high-converting videos."
-                    : plan.name === "Agency"
-                    ? "For agencies and teams managing multiple client brands with white-label proof."
-                    : "For fast-growing companies and agencies demanding maximum power."}
+                <p className={cn("mt-2 text-sm", isPro ? "opacity-70" : "text-text-muted")}>
+                  {descriptions[plan.name.toLowerCase()] ?? fallbackDescription}
                 </p>
 
                 <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold tracking-tight">
-                    {formattedPrice}
-                  </span>
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {priceSubtext}
-                  </span>
+                  <span className="text-5xl font-medium tracking-tight tabular-nums">{formattedPrice}</span>
+                  <span className={cn("text-sm", isPro ? "opacity-70" : "text-text-muted")}>{priceSubtext}</span>
                 </div>
 
                 <ul className="mt-8 space-y-3.5 text-sm">
                   {(plan.features || []).map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <svg
-                        className="h-5 w-5 shrink-0 text-emerald-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      <span className="text-foreground/90">{feature}</span>
+                      <Icon name="check-circle" size="sm" className={cn("mt-0.5", isPro ? "text-brand" : "text-success")} />
+                      <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="mt-8 pt-4 border-t">
-                <button
+              <div className="mt-8 border-t border-current/10 pt-6">
+                <Button
                   type="button"
-                  disabled={isLoading || isCurrent}
+                  size="lg"
+                  variant={isCurrent ? "soft" : isPro ? "primary" : "outline"}
+                  className="w-full"
+                  loading={isLoading}
+                  disabled={isCurrent}
                   onClick={() => handleSelectPlan(plan)}
-                  className={`w-full rounded-lg py-2.5 px-4 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isCurrent
-                      ? "bg-muted text-muted-foreground"
-                      : isPro
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                  }`}
                 >
                   {isLoading
-                    ? "Redirecting..."
+                    ? "Redirecting…"
                     : isCurrent
-                    ? "Current Plan"
-                    : plan.price === 0
-                    ? user
-                      ? "Use Free Plan"
-                      : "Get Started Free"
-                    : `Subscribe to ${plan.name}`}
-                </button>
+                      ? "Current plan"
+                      : plan.price === 0
+                        ? user
+                          ? "Use free plan"
+                          : "Get started free"
+                        : `Subscribe to ${plan.name}`}
+                </Button>
               </div>
-            </div>
+            </Card>
           );
         })}
       </div>

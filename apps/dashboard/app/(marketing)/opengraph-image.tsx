@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 
 export const alt = "Vouchreel — Turn customer love into conversions";
 export const size = { width: 1200, height: 630 };
@@ -14,9 +15,9 @@ export default function OpengraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          backgroundColor: "#0B0B12",
+          backgroundColor: "#1c1410",
           backgroundImage:
-            "radial-gradient(circle at 18% 0%, rgba(99,102,241,0.38) 0%, rgba(11,11,18,0) 55%), radial-gradient(circle at 92% 100%, rgba(168,85,247,0.30) 0%, rgba(11,11,18,0) 50%)",
+            "radial-gradient(circle at 18% 0%, rgba(217,71,27,0.42) 0%, rgba(28,20,16,0) 55%), radial-gradient(circle at 92% 100%, rgba(255,170,120,0.22) 0%, rgba(28,20,16,0) 50%)",
           padding: "72px",
         }}
       >
@@ -29,15 +30,15 @@ export default function OpengraphImage() {
               width: "64px",
               height: "64px",
               borderRadius: "16px",
-              background: "linear-gradient(135deg, #6366f1, #a855f7)",
+              background: DEFAULT_BRAND_HEX,
               color: "#ffffff",
               fontSize: "34px",
-              fontWeight: 700,
+              fontWeight: 500,
             }}
           >
             V
           </div>
-          <div style={{ display: "flex", color: "#ffffff", fontSize: "34px", fontWeight: 600 }}>
+          <div style={{ display: "flex", color: "#ffffff", fontSize: "34px", fontWeight: 500 }}>
             Vouchreel
           </div>
         </div>
@@ -48,7 +49,7 @@ export default function OpengraphImage() {
               display: "flex",
               color: "#ffffff",
               fontSize: "76px",
-              fontWeight: 700,
+              fontWeight: 500,
               lineHeight: 1.1,
               letterSpacing: "-0.02em",
             }}

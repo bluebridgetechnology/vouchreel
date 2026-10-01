@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 interface SpaceOption {
   id: string;
@@ -106,7 +109,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
 
   if (spaces.length === 0) {
     return (
-      <div className="rounded-lg border p-6 text-center text-muted-foreground">
+      <div className="rounded-card border p-6 text-center text-text-muted">
         You need to create a Space first before generating API keys.
       </div>
     );
@@ -124,7 +127,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
             id="spaceSelect"
             value={selectedSpaceId}
             onChange={(e) => setSelectedSpaceId(e.target.value)}
-            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary"
+            className={cn(inputClass, "text-sm")}
           >
             {spaces.map((s) => (
               <option key={s.id} value={s.id}>
@@ -139,30 +142,30 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
             setIsCreating(true);
             setCreatedRawKey(null);
           }}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+          className={buttonVariants({ variant: "primary", size: "md" })}
         >
           + Generate New API Key
         </button>
       </div>
 
       {error && (
-        <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-control bg-danger-soft p-4 text-sm text-danger-foreground">
           {error}
         </div>
       )}
 
       {/* API Key Created Dialog / Banner */}
       {createdRawKey && (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-5 space-y-3">
+        <div className="rounded-card border border-success/30 bg-success-soft p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-emerald-800 dark:text-emerald-300">
+            <h3 className="font-medium text-success-foreground">
               API Key Generated Successfully
             </h3>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="text-xs font-medium text-success-foreground">
               Show Once
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-text-muted">
             Make sure to copy your API key now as you won&apos;t be able to see it again!
           </p>
           <div className="flex items-center gap-2">
@@ -170,11 +173,11 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
               type="text"
               readOnly
               value={createdRawKey}
-              className="flex-1 font-mono text-xs bg-background border rounded px-3 py-2 select-all"
+              className={cn(inputClass, "flex-1 font-mono text-xs")}
             />
             <button
               onClick={() => copyToClipboard(createdRawKey)}
-              className="px-3 py-2 rounded text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+              className={buttonVariants({ variant: "success", size: "sm" })}
             >
               {copied ? "Copied!" : "Copy"}
             </button>
@@ -184,11 +187,11 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
 
       {/* Creation Modal */}
       {isCreating && !createdRawKey && (
-        <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
-          <h3 className="font-semibold text-base">Generate New API Key</h3>
+        <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm space-y-4">
+          <h3 className="font-medium text-base">Generate New API Key</h3>
           <form onSubmit={handleCreateKey} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">
+              <label className="block text-xs font-medium text-text-muted mb-1">
                 Key Label / Description
               </label>
               <input
@@ -197,21 +200,21 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
                 value={keyName}
                 onChange={(e) => setKeyName(e.target.value)}
                 required
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className={cn(inputClass, "w-full text-sm")}
               />
             </div>
             <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setIsCreating(false)}
-                className="px-3 py-1.5 rounded text-sm font-medium border hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-1.5 rounded text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
+                className={buttonVariants({ variant: "primary", size: "sm" })}
               >
                 {loading ? "Generating..." : "Generate"}
               </button>
@@ -221,9 +224,9 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
       )}
 
       {/* Keys List */}
-      <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="rounded-card border bg-surface overflow-hidden">
         <table className="w-full text-left text-sm">
-          <thead className="border-b bg-muted/50 text-xs font-medium text-muted-foreground">
+          <thead className="border-b bg-surface-sunken/50 text-xs font-medium text-text-muted">
             <tr>
               <th className="px-4 py-3">Label</th>
               <th className="px-4 py-3">Key Prefix</th>
@@ -235,29 +238,29 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
           <tbody className="divide-y">
             {keys.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={5} className="px-4 py-8 text-center text-text-muted">
                   {loading ? "Loading API keys..." : "No API keys created for this space yet."}
                 </td>
               </tr>
             ) : (
               keys.map((k) => (
-                <tr key={k.id} className="hover:bg-muted/30 transition-colors">
+                <tr key={k.id} className="hover:bg-surface-sunken/30 transition-colors">
                   <td className="px-4 py-3 font-medium">{k.name}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                  <td className="px-4 py-3 font-mono text-xs text-text-muted">
                     {k.keyPrefix}
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                  <td className="px-4 py-3 text-xs text-text-muted">
                     {k.lastUsedAt
                       ? new Date(k.lastUsedAt).toLocaleDateString()
                       : "Never"}
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                  <td className="px-4 py-3 text-xs text-text-muted">
                     {new Date(k.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => handleDeleteKey(k.id)}
-                      className="text-xs font-medium text-destructive hover:underline"
+                      className={cn(buttonVariants({ variant: "link-danger", size: "bare" }), "text-xs")}
                     >
                       Revoke
                     </button>

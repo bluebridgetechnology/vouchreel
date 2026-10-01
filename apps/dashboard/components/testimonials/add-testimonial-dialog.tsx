@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { MatchRules } from "@/lib/validations/testimonials";
 import { MatchRulesEditor } from "./match-rules-editor";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass, textareaClass } from "@/components/ui/input";
+import { ModalOverlay } from "@/components/ui/modal";
 
 interface AddTestimonialDialogProps {
   spaceId: string;
@@ -140,18 +144,15 @@ export function AddTestimonialDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
+    <ModalOverlay label="Add testimonial" onClose={onClose}>
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="add-testimonial-title"
-        className="relative my-8 w-full max-w-2xl rounded-xl border bg-card p-6 shadow-2xl"
+        className="relative my-8 w-full max-w-2xl rounded-card border bg-surface p-4 sm:p-6 shadow-float"
       >
         {/* Close Button */}
         <button
           onClick={onClose}
           aria-label="Close dialog"
-          className="absolute right-4 top-4 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "absolute right-4 top-4")}
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -159,16 +160,16 @@ export function AddTestimonialDialog({
         </button>
 
         <div className="space-y-1">
-          <h2 id="add-testimonial-title" className="text-xl font-bold tracking-tight">
+          <h2 id="add-testimonial-title" className="text-xl font-medium tracking-tight">
             Add Video Testimonial
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-text-muted">
             Paste a YouTube, Vimeo, or MP4 link. Metadata will be fetched automatically.
           </p>
         </div>
 
         {submitError && (
-          <div className="mt-4 rounded-md bg-destructive/10 p-3 text-xs text-destructive">
+          <div className="mt-4 rounded-control bg-danger-soft p-3 text-xs text-danger-foreground">
             {submitError}
           </div>
         )}
@@ -178,9 +179,9 @@ export function AddTestimonialDialog({
           <div className="space-y-2">
             <label
               htmlFor="add-video-url"
-              className="text-xs font-semibold text-foreground"
+              className="text-xs font-medium text-text"
             >
-              Video URL <span className="text-destructive">*</span>
+              Video URL <span className="text-danger-foreground">*</span>
             </label>
             <div className="flex gap-2">
               <input
@@ -194,7 +195,7 @@ export function AddTestimonialDialog({
                   }
                 }}
                 placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
-                className="flex-1 rounded-md border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "flex-1 text-xs")}
                 required
                 autoFocus
               />
@@ -202,7 +203,7 @@ export function AddTestimonialDialog({
                 type="button"
                 onClick={() => handleFetchMetadata()}
                 disabled={fetchingOembed || !videoUrl.trim()}
-                className="inline-flex items-center gap-1.5 rounded-md border bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-accent disabled:opacity-50"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 {fetchingOembed ? (
                   <span className="animate-spin text-xs">⟳</span>
@@ -212,27 +213,27 @@ export function AddTestimonialDialog({
               </button>
             </div>
             {oembedError && (
-              <p className="text-[11px] text-destructive">{oembedError}</p>
+              <p className="text-2xs text-danger-foreground">{oembedError}</p>
             )}
           </div>
 
           {/* Video Preview Card */}
           {(thumbnailUrl || title || fetchingOembed) && (
-            <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3 rounded-card border bg-surface-sunken/30 p-3 sm:flex-row sm:items-center">
               {thumbnailUrl && (
-                <div className="relative aspect-video w-36 flex-shrink-0 overflow-hidden rounded-md border bg-black">
+                <div className="relative aspect-video w-36 flex-shrink-0 overflow-hidden rounded-control border bg-scrim">
                   <img
                     src={thumbnailUrl}
                     alt={title}
                     className="h-full w-full object-cover"
                   />
                   {durationSeconds && (
-                    <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-0.5 font-mono text-[10px] text-white">
+                    <span className="absolute bottom-1 right-1 rounded-control bg-scrim/80 px-1 py-0.5 font-mono text-2xs text-on-media">
                       {formatDuration(durationSeconds)}
                     </span>
                   )}
                   {platform && (
-                    <span className="absolute left-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-medium uppercase text-white">
+                    <span className="absolute left-1 top-1 rounded-control bg-scrim/70 px-1.5 py-0.5 text-3xs font-medium uppercase text-on-media">
                       {platform}
                     </span>
                   )}
@@ -245,10 +246,10 @@ export function AddTestimonialDialog({
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Testimonial Title"
                   aria-label="Testimonial title"
-                  className="w-full rounded border bg-background px-2.5 py-1 text-xs font-semibold focus:border-primary focus:outline-none"
+                  className={cn(inputClass, "w-full text-xs")}
                 />
-                <p className="text-[11px] text-muted-foreground">
-                  Detected platform: <span className="font-medium capitalize text-foreground">{platform || "video"}</span>
+                <p className="text-2xs text-text-muted">
+                  Detected platform: <span className="font-medium capitalize text-text">{platform || "video"}</span>
                 </p>
               </div>
             </div>
@@ -259,7 +260,7 @@ export function AddTestimonialDialog({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-customer-name"
-                className="text-xs font-semibold text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Customer Name
               </label>
@@ -269,13 +270,13 @@ export function AddTestimonialDialog({
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="e.g., Sarah Johnson"
-                className="w-full rounded-md border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "w-full text-xs")}
               />
             </div>
             <div className="space-y-1.5">
               <label
                 htmlFor="add-customer-company"
-                className="text-xs font-semibold text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Customer Company / Role
               </label>
@@ -285,7 +286,7 @@ export function AddTestimonialDialog({
                 value={customerCompany}
                 onChange={(e) => setCustomerCompany(e.target.value)}
                 placeholder="e.g., Founder at Acme Corp"
-                className="w-full rounded-md border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "w-full text-xs")}
               />
             </div>
           </div>
@@ -294,7 +295,7 @@ export function AddTestimonialDialog({
           <div className="space-y-1.5">
             <label
               htmlFor="add-quote"
-              className="text-xs font-semibold text-foreground"
+              className="text-xs font-medium text-text"
             >
               Quote / Highlight Soundbite
             </label>
@@ -304,7 +305,7 @@ export function AddTestimonialDialog({
               value={quote}
               onChange={(e) => setQuote(e.target.value)}
               placeholder="e.g., 'Vouchreel boosted our landing page conversion by 34% in week one!'"
-              className="w-full rounded-md border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className={cn(textareaClass, "w-full text-xs")}
             />
           </div>
 
@@ -312,7 +313,7 @@ export function AddTestimonialDialog({
           <div className="space-y-2">
             <label
               htmlFor="add-tag-input"
-              className="text-xs font-semibold text-foreground"
+              className="text-xs font-medium text-text"
             >
               Tags
             </label>
@@ -329,12 +330,12 @@ export function AddTestimonialDialog({
                   }
                 }}
                 placeholder="Type tag and press Add"
-                className="flex-1 rounded-md border bg-background px-3 py-1.5 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "flex-1 text-xs")}
               />
               <button
                 type="button"
                 onClick={handleAddTag}
-                className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Add Tag
               </button>
@@ -344,14 +345,14 @@ export function AddTestimonialDialog({
                 {tags.map((t) => (
                   <span
                     key={t}
-                    className="inline-flex items-center gap-1 rounded-md bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-secondary-foreground"
+                    className="inline-flex items-center gap-1 rounded-control bg-surface-sunken px-2.5 py-0.5 text-2xs font-medium text-text"
                   >
                     #{t}
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(t)}
                       aria-label={`Remove tag ${t}`}
-                      className="text-muted-foreground hover:text-destructive"
+                      className={buttonVariants({ variant: "ghost-danger", size: "bare" })}
                     >
                       ×
                     </button>
@@ -372,20 +373,20 @@ export function AddTestimonialDialog({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border bg-background px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-accent"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting || !videoUrl.trim()}
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50"
+              className={buttonVariants({ variant: "primary", size: "sm" })}
             >
               {submitting ? "Saving..." : "Add Testimonial"}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

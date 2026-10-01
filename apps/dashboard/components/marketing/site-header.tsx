@@ -1,73 +1,52 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
+import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/marketing/logo";
+import { MobileNav } from "@/components/marketing/mobile-nav";
+
+const links = [
+  { href: "/#features", label: "Features" },
+  { href: "/#how-it-works", label: "How it works" },
+  { href: "/pricing", label: "Pricing" },
+];
 
 export async function SiteHeader() {
   const session = await getSession();
+  const signedIn = Boolean(session?.user);
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-6">
-        <Link
-          href="/"
-          className="flex items-center gap-2"
-          aria-label="Vouchreel home"
-        >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-primary-foreground">V</span>
-          </span>
-          <span className="text-lg font-semibold tracking-tight">
-            Vouchreel
-          </span>
-        </Link>
+    <header className="sticky top-0 z-(--z-nav) bg-canvas/80 backdrop-blur-md">
+      <div className="mx-auto flex h-18 max-w-(--container-page) items-center justify-between gap-4 px-5 sm:px-8">
+        <Logo />
 
-        <nav
-          aria-label="Marketing"
-          className="hidden items-center gap-8 md:flex"
-        >
-          <Link
-            href="/#features"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Features
-          </Link>
-          <Link
-            href="/#how-it-works"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            How it works
-          </Link>
-          <Link
-            href="/pricing"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Pricing
-          </Link>
+        <nav aria-label="Marketing" className="hidden items-center gap-1 md:flex">
+          {links.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="rounded-pill px-4 py-2 text-sm text-text-muted transition-colors hover:bg-surface-sunken hover:text-text"
+            >
+              {l.label}
+            </Link>
+          ))}
         </nav>
 
-        <div className="flex items-center gap-3">
-          {session?.user ? (
-            <Link
-              href="/dashboard"
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              Dashboard
-            </Link>
+        <div className="flex items-center gap-2">
+          {signedIn ? (
+            <Button asChild variant="ink" className="hidden md:inline-flex">
+              <Link href="/dashboard">Dashboard</Link>
+            </Button>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:block"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/signup"
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                Get started
-              </Link>
+              <Button asChild variant="ghost" className="hidden md:inline-flex">
+                <Link href="/login">Sign in</Link>
+              </Button>
+              <Button asChild variant="ink" className="hidden md:inline-flex">
+                <Link href="/signup">Get started</Link>
+              </Button>
             </>
           )}
+          <MobileNav links={links} signedIn={signedIn} />
         </div>
       </div>
     </header>

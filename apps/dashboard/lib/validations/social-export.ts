@@ -21,7 +21,7 @@ export const updateSocialExportSettingsSchema = z.object({
   brandColor: z
     .string()
     .trim()
-    .regex(/^#[0-9a-fA-F]{6}$/, "Brand color must be a valid hex color like #6366f1")
+    .regex(/^#[0-9a-fA-F]{6}$/, "Brand color must be a valid hex color like #cf3d0b")
     .optional(),
   watermarkPosition: watermarkPositionSchema.optional(),
   showWatermark: z.boolean().optional(),

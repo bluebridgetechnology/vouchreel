@@ -5,7 +5,7 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
   font-size: 14px;
   line-height: 1.4;
-  color: var(--vr-text, #111827);
+  color: var(--vr-text, currentColor);
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -17,26 +17,72 @@
   padding: 0;
 }
 
-/* Base theme custom properties */
+/* ------------------------------------------------------------------
+   Widget design tokens. This is the ONLY place colour literals may live.
+   The widget renders inside a shadow root on customer sites, so it cannot
+   read the dashboard's globals.css; these values mirror the dashboard
+   palette (brand coral, warm neutrals) and are kept in sync by
+   src/__tests__/styles-tokens.test.ts. Per-space theme colours override
+   --vr-primary / --vr-accent / --vr-radius at runtime.
+------------------------------------------------------------------- */
 .vr-theme-root {
-  --vr-primary: #4f46e5;
+  /* Theme (overridden per space) */
+  --vr-primary: #cf3d0b;
   --vr-accent: #ffffff;
   --vr-radius: 12px;
+
+  /* Surfaces and text */
   --vr-bg: #ffffff;
-  --vr-text: #111827;
-  --vr-text-muted: #6b7280;
-  --vr-border: rgba(0, 0, 0, 0.08);
-  --vr-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   --vr-sheet-bg: #ffffff;
+  --vr-text: #1c1917;
+  --vr-text-muted: #78716c;
+  --vr-border: rgba(0, 0, 0, 0.08);
+  --vr-hover: rgba(0, 0, 0, 0.05);
+  --vr-primary-soft: color-mix(in srgb, var(--vr-primary) 10%, transparent);
+  --vr-primary-border: color-mix(in srgb, var(--vr-primary) 20%, transparent);
+
+  /* Media (video) surfaces: fixed in both themes */
+  --vr-media: #000000;
+  --vr-on-media: #ffffff;
+  --vr-scrim: rgba(0, 0, 0, 0.5);
+  --vr-scrim-strong: rgba(0, 0, 0, 0.7);
+  --vr-scrim-chip: rgba(0, 0, 0, 0.75);
+  --vr-scrim-caption: rgba(0, 0, 0, 0.78);
+
+  /* Elevation */
+  --vr-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --vr-shadow-hover: 0 14px 28px -4px rgba(0, 0, 0, 0.18);
+  --vr-shadow-hover-lg: 0 16px 32px -4px rgba(0, 0, 0, 0.16);
+  --vr-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --vr-shadow-fab: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --vr-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+
+  /* Third-party review sources and ratings */
+  --vr-star: #f59e0b;
+  --vr-google: #1a73e8;
+  --vr-google-bg: #e8f0fe;
+  --vr-google-text: #1a73e8;
+  --vr-google-border: #dadce0;
+  --vr-trustpilot: #00b67a;
+  --vr-trustpilot-bg: #e6f7f0;
+  --vr-trustpilot-text: #008554;
+  --vr-trustpilot-border: #b8ebd8;
 }
 
 .vr-theme-root.vr-dark {
-  --vr-bg: #18181b;
-  --vr-text: #f4f4f5;
-  --vr-text-muted: #a1a1aa;
+  --vr-bg: #1c1917;
+  --vr-sheet-bg: #1c1917;
+  --vr-text: #f5f5f4;
+  --vr-text-muted: #a8a29e;
   --vr-border: rgba(255, 255, 255, 0.12);
+  --vr-hover: rgba(255, 255, 255, 0.1);
   --vr-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
-  --vr-sheet-bg: #18181b;
+  --vr-google-bg: rgba(26, 115, 232, 0.2);
+  --vr-google-text: #8ab4f8;
+  --vr-google-border: rgba(26, 115, 232, 0.4);
+  --vr-trustpilot-bg: rgba(0, 182, 122, 0.2);
+  --vr-trustpilot-text: #00b67a;
+  --vr-trustpilot-border: rgba(0, 182, 122, 0.4);
 }
 
 /* Position variants */
@@ -132,7 +178,7 @@
 
 .vr-collapsed-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 28px -4px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--vr-shadow-hover);
 }
 
 /* Full-card open control (keyboard accessible) */
@@ -158,7 +204,7 @@
   height: 52px;
   border-radius: calc(var(--vr-radius) - 4px);
   overflow: hidden;
-  background-color: #000000;
+  background-color: var(--vr-media);
   flex-shrink: 0;
 }
 
@@ -182,7 +228,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--vr-shadow-sm);
 }
 
 .vr-play-badge svg {
@@ -236,11 +282,7 @@
 
 .vr-close-btn:hover {
   color: var(--vr-text);
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.vr-dark .vr-close-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--vr-hover);
 }
 
 .vr-close-btn svg {
@@ -310,7 +352,7 @@
 .vr-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: var(--vr-scrim);
   backdrop-filter: blur(2px);
   z-index: 2147483646;
   opacity: 0;
@@ -401,7 +443,7 @@
   position: relative;
   width: 100%;
   padding-top: 56.25%; /* 16:9 Aspect Ratio */
-  background-color: #000000;
+  background-color: var(--vr-media);
   overflow: hidden;
 }
 
@@ -433,7 +475,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--vr-shadow-fab);
   transition: transform 0.2s ease;
 }
 
@@ -520,7 +562,7 @@
 }
 
 .vr-nav-btn:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--vr-hover);
 }
 
 .vr-nav-btn:disabled {
@@ -537,17 +579,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--vr-scrim);
   border: none;
   border-radius: 50%;
-  color: #ffffff;
+  color: var(--vr-on-media);
   cursor: pointer;
   z-index: 10;
   transition: background-color 0.15s;
 }
 
 .vr-modal-close-btn:hover {
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--vr-scrim-strong);
 }
 
 .vr-modal-close-btn svg {
@@ -628,7 +670,7 @@
 
 .vr-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.16);
+  box-shadow: var(--vr-shadow-hover-lg);
 }
 
 .vr-card-video-thumb {
@@ -637,7 +679,7 @@
   padding-top: 56.25%;
   border-radius: calc(var(--vr-radius) - 4px);
   overflow: hidden;
-  background-color: #000;
+  background-color: var(--vr-media);
 }
 
 .vr-card-video-thumb img {
@@ -652,8 +694,8 @@
   position: absolute;
   bottom: 8px;
   right: 8px;
-  background: rgba(0, 0, 0, 0.75);
-  color: #fff;
+  background: var(--vr-scrim-chip);
+  color: var(--vr-on-media);
   font-size: 10px;
   font-weight: 600;
   padding: 2px 6px;
@@ -671,40 +713,28 @@
 }
 
 .vr-badge-google {
-  background-color: #e8f0fe;
-  color: #1a73e8;
-  border: 1px solid #dadce0;
-}
-
-.vr-dark .vr-badge-google {
-  background-color: rgba(26, 115, 232, 0.2);
-  color: #8ab4f8;
-  border-color: rgba(26, 115, 232, 0.4);
+  background-color: var(--vr-google-bg);
+  color: var(--vr-google-text);
+  border: 1px solid var(--vr-google-border);
 }
 
 .vr-badge-trustpilot {
-  background-color: #e6f7f0;
-  color: #008554;
-  border: 1px solid #b8ebd8;
-}
-
-.vr-dark .vr-badge-trustpilot {
-  background-color: rgba(0, 182, 122, 0.2);
-  color: #00b67a;
-  border-color: rgba(0, 182, 122, 0.4);
+  background-color: var(--vr-trustpilot-bg);
+  color: var(--vr-trustpilot-text);
+  border: 1px solid var(--vr-trustpilot-border);
 }
 
 .vr-badge-video {
-  background-color: rgba(79, 70, 229, 0.1);
+  background-color: var(--vr-primary-soft);
   color: var(--vr-primary);
-  border: 1px solid rgba(79, 70, 229, 0.2);
+  border: 1px solid var(--vr-primary-border);
 }
 
 .vr-stars {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  color: #f59e0b;
+  color: var(--vr-star);
   font-size: 14px;
 }
 
@@ -857,11 +887,11 @@
 
 /* Story Strip Reviews Avatar Ring */
 .vr-story-review-google {
-  border-color: #1a73e8 !important;
+  border-color: var(--vr-google) !important;
 }
 
 .vr-story-review-trustpilot {
-  border-color: #00b67a !important;
+  border-color: var(--vr-trustpilot) !important;
 }
 
 .vr-story-badge {
@@ -871,8 +901,8 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #f59e0b;
-  color: #fff;
+  background: var(--vr-star);
+  color: var(--vr-on-media);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -911,8 +941,8 @@
   left: 50%;
   transform: translateX(-50%);
   max-width: 85%;
-  background: rgba(0, 0, 0, 0.78);
-  color: #ffffff;
+  background: var(--vr-scrim-caption);
+  color: var(--vr-on-media);
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 13px;
@@ -921,7 +951,7 @@
   pointer-events: none;
   z-index: 10;
   backdrop-filter: blur(4px);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  text-shadow: var(--vr-text-shadow);
   transition: opacity 0.15s ease;
 }
 

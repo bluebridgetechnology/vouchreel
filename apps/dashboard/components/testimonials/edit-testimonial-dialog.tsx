@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { MatchRules } from "@/lib/validations/testimonials";
 import { MatchRulesEditor } from "./match-rules-editor";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass, textareaClass } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { ModalOverlay } from "@/components/ui/modal";
 
 interface EditTestimonialDialogProps {
   spaceId: string;
@@ -100,18 +105,15 @@ export function EditTestimonialDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
+    <ModalOverlay label="Edit testimonial" onClose={onClose}>
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="edit-testimonial-title"
-        className="relative my-8 w-full max-w-2xl rounded-xl border bg-card p-6 shadow-2xl"
+        className="relative my-8 w-full max-w-2xl rounded-card border bg-surface p-4 sm:p-6 shadow-float"
       >
         {/* Close Button */}
         <button
           onClick={onClose}
           aria-label="Close dialog"
-          className="absolute right-4 top-4 rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "absolute right-4 top-4")}
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -119,52 +121,37 @@ export function EditTestimonialDialog({
         </button>
 
         <div className="space-y-1">
-          <h2 id="edit-testimonial-title" className="text-xl font-bold tracking-tight">
+          <h2 id="edit-testimonial-title" className="text-xl font-medium tracking-tight">
             Edit Testimonial
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-text-muted">
             Update metadata, customer details, status, and contextual page matching.
           </p>
         </div>
 
         {error && (
-          <div className="mt-4 rounded-md bg-destructive/10 p-3 text-xs text-destructive">
+          <div className="mt-4 rounded-control bg-danger-soft p-3 text-xs text-danger-foreground">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           {/* Active status switch */}
-          <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+          <div className="flex items-center justify-between rounded-card border bg-surface-sunken/30 p-3">
             <div>
-              <span className="text-xs font-semibold text-foreground">Active Status</span>
-              <p className="text-[11px] text-muted-foreground">
+              <span className="text-xs font-medium text-text">Active Status</span>
+              <p className="text-2xs text-text-muted">
                 When active, this testimonial is eligible to display in the website widget.
               </p>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isActive}
-              aria-label="Active status"
-              onClick={() => setIsActive(!isActive)}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                isActive ? "bg-primary" : "bg-muted"
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                  isActive ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
+            <Switch checked={isActive} onCheckedChange={setIsActive} aria-label="Active status" />
           </div>
 
           {/* Title */}
           <div className="space-y-1.5">
             <label
               htmlFor="edit-testimonial-name"
-              className="text-xs font-semibold text-foreground"
+              className="text-xs font-medium text-text"
             >
               Title
             </label>
@@ -173,7 +160,7 @@ export function EditTestimonialDialog({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className={cn(inputClass, "w-full text-xs")}
             />
           </div>
 
@@ -182,7 +169,7 @@ export function EditTestimonialDialog({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-customer-name"
-                className="text-xs font-semibold text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Customer Name
               </label>
@@ -191,13 +178,13 @@ export function EditTestimonialDialog({
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "w-full text-xs")}
               />
             </div>
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-customer-company"
-                className="text-xs font-semibold text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Customer Company / Role
               </label>
@@ -206,7 +193,7 @@ export function EditTestimonialDialog({
                 type="text"
                 value={customerCompany}
                 onChange={(e) => setCustomerCompany(e.target.value)}
-                className="w-full rounded-md border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "w-full text-xs")}
               />
             </div>
           </div>
@@ -215,7 +202,7 @@ export function EditTestimonialDialog({
           <div className="space-y-1.5">
             <label
               htmlFor="edit-quote"
-              className="text-xs font-semibold text-foreground"
+              className="text-xs font-medium text-text"
             >
               Quote / Highlight Soundbite
             </label>
@@ -224,7 +211,7 @@ export function EditTestimonialDialog({
               rows={2}
               value={quote}
               onChange={(e) => setQuote(e.target.value)}
-              className="w-full rounded-md border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className={cn(textareaClass, "w-full text-xs")}
             />
           </div>
 
@@ -232,7 +219,7 @@ export function EditTestimonialDialog({
           <div className="space-y-2">
             <label
               htmlFor="edit-tag-input"
-              className="text-xs font-semibold text-foreground"
+              className="text-xs font-medium text-text"
             >
               Tags
             </label>
@@ -249,12 +236,12 @@ export function EditTestimonialDialog({
                   }
                 }}
                 placeholder="Type tag and press Add"
-                className="flex-1 rounded-md border bg-background px-3 py-1.5 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "flex-1 text-xs")}
               />
               <button
                 type="button"
                 onClick={handleAddTag}
-                className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Add Tag
               </button>
@@ -264,14 +251,14 @@ export function EditTestimonialDialog({
                 {tags.map((t) => (
                   <span
                     key={t}
-                    className="inline-flex items-center gap-1 rounded-md bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-secondary-foreground"
+                    className="inline-flex items-center gap-1 rounded-control bg-surface-sunken px-2.5 py-0.5 text-2xs font-medium text-text"
                   >
                     #{t}
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(t)}
                       aria-label={`Remove tag ${t}`}
-                      className="text-muted-foreground hover:text-destructive"
+                      className={buttonVariants({ variant: "ghost-danger", size: "bare" })}
                     >
                       ×
                     </button>
@@ -292,20 +279,20 @@ export function EditTestimonialDialog({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border bg-background px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-accent"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50"
+              className={buttonVariants({ variant: "primary", size: "sm" })}
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

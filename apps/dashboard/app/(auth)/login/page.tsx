@@ -4,6 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "@/lib/auth/auth-client";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Em } from "@/components/ui/em";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,59 +49,49 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-        <p className="text-muted-foreground text-sm">
-          Sign in to your Vouchreel account
-        </p>
+        <h1 className="text-4xl font-medium">
+          Welcome <Em>back</Em>
+        </h1>
+        <p className="text-sm text-text-muted">Sign in to your Vouchreel account</p>
       </div>
 
-      <div className="rounded-lg border bg-card p-6 shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <Card padding="lg">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div role="alert" className="rounded-control bg-danger-soft px-3.5 py-2.5 text-sm text-danger-foreground">
               {error}
             </div>
           )}
 
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
-            </label>
-            <input
+          <Field label="Email" htmlFor="email">
+            <Input
               id="email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
-          </div>
+          </Field>
 
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
-            <input
+          <Field label="Password" htmlFor="password">
+            <Input
               id="password"
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
-          </div>
+          </Field>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
-          >
+          <Button type="submit" size="lg" className="w-full" loading={loading}>
             {loading ? "Signing in…" : "Sign in"}
-          </button>
+          </Button>
         </form>
 
         <div className="relative my-6">
@@ -104,15 +99,12 @@ export default function LoginPage() {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-card px-2 text-muted-foreground">or</span>
+            <span className="bg-surface px-3 text-text-subtle">or</span>
           </div>
         </div>
 
-        <button
-          onClick={handleGoogleSignIn}
-          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-        >
-          <svg className="h-4 w-4" viewBox="0 0 24 24">
+        <Button type="button" variant="outline" size="lg" className="w-full" onClick={handleGoogleSignIn}>
+          <svg className="size-4" viewBox="0 0 24 24" aria-hidden="true">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
               fill="#4285F4"
@@ -131,15 +123,14 @@ export default function LoginPage() {
             />
           </svg>
           Continue with Google
-        </button>
-      </div>
+        </Button>
+      </Card>
 
-      <div className="text-center text-sm text-muted-foreground">
-        <Link href="/forgot-password" className="hover:text-foreground underline-offset-4 hover:underline">
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-text-muted">
+        <Link href="/forgot-password" className="underline-offset-4 hover:text-text hover:underline">
           Forgot password?
         </Link>
-        {" · "}
-        <Link href="/signup" className="hover:text-foreground underline-offset-4 hover:underline">
+        <Link href="/signup" className="underline-offset-4 hover:text-text hover:underline">
           Create an account
         </Link>
       </div>

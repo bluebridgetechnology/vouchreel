@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { chartColors, chartTheme } from "@/lib/chart-theme";
 
 export interface TimeSeriesPoint {
   date: string;
@@ -33,33 +34,16 @@ export function TimeSeriesChart({ points }: TimeSeriesChartProps) {
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: -16 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border, #e5e7eb)" vertical={false} />
-          <XAxis
-            dataKey="label"
-            tick={{ fontSize: 11 }}
-            tickLine={false}
-            axisLine={false}
-            minTickGap={24}
-          />
-          <YAxis
-            tick={{ fontSize: 11 }}
-            tickLine={false}
-            axisLine={false}
-            allowDecimals={false}
-          />
-          <Tooltip
-            contentStyle={{
-              fontSize: 12,
-              borderRadius: 8,
-              border: "1px solid var(--border, #e5e7eb)",
-            }}
-          />
+          <CartesianGrid {...chartTheme.grid} />
+          <XAxis dataKey="label" {...chartTheme.axis} minTickGap={24} />
+          <YAxis {...chartTheme.axis} allowDecimals={false} />
+          <Tooltip {...chartTheme.tooltip} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           <Line
             type="monotone"
             dataKey="impressions"
             name="Impressions"
-            stroke="#6366f1"
+            stroke={chartColors[0]}
             strokeWidth={2}
             dot={false}
           />
@@ -67,7 +51,7 @@ export function TimeSeriesChart({ points }: TimeSeriesChartProps) {
             type="monotone"
             dataKey="plays"
             name="Plays"
-            stroke="#16a34a"
+            stroke={chartColors[1]}
             strokeWidth={2}
             dot={false}
           />

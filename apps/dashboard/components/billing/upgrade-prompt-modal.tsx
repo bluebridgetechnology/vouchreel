@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
+import { ModalOverlay } from "@/components/ui/modal";
 
 interface UpgradePromptModalProps {
   feature?:
@@ -68,16 +70,16 @@ export function UpgradePromptModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl space-y-5 text-card-foreground">
+    <ModalOverlay label="Upgrade your plan" onClose={onClose}>
+      <div className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-5 text-text">
         <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+          <div className="inline-flex items-center gap-2 rounded-pill bg-brand-soft px-3 py-1 text-xs font-medium text-brand">
             ✨ {details.targetPlan} Feature
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+            className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -86,15 +88,15 @@ export function UpgradePromptModal({
         </div>
 
         <div>
-          <h3 className="text-xl font-bold tracking-tight">{details.title}</h3>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          <h3 className="text-xl font-medium tracking-tight">{details.title}</h3>
+          <p className="mt-2 text-sm text-text-muted leading-relaxed">
             {details.description}
           </p>
         </div>
 
-        <div className="rounded-xl border bg-muted/30 p-4 space-y-2 text-xs">
-          <div className="font-semibold text-foreground">What you will unlock:</div>
-          <ul className="space-y-1 text-muted-foreground">
+        <div className="rounded-card border bg-surface-sunken/30 p-4 space-y-2 text-xs">
+          <div className="font-medium text-text">What you will unlock:</div>
+          <ul className="space-y-1 text-text-muted">
             <li>✓ Multi-seat team members & roles (Editor / Viewer)</li>
             <li>✓ Remove Vouchreel branding from all widgets</li>
             <li>✓ Custom CNAME domain for collection links</li>
@@ -106,18 +108,18 @@ export function UpgradePromptModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border px-4 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
+            className={buttonVariants({ variant: "outline", size: "lg" })}
           >
             Maybe Later
           </button>
           <Link
             href="/settings/billing"
-            className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm text-center"
+            className={buttonVariants({ variant: "primary", size: "lg" })}
           >
             Upgrade Plan
           </Link>
         </div>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

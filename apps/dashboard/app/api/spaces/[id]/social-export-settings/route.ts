@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { socialExportSettings, spaces } from "@/lib/db/schema";
 import { getSubscriptionLimits } from "@/lib/payments/subscription";
 import { updateSocialExportSettingsSchema } from "@/lib/validations/social-export";
+import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -54,7 +55,7 @@ export async function GET(_: Request, { params }: RouteParams) {
       id: null,
       spaceId,
       logoUrl: null,
-      brandColor: "#6366f1",
+      brandColor: DEFAULT_BRAND_HEX,
       watermarkPosition: "bottom-right",
       showWatermark: true,
       defaultFraming: "blur",
@@ -116,7 +117,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
     const valuesToSave = {
       spaceId,
       logoUrl: parsed.data.logoUrl || null,
-      brandColor: parsed.data.brandColor || "#6366f1",
+      brandColor: parsed.data.brandColor || DEFAULT_BRAND_HEX,
       watermarkPosition: parsed.data.watermarkPosition || "bottom-right",
       showWatermark,
       defaultFraming: parsed.data.defaultFraming || "blur",

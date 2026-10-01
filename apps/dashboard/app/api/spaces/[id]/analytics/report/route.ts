@@ -18,6 +18,7 @@ import {
   analyticsReportQuerySchema,
   resolveDateRange,
 } from "@/lib/validations/analytics";
+import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -91,7 +92,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       parsed.data.brandColor ||
       socialSettings?.brandColor ||
       formBranding?.accentColor ||
-      "#4f46e5";
+      DEFAULT_BRAND_HEX;
 
     const isWhiteLabeled = Boolean(
       parsed.data.brandName ||

@@ -3,6 +3,11 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface InviteDetails {
   id: string;
@@ -78,93 +83,84 @@ export default function InviteAcceptancePage({
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-sm text-muted-foreground animate-pulse">
-          Validating invitation link…
-        </div>
-      </main>
+      <Card padding="lg" className="space-y-4" role="status">
+        <span className="sr-only">Validating invitation link…</span>
+        <Skeleton className="mx-auto size-14 rounded-pill" />
+        <Skeleton className="mx-auto h-7 w-2/3" />
+        <Skeleton className="h-20 w-full rounded-card" />
+        <Skeleton className="h-12 w-full rounded-pill" />
+      </Card>
     );
   }
 
   if (error || !invite) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center shadow-lg space-y-4">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive text-xl">
-            ✕
-          </div>
-          <h1 className="text-xl font-bold">Invalid or Expired Invitation</h1>
-          <p className="text-sm text-muted-foreground">
-            {error || "This team invitation is no longer valid or has already expired."}
-          </p>
-          <div className="pt-2">
-            <Link
-              href="/login"
-              className="inline-block rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-            >
-              Go to Login
-            </Link>
-          </div>
+      <Card padding="lg" className="space-y-4 text-center">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-pill bg-danger-soft text-danger-foreground">
+          <Icon name="close-circle" size="lg" />
         </div>
-      </main>
+        <h1 className="text-2xl font-medium">Invalid or expired invitation</h1>
+        <p className="text-sm text-text-muted">
+          {error || "This team invitation is no longer valid or has already expired."}
+        </p>
+        <Button asChild>
+          <Link href="/login">Go to login</Link>
+        </Button>
+      </Card>
     );
   }
 
   if (acceptSuccess) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-2xl border bg-card p-8 text-center shadow-lg space-y-4">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-xl font-bold">
-            ✓
-          </div>
-          <h1 className="text-2xl font-bold">Invitation Accepted!</h1>
-          <p className="text-sm text-muted-foreground">
-            You are now a member of {invite.inviterName}&apos;s team. Redirecting to your spaces…
-          </p>
+      <Card padding="lg" className="space-y-4 text-center">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-pill bg-success-soft text-success-foreground">
+          <Icon name="check-circle" size="lg" />
         </div>
-      </main>
+        <h1 className="text-2xl font-medium">Invitation accepted</h1>
+        <p className="text-sm text-text-muted">
+          You are now a member of {invite.inviterName}&apos;s team. Redirecting to your spaces…
+        </p>
+      </Card>
     );
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-muted/20 p-4">
-      <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-xl space-y-6">
-        <div className="text-center space-y-2">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-lg">
-            VR
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">Team Invitation</h1>
-          <p className="text-sm text-muted-foreground">
-            <strong>{invite.inviterName}</strong> ({invite.inviterEmail}) has invited you to join their workspace on Vouchreel.
-          </p>
+    <Card padding="lg" className="space-y-6">
+      <div className="space-y-3 text-center">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-pill bg-brand-soft text-brand-soft-foreground">
+          <Icon name="users-group-rounded" size="lg" />
         </div>
-
-        <div className="rounded-xl border bg-muted/40 p-4 space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Invited Email:</span>
-            <span className="font-medium text-foreground">{invite.email}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Assigned Role:</span>
-            <span className="font-semibold capitalize text-primary">{invite.role}</span>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <button
-            type="button"
-            disabled={accepting}
-            onClick={handleAccept}
-            className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-50"
-          >
-            {accepting ? "Joining Team…" : "Accept Invitation & Join Team"}
-          </button>
-
-          <p className="text-center text-xs text-muted-foreground">
-            Not logged in? Clicking Accept will prompt you to log in or create an account.
-          </p>
-        </div>
+        <h1 className="text-3xl font-medium">Team invitation</h1>
+        <p className="text-sm text-text-muted">
+          <strong className="font-medium text-text">{invite.inviterName}</strong>{" "}
+          <span className="break-all">({invite.inviterEmail})</span> has invited you to join their workspace on
+          Vouchreel.
+        </p>
       </div>
-    </main>
+
+      <dl className="space-y-3 rounded-card bg-surface-sunken p-4 text-sm">
+        <div className="flex items-center justify-between gap-4">
+          <dt className="shrink-0 text-text-muted">Invited email</dt>
+          <dd className="min-w-0 truncate font-medium">{invite.email}</dd>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <dt className="text-text-muted">Assigned role</dt>
+          <dd>
+            <Badge variant="brand" className="capitalize">
+              {invite.role}
+            </Badge>
+          </dd>
+        </div>
+      </dl>
+
+      <div className="space-y-3">
+        <Button type="button" size="lg" className="w-full" loading={accepting} onClick={handleAccept}>
+          {accepting ? "Joining team…" : "Accept invitation"}
+        </Button>
+        <p className="text-center text-xs text-text-muted">
+          Not logged in? Clicking Accept will prompt you to log in or create an account.
+        </p>
+      </div>
+    </Card>
   );
 }

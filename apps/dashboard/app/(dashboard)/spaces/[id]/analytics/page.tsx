@@ -10,7 +10,7 @@ export default async function SpaceAnalyticsPage({ params }: AnalyticsPageProps)
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold tracking-tight text-foreground">
+        <h2 className="text-xl font-medium tracking-tight text-text">
           Analytics & Performance
         </h2>
       </div>

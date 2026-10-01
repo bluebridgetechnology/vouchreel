@@ -3,6 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { UpgradePromptModal } from "@/components/billing/upgrade-prompt-modal";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
+import { ModalOverlay } from "@/components/ui/modal";
 
 export interface TeamMember {
   id: string;
@@ -191,10 +195,10 @@ export function TeamManager({
     <div className="space-y-8">
       {/* Plan gate banner if not entitled */}
       {!isEntitled && (
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-5 text-amber-900 dark:text-amber-200">
+        <div className="rounded-card border border-warning/30 bg-warning-soft p-5 text-warning-foreground">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h3 className="font-semibold text-base">Multi-Seat Team Collaboration</h3>
+              <h3 className="font-medium text-base">Multi-Seat Team Collaboration</h3>
               <p className="text-sm opacity-90 mt-0.5">
                 Invite editors and viewers to manage your spaces and testimonials together.
                 Team seats are exclusively available on the <strong>Agency</strong> plan.
@@ -203,7 +207,7 @@ export function TeamManager({
             <button
               type="button"
               onClick={() => setShowUpgradeModal(true)}
-              className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+              className={cn(buttonVariants({ variant: "primary", size: "md" }), "shrink-0")}
             >
               Upgrade to Agency
             </button>
@@ -212,27 +216,27 @@ export function TeamManager({
       )}
 
       {/* Invite Form */}
-      <section className="rounded-xl border bg-card p-6 shadow-sm">
-        <h2 className="text-lg font-semibold tracking-tight">Invite New Member</h2>
-        <p className="text-sm text-muted-foreground mt-1">
+      <section className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
+        <h2 className="text-lg font-medium tracking-tight">Invite New Member</h2>
+        <p className="text-sm text-text-muted mt-1">
           Send an invitation magic link to give collaborators access to your spaces.
         </p>
 
         {inviteError && (
-          <div className="mt-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          <div className="mt-4 rounded-control bg-danger-soft p-3 text-sm text-danger-foreground">
             {inviteError}
           </div>
         )}
 
         {inviteSuccess && (
-          <div className="mt-4 rounded-md bg-emerald-500/10 p-3 text-sm text-emerald-600 dark:text-emerald-400">
+          <div className="mt-4 rounded-control bg-success-soft p-3 text-sm text-success-foreground">
             {inviteSuccess}
           </div>
         )}
 
         {lastInviteUrl && (
-          <div className="mt-3 flex items-center gap-2 rounded-md border bg-muted/40 p-2.5 text-xs">
-            <span className="font-medium text-foreground truncate flex-1 select-all">
+          <div className="mt-3 flex items-center gap-2 rounded-control border bg-surface-sunken/40 p-2.5 text-xs">
+            <span className="font-medium text-text truncate flex-1 select-all">
               {lastInviteUrl}
             </span>
             <button
@@ -241,7 +245,7 @@ export function TeamManager({
                 navigator.clipboard.writeText(lastInviteUrl);
                 alert("Invite link copied to clipboard!");
               }}
-              className="rounded bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+              className={buttonVariants({ variant: "primary", size: "sm" })}
             >
               Copy Link
             </button>
@@ -255,14 +259,14 @@ export function TeamManager({
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="colleague@example.com"
             disabled={inviting}
-            className="flex-1 rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+            className={cn(inputClass, "flex-1 text-sm")}
           />
 
           <select
             value={inviteRole}
             onChange={(e) => setInviteRole(e.target.value as "editor" | "viewer")}
             disabled={inviting}
-            className="rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+            className={cn(inputClass, "text-sm")}
           >
             <option value="editor">Editor (Can edit testimonials & widgets)</option>
             <option value="viewer">Viewer (Read-only access)</option>
@@ -271,7 +275,7 @@ export function TeamManager({
           <button
             type="submit"
             disabled={inviting}
-            className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className={buttonVariants({ variant: "primary", size: "md" })}
           >
             {inviting ? "Sending…" : "Send Invite"}
           </button>
@@ -279,44 +283,44 @@ export function TeamManager({
       </section>
 
       {/* Team Members List */}
-      <section className="rounded-xl border bg-card p-6 shadow-sm">
+      <section className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">Active Members</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-lg font-medium tracking-tight">Active Members</h2>
+            <p className="text-sm text-text-muted">
               {members.length} member{members.length === 1 ? "" : "s"} currently in this workspace.
             </p>
           </div>
         </div>
 
-        <div className="divide-y border rounded-lg overflow-hidden">
+        <div className="divide-y border rounded-card overflow-hidden">
           {members.map((member) => {
             const isSelf = member.userId === currentUserId;
             return (
               <div
                 key={member.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 bg-background"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 bg-surface"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary text-sm uppercase">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-brand-soft font-medium text-brand text-sm uppercase">
                     {(member.name || member.email).slice(0, 2)}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm text-foreground">{member.name}</span>
+                      <span className="font-medium text-sm text-text">{member.name}</span>
                       {isSelf && (
-                        <span className="rounded bg-accent px-1.5 py-0.5 text-xs text-muted-foreground font-normal">
+                        <span className="rounded-control bg-brand-soft px-1.5 py-0.5 text-xs text-text-muted font-normal">
                           You
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">{member.email}</span>
+                    <span className="text-xs text-text-muted">{member.email}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   {member.isOwner ? (
-                    <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 px-3 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                    <span className="rounded-pill bg-success-soft px-3 py-1 text-xs font-medium text-success-foreground">
                       Primary Owner
                     </span>
                   ) : (
@@ -326,7 +330,7 @@ export function TeamManager({
                       onChange={(e) =>
                         handleRoleChange(member.id, e.target.value as "editor" | "viewer")
                       }
-                      className="rounded border bg-background px-2.5 py-1 text-xs font-medium outline-none focus:ring-2 focus:ring-primary"
+                      className={cn(inputClass, "text-xs")}
                     >
                       <option value="editor">Editor</option>
                       <option value="viewer">Viewer</option>
@@ -337,7 +341,7 @@ export function TeamManager({
                     <button
                       type="button"
                       onClick={() => setMemberToRemove(member)}
-                      className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      className={buttonVariants({ variant: "ghost-danger", size: "icon-sm" })}
                       title="Remove member"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -354,25 +358,25 @@ export function TeamManager({
 
       {/* Pending Invites List */}
       {invites.length > 0 && (
-        <section className="rounded-xl border bg-card p-6 shadow-sm">
+        <section className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
           <div className="mb-4">
-            <h2 className="text-lg font-semibold tracking-tight">Pending Invitations</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-lg font-medium tracking-tight">Pending Invitations</h2>
+            <p className="text-sm text-text-muted">
               Invitations sent that have not yet been accepted.
             </p>
           </div>
 
-          <div className="divide-y border rounded-lg overflow-hidden">
+          <div className="divide-y border rounded-card overflow-hidden">
             {invites.map((invite) => {
               const expiresDate = new Date(invite.expiresAt);
               return (
                 <div
                   key={invite.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 bg-background"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 bg-surface"
                 >
                   <div>
-                    <span className="font-medium text-sm text-foreground">{invite.email}</span>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                    <span className="font-medium text-sm text-text">{invite.email}</span>
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-text-muted">
                       <span className="capitalize">{invite.role}</span>
                       <span>•</span>
                       <span>Expires {expiresDate.toLocaleDateString()}</span>
@@ -383,14 +387,14 @@ export function TeamManager({
                     <button
                       type="button"
                       onClick={() => handleResendInvite(invite.id)}
-                      className="rounded border px-2.5 py-1 text-xs font-semibold hover:bg-accent transition-colors"
+                      className={buttonVariants({ variant: "outline", size: "sm" })}
                     >
                       Resend
                     </button>
                     <button
                       type="button"
                       onClick={() => handleCancelInvite(invite.id)}
-                      className="rounded border border-destructive/20 text-destructive px-2.5 py-1 text-xs font-semibold hover:bg-destructive/10 transition-colors"
+                      className={buttonVariants({ variant: "outline-danger", size: "sm" })}
                     >
                       Cancel
                     </button>
@@ -404,17 +408,17 @@ export function TeamManager({
 
       {/* Confirmation Modal for Member Removal */}
       {memberToRemove && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-lg space-y-4">
-            <h3 className="text-lg font-bold">Remove Team Member</h3>
-            <p className="text-sm text-muted-foreground">
+        <ModalOverlay label="Remove team member" onClose={() => setMemberToRemove(null)}>
+          <div className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-4">
+            <h3 className="text-lg font-medium">Remove Team Member</h3>
+            <p className="text-sm text-text-muted">
               Are you sure you want to remove <strong>{memberToRemove.name || memberToRemove.email}</strong> from your team? They will immediately lose access to your spaces.
             </p>
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setMemberToRemove(null)}
-                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "md" })}
               >
                 Cancel
               </button>
@@ -422,13 +426,13 @@ export function TeamManager({
                 type="button"
                 disabled={removing}
                 onClick={confirmRemoveMember}
-                className="rounded-md bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                className={buttonVariants({ variant: "danger", size: "md" })}
               >
                 {removing ? "Removing…" : "Remove Member"}
               </button>
             </div>
           </div>
-        </div>
+        </ModalOverlay>
       )}
 
       {/* Upgrade Modal */}

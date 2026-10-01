@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth/session";
 import { getUserSubscription } from "@/lib/payments/subscription";
 import { BillingManager } from "./billing-manager";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -45,18 +47,18 @@ export default async function BillingSettingsPage() {
       <div className="flex items-center gap-4 border-b pb-4">
         <Link
           href="/settings"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           General
         </Link>
-        <span className="text-sm font-medium text-primary border-b-2 border-primary pb-4 -mb-4">
+        <span className="text-sm font-medium text-brand border-b-2 border-brand pb-4 -mb-4">
           Billing & Subscription
         </span>
       </div>
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Billing & Plans</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <h1 className="text-3xl font-medium tracking-tight">Billing & Plans</h1>
+        <p className="text-text-muted mt-1 text-sm">
           Review your current plan tier, manage payment methods, or upgrade for higher limits.
         </p>
       </div>
