@@ -245,7 +245,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
 
       {/* Create Webhook Form */}
       {isCreating && !createdSecret && (
-        <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
+        <div className="rounded-lg border bg-card p-4 sm:p-6 shadow-sm space-y-4">
           <h3 className="font-semibold text-base">Add Webhook Endpoint</h3>
           <form onSubmit={handleCreateWebhook} className="space-y-4">
             <div>
@@ -377,7 +377,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
 
       {/* Delivery Logs Modal / Panel */}
       {inspectingWebhookId && (
-        <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
+        <div className="rounded-lg border bg-card p-4 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-base">Delivery Logs</h3>
             <button

@@ -184,7 +184,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
 
       {/* Creation Modal */}
       {isCreating && !createdRawKey && (
-        <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
+        <div className="rounded-lg border bg-card p-4 sm:p-6 shadow-sm space-y-4">
           <h3 className="font-semibold text-base">Generate New API Key</h3>
           <form onSubmit={handleCreateKey} className="space-y-4">
             <div>

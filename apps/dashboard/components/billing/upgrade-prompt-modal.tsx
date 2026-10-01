@@ -69,7 +69,7 @@ export function UpgradePromptModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl space-y-5 text-card-foreground">
+      <div className="w-full max-w-md rounded-2xl border bg-card p-4 sm:p-6 shadow-2xl space-y-5 text-card-foreground">
         <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
             ✨ {details.targetPlan} Feature

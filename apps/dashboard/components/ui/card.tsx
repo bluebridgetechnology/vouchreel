@@ -14,7 +14,7 @@ export const cardVariants = cva("text-text", {
       cream: "rounded-panel bg-tint-cream text-tint-foreground",
       inverse: "rounded-panel bg-surface-inverse text-text-inverse",
     },
-    padding: { none: "", sm: "p-4", md: "p-6", lg: "p-8" },
+    padding: { none: "", sm: "p-4", md: "p-4 sm:p-6", lg: "p-5 sm:p-8" },
     interactive: {
       true: "transition-[transform,box-shadow] duration-(--duration-base) ease-(--ease-out) hover:-translate-y-0.5 hover:shadow-float",
       false: "",
@@ -29,7 +29,7 @@ export function Card({ className, variant, padding, interactive, ...props }: Car
   return <div className={cn(cardVariants({ variant, padding, interactive }), className)} {...props} />;
 }
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("space-y-1 p-6 pb-0", className)} {...props} />;
+  return <div className={cn("space-y-1 p-4 pb-0 sm:p-6 sm:pb-0", className)} {...props} />;
 }
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return <h3 className={cn("text-lg font-medium", className)} {...props} />;
@@ -38,8 +38,8 @@ export function CardDescription({ className, ...props }: React.HTMLAttributes<HT
   return <p className={cn("text-sm text-text-muted", className)} {...props} />;
 }
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("p-6", className)} {...props} />;
+  return <div className={cn("p-4 sm:p-6", className)} {...props} />;
 }
 export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex items-center gap-3 p-6 pt-0", className)} {...props} />;
+  return <div className={cn("flex items-center gap-3 p-4 pt-0 sm:p-6 sm:pt-0", className)} {...props} />;
 }

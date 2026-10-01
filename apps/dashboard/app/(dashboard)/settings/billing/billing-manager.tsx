@@ -70,7 +70,7 @@ export function BillingManager({
       )}
 
       {/* Subscription Card */}
-      <div className="rounded-2xl border bg-card p-6 shadow-sm">
+      <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b">
           <div>
             <div className="flex items-center gap-3">

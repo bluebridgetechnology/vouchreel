@@ -212,7 +212,7 @@ export function TeamManager({
       )}
 
       {/* Invite Form */}
-      <section className="rounded-xl border bg-card p-6 shadow-sm">
+      <section className="rounded-xl border bg-card p-4 sm:p-6 shadow-sm">
         <h2 className="text-lg font-semibold tracking-tight">Invite New Member</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Send an invitation magic link to give collaborators access to your spaces.
@@ -279,7 +279,7 @@ export function TeamManager({
       </section>
 
       {/* Team Members List */}
-      <section className="rounded-xl border bg-card p-6 shadow-sm">
+      <section className="rounded-xl border bg-card p-4 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold tracking-tight">Active Members</h2>
@@ -354,7 +354,7 @@ export function TeamManager({
 
       {/* Pending Invites List */}
       {invites.length > 0 && (
-        <section className="rounded-xl border bg-card p-6 shadow-sm">
+        <section className="rounded-xl border bg-card p-4 sm:p-6 shadow-sm">
           <div className="mb-4">
             <h2 className="text-lg font-semibold tracking-tight">Pending Invitations</h2>
             <p className="text-sm text-muted-foreground">
@@ -405,7 +405,7 @@ export function TeamManager({
       {/* Confirmation Modal for Member Removal */}
       {memberToRemove && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-lg space-y-4">
+          <div className="w-full max-w-md rounded-xl border bg-card p-4 sm:p-6 shadow-lg space-y-4">
             <h3 className="text-lg font-bold">Remove Team Member</h3>
             <p className="text-sm text-muted-foreground">
               Are you sure you want to remove <strong>{memberToRemove.name || memberToRemove.email}</strong> from your team? They will immediately lose access to your spaces.

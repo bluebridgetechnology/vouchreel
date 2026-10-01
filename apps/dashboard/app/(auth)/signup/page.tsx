@@ -4,6 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signUp } from "@/lib/auth/auth-client";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Em } from "@/components/ui/em";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -39,84 +44,68 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Create an account</h1>
-        <p className="text-muted-foreground text-sm">
-          Start collecting video testimonials in minutes
-        </p>
+        <h1 className="text-4xl font-medium">
+          Create an <Em>account</Em>
+        </h1>
+        <p className="text-sm text-text-muted">Start collecting video testimonials in minutes</p>
       </div>
 
-      <div className="rounded-lg border bg-card p-6 shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <Card padding="lg">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div role="alert" className="rounded-control bg-danger-soft px-3.5 py-2.5 text-sm text-danger-foreground">
               {error}
             </div>
           )}
 
-          <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">
-              Full name
-            </label>
-            <input
+          <Field label="Full name" htmlFor="name">
+            <Input
               id="name"
               type="text"
+              autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Jane Doe"
               required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
-          </div>
+          </Field>
 
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
-            </label>
-            <input
+          <Field label="Email" htmlFor="email">
+            <Input
               id="email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
-          </div>
+          </Field>
 
-          <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
-            <input
+          <Field label="Password" htmlFor="password" hint="Must be at least 8 characters">
+            <Input
               id="password"
               type="password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
               minLength={8}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
-            <p className="text-xs text-muted-foreground">
-              Must be at least 8 characters
-            </p>
-          </div>
+          </Field>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
-          >
+          <Button type="submit" size="lg" className="w-full" loading={loading}>
             {loading ? "Creating account…" : "Create account"}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-text-muted">
         Already have an account?{" "}
-        <Link href="/login" className="hover:text-foreground underline-offset-4 hover:underline">
+        <Link href="/login" className="text-text underline-offset-4 hover:underline">
           Sign in
         </Link>
       </p>

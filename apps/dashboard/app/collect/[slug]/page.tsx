@@ -153,7 +153,7 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
   const accent = form.branding.accentColor || "#7c3aed";
   if (complete) return (
     <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6">
-      <section className="w-full rounded-2xl border bg-card p-8 text-center shadow-sm">
+      <section className="w-full rounded-2xl border bg-card p-5 sm:p-8 text-center shadow-sm">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-xl text-emerald-700">✓</div>
         <h1 className="text-2xl font-bold">Thank you for sharing!</h1>
         <p className="mt-2 text-sm text-muted-foreground">Your testimonial has been sent for review.</p>
@@ -164,7 +164,7 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
 
   return (
     <main className="min-h-screen bg-muted/30 px-4 py-10 sm:py-16">
-      <section className="mx-auto max-w-xl rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
+      <section className="mx-auto max-w-xl rounded-2xl border bg-card p-4 sm:p-6 shadow-sm sm:p-8">
         {form.branding.logoUrl && <img className="mb-5 h-10 max-w-48 object-contain" src={form.branding.logoUrl} alt="" />}
         <h1 className="text-2xl font-bold tracking-tight">{form.title}</h1>
         <p className="mt-3 whitespace-pre-wrap text-muted-foreground">{form.promptText}</p>

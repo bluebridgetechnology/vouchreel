@@ -370,7 +370,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
           aria-describedby="delete-testimonial-desc"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
         >
-          <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-xl border bg-card p-4 sm:p-6 shadow-xl">
             <h3
               id="delete-testimonial-title"
               className="text-lg font-bold text-destructive"

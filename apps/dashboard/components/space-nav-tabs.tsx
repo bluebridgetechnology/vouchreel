@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Icon } from "@/components/ui/icon";
+import { cn } from "@/lib/utils";
 
 interface SpaceNavTabsProps {
   spaceId: string;
@@ -29,43 +31,18 @@ export function SpaceNavTabs({
   }, [spaceId]);
 
   const tabs = [
-    {
-      label: "Testimonials",
-      href: `/spaces/${spaceId}/testimonials`,
-      active: pathname.startsWith(`/spaces/${spaceId}/testimonials`),
-    },
-    {
-      label: "Reviews",
-      href: `/spaces/${spaceId}/reviews`,
-      active: pathname.startsWith(`/spaces/${spaceId}/reviews`),
-    },
-    {
-      label: "Collect",
-      href: `/spaces/${spaceId}/collect`,
-      active: pathname.startsWith(`/spaces/${spaceId}/collect`),
-      badge: pendingCount,
-    },
-    {
-      label: "Social",
-      href: `/spaces/${spaceId}/social`,
-      active: pathname.startsWith(`/spaces/${spaceId}/social`),
-    },
-    {
-      label: "Widget",
-      href: `/spaces/${spaceId}/widget`,
-      active: pathname.startsWith(`/spaces/${spaceId}/widget`),
-    },
-    {
-      label: "Experiments",
-      href: `/spaces/${spaceId}/experiments`,
-      active: pathname.startsWith(`/spaces/${spaceId}/experiments`),
-    },
-    {
-      label: "Analytics",
-      href: `/spaces/${spaceId}/analytics`,
-      active: pathname.startsWith(`/spaces/${spaceId}/analytics`),
-    },
-  ];
+    { label: "Testimonials", segment: "testimonials" },
+    { label: "Reviews", segment: "reviews" },
+    { label: "Collect", segment: "collect", badge: pendingCount },
+    { label: "Social", segment: "social" },
+    { label: "Widget", segment: "widget" },
+    { label: "Experiments", segment: "experiments" },
+    { label: "Analytics", segment: "analytics" },
+  ].map((tab) => ({
+    ...tab,
+    href: `/spaces/${spaceId}/${tab.segment}`,
+    active: pathname.startsWith(`/spaces/${spaceId}/${tab.segment}`),
+  }));
 
   function copyEmbedKey() {
     navigator.clipboard.writeText(embedKey);
@@ -74,71 +51,61 @@ export function SpaceNavTabs({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Link
-              href="/spaces"
-              className="text-xs font-medium text-muted-foreground hover:text-foreground"
-            >
-              Spaces
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0 space-y-1.5">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-text-muted">
+            <Link href="/spaces" className="inline-flex items-center gap-1 hover:text-text">
+              <Icon name="arrow-left" size="sm" /> Spaces
             </Link>
-            <span className="text-xs text-muted-foreground">/</span>
-            <span className="text-xs font-medium text-foreground">{spaceName}</span>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{spaceName}</h1>
+          </nav>
+          <h1 className="break-words text-2xl font-medium sm:text-3xl">{spaceName}</h1>
         </div>
 
-        {/* Embed Key copy badge */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Embed Key:</span>
-          <button
-            onClick={copyEmbedKey}
-            className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2.5 py-1 font-mono text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-accent"
-            title="Click to copy embed key"
-          >
-            <span>{embedKey}</span>
-            {copied ? (
-              <span className="text-[11px] font-semibold text-green-700">Copied!</span>
-            ) : (
-              <svg className="h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-            )}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={copyEmbedKey}
+          title="Click to copy embed key"
+          className="inline-flex max-w-full items-center gap-2 self-start rounded-pill border bg-surface px-3.5 py-2 text-xs transition-colors hover:bg-surface-sunken sm:self-auto"
+        >
+          <span className="shrink-0 text-text-muted">Embed key</span>
+          <span className="min-w-0 truncate font-mono">{embedKey}</span>
+          {copied ? (
+            <span className="shrink-0 text-success-foreground">Copied</span>
+          ) : (
+            <Icon name="copy" size="sm" className="text-text-subtle" />
+          )}
+        </button>
       </div>
 
-      {/* Sub-navigation tabs */}
-      <div className="border-b">
-        <nav className="-mb-px flex space-x-8">
+      {/* Scrolls horizontally on small screens instead of widening the page */}
+      <nav
+        aria-label="Space sections"
+        className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden"
+      >
+        <div className="inline-flex min-w-max items-center gap-1 rounded-pill bg-surface-sunken p-1">
           {tabs.map((tab) => (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`whitespace-nowrap border-b-2 py-3 text-sm font-medium transition-colors ${
+              aria-current={tab.active ? "page" : undefined}
+              className={cn(
+                "inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-pill px-4 text-sm font-medium transition-colors",
                 tab.active
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
-              }`}
+                  ? "bg-surface text-text shadow-sm"
+                  : "text-text-muted hover:text-text",
+              )}
             >
               {tab.label}
               {tab.badge !== null && tab.badge !== undefined && tab.badge > 0 && (
-                <span className="ml-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                <span className="rounded-pill bg-brand px-1.5 text-2xs font-medium text-text-on-accent">
                   {tab.badge}
                 </span>
               )}
             </Link>
           ))}
-        </nav>
-      </div>
+        </div>
+      </nav>
     </div>
   );
 }

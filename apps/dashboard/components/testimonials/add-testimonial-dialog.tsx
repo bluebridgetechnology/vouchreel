@@ -145,7 +145,7 @@ export function AddTestimonialDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-testimonial-title"
-        className="relative my-8 w-full max-w-2xl rounded-xl border bg-card p-6 shadow-2xl"
+        className="relative my-8 w-full max-w-2xl rounded-xl border bg-card p-4 sm:p-6 shadow-2xl"
       >
         {/* Close Button */}
         <button

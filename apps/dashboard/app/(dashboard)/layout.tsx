@@ -11,10 +11,12 @@ export default async function DashboardLayout({
   const session = await requireSession();
 
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
+    <div className="flex min-h-screen flex-col bg-canvas lg:flex-row">
       <DashboardMobileHeader user={session.user} />
       <DashboardSidebar user={session.user} />
-      <main className="min-w-0 flex-1 p-6 lg:p-8">{children}</main>
+      <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
+        <div className="mx-auto w-full max-w-6xl">{children}</div>
+      </main>
     </div>
   );
 }

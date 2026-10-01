@@ -169,7 +169,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
         <div className="lg:col-span-7 space-y-6">
           <form
             onSubmit={handleSaveSettings}
-            className="rounded-2xl border bg-card p-6 shadow-sm space-y-6"
+            className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm space-y-6"
           >
             <h3 className="text-base font-bold text-foreground">
               Branding & Export Settings
@@ -461,7 +461,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
       </div>
 
       {/* Space Export History */}
-      <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
+      <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-foreground">

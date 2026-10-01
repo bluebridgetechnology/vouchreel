@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Em } from "@/components/ui/em";
+import { Field } from "@/components/ui/field";
+import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -28,65 +34,56 @@ export default function ForgotPasswordPage() {
 
   if (submitted) {
     return (
-      <div className="space-y-6">
-        <div className="space-y-2 text-center">
-          <h1 className="text-2xl font-bold tracking-tight">Check your email</h1>
-          <p className="text-muted-foreground text-sm">
-            If an account exists for <strong>{email}</strong>, we&apos;ve sent
-            password reset instructions.
+      <Card padding="lg" className="space-y-5 text-center">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-pill bg-success-soft text-success-foreground">
+          <Icon name="check-circle" size="lg" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-medium">Check your email</h1>
+          <p className="text-sm text-text-muted">
+            If an account exists for <strong className="break-all font-medium text-text">{email}</strong>, we&apos;ve
+            sent password reset instructions.
           </p>
         </div>
-        <div className="text-center">
-          <Link
-            href="/login"
-            className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
-          >
-            Back to login
-          </Link>
-        </div>
-      </div>
+        <Button asChild variant="outline">
+          <Link href="/login">Back to login</Link>
+        </Button>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div className="space-y-2 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Reset password</h1>
-        <p className="text-muted-foreground text-sm">
-          Enter your email and we&apos;ll send reset instructions
-        </p>
+        <h1 className="text-4xl font-medium">
+          Reset <Em>password</Em>
+        </h1>
+        <p className="text-sm text-text-muted">Enter your email and we&apos;ll send reset instructions</p>
       </div>
 
-      <div className="rounded-lg border bg-card p-6 shadow-sm">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
-            </label>
-            <input
+      <Card padding="lg">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <Field label="Email" htmlFor="email">
+            <Input
               id="email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
-          </div>
+          </Field>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
-          >
+          <Button type="submit" size="lg" className="w-full" loading={loading}>
             {loading ? "Sending…" : "Send reset link"}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-text-muted">
         Remember your password?{" "}
-        <Link href="/login" className="hover:text-foreground underline-offset-4 hover:underline">
+        <Link href="/login" className="text-text underline-offset-4 hover:underline">
           Sign in
         </Link>
       </p>

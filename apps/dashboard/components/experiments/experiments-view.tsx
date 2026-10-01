@@ -364,7 +364,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
           </div>
 
           {/* Experiment Title & Header Card */}
-          <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -764,7 +764,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
       {/* Create Experiment Modal Dialog */}
       {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="w-full max-w-xl rounded-2xl border bg-card p-6 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-150 my-8">
+          <div className="w-full max-w-xl rounded-2xl border bg-card p-4 sm:p-6 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-150 my-8">
             <div className="flex items-center justify-between border-b pb-4">
               <div>
                 <h3 className="text-lg font-bold text-foreground">Create New Experiment</h3>

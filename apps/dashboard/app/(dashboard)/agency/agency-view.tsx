@@ -374,7 +374,7 @@ export function AgencyView({
       {/* Add Client Space Modal */}
       {showAddClientModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-xl space-y-4">
+          <div className="w-full max-w-md rounded-2xl border bg-card p-4 sm:p-6 shadow-xl space-y-4">
             <h3 className="text-lg font-bold">Add New Client Space</h3>
             <p className="text-sm text-muted-foreground">
               Create a dedicated workspace container for your client&apos;s video testimonials and embed widget.

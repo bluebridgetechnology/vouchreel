@@ -48,7 +48,7 @@ export default async function SettingsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* User Card */}
-        <div className="rounded-lg border bg-card p-6 space-y-3">
+        <div className="rounded-lg border bg-card p-4 sm:p-6 space-y-3">
           <h2 className="text-base font-semibold">User Profile</h2>
           <div className="text-sm space-y-1">
             <p className="text-muted-foreground">
@@ -61,7 +61,7 @@ export default async function SettingsPage() {
         </div>
 
         {/* Team Collaboration Card */}
-        <div className="rounded-lg border bg-card p-6 space-y-3">
+        <div className="rounded-lg border bg-card p-4 sm:p-6 space-y-3">
           <h2 className="text-base font-semibold">Team Collaboration</h2>
           <p className="text-sm text-muted-foreground">
             Invite editors and viewers to collaborate on spaces, testimonials, and widgets.
@@ -77,7 +77,7 @@ export default async function SettingsPage() {
         </div>
 
         {/* Developer Integrations Card */}
-        <div className="rounded-lg border bg-card p-6 space-y-3 md:col-span-2">
+        <div className="rounded-lg border bg-card p-4 sm:p-6 space-y-3 md:col-span-2">
           <h2 className="text-base font-semibold">Developer & API</h2>
           <p className="text-sm text-muted-foreground">
             Connect Vouchreel to Shopify, WordPress, Zapier, or your own custom backend services.

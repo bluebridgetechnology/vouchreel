@@ -306,7 +306,7 @@ export function SocialExportModal({
                 </div>
               ) : activeExport && (activeExport.status === "pending" || activeExport.status === "processing") ? (
                 /* Processing State */
-                <div className="rounded-2xl border bg-card p-8 text-center space-y-4">
+                <div className="rounded-2xl border bg-card p-5 sm:p-8 text-center space-y-4">
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <svg className="h-7 w-7 animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

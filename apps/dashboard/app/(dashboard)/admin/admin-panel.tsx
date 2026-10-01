@@ -77,7 +77,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
       )}
 
       {/* Payment Provider Selection */}
-      <div className="rounded-2xl border bg-card p-6 shadow-sm">
+      <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm">
         <h2 className="text-xl font-bold">Active Payment Provider</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Choose which payment processor is used for newly created checkout sessions.
@@ -156,7 +156,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
       </div>
 
       {/* Webhook Endpoints Info */}
-      <div className="rounded-2xl border bg-card p-6 shadow-sm space-y-4">
+      <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm space-y-4">
         <div>
           <h2 className="text-xl font-bold">Registered Webhook Endpoints</h2>
           <p className="mt-1 text-sm text-muted-foreground">

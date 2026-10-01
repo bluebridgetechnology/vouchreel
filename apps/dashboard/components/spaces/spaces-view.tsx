@@ -176,7 +176,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
           {spaces.map((space) => (
             <div
               key={space.id}
-              className="flex flex-col justify-between rounded-lg border bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+              className="flex flex-col justify-between rounded-lg border bg-card p-4 sm:p-6 shadow-sm transition-shadow hover:shadow-md"
             >
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-2">
@@ -300,7 +300,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
             aria-modal="true"
             aria-labelledby="rename-dialog-title"
             aria-describedby="rename-dialog-desc"
-            className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg"
+            className="w-full max-w-md rounded-lg border bg-card p-4 sm:p-6 shadow-lg"
           >
             <h2 id="rename-dialog-title" className="text-lg font-semibold">
               Rename Space
@@ -355,7 +355,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
             aria-modal="true"
             aria-labelledby="delete-dialog-title"
             aria-describedby="delete-dialog-desc"
-            className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg"
+            className="w-full max-w-md rounded-lg border bg-card p-4 sm:p-6 shadow-lg"
           >
             <h2 id="delete-dialog-title" className="text-lg font-semibold text-destructive">
               Delete Space
