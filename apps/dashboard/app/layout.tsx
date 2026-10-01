@@ -1,6 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { GeistSans, GeistMono } from "@/lib/fonts";
+import { fontSans, fontMono } from "@/lib/fonts";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -36,11 +37,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${GeistSans.variable} ${GeistMono.variable}`}
+      className={`${fontSans.variable} ${fontMono.variable}`}
       suppressHydrationWarning
     >
-      <body className="font-sans antialiased" suppressHydrationWarning>
-        {children}
+      <body suppressHydrationWarning>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

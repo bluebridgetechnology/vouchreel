@@ -1,28 +1,16 @@
-import localFont from "next/font/local";
+import { Outfit, JetBrains_Mono } from "next/font/google";
 
-export const GeistSans = localFont({
-  src: "../../../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+export const fontSans = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
 });
 
-// Mono is only used for small inline code snippets, so it must not be
-// preloaded on every page (70KB on the critical path otherwise).
-export const GeistMono = localFont({
-  src: "../../../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+// Mono is only used for code snippets, keys and chart labels, so it is not
+// preloaded on every page.
+export const fontMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
   preload: false,
-  adjustFontFallback: false,
-  fallback: [
-    "ui-monospace",
-    "SFMono-Regular",
-    "Roboto Mono",
-    "Menlo",
-    "Monaco",
-    "Liberation Mono",
-    "DejaVu Sans Mono",
-    "Courier New",
-    "monospace",
-  ],
 });
