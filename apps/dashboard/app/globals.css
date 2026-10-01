@@ -69,6 +69,10 @@
   --color-tint-cream: var(--tint-cream);
   --color-tint-foreground: var(--tint-foreground);
 
+  /* Media overlays: fixed in both themes (video scrims, on-video text) */
+  --color-scrim: var(--scrim);
+  --color-on-media: var(--on-media);
+
   /* Charts */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -102,6 +106,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-check: 0.375rem;
   --radius-control: 0.625rem;
   --radius-card: 1.25rem;
   --radius-panel: 1.75rem;
@@ -124,6 +129,8 @@
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1rem;
   --text-2xs--letter-spacing: 0.02em;
+  --text-3xs: 0.5625rem; /* widget-preview mock-ups only */
+  --text-3xs--line-height: 0.75rem;
   --text-xs: 0.75rem;
   --text-xs--line-height: 1.125rem;
   --text-sm: 0.875rem;
@@ -262,6 +269,9 @@
     --tint-peach: oklch(0.93 0.06 62);
     --tint-cream: oklch(0.96 0.035 92);
     --tint-foreground: var(--palette-ink-900);
+
+    --scrim: oklch(0 0 0);
+    --on-media: oklch(1 0 0);
 
     --chart-1: oklch(0.65 0.19 38);
     --chart-2: oklch(0.6 0.13 190);

@@ -106,9 +106,9 @@ export function TemplatePicker({
   ];
 
   return (
-    <div className="rounded-xl border bg-card p-4 sm:p-6 shadow-xs space-y-4">
+    <div className="rounded-card border bg-card p-4 sm:p-6 shadow-xs space-y-4">
       <div className="space-y-1">
-        <h3 className="text-base font-semibold text-foreground">
+        <h3 className="text-base font-medium text-foreground">
           Display Template
         </h3>
         <p className="text-xs text-muted-foreground">
@@ -125,7 +125,7 @@ export function TemplatePicker({
               key={tmpl.id}
               type="button"
               onClick={() => onChange(tmpl.id)}
-              className={`relative flex flex-col justify-between rounded-xl border p-4 text-left transition-all hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary ${
+              className={`relative flex flex-col justify-between rounded-card border p-4 text-left transition-all hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary ${
                 isSelected
                   ? "border-primary bg-primary/5 shadow-xs ring-1 ring-primary"
                   : "border-border bg-card/60"
@@ -134,7 +134,7 @@ export function TemplatePicker({
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div
-                    className={`rounded-lg p-2 ${
+                    className={`rounded-card p-2 ${
                       isSelected
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground"
@@ -143,14 +143,14 @@ export function TemplatePicker({
                     {tmpl.icon}
                   </div>
                   {tmpl.badge && (
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                    <span className="rounded-pill bg-primary/10 px-2 py-0.5 text-2xs font-medium text-primary">
                       {tmpl.badge}
                     </span>
                   )}
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-sm text-foreground">
+                  <h4 className="font-medium text-sm text-foreground">
                     {tmpl.title}
                   </h4>
                   <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
@@ -159,8 +159,8 @@ export function TemplatePicker({
                 </div>
               </div>
 
-              <div className="mt-3 pt-2 border-t flex items-center justify-between text-[11px]">
-                <span className={isSelected ? "font-semibold text-primary" : "text-muted-foreground"}>
+              <div className="mt-3 pt-2 border-t flex items-center justify-between text-2xs">
+                <span className={isSelected ? "font-medium text-primary" : "text-muted-foreground"}>
                   {isSelected ? "Active Template" : "Select Template"}
                 </span>
                 {isSelected && (

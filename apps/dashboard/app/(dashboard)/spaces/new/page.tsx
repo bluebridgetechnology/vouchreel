@@ -54,16 +54,16 @@ export default function NewSpacePage() {
       </div>
 
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight">Create a new space</h1>
+        <h1 className="text-2xl font-medium tracking-tight">Create a new space</h1>
         <p className="text-sm text-muted-foreground">
           Spaces organize your video testimonials for a specific website, product, or landing page.
         </p>
       </div>
 
-      <div className="rounded-lg border bg-card p-4 sm:p-6 shadow-sm">
+      <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="rounded-control bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
             </div>
           )}
@@ -78,7 +78,7 @@ export default function NewSpacePage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Marketing Website, SaaS Landing Page"
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-control border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               required
               autoFocus
             />
@@ -90,14 +90,14 @@ export default function NewSpacePage() {
           <div className="flex items-center justify-end gap-3 pt-2">
             <Link
               href="/spaces"
-              className="rounded-md border bg-background px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent"
+              className="rounded-control border bg-background px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent"
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={loading || !name.trim()}
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90 disabled:opacity-50"
             >
               {loading ? "Creating..." : "Create Space"}
             </button>

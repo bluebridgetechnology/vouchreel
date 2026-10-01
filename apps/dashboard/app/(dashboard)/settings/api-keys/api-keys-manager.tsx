@@ -106,7 +106,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
 
   if (spaces.length === 0) {
     return (
-      <div className="rounded-lg border p-6 text-center text-muted-foreground">
+      <div className="rounded-card border p-6 text-center text-muted-foreground">
         You need to create a Space first before generating API keys.
       </div>
     );
@@ -124,7 +124,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
             id="spaceSelect"
             value={selectedSpaceId}
             onChange={(e) => setSelectedSpaceId(e.target.value)}
-            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary"
+            className="rounded-control border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {spaces.map((s) => (
               <option key={s.id} value={s.id}>
@@ -139,26 +139,26 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
             setIsCreating(true);
             setCreatedRawKey(null);
           }}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center justify-center rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
         >
           + Generate New API Key
         </button>
       </div>
 
       {error && (
-        <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-control bg-destructive/10 p-4 text-sm text-destructive">
           {error}
         </div>
       )}
 
       {/* API Key Created Dialog / Banner */}
       {createdRawKey && (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-5 space-y-3">
+        <div className="rounded-card border border-success/30 bg-success-soft p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-emerald-800 dark:text-emerald-300">
+            <h3 className="font-medium text-success-foreground">
               API Key Generated Successfully
             </h3>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="text-xs font-medium text-success-foreground">
               Show Once
             </span>
           </div>
@@ -170,11 +170,11 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
               type="text"
               readOnly
               value={createdRawKey}
-              className="flex-1 font-mono text-xs bg-background border rounded px-3 py-2 select-all"
+              className="flex-1 font-mono text-xs bg-background border rounded-control px-3 py-2 select-all"
             />
             <button
               onClick={() => copyToClipboard(createdRawKey)}
-              className="px-3 py-2 rounded text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+              className="px-3 py-2 rounded-control text-xs font-medium bg-success text-text-on-accent hover:bg-success/90 transition"
             >
               {copied ? "Copied!" : "Copy"}
             </button>
@@ -184,8 +184,8 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
 
       {/* Creation Modal */}
       {isCreating && !createdRawKey && (
-        <div className="rounded-lg border bg-card p-4 sm:p-6 shadow-sm space-y-4">
-          <h3 className="font-semibold text-base">Generate New API Key</h3>
+        <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm space-y-4">
+          <h3 className="font-medium text-base">Generate New API Key</h3>
           <form onSubmit={handleCreateKey} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">
@@ -197,21 +197,21 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
                 value={keyName}
                 onChange={(e) => setKeyName(e.target.value)}
                 required
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full rounded-control border border-input bg-background px-3 py-2 text-sm"
               />
             </div>
             <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setIsCreating(false)}
-                className="px-3 py-1.5 rounded text-sm font-medium border hover:bg-accent"
+                className="px-3 py-1.5 rounded-control text-sm font-medium border hover:bg-accent"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-1.5 rounded text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
+                className="px-4 py-1.5 rounded-control text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {loading ? "Generating..." : "Generate"}
               </button>
@@ -221,7 +221,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
       )}
 
       {/* Keys List */}
-      <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="rounded-card border bg-card overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="border-b bg-muted/50 text-xs font-medium text-muted-foreground">
             <tr>

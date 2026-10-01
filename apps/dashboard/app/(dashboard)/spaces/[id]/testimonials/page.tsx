@@ -222,7 +222,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
       {/* Header bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-foreground">
+          <h2 className="text-xl font-medium tracking-tight text-foreground">
             Testimonials
           </h2>
           <p className="text-xs text-muted-foreground">
@@ -233,7 +233,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
         <button
           type="button"
           onClick={openAddDialog}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow transition-colors hover:bg-primary/90"
+          className="inline-flex items-center justify-center gap-2 rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
@@ -243,7 +243,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
       </div>
 
       {error && (
-        <div className="rounded-md bg-destructive/10 p-4 text-xs text-destructive">
+        <div className="rounded-control bg-destructive/10 p-4 text-xs text-destructive">
           {error}
         </div>
       )}
@@ -254,14 +254,14 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="h-28 animate-pulse rounded-xl border bg-muted/40 p-4"
+              className="h-28 animate-pulse rounded-card border bg-muted/40 p-4"
             />
           ))}
         </div>
       ) : testimonials.length === 0 ? (
         /* Empty State */
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+        <div className="flex flex-col items-center justify-center rounded-card border border-dashed p-12 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-pill bg-muted">
             <svg
               className="h-6 w-6 text-muted-foreground"
               fill="none"
@@ -276,14 +276,14 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
               />
             </svg>
           </div>
-          <h3 className="mt-4 text-base font-semibold">No testimonials yet</h3>
+          <h3 className="mt-4 text-base font-medium">No testimonials yet</h3>
           <p className="mt-1 max-w-sm text-xs text-muted-foreground">
             Paste a YouTube, Vimeo, or MP4 link to add your first customer testimonial.
           </p>
           <button
             type="button"
             onClick={openAddDialog}
-            className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90"
+            className="mt-6 inline-flex items-center justify-center rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
           >
             Add your first testimonial
           </button>
@@ -368,12 +368,12 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
           aria-modal="true"
           aria-labelledby="delete-testimonial-title"
           aria-describedby="delete-testimonial-desc"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/60 p-4"
         >
-          <div className="w-full max-w-md rounded-xl border bg-card p-4 sm:p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-card border bg-card p-4 sm:p-6 shadow-float">
             <h3
               id="delete-testimonial-title"
-              className="text-lg font-bold text-destructive"
+              className="text-lg font-medium text-destructive"
             >
               Delete Testimonial
             </h3>
@@ -384,7 +384,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
               Are you sure you want to delete this testimonial? It will no longer be displayed in your website widget.
             </p>
             {deletingTestimonial.title && (
-              <p className="mt-2 rounded-md bg-muted p-2 font-medium text-xs text-foreground">
+              <p className="mt-2 rounded-control bg-muted p-2 font-medium text-xs text-foreground">
                 {deletingTestimonial.title}
               </p>
             )}
@@ -393,7 +393,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
                 type="button"
                 onClick={closeDeleteDialog}
                 autoFocus
-                className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+                className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
               >
                 Cancel
               </button>
@@ -401,7 +401,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleteLoading}
-                className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                className="rounded-control bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
               >
                 {deleteLoading ? "Deleting..." : "Delete Testimonial"}
               </button>

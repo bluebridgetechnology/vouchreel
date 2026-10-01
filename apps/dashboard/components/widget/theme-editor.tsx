@@ -1,28 +1,13 @@
 "use client";
 
 import { WidgetTheme } from "@/lib/validations/widget-config";
+import { DEFAULT_BRAND_HEX } from "@/lib/brand";
+import { ACCENT_COLOR_PRESETS, PRIMARY_COLOR_PRESETS } from "@/lib/widget-presets";
 
 interface ThemeEditorProps {
   value: WidgetTheme;
   onChange: (theme: WidgetTheme) => void;
 }
-
-const PRIMARY_COLOR_PRESETS = [
-  { name: "Indigo", hex: "#6366f1" },
-  { name: "Blue", hex: "#3b82f6" },
-  { name: "Emerald", hex: "#10b981" },
-  { name: "Violet", hex: "#8b5cf6" },
-  { name: "Rose", hex: "#f43f5e" },
-  { name: "Amber", hex: "#f59e0b" },
-  { name: "Dark Slate", hex: "#0f172a" },
-];
-
-const ACCENT_COLOR_PRESETS = [
-  { name: "White", hex: "#ffffff" },
-  { name: "Light Slate", hex: "#f8fafc" },
-  { name: "Soft Zinc", hex: "#f4f4f5" },
-  { name: "Dark Slate", hex: "#0f172a" },
-];
 
 const RADIUS_PRESETS = [
   { label: "Sharp (0px)", value: 0 },
@@ -64,13 +49,13 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-sm font-semibold text-foreground">Theme & Branding</h3>
+        <h3 className="text-sm font-medium text-foreground">Theme & Branding</h3>
         <p className="text-xs text-muted-foreground">
           Customize colors, light/dark mode, and shape to match your brand identity.
         </p>
       </div>
 
-      <div className="space-y-5 rounded-xl border bg-card p-4 sm:p-5">
+      <div className="space-y-5 rounded-card border bg-card p-4 sm:p-5">
         {/* Colors Row */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {/* Primary Color */}
@@ -78,16 +63,16 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
             <div className="flex items-center justify-between">
               <label
                 htmlFor="widget-primary-hex"
-                className="text-xs font-semibold text-foreground"
+                className="text-xs font-medium text-foreground"
               >
                 Primary Brand Color
               </label>
-              <span className="font-mono text-[11px] text-muted-foreground">
+              <span className="font-mono text-2xs text-muted-foreground">
                 {value.primaryColor}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border shadow-sm">
+              <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-control border shadow-sm">
                 <input
                   type="color"
                   value={value.primaryColor}
@@ -101,8 +86,8 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
                 type="text"
                 value={value.primaryColor}
                 onChange={(e) => handlePrimaryChange(e.target.value)}
-                placeholder="#4f46e5"
-                className="w-full rounded-md border bg-background px-3 py-1.5 font-mono text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder={DEFAULT_BRAND_HEX}
+                className="w-full rounded-control border bg-background px-3 py-1.5 font-mono text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
 
@@ -114,7 +99,7 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
                   type="button"
                   title={preset.name}
                   onClick={() => handlePrimaryChange(preset.hex)}
-                  className={`h-5 w-5 rounded-full border transition-transform ${
+                  className={`h-5 w-5 rounded-pill border transition-transform ${
                     value.primaryColor.toLowerCase() === preset.hex.toLowerCase()
                       ? "scale-110 ring-2 ring-primary ring-offset-1"
                       : "hover:scale-105"
@@ -130,16 +115,16 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
             <div className="flex items-center justify-between">
               <label
                 htmlFor="widget-accent-hex"
-                className="text-xs font-semibold text-foreground"
+                className="text-xs font-medium text-foreground"
               >
                 Accent / Text Color
               </label>
-              <span className="font-mono text-[11px] text-muted-foreground">
+              <span className="font-mono text-2xs text-muted-foreground">
                 {value.accentColor}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border shadow-sm">
+              <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-control border shadow-sm">
                 <input
                   type="color"
                   value={value.accentColor}
@@ -153,8 +138,8 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
                 type="text"
                 value={value.accentColor}
                 onChange={(e) => handleAccentChange(e.target.value)}
-                placeholder="#ffffff"
-                className="w-full rounded-md border bg-background px-3 py-1.5 font-mono text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder={ACCENT_COLOR_PRESETS[0].hex}
+                className="w-full rounded-control border bg-background px-3 py-1.5 font-mono text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
 
@@ -166,7 +151,7 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
                   type="button"
                   title={preset.name}
                   onClick={() => handleAccentChange(preset.hex)}
-                  className={`h-5 w-5 rounded-full border transition-transform ${
+                  className={`h-5 w-5 rounded-pill border transition-transform ${
                     value.accentColor.toLowerCase() === preset.hex.toLowerCase()
                       ? "scale-110 ring-2 ring-primary ring-offset-1"
                       : "hover:scale-105"
@@ -184,14 +169,14 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {/* Light / Dark Mode Toggle */}
           <div className="space-y-2">
-            <span id="display-mode-label" className="text-xs font-semibold text-foreground">
+            <span id="display-mode-label" className="text-xs font-medium text-foreground">
               Display Mode
             </span>
             <div role="group" aria-labelledby="display-mode-label" className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => handleModeChange("light")}
-                className={`flex items-center justify-center gap-2 rounded-lg border py-2 text-xs font-medium transition-all ${
+                className={`flex items-center justify-center gap-2 rounded-card border py-2 text-xs font-medium transition-all ${
                   value.mode === "light"
                     ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
                     : "border-border bg-background text-muted-foreground hover:bg-muted"
@@ -206,7 +191,7 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
               <button
                 type="button"
                 onClick={() => handleModeChange("dark")}
-                className={`flex items-center justify-center gap-2 rounded-lg border py-2 text-xs font-medium transition-all ${
+                className={`flex items-center justify-center gap-2 rounded-card border py-2 text-xs font-medium transition-all ${
                   value.mode === "dark"
                     ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
                     : "border-border bg-background text-muted-foreground hover:bg-muted"
@@ -218,7 +203,7 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
                 Dark Mode
               </button>
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               Controls card surfaces, backgrounds, and contrast inside video modals.
             </p>
           </div>
@@ -228,11 +213,11 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
             <div className="flex items-center justify-between">
               <label
                 htmlFor="widget-border-radius"
-                className="text-xs font-semibold text-foreground"
+                className="text-xs font-medium text-foreground"
               >
                 Corner Radius
               </label>
-              <span className="rounded bg-muted px-2 py-0.5 font-mono text-[11px] font-semibold text-foreground">
+              <span className="rounded-control bg-muted px-2 py-0.5 font-mono text-2xs font-medium text-foreground">
                 {value.borderRadius}px
               </span>
             </div>
@@ -255,7 +240,7 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
                     key={preset.value}
                     type="button"
                     onClick={() => handleRadiusChange(preset.value)}
-                    className={`rounded-md border px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                    className={`rounded-control border px-2 py-0.5 text-2xs font-medium transition-colors ${
                       value.borderRadius === preset.value
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border bg-background text-muted-foreground hover:bg-muted"

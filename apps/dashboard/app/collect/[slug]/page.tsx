@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, use, useEffect, useRef, useState } from "react";
+import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 const MAX_DURATION_SECONDS = 5 * 60;
@@ -150,38 +151,38 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
   if (loading) return <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6 text-sm text-muted-foreground">Loading collection form…</main>;
   if (!form) return <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6 text-sm text-muted-foreground">{error || "Collection form not found."}</main>;
 
-  const accent = form.branding.accentColor || "#7c3aed";
+  const accent = form.branding.accentColor || DEFAULT_BRAND_HEX;
   if (complete) return (
     <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6">
-      <section className="w-full rounded-2xl border bg-card p-5 sm:p-8 text-center shadow-sm">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-xl text-emerald-700">✓</div>
-        <h1 className="text-2xl font-bold">Thank you for sharing!</h1>
+      <section className="w-full rounded-card border bg-card p-5 sm:p-8 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-pill bg-success-soft text-xl text-success-foreground">✓</div>
+        <h1 className="text-2xl font-medium">Thank you for sharing!</h1>
         <p className="mt-2 text-sm text-muted-foreground">Your testimonial has been sent for review.</p>
-        {form.incentiveType !== "none" && form.incentiveValue && <p className="mt-5 rounded-lg bg-muted p-3 text-sm font-medium">{form.incentiveValue}</p>}
+        {form.incentiveType !== "none" && form.incentiveValue && <p className="mt-5 rounded-card bg-muted p-3 text-sm font-medium">{form.incentiveValue}</p>}
       </section>
     </main>
   );
 
   return (
     <main className="min-h-screen bg-muted/30 px-4 py-10 sm:py-16">
-      <section className="mx-auto max-w-xl rounded-2xl border bg-card p-4 sm:p-6 shadow-sm sm:p-8">
+      <section className="mx-auto max-w-xl rounded-card border bg-card p-4 sm:p-6 shadow-sm sm:p-8">
         {form.branding.logoUrl && <img className="mb-5 h-10 max-w-48 object-contain" src={form.branding.logoUrl} alt="" />}
-        <h1 className="text-2xl font-bold tracking-tight">{form.title}</h1>
+        <h1 className="text-2xl font-medium tracking-tight">{form.title}</h1>
         <p className="mt-3 whitespace-pre-wrap text-muted-foreground">{form.promptText}</p>
-        {error && <p role="alert" className="mt-5 rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+        {error && <p role="alert" className="mt-5 rounded-control bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
         <form onSubmit={submit} className="mt-7 space-y-5">
-          <div className="grid grid-cols-2 rounded-lg border p-1">
-            {(["video", "text"] as const).map((value) => <button key={value} type="button" onClick={() => { setMode(value); setError(null); }} className={`rounded-md py-2 text-sm font-medium ${mode === value ? "text-white shadow-sm" : "text-muted-foreground"}`} style={mode === value ? { backgroundColor: accent } : undefined}>{value === "video" ? "Video" : "Written"}</button>)}
+          <div className="grid grid-cols-2 rounded-card border p-1">
+            {(["video", "text"] as const).map((value) => <button key={value} type="button" onClick={() => { setMode(value); setError(null); }} className={`rounded-control py-2 text-sm font-medium ${mode === value ? "text-on-media shadow-sm" : "text-muted-foreground"}`} style={mode === value ? { backgroundColor: accent } : undefined}>{value === "video" ? "Video" : "Written"}</button>)}
           </div>
-          {mode === "video" ? <div className="space-y-3 rounded-xl border border-dashed p-4">
-            {previewUrl ? <><video className="aspect-video w-full rounded-lg bg-black" controls src={previewUrl} onLoadedMetadata={(event) => { if (event.currentTarget.duration > MAX_DURATION_SECONDS) { setVideo(null); setPreviewUrl(null); setError("Videos must be five minutes or less."); } }} /><button type="button" onClick={() => { setVideo(null); setPreviewUrl(null); }} className="text-sm font-medium" style={{ color: accent }}>Choose another video</button></> : <>
+          {mode === "video" ? <div className="space-y-3 rounded-card border border-dashed p-4">
+            {previewUrl ? <><video className="aspect-video w-full rounded-card bg-scrim" controls src={previewUrl} onLoadedMetadata={(event) => { if (event.currentTarget.duration > MAX_DURATION_SECONDS) { setVideo(null); setPreviewUrl(null); setError("Videos must be five minutes or less."); } }} /><button type="button" onClick={() => { setVideo(null); setPreviewUrl(null); }} className="text-sm font-medium" style={{ color: accent }}>Choose another video</button></> : <>
               <p className="text-sm text-muted-foreground">Record up to 5 minutes, or upload an MP4, WebM, MOV, or AVI under 100 MB.</p>
-              <div className="flex flex-wrap gap-3"><button type="button" onClick={recording ? stopRecording : startRecording} className="rounded-md px-4 py-2 text-sm font-semibold text-white" style={{ backgroundColor: accent }}>{recording ? `Stop recording (${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")})` : "Record with camera"}</button><label className="cursor-pointer rounded-md border px-4 py-2 text-sm font-semibold">Upload video<input className="sr-only" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-msvideo" onChange={(event) => event.target.files?.[0] && setPreview(event.target.files[0])} /></label></div>
+              <div className="flex flex-wrap gap-3"><button type="button" onClick={recording ? stopRecording : startRecording} className="rounded-control px-4 py-2 text-sm font-medium text-on-media" style={{ backgroundColor: accent }}>{recording ? `Stop recording (${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")})` : "Record with camera"}</button><label className="cursor-pointer rounded-control border px-4 py-2 text-sm font-medium">Upload video<input className="sr-only" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-msvideo" onChange={(event) => event.target.files?.[0] && setPreview(event.target.files[0])} /></label></div>
             </>}
-          </div> : <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={5000} rows={7} placeholder="Write your testimonial…" className="w-full rounded-md border bg-background p-3 text-sm outline-none focus:ring-2" style={{ "--tw-ring-color": accent } as React.CSSProperties} />}
-          <div className="grid gap-4 sm:grid-cols-2"><label className="space-y-1 text-sm font-medium">Your name<input required value={name} onChange={(event) => setName(event.target.value)} maxLength={100} className="w-full rounded-md border bg-background px-3 py-2 text-sm" /></label><label className="space-y-1 text-sm font-medium">Email address<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={200} className="w-full rounded-md border bg-background px-3 py-2 text-sm" /></label></div>
-          {progress !== null && <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full transition-all" style={{ width: `${progress}%`, backgroundColor: accent }} /></div>}
-          <button disabled={submitting} className="w-full rounded-md px-4 py-3 text-sm font-semibold text-white disabled:opacity-60" style={{ backgroundColor: accent }}>{submitting ? (progress !== null ? `Uploading ${progress}%…` : "Submitting…") : "Submit testimonial"}</button>
+          </div> : <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={5000} rows={7} placeholder="Write your testimonial…" className="w-full rounded-control border bg-background p-3 text-sm outline-none focus:ring-2" style={{ "--tw-ring-color": accent } as React.CSSProperties} />}
+          <div className="grid gap-4 sm:grid-cols-2"><label className="space-y-1 text-sm font-medium">Your name<input required value={name} onChange={(event) => setName(event.target.value)} maxLength={100} className="w-full rounded-control border bg-background px-3 py-2 text-sm" /></label><label className="space-y-1 text-sm font-medium">Email address<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={200} className="w-full rounded-control border bg-background px-3 py-2 text-sm" /></label></div>
+          {progress !== null && <div className="h-2 overflow-hidden rounded-pill bg-muted"><div className="h-full transition-all" style={{ width: `${progress}%`, backgroundColor: accent }} /></div>}
+          <button disabled={submitting} className="w-full rounded-control px-4 py-3 text-sm font-medium text-on-media disabled:opacity-60" style={{ backgroundColor: accent }}>{submitting ? (progress !== null ? `Uploading ${progress}%…` : "Submitting…") : "Submit testimonial"}</button>
         </form>
         {!form.branding?.removeBranding && (
           <div className="mt-8 text-center text-xs text-muted-foreground">
@@ -190,7 +191,7 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
               href="https://vouchreel.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold underline hover:text-foreground"
+              className="font-medium underline hover:text-foreground"
             >
               Vouchreel
             </a>

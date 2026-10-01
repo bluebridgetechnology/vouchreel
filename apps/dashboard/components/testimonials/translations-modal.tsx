@@ -166,13 +166,13 @@ export function TranslationsModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="translations-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/60 p-4 backdrop-blur-sm"
     >
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl border bg-card shadow-2xl overflow-hidden">
+      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-card border bg-card shadow-float overflow-hidden">
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-control bg-primary/10 text-primary">
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -183,7 +183,7 @@ export function TranslationsModal({
               </svg>
             </div>
             <div>
-              <h3 id="translations-modal-title" className="text-base font-bold text-foreground">
+              <h3 id="translations-modal-title" className="text-base font-medium text-foreground">
                 Multi-Language Captions & Translations
               </h3>
               <p className="text-xs text-muted-foreground">
@@ -196,7 +196,7 @@ export function TranslationsModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="rounded-card p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             aria-label="Close dialog"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,7 +209,7 @@ export function TranslationsModal({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Notification Banners */}
           {error && (
-            <div className="rounded-lg bg-destructive/10 p-3 text-xs text-destructive flex items-center gap-2">
+            <div className="rounded-card bg-destructive/10 p-3 text-xs text-destructive flex items-center gap-2">
               <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -218,7 +218,7 @@ export function TranslationsModal({
           )}
 
           {successMessage && (
-            <div className="rounded-lg bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+            <div className="rounded-card bg-success-soft p-3 text-xs text-success-foreground flex items-center gap-2">
               <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
@@ -227,12 +227,12 @@ export function TranslationsModal({
           )}
 
           {/* Source Content Preview */}
-          <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+          <div className="rounded-card border bg-muted/30 p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-primary/10 px-2.5 py-0.5 text-2xs font-medium text-primary">
                 <span>🇺🇸</span> English [Source]
               </span>
-              <span className="text-[11px] text-muted-foreground">Original Text</span>
+              <span className="text-2xs text-muted-foreground">Original Text</span>
             </div>
             {testimonial.quote ? (
               <p className="text-xs italic text-foreground">"{testimonial.quote}"</p>
@@ -242,8 +242,8 @@ export function TranslationsModal({
           </div>
 
           {/* Action: Auto-translate New Language */}
-          <div className="rounded-xl border p-4 bg-card space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="rounded-card border p-4 bg-card space-y-3">
+            <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Add or Refresh Translation
             </h4>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -251,7 +251,7 @@ export function TranslationsModal({
                 value={targetLang}
                 onChange={(e) => setTargetLang(e.target.value)}
                 disabled={translating}
-                className="flex-1 rounded-md border bg-background px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex-1 rounded-control border bg-background px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {SUPPORTED_LANGUAGES.map((lang) => {
                   const alreadyCached = translations.some((t) => t.language.toLowerCase() === lang.code);
@@ -267,7 +267,7 @@ export function TranslationsModal({
                 type="button"
                 onClick={handleAutoTranslate}
                 disabled={translating}
-                className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow transition hover:bg-primary/90 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1.5 rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs transition hover:bg-primary/90 disabled:opacity-50"
               >
                 {translating ? (
                   <>
@@ -296,7 +296,7 @@ export function TranslationsModal({
                 )}
               </button>
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               Translations are generated via configured translation adapters (DeepL, Google Translate, or Mock) and cached in the database for instant visitor delivery.
             </p>
           </div>
@@ -304,15 +304,15 @@ export function TranslationsModal({
           {/* Cached Translations Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Available Cached Translations ({translations.length})
               </h4>
             </div>
 
             {loading ? (
-              <div className="h-16 animate-pulse rounded-lg bg-muted/40" />
+              <div className="h-16 animate-pulse rounded-control bg-muted/40" />
             ) : translations.length === 0 ? (
-              <div className="rounded-lg border border-dashed p-6 text-center text-xs text-muted-foreground">
+              <div className="rounded-card border border-dashed p-6 text-center text-xs text-muted-foreground">
                 No translations generated yet. Choose a language above and click "Auto-translate".
               </div>
             ) : (
@@ -327,9 +327,9 @@ export function TranslationsModal({
                         key={item.id}
                         type="button"
                         onClick={() => setSelectedLang(item.language)}
-                        className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+                        className={`inline-flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-xs font-medium transition-all ${
                           isSelected
-                            ? "border-primary bg-primary/10 text-primary font-semibold shadow-sm"
+                            ? "border-primary bg-primary/10 text-primary font-medium shadow-sm"
                             : "border-border bg-card text-foreground hover:bg-accent"
                         }`}
                       >
@@ -342,27 +342,27 @@ export function TranslationsModal({
 
                 {/* Selected Translation Detail & Preview */}
                 {activeTranslation && (
-                  <div className="rounded-xl border bg-card p-4 space-y-4">
+                  <div className="rounded-card border bg-card p-4 space-y-4">
                     <div className="flex items-center justify-between border-b pb-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-xs text-foreground uppercase">
+                        <span className="font-medium text-xs text-foreground uppercase">
                           {activeTranslation.language} Translation
                         </span>
-                        <span className="rounded bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+                        <span className="rounded-control bg-muted px-2 py-0.5 text-2xs font-mono text-muted-foreground">
                           Provider: {activeTranslation.provider}
                         </span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-2xs text-muted-foreground">
                         Cached: {new Date(activeTranslation.createdAt).toLocaleDateString()}
                       </span>
                     </div>
 
                     {/* Translated Quote */}
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-muted-foreground">
+                      <label className="text-2xs font-medium text-muted-foreground">
                         Translated Quote
                       </label>
-                      <div className="rounded-md bg-muted/40 p-3 text-xs italic text-foreground">
+                      <div className="rounded-control bg-muted/40 p-3 text-xs italic text-foreground">
                         "{activeTranslation.quote || 'No translated quote'}"
                       </div>
                     </div>
@@ -372,13 +372,13 @@ export function TranslationsModal({
                     Array.isArray(activeTranslation.transcript) &&
                     activeTranslation.transcript.length > 0 ? (
                       <div className="space-y-2">
-                        <label className="text-[11px] font-medium text-muted-foreground">
+                        <label className="text-2xs font-medium text-muted-foreground">
                           Subtitle Cues ({activeTranslation.transcript.length})
                         </label>
-                        <div className="max-h-40 overflow-y-auto rounded-md border divide-y text-xs">
+                        <div className="max-h-40 overflow-y-auto rounded-control border divide-y text-xs">
                           {activeTranslation.transcript.map((cue, idx) => (
                             <div key={idx} className="flex items-start gap-3 p-2 bg-background hover:bg-muted/30">
-                              <span className="font-mono text-[10px] text-muted-foreground pt-0.5 whitespace-nowrap">
+                              <span className="font-mono text-2xs text-muted-foreground pt-0.5 whitespace-nowrap">
                                 {formatTime(cue.start)} - {formatTime(cue.end)}
                               </span>
                               <span className="text-foreground">{cue.text}</span>
@@ -387,7 +387,7 @@ export function TranslationsModal({
                         </div>
                       </div>
                     ) : (
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-2xs text-muted-foreground">
                         No subtitle cues stored for this testimonial.
                       </p>
                     )}
@@ -403,7 +403,7 @@ export function TranslationsModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border bg-background px-4 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
+            className="rounded-control border bg-background px-4 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
           >
             Done
           </button>

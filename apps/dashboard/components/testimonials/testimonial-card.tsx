@@ -69,7 +69,7 @@ export function TestimonialCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md sm:flex-row sm:items-start ${
+      className={`group relative flex flex-col gap-4 rounded-card border bg-card p-4 shadow-sm transition-all hover:shadow-card sm:flex-row sm:items-start ${
         !testimonial.isActive ? "opacity-75 bg-muted/20" : ""
       }`}
     >
@@ -93,7 +93,7 @@ export function TestimonialCard({
       </button>
 
       {/* Video Thumbnail */}
-      <div className="relative aspect-video w-full flex-shrink-0 overflow-hidden rounded-lg border bg-muted sm:w-44">
+      <div className="relative aspect-video w-full flex-shrink-0 overflow-hidden rounded-card border bg-muted sm:w-44">
         {testimonial.thumbnailUrl ? (
           <img
             src={testimonial.thumbnailUrl}
@@ -107,13 +107,13 @@ export function TestimonialCard({
         )}
 
         {/* Platform badge */}
-        <span className="absolute left-1.5 top-1.5 rounded bg-black/75 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">
+        <span className="absolute left-1.5 top-1.5 rounded-control bg-scrim/75 px-1.5 py-0.5 text-3xs font-medium uppercase tracking-wider text-on-media">
           {testimonial.platform}
         </span>
 
         {/* Duration badge */}
         {testimonial.durationSeconds && (
-          <span className="absolute bottom-1.5 right-1.5 rounded bg-black/80 px-1.5 py-0.5 font-mono text-[10px] text-white">
+          <span className="absolute bottom-1.5 right-1.5 rounded-control bg-scrim/80 px-1.5 py-0.5 font-mono text-2xs text-on-media">
             {formatDuration(testimonial.durationSeconds)}
           </span>
         )}
@@ -123,15 +123,15 @@ export function TestimonialCard({
       <div className="flex flex-1 flex-col justify-between space-y-2">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="text-base font-semibold text-foreground">
+            <h4 className="text-base font-medium text-foreground">
               {testimonial.title || "Video Testimonial"}
             </h4>
 
             {/* Status Badge */}
             <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+              className={`rounded-pill px-2 py-0.5 text-2xs font-medium uppercase tracking-wider ${
                 testimonial.isActive
-                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                  ? "bg-success-soft text-success-foreground"
                   : "bg-muted text-muted-foreground"
               }`}
             >
@@ -139,7 +139,7 @@ export function TestimonialCard({
             </span>
 
             {/* AI Auto-Clipping Placeholder Badge */}
-            <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-violet-600 dark:text-violet-400">
+            <span className="inline-flex items-center gap-1 rounded-pill bg-brand-soft px-2.5 py-0.5 text-2xs font-medium text-brand">
               <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -174,7 +174,7 @@ export function TestimonialCard({
           {/* Tags & Contextual matching */}
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
             {/* Contextual match indicator */}
-            <span className="inline-flex items-center gap-1 rounded bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-control bg-muted/60 px-2 py-0.5 text-2xs font-medium text-muted-foreground">
               <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -193,7 +193,7 @@ export function TestimonialCard({
               testimonial.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded bg-secondary/80 px-2 py-0.5 text-[10px] font-medium text-secondary-foreground"
+                  className="rounded-control bg-secondary/80 px-2 py-0.5 text-2xs font-medium text-secondary-foreground"
                 >
                   #{tag}
                 </span>
@@ -217,7 +217,7 @@ export function TestimonialCard({
               <button
                 type="button"
                 onClick={() => onExportSocial(testimonial)}
-                className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+                className="inline-flex items-center gap-1 rounded-control px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
               >
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -229,7 +229,7 @@ export function TestimonialCard({
               <button
                 type="button"
                 onClick={() => onManageTranslations(testimonial)}
-                className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent transition-colors"
+                className="inline-flex items-center gap-1 rounded-control px-2.5 py-1 text-xs font-medium text-foreground hover:bg-accent transition-colors"
                 title="Manage multi-language captions & translations"
               >
                 <svg className="h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,14 +241,14 @@ export function TestimonialCard({
             <button
               type="button"
               onClick={() => onEdit(testimonial)}
-              className="rounded-md px-2.5 py-1 text-xs font-medium text-foreground hover:bg-accent"
+              className="rounded-control px-2.5 py-1 text-xs font-medium text-foreground hover:bg-accent"
             >
               Edit
             </button>
             <button
               type="button"
               onClick={() => onDelete(testimonial)}
-              className="rounded-md px-2.5 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
+              className="rounded-control px-2.5 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
             >
               Delete
             </button>

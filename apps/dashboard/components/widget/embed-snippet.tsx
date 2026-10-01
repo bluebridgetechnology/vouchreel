@@ -101,31 +101,31 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-foreground">Embed on Your Website</h3>
+        <h3 className="text-sm font-medium text-foreground">Embed on Your Website</h3>
         <p className="text-xs text-muted-foreground">
           Copy and paste this lightweight script tag onto your website to start displaying your widget.
         </p>
       </div>
 
-      <div className="space-y-5 rounded-xl border bg-card p-4 sm:p-5">
+      <div className="space-y-5 rounded-card border bg-card p-4 sm:p-5">
         {/* Code Box */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-foreground">
+            <span className="text-xs font-medium text-foreground">
               Script Snippet
             </span>
             {copied && (
-              <span className="text-xs font-semibold text-emerald-700 animate-fade-in">
+              <span className="text-xs font-medium text-success-foreground animate-fade-in">
                 ✓ Copied to clipboard!
               </span>
             )}
           </div>
 
-          <div className="relative flex items-center rounded-lg border bg-neutral-950 p-3 font-mono text-xs text-neutral-100 shadow-inner">
+          <div className="relative flex items-center rounded-card border bg-surface-inverse p-3 font-mono text-xs text-text-inverse">
             <code
               tabIndex={0}
               aria-label="Embed script snippet"
-              className="block flex-1 overflow-x-auto pr-16 select-all font-mono text-[11px] leading-relaxed text-emerald-400"
+              className="block flex-1 overflow-x-auto pr-16 select-all font-mono text-2xs leading-relaxed text-success"
             >
               {snippet}
             </code>
@@ -133,7 +133,7 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
             <button
               type="button"
               onClick={handleCopy}
-              className="absolute right-2 rounded-md bg-neutral-800 px-3 py-1.5 text-xs font-semibold text-neutral-100 shadow hover:bg-neutral-700 active:scale-95 transition-all"
+              className="absolute right-2 rounded-control bg-text-inverse/10 px-3 py-1.5 text-xs font-medium text-text-inverse shadow-xs hover:bg-text-inverse/20 active:scale-95 transition-all"
             >
               {copied ? "Copied!" : "Copy Code"}
             </button>
@@ -145,7 +145,7 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
         {/* Platform Guides */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-foreground">
+            <label className="text-xs font-medium text-foreground">
               Installation Guides by Platform
             </label>
           </div>
@@ -157,9 +157,9 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
                 key={platform.id}
                 type="button"
                 onClick={() => setSelectedPlatform(platform.id)}
-                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                className={`rounded-control px-2.5 py-1 text-xs font-medium transition-colors ${
                   selectedPlatform === platform.id
-                    ? "border border-primary bg-primary/10 text-primary font-semibold"
+                    ? "border border-primary bg-primary/10 text-primary font-medium"
                     : "border border-border bg-background text-muted-foreground hover:bg-muted"
                 }`}
               >
@@ -169,8 +169,8 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
           </div>
 
           {/* Step by step list */}
-          <div className="rounded-lg border bg-muted/20 p-3.5 space-y-2">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+          <div className="rounded-card border bg-muted/20 p-3.5 space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
               <span>Steps for {activeGuide.name}</span>
             </div>
 

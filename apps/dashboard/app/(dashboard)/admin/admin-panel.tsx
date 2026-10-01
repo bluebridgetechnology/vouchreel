@@ -66,9 +66,9 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
       {message && (
         <div
           role="status"
-          className={`rounded-lg border p-4 text-sm ${
+          className={`rounded-card border p-4 text-sm ${
             message.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/50 dark:bg-emerald-950/50 dark:text-emerald-300"
+              ? "border-success/30 bg-success-soft text-success-foreground"
               : "border-destructive/20 bg-destructive/10 text-destructive"
           }`}
         >
@@ -77,8 +77,8 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
       )}
 
       {/* Payment Provider Selection */}
-      <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm">
-        <h2 className="text-xl font-bold">Active Payment Provider</h2>
+      <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm">
+        <h2 className="text-xl font-medium">Active Payment Provider</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Choose which payment processor is used for newly created checkout sessions.
         </p>
@@ -86,7 +86,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Stripe Option */}
           <label
-            className={`relative flex cursor-pointer flex-col rounded-xl border p-5 transition-all ${
+            className={`relative flex cursor-pointer flex-col rounded-card border p-5 transition-all ${
               provider === "stripe"
                 ? "border-primary bg-primary/5 ring-2 ring-primary"
                 : "border-border hover:bg-accent/50"
@@ -102,9 +102,9 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
                   onChange={() => setProvider("stripe")}
                   className="h-4 w-4 text-primary focus:ring-primary"
                 />
-                <span className="font-semibold">Stripe</span>
+                <span className="font-medium">Stripe</span>
               </div>
-              <span className="rounded bg-blue-100 dark:bg-blue-950 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:text-blue-300">
+              <span className="rounded-control bg-info-soft px-2 py-0.5 text-xs font-medium text-info-foreground">
                 Default
               </span>
             </div>
@@ -115,7 +115,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
 
           {/* Dodo Option */}
           <label
-            className={`relative flex cursor-pointer flex-col rounded-xl border p-5 transition-all ${
+            className={`relative flex cursor-pointer flex-col rounded-card border p-5 transition-all ${
               provider === "dodo"
                 ? "border-primary bg-primary/5 ring-2 ring-primary"
                 : "border-border hover:bg-accent/50"
@@ -131,9 +131,9 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
                   onChange={() => setProvider("dodo")}
                   className="h-4 w-4 text-primary focus:ring-primary"
                 />
-                <span className="font-semibold">Dodo Payments</span>
+                <span className="font-medium">Dodo Payments</span>
               </div>
-              <span className="rounded bg-amber-100 dark:bg-amber-950 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-300">
+              <span className="rounded-control bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning-foreground">
                 MoR
               </span>
             </div>
@@ -148,7 +148,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
             type="button"
             disabled={saving}
             onClick={handleSave}
-            className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="rounded-control bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {saving ? "Saving changes..." : "Save Provider Configuration"}
           </button>
@@ -156,9 +156,9 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
       </div>
 
       {/* Webhook Endpoints Info */}
-      <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm space-y-4">
+      <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm space-y-4">
         <div>
-          <h2 className="text-xl font-bold">Registered Webhook Endpoints</h2>
+          <h2 className="text-xl font-medium">Registered Webhook Endpoints</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Both webhook endpoints remain permanently active so event notifications are never missed
             even if you switch active providers. Configure these in your respective provider dashboards.
@@ -166,9 +166,9 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
         </div>
 
         {/* Stripe Webhook */}
-        <div className="space-y-2 rounded-lg border p-4 bg-muted/40">
+        <div className="space-y-2 rounded-card border p-4 bg-muted/40">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">Stripe Webhook URL</span>
+            <span className="text-sm font-medium">Stripe Webhook URL</span>
             <button
               type="button"
               onClick={() => copyToClipboard(stripeWebhookUrl, "stripe")}
@@ -177,7 +177,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
               {copiedStripe ? "Copied!" : "Copy URL"}
             </button>
           </div>
-          <code className="block rounded bg-background p-2 text-xs font-mono text-foreground border break-all">
+          <code className="block rounded-control bg-background p-2 text-xs font-mono text-foreground border break-all">
             {stripeWebhookUrl}
           </code>
           <p className="text-xs text-muted-foreground">
@@ -189,9 +189,9 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
         </div>
 
         {/* Dodo Webhook */}
-        <div className="space-y-2 rounded-lg border p-4 bg-muted/40">
+        <div className="space-y-2 rounded-card border p-4 bg-muted/40">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">Dodo Payments Webhook URL</span>
+            <span className="text-sm font-medium">Dodo Payments Webhook URL</span>
             <button
               type="button"
               onClick={() => copyToClipboard(dodoWebhookUrl, "dodo")}
@@ -200,7 +200,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
               {copiedDodo ? "Copied!" : "Copy URL"}
             </button>
           </div>
-          <code className="block rounded bg-background p-2 text-xs font-mono text-foreground border break-all">
+          <code className="block rounded-control bg-background p-2 text-xs font-mono text-foreground border break-all">
             {dodoWebhookUrl}
           </code>
           <p className="text-xs text-muted-foreground">

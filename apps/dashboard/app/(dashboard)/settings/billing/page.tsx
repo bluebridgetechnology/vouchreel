@@ -55,7 +55,7 @@ export default async function BillingSettingsPage() {
       </div>
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Billing & Plans</h1>
+        <h1 className="text-3xl font-medium tracking-tight">Billing & Plans</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Review your current plan tier, manage payment methods, or upgrade for higher limits.
         </p>

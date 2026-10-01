@@ -52,11 +52,11 @@ export function BillingManager({
   const isFree = price === 0;
 
   const statusColors: Record<string, string> = {
-    active: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-    trialing: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300",
-    past_due: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-    canceled: "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300",
-    incomplete: "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300",
+    active: "bg-success-soft text-success-foreground",
+    trialing: "bg-info-soft text-info-foreground",
+    past_due: "bg-warning-soft text-warning-foreground",
+    canceled: "bg-danger-soft text-danger-foreground",
+    incomplete: "bg-surface-sunken text-text",
   };
 
   const badgeColor = statusColors[status] || statusColors.active;
@@ -64,19 +64,19 @@ export function BillingManager({
   return (
     <div className="space-y-6">
       {portalError && (
-        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-card border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
           {portalError}
         </div>
       )}
 
       {/* Subscription Card */}
-      <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm">
+      <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b">
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold">{planName} Plan</h2>
+              <h2 className="text-2xl font-medium">{planName} Plan</h2>
               <span
-                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${badgeColor}`}
+                className={`rounded-pill px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider ${badgeColor}`}
               >
                 {status}
               </span>
@@ -96,7 +96,7 @@ export function BillingManager({
                 type="button"
                 disabled={loadingPortal}
                 onClick={handleOpenPortal}
-                className="rounded-lg border bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50"
+                className="rounded-control border bg-background px-4 py-2 text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50"
               >
                 {loadingPortal ? "Opening portal..." : "Manage Subscription"}
               </button>
@@ -104,7 +104,7 @@ export function BillingManager({
 
             <Link
               href="/pricing"
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
               Change Plan
             </Link>
@@ -114,7 +114,7 @@ export function BillingManager({
         {/* Details Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6">
           <div>
-            <h4 className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+            <h4 className="text-xs font-medium uppercase text-muted-foreground tracking-wider">
               Billing Details
             </h4>
             <div className="mt-3 space-y-2 text-sm">
@@ -140,14 +140,14 @@ export function BillingManager({
           </div>
 
           <div>
-            <h4 className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+            <h4 className="text-xs font-medium uppercase text-muted-foreground tracking-wider">
               Included Features
             </h4>
             <ul className="mt-3 space-y-2 text-sm">
               {features.map((feat, idx) => (
                 <li key={idx} className="flex items-center gap-2">
                   <svg
-                    className="h-4 w-4 text-emerald-500 shrink-0"
+                    className="h-4 w-4 text-success shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"

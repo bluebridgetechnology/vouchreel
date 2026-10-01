@@ -117,14 +117,14 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Spaces</h1>
+          <h1 className="text-3xl font-medium tracking-tight">Spaces</h1>
           <p className="text-muted-foreground text-sm">
             Manage your testimonial spaces and video widgets
           </p>
         </div>
         <Link
           href="/spaces/new"
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
+          className="inline-flex items-center justify-center gap-2 rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
@@ -135,8 +135,8 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
 
       {spaces.length === 0 ? (
         /* Empty State */
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+        <div className="flex flex-col items-center justify-center rounded-card border border-dashed p-12 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-pill bg-muted">
             <svg
               className="h-7 w-7 text-muted-foreground"
               fill="none"
@@ -151,20 +151,20 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
               />
             </svg>
           </div>
-          <h3 className="mt-4 text-lg font-semibold">No spaces yet</h3>
+          <h3 className="mt-4 text-lg font-medium">No spaces yet</h3>
           <p className="mt-1 max-w-sm text-sm text-muted-foreground">
             Create your first space to start collecting and displaying video testimonials on your website.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href="/spaces/new"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90"
+              className="inline-flex items-center justify-center rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
             >
               Create Space
             </Link>
             <Link
               href="/onboarding"
-              className="inline-flex items-center justify-center rounded-md border bg-background px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm hover:bg-accent hover:text-accent-foreground"
+              className="inline-flex items-center justify-center rounded-control border bg-background px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm hover:bg-accent hover:text-accent-foreground"
             >
               Start Onboarding Wizard
             </Link>
@@ -176,11 +176,11 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
           {spaces.map((space) => (
             <div
               key={space.id}
-              className="flex flex-col justify-between rounded-lg border bg-card p-4 sm:p-6 shadow-sm transition-shadow hover:shadow-md"
+              className="flex flex-col justify-between rounded-card border bg-card p-4 sm:p-6 shadow-sm transition-shadow hover:shadow-card"
             >
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-xl font-semibold tracking-tight text-foreground">
+                  <h3 className="text-xl font-medium tracking-tight text-foreground">
                     {space.name}
                   </h3>
                   <div className="flex items-center gap-1">
@@ -192,7 +192,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                       }}
                       title="Rename Space"
                       aria-label={`Rename space ${space.name}`}
-                      className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      className="rounded-control p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -210,7 +210,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                       }}
                       title="Delete Space"
                       aria-label={`Delete space ${space.name}`}
-                      className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      className="rounded-control p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                     >
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -229,12 +229,12 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                   <span className="text-xs text-muted-foreground">Embed Key:</span>
                   <button
                     onClick={() => copyEmbedKey(space.embedKey)}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 font-mono text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                    className="inline-flex items-center gap-1.5 rounded-control bg-muted px-2 py-1 font-mono text-xs font-medium text-foreground transition-colors hover:bg-accent"
                     title="Click to copy embed key"
                   >
                     <span>{space.embedKey}</span>
                     {copiedKey === space.embedKey ? (
-                      <span className="text-[10px] text-green-700 font-semibold">Copied!</span>
+                      <span className="text-2xs text-success-foreground font-medium">Copied!</span>
                     ) : (
                       <svg className="h-3 w-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -276,13 +276,13 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
               <div className="mt-6 flex items-center gap-2 border-t pt-4">
                 <Link
                   href={`/spaces/${space.id}/testimonials`}
-                  className="inline-flex flex-1 items-center justify-center rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+                  className="inline-flex flex-1 items-center justify-center rounded-control bg-primary px-3 py-2 text-xs font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
                 >
                   Manage Testimonials
                 </Link>
                 <Link
                   href={`/spaces/${space.id}/widget`}
-                  className="inline-flex items-center justify-center rounded-md border bg-background px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  className="inline-flex items-center justify-center rounded-control border bg-background px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   Widget
                 </Link>
@@ -294,15 +294,15 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
 
       {/* Rename Space Dialog Modal */}
       {editingSpace && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/50 p-4">
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="rename-dialog-title"
             aria-describedby="rename-dialog-desc"
-            className="w-full max-w-md rounded-lg border bg-card p-4 sm:p-6 shadow-lg"
+            className="w-full max-w-md rounded-card border bg-card p-4 sm:p-6 shadow-float"
           >
-            <h2 id="rename-dialog-title" className="text-lg font-semibold">
+            <h2 id="rename-dialog-title" className="text-lg font-medium">
               Rename Space
             </h2>
             <p id="rename-dialog-desc" className="mt-1 text-xs text-muted-foreground">
@@ -321,7 +321,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                   type="text"
                   value={renameValue}
                   onChange={(e) => setRenameValue(e.target.value)}
-                  className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="mt-1 w-full rounded-control border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   required
                   autoFocus
                 />
@@ -330,14 +330,14 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                 <button
                   type="button"
                   onClick={closeRenameModal}
-                  className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+                  className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={renameSaving || !renameValue.trim()}
-                  className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className="rounded-control bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
                   {renameSaving ? "Saving..." : "Save Name"}
                 </button>
@@ -349,26 +349,26 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
 
       {/* Delete Space Confirmation Modal */}
       {deletingSpace && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/50 p-4">
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-dialog-title"
             aria-describedby="delete-dialog-desc"
-            className="w-full max-w-md rounded-lg border bg-card p-4 sm:p-6 shadow-lg"
+            className="w-full max-w-md rounded-card border bg-card p-4 sm:p-6 shadow-float"
           >
-            <h2 id="delete-dialog-title" className="text-lg font-semibold text-destructive">
+            <h2 id="delete-dialog-title" className="text-lg font-medium text-destructive">
               Delete Space
             </h2>
             <p id="delete-dialog-desc" className="mt-2 text-sm text-muted-foreground">
-              Are you sure you want to delete <span className="font-semibold text-foreground">{deletingSpace.name}</span>? This will permanently delete the space, its testimonials, and its widget configuration.
+              Are you sure you want to delete <span className="font-medium text-foreground">{deletingSpace.name}</span>? This will permanently delete the space, its testimonials, and its widget configuration.
             </p>
             <div className="mt-6 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={closeDeleteModal}
                 autoFocus
-                className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+                className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
               >
                 Cancel
               </button>
@@ -376,7 +376,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleteLoading}
-                className="rounded-md bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                className="rounded-control bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
               >
                 {deleteLoading ? "Deleting..." : "Delete Space"}
               </button>

@@ -167,7 +167,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
 
   if (spaces.length === 0) {
     return (
-      <div className="rounded-lg border p-6 text-center text-muted-foreground">
+      <div className="rounded-card border p-6 text-center text-muted-foreground">
         You need to create a Space first before configuring webhooks.
       </div>
     );
@@ -185,7 +185,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
             id="spaceSelectWebhooks"
             value={selectedSpaceId}
             onChange={(e) => setSelectedSpaceId(e.target.value)}
-            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary"
+            className="rounded-control border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {spaces.map((s) => (
               <option key={s.id} value={s.id}>
@@ -200,26 +200,26 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
             setIsCreating(true);
             setCreatedSecret(null);
           }}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center justify-center rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
         >
           + Add Webhook Endpoint
         </button>
       </div>
 
       {error && (
-        <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-control bg-destructive/10 p-4 text-sm text-destructive">
           {error}
         </div>
       )}
 
       {/* Secret Created Banner */}
       {createdSecret && (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-5 space-y-3">
+        <div className="rounded-card border border-success/30 bg-success-soft p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-emerald-800 dark:text-emerald-300">
+            <h3 className="font-medium text-success-foreground">
               Webhook Endpoint Added
             </h3>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            <span className="text-xs font-medium text-success-foreground">
               Signing Secret
             </span>
           </div>
@@ -231,11 +231,11 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
               type="text"
               readOnly
               value={createdSecret}
-              className="flex-1 font-mono text-xs bg-background border rounded px-3 py-2 select-all"
+              className="flex-1 font-mono text-xs bg-background border rounded-control px-3 py-2 select-all"
             />
             <button
               onClick={() => copyToClipboard(createdSecret)}
-              className="px-3 py-2 rounded text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+              className="px-3 py-2 rounded-control text-xs font-medium bg-success text-text-on-accent hover:bg-success/90 transition"
             >
               {copied ? "Copied!" : "Copy"}
             </button>
@@ -245,8 +245,8 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
 
       {/* Create Webhook Form */}
       {isCreating && !createdSecret && (
-        <div className="rounded-lg border bg-card p-4 sm:p-6 shadow-sm space-y-4">
-          <h3 className="font-semibold text-base">Add Webhook Endpoint</h3>
+        <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm space-y-4">
+          <h3 className="font-medium text-base">Add Webhook Endpoint</h3>
           <form onSubmit={handleCreateWebhook} className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">
@@ -258,7 +258,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 required
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full rounded-control border border-input bg-background px-3 py-2 text-sm"
               />
             </div>
 
@@ -270,13 +270,13 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
                 {AVAILABLE_EVENTS.map((evt) => (
                   <label
                     key={evt.id}
-                    className="flex items-center gap-2 text-xs border rounded p-2 hover:bg-accent cursor-pointer"
+                    className="flex items-center gap-2 text-xs border rounded-control p-2 hover:bg-accent cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={selectedEvents.includes(evt.id)}
                       onChange={() => toggleEventSelection(evt.id)}
-                      className="rounded border-gray-300"
+                      className="rounded-control border-border-strong"
                     />
                     <span>{evt.label}</span>
                   </label>
@@ -288,14 +288,14 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
               <button
                 type="button"
                 onClick={() => setIsCreating(false)}
-                className="px-3 py-1.5 rounded text-sm font-medium border hover:bg-accent"
+                className="px-3 py-1.5 rounded-control text-sm font-medium border hover:bg-accent"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading || selectedEvents.length === 0}
-                className="px-4 py-1.5 rounded text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
+                className="px-4 py-1.5 rounded-control text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {loading ? "Adding..." : "Add Endpoint"}
               </button>
@@ -305,7 +305,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
       )}
 
       {/* Webhooks Table */}
-      <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="rounded-card border bg-card overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="border-b bg-muted/50 text-xs font-medium text-muted-foreground">
             <tr>
@@ -333,7 +333,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
                       {w.events.map((e) => (
                         <span
                           key={e}
-                          className="inline-flex items-center rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium"
+                          className="inline-flex items-center rounded-pill bg-secondary px-2 py-0.5 text-2xs font-medium"
                         >
                           {e}
                         </span>
@@ -342,9 +342,9 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
                   </td>
                   <td className="px-4 py-3 text-xs">
                     <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                      className={`inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-medium ${
                         w.isActive
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          ? "bg-success-soft text-success-foreground"
                           : "bg-muted text-muted-foreground"
                       }`}
                     >
@@ -377,9 +377,9 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
 
       {/* Delivery Logs Modal / Panel */}
       {inspectingWebhookId && (
-        <div className="rounded-lg border bg-card p-4 sm:p-6 shadow-sm space-y-4">
+        <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-base">Delivery Logs</h3>
+            <h3 className="font-medium text-base">Delivery Logs</h3>
             <button
               onClick={() => setInspectingWebhookId(null)}
               className="text-xs text-muted-foreground hover:text-foreground"
@@ -414,13 +414,13 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
                       <td className="px-3 py-2 font-mono font-medium">{d.event}</td>
                       <td className="px-3 py-2">
                         <span
-                          className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                          className={`inline-flex items-center rounded-pill px-1.5 py-0.5 text-2xs font-medium ${
                             d.status === "success"
-                              ? "bg-emerald-500/10 text-emerald-600"
+                              ? "bg-success-soft text-success-foreground"
                               : d.status === "retrying"
-                              ? "bg-amber-500/10 text-amber-600"
+                              ? "bg-warning-soft text-warning-foreground"
                               : d.status === "failed"
-                              ? "bg-red-500/10 text-red-600"
+                              ? "bg-danger-soft text-danger-foreground"
                               : "bg-muted text-muted-foreground"
                           }`}
                         >

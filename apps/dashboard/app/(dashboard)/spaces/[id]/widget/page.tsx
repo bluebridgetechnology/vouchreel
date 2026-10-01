@@ -144,13 +144,13 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+        <div className="h-8 w-48 animate-pulse rounded-control bg-muted" />
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           <div className="space-y-4 lg:col-span-7">
-            <div className="h-48 animate-pulse rounded-xl border bg-muted/40" />
-            <div className="h-48 animate-pulse rounded-xl border bg-muted/40" />
+            <div className="h-48 animate-pulse rounded-card border bg-muted/40" />
+            <div className="h-48 animate-pulse rounded-card border bg-muted/40" />
           </div>
-          <div className="h-96 animate-pulse rounded-xl border bg-muted/40 lg:col-span-5" />
+          <div className="h-96 animate-pulse rounded-card border bg-muted/40 lg:col-span-5" />
         </div>
       </div>
     );
@@ -158,12 +158,12 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 text-center">
-        <h3 className="text-sm font-semibold text-destructive">Error Loading Widget Settings</h3>
+      <div className="rounded-card border border-destructive/20 bg-destructive/5 p-6 text-center">
+        <h3 className="text-sm font-medium text-destructive">Error Loading Widget Settings</h3>
         <p className="mt-1 text-xs text-muted-foreground">{error}</p>
         <button
           onClick={() => fetchWidgetConfig()}
-          className="mt-4 inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+          className="mt-4 inline-flex items-center rounded-control bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
         >
           Try Again
         </button>
@@ -177,11 +177,11 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold tracking-tight text-foreground">
+            <h2 className="text-xl font-medium tracking-tight text-foreground">
               Widget Customization
             </h2>
             {isDirty && (
-              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-500/20">
+              <span className="rounded-pill bg-warning-soft px-2 py-0.5 text-2xs font-medium text-warning-foreground border border-warning/30">
                 Unsaved changes
               </span>
             )}
@@ -196,7 +196,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           <button
             type="button"
             onClick={handleResetDefaults}
-            className="rounded-md border bg-background px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted"
+            className="rounded-control border bg-background px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted"
           >
             Reset Defaults
           </button>
@@ -204,11 +204,11 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             {saving ? (
               <>
-                <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                <span className="h-3 w-3 animate-spin rounded-pill border-2 border-primary-foreground border-t-transparent" />
                 <span>Saving...</span>
               </>
             ) : (
@@ -225,9 +225,9 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
 
       {/* Save Success / Error Banners */}
       {saveSuccess && (
-        <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-700 dark:text-emerald-300">
+        <div className="flex items-center justify-between rounded-card border border-success/30 bg-success-soft p-3.5 text-xs text-success-foreground">
           <div className="flex items-center gap-2">
-            <svg className="h-4 w-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 shrink-0 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
             <span>Widget configuration saved successfully! Your live visitors will see the updated widget instantly.</span>
@@ -235,7 +235,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           <button
             type="button"
             onClick={() => setSaveSuccess(false)}
-            className="text-emerald-700 dark:text-emerald-300 hover:opacity-75"
+            className="text-success-foreground hover:opacity-75"
           >
             ✕
           </button>
@@ -243,7 +243,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
       )}
 
       {saveError && (
-        <div className="flex items-center justify-between rounded-lg border border-destructive/30 bg-destructive/10 p-3.5 text-xs text-destructive">
+        <div className="flex items-center justify-between rounded-card border border-destructive/30 bg-destructive/10 p-3.5 text-xs text-destructive">
           <div className="flex items-center gap-2">
             <svg className="h-4 w-4 shrink-0 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -330,12 +330,12 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           </div>
 
           {/* Sticky / In-page Save Prompt */}
-          <div className="flex items-center justify-between rounded-xl border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between rounded-card border bg-card p-4 shadow-sm">
             <div className="space-y-0.5">
-              <span className="text-xs font-semibold text-foreground">
+              <span className="text-xs font-medium text-foreground">
                 {isDirty ? "Unsaved changes pending" : "All changes up to date"}
               </span>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-2xs text-muted-foreground">
                 {isDirty
                   ? "Remember to save your settings to update the production widget."
                   : "Last configuration synced with database."}
@@ -346,7 +346,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
@@ -357,7 +357,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
             {embedKey ? (
               <EmbedSnippet embedKey={embedKey} />
             ) : (
-              <div className="h-40 animate-pulse rounded-xl border bg-muted/30" />
+              <div className="h-40 animate-pulse rounded-card border bg-muted/30" />
             )}
           </div>
         </div>

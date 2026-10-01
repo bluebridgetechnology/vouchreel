@@ -74,9 +74,9 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
   }
 
   return (
-    <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
+    <div className="space-y-4 rounded-card border bg-muted/20 p-4">
       <div className="space-y-1">
-        <span id="match-rules-label" className="block text-sm font-semibold text-foreground">
+        <span id="match-rules-label" className="block text-sm font-medium text-foreground">
           Contextual Page Matching Rules
         </span>
         <p className="text-xs text-muted-foreground">
@@ -88,12 +88,12 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
       <div
         role="group"
         aria-labelledby="match-rules-label"
-        className="grid grid-cols-2 gap-2 rounded-lg border bg-muted/40 p-1"
+        className="grid grid-cols-2 gap-2 rounded-card border bg-muted/40 p-1"
       >
         <button
           type="button"
           onClick={() => setMode("all")}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+          className={`rounded-control px-3 py-1.5 text-xs font-medium transition-all ${
             mode === "all"
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
@@ -104,7 +104,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
         <button
           type="button"
           onClick={() => setMode("specific")}
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
+          className={`rounded-control px-3 py-1.5 text-xs font-medium transition-all ${
             mode === "specific"
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
@@ -141,18 +141,18 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                   }
                 }}
                 placeholder="e.g. /products/*, /pricing"
-                className="flex-1 rounded-md border bg-background px-3 py-1.5 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="flex-1 rounded-control border bg-background px-3 py-1.5 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <button
                 type="button"
                 onClick={() => handleAddPattern()}
-                className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+                className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
               >
                 Add
               </button>
             </div>
             {patternError && (
-              <p className="text-[11px] text-destructive">{patternError}</p>
+              <p className="text-2xs text-destructive">{patternError}</p>
             )}
 
             {urlPatterns.length > 0 ? (
@@ -160,7 +160,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                 {urlPatterns.map((p) => (
                   <span
                     key={p}
-                    className="inline-flex items-center gap-1 rounded-md bg-background px-2 py-0.5 font-mono text-[11px] font-medium border text-foreground"
+                    className="inline-flex items-center gap-1 rounded-control bg-background px-2 py-0.5 font-mono text-2xs font-medium border text-foreground"
                   >
                     {p}
                     <button
@@ -175,7 +175,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-muted-foreground italic">
+              <p className="text-2xs text-muted-foreground italic">
                 No patterns added yet. Add patterns like <code>/pricing</code> or <code>/checkout/*</code>.
               </p>
             )}
@@ -202,12 +202,12 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                   }
                 }}
                 placeholder="e.g. enterprise, checkout, product-a"
-                className="flex-1 rounded-md border bg-background px-3 py-1.5 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="flex-1 rounded-control border bg-background px-3 py-1.5 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <button
                 type="button"
                 onClick={() => handleAddTag()}
-                className="rounded-md border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+                className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
               >
                 Add
               </button>
@@ -217,7 +217,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                 {tags.map((t) => (
                   <span
                     key={t}
-                    className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground"
+                    className="inline-flex items-center gap-1 rounded-control bg-secondary px-2 py-0.5 text-2xs font-medium text-secondary-foreground"
                   >
                     #{t}
                     <button
@@ -235,8 +235,8 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
           </div>
 
           {/* Rule Preview */}
-          <div className="rounded-md bg-background/80 border p-2.5 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">Matching summary: </span>
+          <div className="rounded-control bg-background/80 border p-2.5 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">Matching summary: </span>
             {urlPatterns.length === 0 && tags.length === 0 ? (
               <span>Will not match any specific page until patterns or tags are added.</span>
             ) : (

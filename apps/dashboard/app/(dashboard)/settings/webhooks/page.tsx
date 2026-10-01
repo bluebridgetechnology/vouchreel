@@ -42,7 +42,7 @@ export default async function WebhooksSettingsPage() {
       </div>
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Outbound Webhooks</h1>
+        <h1 className="text-3xl font-medium tracking-tight">Outbound Webhooks</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Receive real-time HTTPS notifications when testimonials are submitted, approved, or when conversion goals fire.
         </p>

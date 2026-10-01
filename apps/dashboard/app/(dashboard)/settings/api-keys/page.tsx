@@ -42,7 +42,7 @@ export default async function ApiKeysSettingsPage() {
       </div>
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">API Keys</h1>
+        <h1 className="text-3xl font-medium tracking-tight">API Keys</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Manage API keys for programmatic access to the Vouchreel REST API and external integrations.
         </p>
