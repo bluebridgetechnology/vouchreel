@@ -151,9 +151,40 @@
   --text-display--line-height: 1.02;
   --text-display--letter-spacing: -0.035em;
 
+  /* Outfit tops out at 500 in this product. Heavier utilities are clamped to 500
+     so legacy font-semibold / font-bold render correctly until Phase 5 removes them. */
+  --font-weight-light: 300;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
-  --font-weight-semibold: 600;
+  --font-weight-semibold: 500;
+  --font-weight-bold: 500;
+  --font-weight-extrabold: 500;
+  --font-weight-black: 500;
+}
+
+/* Motion keyframes used by overlays and skeletons */
+@theme {
+  --animate-fade-in: fade-in var(--duration-base) var(--ease-out);
+  --animate-pop-in: pop-in var(--duration-base) var(--ease-out);
+  --animate-slide-up: slide-up var(--duration-slow) var(--ease-out);
+  --animate-shimmer: shimmer 1.6s var(--ease-in-out) infinite;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(4px) scale(0.97); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes shimmer {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
 }
 
 /* ------------------------------------------------------------------ */

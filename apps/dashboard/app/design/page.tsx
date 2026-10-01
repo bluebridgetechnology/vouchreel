@@ -1,6 +1,7 @@
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Icon } from "@/components/ui/icon";
 import { Em } from "@/components/ui/em";
+import { PrimitivesDemo } from "./primitives-demo";
 
 const surfaces = [
   ["canvas", "bg-canvas"],
@@ -191,6 +192,11 @@ export default function DesignPage() {
           ))}
         </div>
       </Section>
+
+      <div className="border-t pt-14">
+        <h2 className="mb-8 text-3xl font-medium">Components</h2>
+        <PrimitivesDemo />
+      </div>
     </main>
   );
 }

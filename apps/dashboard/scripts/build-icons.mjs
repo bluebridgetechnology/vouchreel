@@ -22,6 +22,23 @@ const ICONS = [
   "close-circle-outline",
   "star-outline",
   "videocamera-record-outline",
+  "alt-arrow-down-outline",
+  "alt-arrow-up-outline",
+  "alt-arrow-right-outline",
+  "check-read-outline",
+  "close-outline",
+  "bell-outline",
+  "trash-bin-minimalistic-outline",
+  "pen-outline",
+  "add-circle-outline",
+  "menu-dots-outline",
+  "logout-outline",
+  "user-circle-outline",
+  "chart-outline",
+  "upload-outline",
+  "play-circle-outline",
+  "link-outline",
+  "eye-outline",
 ];
 
 const subset = getIcons(solar, ICONS);

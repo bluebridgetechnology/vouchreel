@@ -76,7 +76,7 @@ All in `app/globals.css`, three layers, Tailwind v4 `@theme`. **Rule: components
 
 **Layer 3: Tailwind theme mappings** (`@theme inline`): `--color-*` for every semantic token, plus:
 - **Type scale** `--text-2xs..--text-display` with paired line-height/tracking (`--text-xs--line-height`), minimum body size 12px (kills all 200 arbitrary sub-12px sizes; where tiny labels are truly needed, one `--text-2xs: 11px` token)
-- **Weights**: only 400 / 500 / 600 (display 600). Drop bold/extrabold/black.
+- **Weights**: Outfit max weight is **500**; only 300 / 400 / 500 are loaded. Hierarchy comes from size, colour and spacing, never from bold. Legacy `font-semibold/bold/extrabold/black` utilities are clamped to 500 in the theme until migrated, then banned.
 - **Radius**: `--radius-control` (10px), `--radius-card` (20px), `--radius-panel` (28px), `--radius-pill`. Map to `rounded-control/card/panel/pill`; ban bare `rounded`, `rounded-md/lg/xl/2xl`.
 - **Shadows**: `--shadow-xs`, `--shadow-card`, `--shadow-float`, `--shadow-focus` (3 levels + focus ring).
 - **Spacing**: stay on Tailwind 4px scale; add `--space-section` (clamp) and `--container-page`.
