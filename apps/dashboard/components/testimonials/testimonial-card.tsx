@@ -27,6 +27,7 @@ interface TestimonialCardProps {
   onEdit: (t: TestimonialItem) => void;
   onDelete: (t: TestimonialItem) => void;
   onToggleActive: (t: TestimonialItem) => void;
+  onExportSocial?: (t: TestimonialItem) => void;
 }
 
 export function TestimonialCard({
@@ -34,6 +35,7 @@ export function TestimonialCard({
   onEdit,
   onDelete,
   onToggleActive,
+  onExportSocial,
 }: TestimonialCardProps) {
   const {
     attributes,
@@ -209,6 +211,18 @@ export function TestimonialCard({
             </button>
           </div>
           <div className="flex items-center gap-1">
+            {testimonial.videoUrl && onExportSocial && (
+              <button
+                type="button"
+                onClick={() => onExportSocial(testimonial)}
+                className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Export for social
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onEdit(testimonial)}

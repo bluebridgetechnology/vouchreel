@@ -43,6 +43,13 @@
       "when": 1790813493707,
       "tag": "0005_chief_marten_broadcloak",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790855448215,
+      "tag": "0006_stiff_queen_noir",
+      "breakpoints": true
     }
   ]
 }

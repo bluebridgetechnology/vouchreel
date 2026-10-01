@@ -123,6 +123,31 @@ export const deliveryStatusEnum = pgEnum("delivery_status", [
   "retrying",
 ]);
 
+export const socialExportFormatEnum = pgEnum("social_export_format", [
+  "tiktok",
+  "reels",
+  "shorts",
+]);
+
+export const socialExportStatusEnum = pgEnum("social_export_status", [
+  "pending",
+  "processing",
+  "done",
+  "failed",
+]);
+
+export const watermarkPositionEnum = pgEnum("watermark_position", [
+  "bottom-right",
+  "bottom-left",
+  "top-right",
+  "top-left",
+]);
+
+export const exportFramingEnum = pgEnum("export_framing", [
+  "blur",
+  "letterbox",
+]);
+
 export interface CollectionFormBranding {
   accentColor?: string;
   logoUrl?: string;
@@ -523,6 +548,56 @@ export const webhookDeliveries = pgTable("webhook_deliveries", {
   index("webhook_deliveries_status_retry_idx").on(table.status, table.nextRetryAt),
 ]);
 
+/**
+ * Social export settings — per-space branding and default layout settings
+ * for social media video exports (TikTok, Reels, Shorts).
+ */
+export const socialExportSettings = pgTable("social_export_settings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  spaceId: uuid("space_id")
+    .notNull()
+    .unique()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  logoUrl: text("logo_url"),
+  brandColor: text("brand_color").default("#6366f1").notNull(),
+  watermarkPosition: watermarkPositionEnum("watermark_position")
+    .default("bottom-right")
+    .notNull(),
+  showWatermark: boolean("show_watermark").default(true).notNull(),
+  defaultFraming: exportFramingEnum("default_framing").default("blur").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+/**
+ * Social exports — tracked video exports formatted for TikTok, Reels, or Shorts.
+ */
+export const socialExports = pgTable("social_exports", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  spaceId: uuid("space_id")
+    .notNull()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  testimonialId: uuid("testimonial_id")
+    .notNull()
+    .references(() => testimonials.id, { onDelete: "cascade" }),
+  format: socialExportFormatEnum("format").notNull(),
+  outputUrl: text("output_url"),
+  status: socialExportStatusEnum("status").default("pending").notNull(),
+  errorMessage: text("error_message"),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+}, (table) => [
+  index("social_exports_space_idx").on(table.spaceId, table.createdAt),
+  index("social_exports_testimonial_idx").on(table.testimonialId, table.createdAt),
+]);
+
 // ─── Relations ──────────────────────────────────────────────────────────────
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -560,6 +635,8 @@ export const spacesRelations = relations(spaces, ({ many, one }) => ({
   reviews: many(reviews),
   apiKeys: many(apiKeys),
   webhookEndpoints: many(webhookEndpoints),
+  socialExportSettings: one(socialExportSettings),
+  socialExports: many(socialExports),
 }));
 
 export const collectionFormsRelations = relations(
@@ -580,11 +657,12 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
   }),
 }));
 
-export const testimonialsRelations = relations(testimonials, ({ one }) => ({
+export const testimonialsRelations = relations(testimonials, ({ one, many }) => ({
   space: one(spaces, {
     fields: [testimonials.spaceId],
     references: [spaces.id],
   }),
+  socialExports: many(socialExports),
 }));
 
 export const widgetConfigsRelations = relations(widgetConfigs, ({ one }) => ({
@@ -672,6 +750,30 @@ export const webhookDeliveriesRelations = relations(
     endpoint: one(webhookEndpoints, {
       fields: [webhookDeliveries.endpointId],
       references: [webhookEndpoints.id],
+    }),
+  })
+);
+
+export const socialExportSettingsRelations = relations(
+  socialExportSettings,
+  ({ one }) => ({
+    space: one(spaces, {
+      fields: [socialExportSettings.spaceId],
+      references: [spaces.id],
+    }),
+  })
+);
+
+export const socialExportsRelations = relations(
+  socialExports,
+  ({ one }) => ({
+    space: one(spaces, {
+      fields: [socialExports.spaceId],
+      references: [spaces.id],
+    }),
+    testimonial: one(testimonials, {
+      fields: [socialExports.testimonialId],
+      references: [testimonials.id],
     }),
   })
 );

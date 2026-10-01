@@ -46,6 +46,11 @@ export function SpaceNavTabs({
       badge: pendingCount,
     },
     {
+      label: "Social",
+      href: `/spaces/${spaceId}/social`,
+      active: pathname.startsWith(`/spaces/${spaceId}/social`),
+    },
+    {
       label: "Widget",
       href: `/spaces/${spaceId}/widget`,
       active: pathname.startsWith(`/spaces/${spaceId}/widget`),

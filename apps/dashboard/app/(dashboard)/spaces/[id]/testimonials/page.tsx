@@ -23,6 +23,7 @@ import {
 } from "@/components/testimonials/testimonial-card";
 import { AddTestimonialDialog } from "@/components/testimonials/add-testimonial-dialog";
 import { EditTestimonialDialog } from "@/components/testimonials/edit-testimonial-dialog";
+import { SocialExportModal } from "@/components/social/social-export-modal";
 
 interface TestimonialsPageProps {
   params: Promise<{ id: string }>;
@@ -39,6 +40,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingTestimonial, setEditingTestimonial] = useState<TestimonialItem | null>(null);
   const [deletingTestimonial, setDeletingTestimonial] = useState<TestimonialItem | null>(null);
+  const [exportingTestimonial, setExportingTestimonial] = useState<TestimonialItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
 
@@ -303,6 +305,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
                   onEdit={openEditDialog}
                   onDelete={openDeleteDialog}
                   onToggleActive={handleToggleActive}
+                  onExportSocial={(t) => setExportingTestimonial(t)}
                 />
               ))}
             </div>
@@ -332,6 +335,16 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
               prev.map((t) => (t.id === updated.id ? updated : t))
             );
           }}
+        />
+      )}
+
+      {/* Social Export Modal */}
+      {exportingTestimonial && (
+        <SocialExportModal
+          spaceId={spaceId}
+          testimonial={exportingTestimonial}
+          isOpen={true}
+          onClose={() => setExportingTestimonial(null)}
         />
       )}
 

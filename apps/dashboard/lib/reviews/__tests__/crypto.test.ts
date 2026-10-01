@@ -58,7 +58,9 @@ describe("Review Credentials Crypto", () => {
     // Tamper with ciphertext
     const tampered: EncryptedData = {
       ...encrypted,
-      encrypted: encrypted.encrypted.replace(/^[0-9a-f]/, "0"),
+      encrypted:
+        (encrypted.encrypted[0] === "f" ? "0" : "f") +
+        encrypted.encrypted.slice(1),
     };
 
     const result = decryptCredentials(tampered);
