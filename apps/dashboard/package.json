@@ -13,6 +13,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "node scripts/seed-events.mjs",
+    "admin:grant": "node scripts/grant-admin.mjs",
     "db:seed:demo": "node scripts/seed-demo-user.mjs",
     "icons:build": "node scripts/build-icons.mjs"
   },

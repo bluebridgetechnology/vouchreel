@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { adminSettings } from "@/lib/db/schema";
 import { getActivePaymentProviderName } from "@/lib/payments";
+import { isPlatformAdmin } from "@/lib/auth/platform-admin";
 import {
   unauthorized,
   forbidden,
@@ -12,12 +13,6 @@ import {
 } from "@/lib/api/errors";
 
 export const dynamic = "force-dynamic";
-
-function isAdmin(role?: string | null): boolean {
-  if (!role) return false;
-  const r = role.toLowerCase().trim();
-  return r === "owner" || r === "admin";
-}
 
 /**
  * GET /api/admin/settings
@@ -31,7 +26,7 @@ export async function GET() {
       return unauthorized("Unauthorized");
     }
 
-    if (!isAdmin((session.user as any).role)) {
+    if (!isPlatformAdmin(session.user)) {
       return forbidden("Forbidden: Admin access required");
     }
 
@@ -58,7 +53,7 @@ export async function PUT(request: Request) {
       return unauthorized("Unauthorized");
     }
 
-    if (!isAdmin((session.user as any).role)) {
+    if (!isPlatformAdmin(session.user)) {
       return forbidden("Forbidden: Admin access required");
     }
 

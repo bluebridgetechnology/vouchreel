@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth/session";
 import { getActivePaymentProviderName } from "@/lib/payments";
+import { isPlatformAdmin } from "@/lib/auth/platform-admin";
 import { AdminPanel } from "./admin-panel";
 
 export const dynamic = "force-dynamic";
@@ -8,8 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const session = await requireSession();
 
-  const role = ((session.user as any).role || "").toLowerCase().trim();
-  if (role !== "owner" && role !== "admin") {
+  if (!isPlatformAdmin(session.user)) {
     redirect("/dashboard");
   }
 
