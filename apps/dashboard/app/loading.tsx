@@ -6,7 +6,7 @@ export default function Loading() {
     >
       <span className="sr-only">Loading</span>
       <div
-        className="h-8 w-8 animate-spin rounded-pill border-2 border-muted border-t-primary"
+        className="h-8 w-8 animate-spin rounded-pill border-2 border-border border-t-primary"
         aria-hidden="true"
       />
     </div>

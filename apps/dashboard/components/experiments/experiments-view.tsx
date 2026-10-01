@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
+import { ModalOverlay } from "@/components/ui/modal";
 
 interface ExperimentsViewProps {
   spaceId: string;
@@ -273,10 +274,10 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-medium tracking-tight text-foreground">
+          <h2 className="text-2xl font-medium tracking-tight text-text">
             A/B Testing Experiments
           </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-text-muted">
             Optimize conversion rates by deterministically testing widget triggers, positions, and templates.
           </p>
         </div>
@@ -302,7 +303,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
           className={`flex items-center justify-between rounded-card border p-4 text-xs font-medium ${
             feedback.type === "success"
               ? "border-success/30 bg-success-soft text-success-foreground"
-              : "border-destructive/20 bg-destructive/10 text-destructive"
+              : "border-danger/20 bg-danger-soft text-danger-foreground"
           }`}
         >
           <span>{feedback.text}</span>
@@ -368,11 +369,11 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
           </div>
 
           {/* Experiment Title & Header Card */}
-          <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm">
+          <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-medium text-foreground">{selectedExp.name}</h3>
+                  <h3 className="text-xl font-medium text-text">{selectedExp.name}</h3>
                   <span
                     className={`rounded-pill px-2.5 py-0.5 text-2xs font-medium uppercase tracking-wider ${
                       selectedExp.status === "running"
@@ -384,11 +385,11 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   >
                     {selectedExp.status}
                   </span>
-                  <span className="rounded-pill bg-muted px-2.5 py-0.5 text-2xs font-medium text-muted-foreground uppercase">
+                  <span className="rounded-pill bg-surface-sunken px-2.5 py-0.5 text-2xs font-medium text-text-muted uppercase">
                     {selectedExp.type}
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-text-muted">
                   Traffic Allocation: {selectedExp.trafficSplit?.join("% / ")}% • Created on{" "}
                   {new Date(selectedExp.createdAt).toLocaleDateString()}
                   {selectedExp.startedAt && ` • Started ${new Date(selectedExp.startedAt).toLocaleDateString()}`}
@@ -399,20 +400,20 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               {/* Total overview badges */}
               <div className="flex items-center gap-4 text-right">
                 <div>
-                  <div className="text-xs text-muted-foreground">Total Impressions</div>
-                  <div className="text-lg font-medium text-foreground">
+                  <div className="text-xs text-text-muted">Total Impressions</div>
+                  <div className="text-lg font-medium text-text">
                     {selectedExp.totalImpressions.toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Conversions</div>
-                  <div className="text-lg font-medium text-foreground">
+                  <div className="text-xs text-text-muted">Conversions</div>
+                  <div className="text-lg font-medium text-text">
                     {selectedExp.totalConversions.toLocaleString()}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-muted-foreground">Overall CR</div>
-                  <div className="text-lg font-medium text-primary">
+                  <div className="text-xs text-text-muted">Overall CR</div>
+                  <div className="text-lg font-medium text-brand">
                     {selectedExp.overallConversionRate}%
                   </div>
                 </div>
@@ -493,7 +494,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               return (
                 <div
                   key={variant.id}
-                  className={`rounded-card border bg-card p-6 shadow-sm space-y-5 transition-all ${
+                  className={`rounded-card border bg-surface p-6 shadow-sm space-y-5 transition-all ${
                     isWinner ? "border-brand ring-2 ring-brand/30" : ""
                   }`}
                 >
@@ -515,32 +516,32 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                           </span>
                         )}
                       </div>
-                      <h4 className="text-base font-medium text-foreground mt-1">
+                      <h4 className="text-base font-medium text-text mt-1">
                         {variant.name}
                       </h4>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-xs font-medium text-muted-foreground">
+                      <span className="text-xs font-medium text-text-muted">
                         {variant.trafficSplit}% Traffic
                       </span>
                     </div>
                   </div>
 
                   {/* Primary KPI: Conversion Rate & Uplift */}
-                  <div className="rounded-card bg-muted/40 p-4 flex items-center justify-between">
+                  <div className="rounded-card bg-surface-sunken/40 p-4 flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-medium text-muted-foreground">
+                      <div className="text-xs font-medium text-text-muted">
                         Conversion Rate
                       </div>
-                      <div className="text-2xl font-medium text-foreground mt-0.5">
+                      <div className="text-2xl font-medium text-text mt-0.5">
                         {variant.conversionRate}%
                       </div>
                     </div>
 
                     {!isControl && variant.significance?.sampleSizeMet && (
                       <div className="text-right">
-                        <div className="text-2xs font-medium text-muted-foreground">
+                        <div className="text-2xs font-medium text-text-muted">
                           Uplift vs Control
                         </div>
                         <div
@@ -558,38 +559,38 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   </div>
 
                   {/* Configuration Inspector */}
-                  <div className="space-y-1.5 text-xs border rounded-card p-3 bg-background">
-                    <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <div className="space-y-1.5 text-xs border rounded-card p-3 bg-surface">
+                    <span className="text-2xs font-medium uppercase tracking-wider text-text-muted">
                       Variant Configuration
                     </span>
-                    <pre className="font-mono text-2xs text-muted-foreground overflow-x-auto whitespace-pre-wrap">
+                    <pre className="font-mono text-2xs text-text-muted overflow-x-auto whitespace-pre-wrap">
                       {JSON.stringify(variant.config, null, 2)}
                     </pre>
                   </div>
 
                   {/* Detailed metrics breakdown */}
                   <div className="grid grid-cols-4 gap-2 pt-2 border-t text-center">
-                    <div className="p-2 rounded-card bg-muted/20">
-                      <div className="text-2xs font-medium text-muted-foreground">Impressions</div>
-                      <div className="text-sm font-medium text-foreground mt-0.5">
+                    <div className="p-2 rounded-card bg-surface-sunken/20">
+                      <div className="text-2xs font-medium text-text-muted">Impressions</div>
+                      <div className="text-sm font-medium text-text mt-0.5">
                         {variant.impressions.toLocaleString()}
                       </div>
                     </div>
-                    <div className="p-2 rounded-card bg-muted/20">
-                      <div className="text-2xs font-medium text-muted-foreground">Plays ({variant.playRate}%)</div>
-                      <div className="text-sm font-medium text-foreground mt-0.5">
+                    <div className="p-2 rounded-card bg-surface-sunken/20">
+                      <div className="text-2xs font-medium text-text-muted">Plays ({variant.playRate}%)</div>
+                      <div className="text-sm font-medium text-text mt-0.5">
                         {variant.plays.toLocaleString()}
                       </div>
                     </div>
-                    <div className="p-2 rounded-card bg-muted/20">
-                      <div className="text-2xs font-medium text-muted-foreground">Clicks ({variant.clickThroughRate}%)</div>
-                      <div className="text-sm font-medium text-foreground mt-0.5">
+                    <div className="p-2 rounded-card bg-surface-sunken/20">
+                      <div className="text-2xs font-medium text-text-muted">Clicks ({variant.clickThroughRate}%)</div>
+                      <div className="text-sm font-medium text-text mt-0.5">
                         {variant.clicks.toLocaleString()}
                       </div>
                     </div>
-                    <div className="p-2 rounded-card bg-muted/20">
-                      <div className="text-2xs font-medium text-muted-foreground">Conversions</div>
-                      <div className="text-sm font-medium text-primary mt-0.5">
+                    <div className="p-2 rounded-card bg-surface-sunken/20">
+                      <div className="text-2xs font-medium text-text-muted">Conversions</div>
+                      <div className="text-sm font-medium text-brand mt-0.5">
                         {variant.conversions.toLocaleString()}
                       </div>
                     </div>
@@ -640,18 +641,18 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
           </div>
 
           {loading ? (
-            <div className="py-16 text-center text-xs text-muted-foreground">
+            <div className="py-16 text-center text-xs text-text-muted">
               Loading experiments...
             </div>
           ) : filteredExperiments.length === 0 ? (
             <div className="rounded-card border border-dashed p-12 text-center space-y-3">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-primary/10 text-primary">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-brand-soft text-brand">
                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
-              <h3 className="text-base font-medium text-foreground">No experiments found</h3>
-              <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+              <h3 className="text-base font-medium text-text">No experiments found</h3>
+              <p className="text-xs text-text-muted max-w-sm mx-auto">
                 Create an experiment to start testing different triggers, positions, or templates on your visitors.
               </p>
               <button
@@ -669,11 +670,11 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               {filteredExperiments.map((exp) => (
                 <div
                   key={exp.id}
-                  className="rounded-card border bg-card p-5 shadow-sm hover:border-primary/50 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                  className="rounded-card border bg-surface p-5 shadow-sm hover:border-brand/50 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
                 >
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-base text-foreground">{exp.name}</span>
+                      <span className="font-medium text-base text-text">{exp.name}</span>
                       <span
                         className={`rounded-pill px-2.5 py-0.5 text-2xs font-medium uppercase tracking-wider ${
                           exp.status === "running"
@@ -685,12 +686,12 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       >
                         {exp.status}
                       </span>
-                      <span className="rounded-pill bg-muted px-2 py-0.5 text-2xs font-medium text-muted-foreground uppercase">
+                      <span className="rounded-pill bg-surface-sunken px-2 py-0.5 text-2xs font-medium text-text-muted uppercase">
                         {exp.type}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-4 text-xs text-text-muted">
                       <span>Traffic Split: {exp.trafficSplit?.join("/")}%</span>
                       <span>•</span>
                       <span>{exp.variants?.length || 0} variants</span>
@@ -704,20 +705,20 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   {/* Summary performance stats */}
                   <div className="flex items-center gap-6 text-center">
                     <div>
-                      <div className="text-2xs uppercase font-medium text-muted-foreground">Impressions</div>
-                      <div className="text-sm font-medium text-foreground">
+                      <div className="text-2xs uppercase font-medium text-text-muted">Impressions</div>
+                      <div className="text-sm font-medium text-text">
                         {exp.totalImpressions.toLocaleString()}
                       </div>
                     </div>
                     <div>
-                      <div className="text-2xs uppercase font-medium text-muted-foreground">Conversions</div>
-                      <div className="text-sm font-medium text-foreground">
+                      <div className="text-2xs uppercase font-medium text-text-muted">Conversions</div>
+                      <div className="text-sm font-medium text-text">
                         {exp.totalConversions.toLocaleString()}
                       </div>
                     </div>
                     <div>
-                      <div className="text-2xs uppercase font-medium text-muted-foreground">CR</div>
-                      <div className="text-sm font-medium text-primary">
+                      <div className="text-2xs uppercase font-medium text-text-muted">CR</div>
+                      <div className="text-sm font-medium text-brand">
                         {exp.overallConversionRate}%
                       </div>
                     </div>
@@ -759,12 +760,12 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
       {/* Create Experiment Modal Dialog */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="w-full max-w-xl rounded-card border bg-card p-4 sm:p-6 shadow-float space-y-6 animate-in fade-in zoom-in-95 duration-150 my-8">
+        <ModalOverlay label="Create experiment" onClose={() => setIsCreateOpen(false)}>
+          <div className="w-full max-w-xl rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-6 animate-in fade-in zoom-in-95 duration-150 my-8">
             <div className="flex items-center justify-between border-b pb-4">
               <div>
-                <h3 className="text-lg font-medium text-foreground">Create New Experiment</h3>
-                <p className="text-xs text-muted-foreground">
+                <h3 className="text-lg font-medium text-text">Create New Experiment</h3>
+                <p className="text-xs text-text-muted">
                   A/B test two variations to determine which drives higher visitor conversions.
                 </p>
               </div>
@@ -779,7 +780,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
             <div className="space-y-4">
               {/* Experiment Name */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <label className="text-xs font-medium uppercase tracking-wider text-text-muted">
                   Experiment Name
                 </label>
                 <input
@@ -793,7 +794,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
               {/* Experiment Type Selector */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <label className="text-xs font-medium uppercase tracking-wider text-text-muted">
                   Experiment Type
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -804,8 +805,8 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       onClick={() => handleTypeChange(t)}
                       className={cn("rounded-card border p-3 text-left transition-all", toggleStyle("choice", formData.type === t))}
                     >
-                      <div className="font-medium text-xs uppercase text-foreground">{t}</div>
-                      <div className="text-2xs text-muted-foreground mt-0.5 capitalize">
+                      <div className="font-medium text-xs uppercase text-text">{t}</div>
+                      <div className="text-2xs text-text-muted mt-0.5 capitalize">
                         Test {t}s
                       </div>
                     </button>
@@ -814,12 +815,12 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               </div>
 
               {/* Traffic Split */}
-              <div className="space-y-2 rounded-card border bg-muted/20 p-4">
+              <div className="space-y-2 rounded-card border bg-surface-sunken/20 p-4">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium uppercase tracking-wider text-muted-foreground">
+                  <span className="font-medium uppercase tracking-wider text-text-muted">
                     Traffic Split
                   </span>
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-text">
                     {formData.split}% Control / {100 - formData.split}% Variant B
                   </span>
                 </div>
@@ -851,12 +852,12 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               {/* Variant Configurations */}
               <div className="space-y-4 pt-1">
                 {/* Variant 0 (Control) */}
-                <div className="rounded-card border p-3.5 space-y-3 bg-card">
+                <div className="rounded-card border p-3.5 space-y-3 bg-surface">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-foreground">
+                    <span className="text-xs font-medium text-text">
                       Variant A (Control)
                     </span>
-                    <span className="text-2xs font-medium text-muted-foreground">
+                    <span className="text-2xs font-medium text-text-muted">
                       {formData.split}% Traffic
                     </span>
                   </div>
@@ -872,7 +873,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   {formData.type === "trigger" && (
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label className="text-2xs text-muted-foreground">Trigger</label>
+                        <label className="text-2xs text-text-muted">Trigger</label>
                         <select
                           value={(formData.controlConfig.type as string) || "delay"}
                           onChange={(e) =>
@@ -896,7 +897,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       </div>
                       {formData.controlConfig.type === "delay" && (
                         <div>
-                          <label className="text-2xs text-muted-foreground">Delay (sec)</label>
+                          <label className="text-2xs text-text-muted">Delay (sec)</label>
                           <input
                             type="number"
                             min="1"
@@ -922,7 +923,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
                   {formData.type === "position" && (
                     <div>
-                      <label className="text-2xs text-muted-foreground">Position</label>
+                      <label className="text-2xs text-text-muted">Position</label>
                       <select
                         value={(formData.controlConfig.position as string) || "bottom-right"}
                         onChange={(e) =>
@@ -944,7 +945,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
                   {formData.type === "template" && (
                     <div>
-                      <label className="text-2xs text-muted-foreground">Template</label>
+                      <label className="text-2xs text-text-muted">Template</label>
                       <select
                         value={(formData.controlConfig.template as string) || "floating-card"}
                         onChange={(e) =>
@@ -966,12 +967,12 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 </div>
 
                 {/* Variant 1 (Variant B) */}
-                <div className="rounded-card border p-3.5 space-y-3 bg-card border-primary/40">
+                <div className="rounded-card border p-3.5 space-y-3 bg-surface border-brand/40">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-foreground">
+                    <span className="text-xs font-medium text-text">
                       Variant B (Test Variant)
                     </span>
-                    <span className="text-2xs font-medium text-primary">
+                    <span className="text-2xs font-medium text-brand">
                       {100 - formData.split}% Traffic
                     </span>
                   </div>
@@ -987,7 +988,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   {formData.type === "trigger" && (
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label className="text-2xs text-muted-foreground">Trigger</label>
+                        <label className="text-2xs text-text-muted">Trigger</label>
                         <select
                           value={(formData.variantConfig.type as string) || "exit-intent"}
                           onChange={(e) =>
@@ -1011,7 +1012,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       </div>
                       {formData.variantConfig.type === "delay" && (
                         <div>
-                          <label className="text-2xs text-muted-foreground">Delay (sec)</label>
+                          <label className="text-2xs text-text-muted">Delay (sec)</label>
                           <input
                             type="number"
                             min="1"
@@ -1037,7 +1038,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
                   {formData.type === "position" && (
                     <div>
-                      <label className="text-2xs text-muted-foreground">Position</label>
+                      <label className="text-2xs text-text-muted">Position</label>
                       <select
                         value={(formData.variantConfig.position as string) || "bottom-left"}
                         onChange={(e) =>
@@ -1059,7 +1060,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
                   {formData.type === "template" && (
                     <div>
-                      <label className="text-2xs text-muted-foreground">Template</label>
+                      <label className="text-2xs text-text-muted">Template</label>
                       <select
                         value={(formData.variantConfig.template as string) || "wall-of-love"}
                         onChange={(e) =>
@@ -1110,7 +1111,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               </button>
             </div>
           </div>
-        </div>
+        </ModalOverlay>
       )}
     </div>
   );

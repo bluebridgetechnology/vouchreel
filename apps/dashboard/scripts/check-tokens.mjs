@@ -8,6 +8,7 @@
 //   size      arbitrary text sizes (text-[11px])
 //   weight    font-semibold / bold / extrabold / black (Outfit max weight is 500)
 //   radius    legacy radius classes (rounded, rounded-md/lg/xl/2xl/full/sm/xs)
+//   legacy    shadcn alias names (bg-card, text-foreground, text-muted-foreground, bg-primary ...)
 //   control   hand-rolled <button>/<input>/<select>/<textarea> (use buttonVariants, toggleStyle,
 //             Switch, inputClass / textareaClass or the components in components/ui)
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -27,6 +28,7 @@ const rules = {
   size: /(?<![\w-])text-\[\d+(?:\.\d+)?(?:px|rem)\]/,
   weight: /(?<![\w-])font-(?:semibold|bold|extrabold|black)(?![\w-])/,
   radius: /(?<![\w-])rounded(?:-(?:sm|md|lg|xl|2xl|3xl|xs|full))?(?![\w-])/,
+  legacy: /(?<![\w-])(?:[a-z-]+:)*(?:bg|text|border|ring|divide|from|to|via|fill|stroke|outline|placeholder)-(?:background|foreground|card-foreground|card|popover-foreground|popover|primary-foreground|primary|secondary-foreground|secondary|muted-foreground|muted|accent-foreground|accent|destructive-foreground|destructive|input)(?:\/\d+)?(?![\w-])/,
 };
 
 // Files where raw values are legitimate: brand logos, OG image, tests, generated files, token source.

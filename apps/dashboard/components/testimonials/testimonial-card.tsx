@@ -71,8 +71,8 @@ export function TestimonialCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative flex flex-col gap-4 rounded-card border bg-card p-4 shadow-sm transition-all hover:shadow-card sm:flex-row sm:items-start ${
-        !testimonial.isActive ? "opacity-75 bg-muted/20" : ""
+      className={`group relative flex flex-col gap-4 rounded-card border bg-surface p-4 shadow-sm transition-all hover:shadow-card sm:flex-row sm:items-start ${
+        !testimonial.isActive ? "opacity-75 bg-surface-sunken/20" : ""
       }`}
     >
       {/* Drag Handle */}
@@ -95,7 +95,7 @@ export function TestimonialCard({
       </button>
 
       {/* Video Thumbnail */}
-      <div className="relative aspect-video w-full flex-shrink-0 overflow-hidden rounded-card border bg-muted sm:w-44">
+      <div className="relative aspect-video w-full flex-shrink-0 overflow-hidden rounded-card border bg-surface-sunken sm:w-44">
         {testimonial.thumbnailUrl ? (
           <img
             src={testimonial.thumbnailUrl}
@@ -103,7 +103,7 @@ export function TestimonialCard({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-muted text-xs text-muted-foreground">
+          <div className="flex h-full w-full items-center justify-center bg-surface-sunken text-xs text-text-muted">
             No preview
           </div>
         )}
@@ -125,7 +125,7 @@ export function TestimonialCard({
       <div className="flex flex-1 flex-col justify-between space-y-2">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="text-base font-medium text-foreground">
+            <h4 className="text-base font-medium text-text">
               {testimonial.title || "Video Testimonial"}
             </h4>
 
@@ -134,7 +134,7 @@ export function TestimonialCard({
               className={`rounded-pill px-2 py-0.5 text-2xs font-medium uppercase tracking-wider ${
                 testimonial.isActive
                   ? "bg-success-soft text-success-foreground"
-                  : "bg-muted text-muted-foreground"
+                  : "bg-surface-sunken text-text-muted"
               }`}
             >
               {testimonial.isActive ? "Active" : "Inactive"}
@@ -156,8 +156,8 @@ export function TestimonialCard({
 
           {/* Customer info */}
           {(testimonial.customerName || testimonial.customerCompany) && (
-            <p className="text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">
+            <p className="text-xs text-text-muted">
+              <span className="font-medium text-text">
                 {testimonial.customerName || "Customer"}
               </span>
               {testimonial.customerCompany && (
@@ -168,7 +168,7 @@ export function TestimonialCard({
 
           {/* Quote */}
           {testimonial.quote && (
-            <p className="line-clamp-2 text-xs italic text-muted-foreground">
+            <p className="line-clamp-2 text-xs italic text-text-muted">
               "{testimonial.quote}"
             </p>
           )}
@@ -176,7 +176,7 @@ export function TestimonialCard({
           {/* Tags & Contextual matching */}
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
             {/* Contextual match indicator */}
-            <span className="inline-flex items-center gap-1 rounded-control bg-muted/60 px-2 py-0.5 text-2xs font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-1 rounded-control bg-surface-sunken/60 px-2 py-0.5 text-2xs font-medium text-text-muted">
               <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -195,7 +195,7 @@ export function TestimonialCard({
               testimonial.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-control bg-secondary/80 px-2 py-0.5 text-2xs font-medium text-secondary-foreground"
+                  className="rounded-control bg-surface-sunken/80 px-2 py-0.5 text-2xs font-medium text-text"
                 >
                   #{tag}
                 </span>
@@ -234,7 +234,7 @@ export function TestimonialCard({
                 className={buttonVariants({ variant: "ghost", size: "sm" })}
                 title="Manage multi-language captions & translations"
               >
-                <svg className="h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-3.5 w-3.5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                 </svg>
                 Translations

@@ -67,13 +67,13 @@ export function LivePreview({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="flex h-2 w-2 rounded-pill bg-success animate-pulse" />
-          <span className="text-xs font-medium text-foreground">Live Widget Preview</span>
-          <span className="hidden rounded-control bg-muted px-2 py-0.5 text-2xs font-medium text-muted-foreground sm:inline-block">
+          <span className="text-xs font-medium text-text">Live Widget Preview</span>
+          <span className="hidden rounded-control bg-surface-sunken px-2 py-0.5 text-2xs font-medium text-text-muted sm:inline-block">
             {getTriggerLabel()}
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 rounded-card border bg-muted/30 p-1">
+        <div className="flex items-center gap-1.5 rounded-card border bg-surface-sunken/30 p-1">
           <button
             type="button"
             onClick={() => setViewport("desktop")}
@@ -99,12 +99,12 @@ export function LivePreview({
       </div>
 
       {/* Preview Viewport Frame */}
-      <div className="flex items-center justify-center rounded-card border bg-muted/40 p-4 transition-all min-h-[460px]">
+      <div className="flex items-center justify-center rounded-card border bg-surface-sunken/40 p-4 transition-all min-h-[460px]">
         <div
           className={`relative overflow-hidden rounded-card border border-border shadow-float transition-all duration-300 ${
             viewport === "desktop"
-              ? "h-[500px] w-full bg-background"
-              : "h-[580px] w-[340px] rounded-[36px] border-[8px] border-border-strong bg-background shadow-float"
+              ? "h-[500px] w-full bg-surface"
+              : "h-[580px] w-[340px] rounded-[36px] border-[8px] border-border-strong bg-surface shadow-float"
           }`}
         >
           {/* Mobile Speaker / Camera Notch */}
@@ -113,32 +113,32 @@ export function LivePreview({
           )}
 
           {/* Browser / App Header */}
-          <div className="flex items-center justify-between border-b bg-muted/50 px-3 py-2 text-2xs text-muted-foreground">
+          <div className="flex items-center justify-between border-b bg-surface-sunken/50 px-3 py-2 text-2xs text-text-muted">
             <div className="flex items-center gap-1.5">
               <div className="h-2 w-2 rounded-pill bg-danger" />
               <div className="h-2 w-2 rounded-pill bg-warning" />
               <div className="h-2 w-2 rounded-pill bg-success" />
             </div>
-            <div className="rounded-pill bg-background/80 px-4 py-0.5 text-2xs text-muted-foreground font-mono">
+            <div className="rounded-pill bg-canvas/80 px-4 py-0.5 text-2xs text-text-muted font-mono">
               https://yourbrand.com
             </div>
             <div className="w-6" />
           </div>
 
           {/* Mock Website Canvas */}
-          <div className="relative h-[calc(100%-37px)] overflow-y-auto bg-gradient-to-b from-background to-muted/20 p-4 select-none">
+          <div className="relative h-[calc(100%-37px)] overflow-y-auto bg-gradient-to-b from-canvas to-surface-sunken/20 p-4 select-none">
             {/* Mock Navigation */}
             <div className="flex items-center justify-between pb-4 border-b border-border/40">
               <div className="flex items-center gap-2">
-                <div className="h-5 w-5 rounded-control bg-primary/20 flex items-center justify-center font-medium text-2xs text-primary">
+                <div className="h-5 w-5 rounded-control bg-brand-soft flex items-center justify-center font-medium text-2xs text-brand">
                   V
                 </div>
-                <span className="text-xs font-medium text-foreground">Acme Corp</span>
+                <span className="text-xs font-medium text-text">Acme Corp</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-2 w-8 rounded-control bg-muted" />
-                <div className="h-2 w-8 rounded-control bg-muted" />
-                <div className="h-5 rounded-control bg-primary/20 px-2 text-3xs font-medium text-primary flex items-center">
+                <div className="h-2 w-8 rounded-control bg-surface-sunken" />
+                <div className="h-2 w-8 rounded-control bg-surface-sunken" />
+                <div className="h-5 rounded-control bg-brand-soft px-2 text-3xs font-medium text-brand flex items-center">
                   Sign In
                 </div>
               </div>
@@ -146,13 +146,13 @@ export function LivePreview({
 
             {/* Mock Hero Section */}
             <div className="py-8 text-center space-y-2.5">
-              <span className="inline-flex rounded-pill bg-primary/10 px-2.5 py-0.5 text-3xs font-medium text-primary">
+              <span className="inline-flex rounded-pill bg-brand-soft px-2.5 py-0.5 text-3xs font-medium text-brand">
                 ★ 4.9/5 stars from 300+ founders
               </span>
-              <h1 className="text-base font-medium tracking-tight text-foreground sm:text-lg">
+              <h1 className="text-base font-medium tracking-tight text-text sm:text-lg">
                 Supercharge Growth with Authentic Video Testimonials
               </h1>
-              <p className="mx-auto max-w-xs text-2xs text-muted-foreground leading-relaxed">
+              <p className="mx-auto max-w-xs text-2xs text-text-muted leading-relaxed">
                 Collect, embed, and showcase trust-building video proof that drives conversion on any site.
               </p>
               <div className="pt-2 flex justify-center gap-2">
@@ -175,7 +175,7 @@ export function LivePreview({
             {/* Mock Content Cards or Curated Templates */}
             {template === "wall-of-love" && (
               <div className="pt-3 space-y-2">
-                <div className="text-2xs font-medium text-foreground">Wall of Love Preview</div>
+                <div className="text-2xs font-medium text-text">Wall of Love Preview</div>
                 <div className="grid grid-cols-2 gap-2">
                   {/* Video Testimonial Card */}
                   <button
@@ -200,11 +200,11 @@ export function LivePreview({
                         </div>
                       </div>
                     </div>
-                    <span className="text-3xs font-medium text-primary">📹 Video Testimonial</span>
-                    <p className="text-2xs text-foreground line-clamp-2 mt-0.5">
+                    <span className="text-3xs font-medium text-brand">📹 Video Testimonial</span>
+                    <p className="text-2xs text-text line-clamp-2 mt-0.5">
                       &ldquo;Conversions spiked immediately!&rdquo;
                     </p>
-                    <p className="text-3xs text-muted-foreground mt-1">Sarah Johnson • 1:42</p>
+                    <p className="text-3xs text-text-muted mt-1">Sarah Johnson • 1:42</p>
                   </button>
 
                   {/* Google Review Card */}
@@ -228,11 +228,11 @@ export function LivePreview({
                         </span>
                         <span className="text-warning text-2xs">★★★★★</span>
                       </div>
-                      <p className="text-2xs text-foreground line-clamp-3">
+                      <p className="text-2xs text-text line-clamp-3">
                         &ldquo;Vouchreel transformed our landing page social proof. Conversions increased by 38%!&rdquo;
                       </p>
                     </div>
-                    <p className="text-3xs text-muted-foreground mt-2 border-t pt-1">
+                    <p className="text-3xs text-text-muted mt-2 border-t pt-1">
                       Alex Morgan • 2 days ago
                     </p>
                   </button>
@@ -258,11 +258,11 @@ export function LivePreview({
                         </span>
                         <span className="text-warning text-2xs">★★★★★</span>
                       </div>
-                      <p className="text-2xs text-foreground line-clamp-3">
+                      <p className="text-2xs text-text line-clamp-3">
                         &ldquo;Incredible tool. Collecting customer feedback has never been easier.&rdquo;
                       </p>
                     </div>
-                    <p className="text-3xs text-muted-foreground mt-2 border-t pt-1">
+                    <p className="text-3xs text-text-muted mt-2 border-t pt-1">
                       Elena Rostova • 1 week ago
                     </p>
                   </button>
@@ -290,11 +290,11 @@ export function LivePreview({
                         </div>
                       </div>
                     </div>
-                    <span className="text-3xs font-medium text-primary">📹 Video Testimonial</span>
-                    <p className="text-2xs text-foreground line-clamp-2 mt-0.5">
+                    <span className="text-3xs font-medium text-brand">📹 Video Testimonial</span>
+                    <p className="text-2xs text-text line-clamp-2 mt-0.5">
                       &ldquo;Our best marketing investment.&rdquo;
                     </p>
-                    <p className="text-3xs text-muted-foreground mt-1">David K. • 0:54</p>
+                    <p className="text-3xs text-text-muted mt-1">David K. • 0:54</p>
                   </button>
                 </div>
               </div>
@@ -302,13 +302,13 @@ export function LivePreview({
 
             {template === "carousel" && (
               <div className="pt-3 space-y-2">
-                <div className="text-2xs font-medium text-foreground">Carousel Preview</div>
+                <div className="text-2xs font-medium text-text">Carousel Preview</div>
                 <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
                   {/* Card 1: Video */}
                   <button
                     type="button"
                     onClick={() => setIsExpanded(true)}
-                    className="flex flex-col text-left shrink-0 w-36 rounded-card border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer"
+                    className="flex flex-col text-left shrink-0 w-36 rounded-card border bg-surface/80 p-2 shadow-xs hover:border-brand/50 cursor-pointer"
                   >
                     <div className="relative aspect-video w-full rounded-control bg-scrim overflow-hidden mb-1">
                       <img
@@ -327,8 +327,8 @@ export function LivePreview({
                         </div>
                       </div>
                     </div>
-                    <p className="text-3xs font-medium text-foreground truncate">Sarah Johnson</p>
-                    <p className="text-3xs text-muted-foreground line-clamp-1">&ldquo;Doubled conversions&rdquo;</p>
+                    <p className="text-3xs font-medium text-text truncate">Sarah Johnson</p>
+                    <p className="text-3xs text-text-muted line-clamp-1">&ldquo;Doubled conversions&rdquo;</p>
                   </button>
 
                   {/* Card 2: Google Review */}
@@ -343,18 +343,18 @@ export function LivePreview({
                         date: "2 days ago",
                       })
                     }
-                    className="flex flex-col text-left shrink-0 w-36 rounded-card border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer justify-between"
+                    className="flex flex-col text-left shrink-0 w-36 rounded-card border bg-surface/80 p-2 shadow-xs hover:border-brand/50 cursor-pointer justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-3xs font-medium px-1 rounded-control bg-info-soft text-info-foreground">Google</span>
                         <span className="text-warning text-3xs">★★★★★</span>
                       </div>
-                      <p className="text-3xs text-foreground line-clamp-2">
+                      <p className="text-3xs text-text line-clamp-2">
                         &ldquo;Transformed our social proof!&rdquo;
                       </p>
                     </div>
-                    <p className="text-3xs text-muted-foreground mt-1 border-t pt-0.5">Alex M.</p>
+                    <p className="text-3xs text-text-muted mt-1 border-t pt-0.5">Alex M.</p>
                   </button>
 
                   {/* Card 3: Trustpilot Review */}
@@ -369,18 +369,18 @@ export function LivePreview({
                         date: "1 week ago",
                       })
                     }
-                    className="flex flex-col text-left shrink-0 w-36 rounded-card border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer justify-between"
+                    className="flex flex-col text-left shrink-0 w-36 rounded-card border bg-surface/80 p-2 shadow-xs hover:border-brand/50 cursor-pointer justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-3xs font-medium px-1 rounded-control bg-success-soft text-success-foreground">Trustpilot</span>
                         <span className="text-warning text-3xs">★★★★★</span>
                       </div>
-                      <p className="text-3xs text-foreground line-clamp-2">
+                      <p className="text-3xs text-text line-clamp-2">
                         &ldquo;Never been easier to gather proof.&rdquo;
                       </p>
                     </div>
-                    <p className="text-3xs text-muted-foreground mt-1 border-t pt-0.5">Elena R.</p>
+                    <p className="text-3xs text-text-muted mt-1 border-t pt-0.5">Elena R.</p>
                   </button>
                 </div>
               </div>
@@ -388,7 +388,7 @@ export function LivePreview({
 
             {template === "masonry" && (
               <div className="pt-3 space-y-2">
-                <div className="text-2xs font-medium text-foreground">Masonry Grid Preview</div>
+                <div className="text-2xs font-medium text-text">Masonry Grid Preview</div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-2">
                     <button
@@ -403,8 +403,8 @@ export function LivePreview({
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <p className="text-3xs font-medium text-foreground">Sarah J. • 1:42</p>
-                      <p className="text-3xs text-muted-foreground">&ldquo;Super simple to use&rdquo;</p>
+                      <p className="text-3xs font-medium text-text">Sarah J. • 1:42</p>
+                      <p className="text-3xs text-text-muted">&ldquo;Super simple to use&rdquo;</p>
                     </button>
                     <button
                       type="button"
@@ -423,7 +423,7 @@ export function LivePreview({
                         <span className="text-3xs font-medium px-1 rounded-control bg-success-soft text-success-foreground">Trustpilot</span>
                         <span className="text-warning text-3xs">★★★★★</span>
                       </div>
-                      <p className="text-3xs text-foreground">&ldquo;Very polished widget and easy integration.&rdquo;</p>
+                      <p className="text-3xs text-text">&ldquo;Very polished widget and easy integration.&rdquo;</p>
                     </button>
                   </div>
 
@@ -445,7 +445,7 @@ export function LivePreview({
                         <span className="text-3xs font-medium px-1 rounded-control bg-info-soft text-info-foreground">Google</span>
                         <span className="text-warning text-3xs">★★★★★</span>
                       </div>
-                      <p className="text-3xs text-foreground">&ldquo;Top-tier social proof tool. The video plus text blends seamlessly.&rdquo;</p>
+                      <p className="text-3xs text-text">&ldquo;Top-tier social proof tool. The video plus text blends seamlessly.&rdquo;</p>
                     </button>
                     <button
                       type="button"
@@ -459,7 +459,7 @@ export function LivePreview({
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <p className="text-3xs font-medium text-foreground">David K. • 0:54</p>
+                      <p className="text-3xs font-medium text-text">David K. • 0:54</p>
                     </button>
                   </div>
                 </div>
@@ -536,7 +536,7 @@ export function LivePreview({
                         <div className="text-xs font-medium leading-tight">
                           Sarah Johnson
                         </div>
-                        <div className="text-2xs text-muted-foreground">
+                        <div className="text-2xs text-text-muted">
                           Founder, CloudScale
                         </div>
                       </div>
@@ -597,14 +597,14 @@ export function LivePreview({
                     type="button"
                     aria-label="Close review modal"
                     onClick={() => setExpandedReview(null)}
-                    className="absolute right-2.5 top-2.5 z-40 flex h-6 w-6 items-center justify-center rounded-pill bg-scrim/20 text-foreground hover:bg-scrim/40 cursor-pointer"
+                    className="absolute right-2.5 top-2.5 z-40 flex h-6 w-6 items-center justify-center rounded-pill bg-scrim/20 text-text hover:bg-scrim/40 cursor-pointer"
                   >
                     ✕
                   </button>
 
                   <div className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-2xs font-medium px-2 py-0.5 rounded-control bg-primary/10 text-primary">
+                      <span className="text-2xs font-medium px-2 py-0.5 rounded-control bg-brand-soft text-brand">
                         {expandedReview.provider}
                       </span>
                       <span className="text-warning text-xs">
@@ -614,12 +614,12 @@ export function LivePreview({
                       </span>
                     </div>
 
-                    <p className="text-xs text-foreground/90 italic leading-relaxed">
+                    <p className="text-xs text-text/90 italic leading-relaxed">
                       &ldquo;{expandedReview.text}&rdquo;
                     </p>
 
-                    <div className="pt-2 border-t flex items-center justify-between text-2xs text-muted-foreground">
-                      <span className="font-medium text-foreground">
+                    <div className="pt-2 border-t flex items-center justify-between text-2xs text-text-muted">
+                      <span className="font-medium text-text">
                         {expandedReview.authorName}
                       </span>
                       <span>{expandedReview.date}</span>
@@ -633,10 +633,10 @@ export function LivePreview({
       </div>
 
       {/* Autoplay Preview Toggle & Interactive Instructions */}
-      <div className="flex flex-col gap-2 rounded-card border bg-card p-3 sm:flex-row sm:items-center sm:justify-between text-xs">
+      <div className="flex flex-col gap-2 rounded-card border bg-surface p-3 sm:flex-row sm:items-center sm:justify-between text-xs">
         <div className="space-y-0.5">
-          <span className="font-medium text-foreground">Autoplay Video Previews</span>
-          <p className="text-2xs text-muted-foreground">
+          <span className="font-medium text-text">Autoplay Video Previews</span>
+          <p className="text-2xs text-text-muted">
             Muted preview loop plays inside the floating bubble to grab visitor attention.
           </p>
         </div>
@@ -644,7 +644,7 @@ export function LivePreview({
         <Switch checked={autoplayPreview} onCheckedChange={(v) => onAutoplayChange?.(v)} aria-label="Autoplay video previews" />
       </div>
 
-      <p className="text-center text-2xs text-muted-foreground">
+      <p className="text-center text-2xs text-text-muted">
         Tip: Click the widget in the preview above to test the interactive video modal experience.
       </p>
     </div>

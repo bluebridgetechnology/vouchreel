@@ -86,14 +86,14 @@ export function ConversionGoalsPanel({
   }
 
   return (
-    <div className="rounded-card border bg-card p-4">
+    <div className="rounded-card border bg-surface p-4">
       <h3 className="text-sm font-medium">Conversion Goals</h3>
-      <p className="mt-1 text-xs text-muted-foreground">
+      <p className="mt-1 text-xs text-text-muted">
         Track whether visitors who see your testimonials end up converting.
       </p>
 
       {error && (
-        <div className="mt-3 rounded-control bg-destructive/10 p-3 text-xs text-destructive">
+        <div className="mt-3 rounded-control bg-danger-soft p-3 text-xs text-danger-foreground">
           {error}
         </div>
       )}
@@ -138,7 +138,7 @@ export function ConversionGoalsPanel({
           </button>
         </div>
         {goalType === "url-match" && (
-          <p className="text-2xs text-muted-foreground">
+          <p className="text-2xs text-text-muted">
             The widget fires a conversion whenever a visitor lands on a matching URL.
             Use * as a wildcard (e.g. /checkout/*).
           </p>
@@ -148,7 +148,7 @@ export function ConversionGoalsPanel({
       {/* Goal list */}
       <div className="mt-4 space-y-2">
         {goals.length === 0 ? (
-          <p className="rounded-control bg-muted/40 p-4 text-center text-xs text-muted-foreground">
+          <p className="rounded-control bg-surface-sunken/40 p-4 text-center text-xs text-text-muted">
             No conversion goals yet. Create one above to start measuring ROI.
           </p>
         ) : (
@@ -159,13 +159,13 @@ export function ConversionGoalsPanel({
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="rounded-control bg-muted px-1.5 py-0.5 text-2xs font-medium uppercase text-muted-foreground">
+                  <span className="rounded-control bg-surface-sunken px-1.5 py-0.5 text-2xs font-medium uppercase text-text-muted">
                     {goal.goalType}
                   </span>
                   <p className="truncate text-xs font-medium">{goal.goalValue}</p>
                 </div>
                 {goal.goalType === "pixel" && (
-                  <code className="mt-1 block truncate rounded-control bg-muted/60 px-2 py-1 text-2xs text-muted-foreground">
+                  <code className="mt-1 block truncate rounded-control bg-surface-sunken/60 px-2 py-1 text-2xs text-text-muted">
                     {pixelSnippet(goal.id)}
                   </code>
                 )}

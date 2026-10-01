@@ -52,13 +52,13 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-sm font-medium text-foreground">Theme & Branding</h3>
-        <p className="text-xs text-muted-foreground">
+        <h3 className="text-sm font-medium text-text">Theme & Branding</h3>
+        <p className="text-xs text-text-muted">
           Customize colors, light/dark mode, and shape to match your brand identity.
         </p>
       </div>
 
-      <div className="space-y-5 rounded-card border bg-card p-4 sm:p-5">
+      <div className="space-y-5 rounded-card border bg-surface p-4 sm:p-5">
         {/* Colors Row */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {/* Primary Color */}
@@ -66,11 +66,11 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
             <div className="flex items-center justify-between">
               <label
                 htmlFor="widget-primary-hex"
-                className="text-xs font-medium text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Primary Brand Color
               </label>
-              <span className="font-mono text-2xs text-muted-foreground">
+              <span className="font-mono text-2xs text-text-muted">
                 {value.primaryColor}
               </span>
             </div>
@@ -114,11 +114,11 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
             <div className="flex items-center justify-between">
               <label
                 htmlFor="widget-accent-hex"
-                className="text-xs font-medium text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Accent / Text Color
               </label>
-              <span className="font-mono text-2xs text-muted-foreground">
+              <span className="font-mono text-2xs text-text-muted">
                 {value.accentColor}
               </span>
             </div>
@@ -164,7 +164,7 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {/* Light / Dark Mode Toggle */}
           <div className="space-y-2">
-            <span id="display-mode-label" className="text-xs font-medium text-foreground">
+            <span id="display-mode-label" className="text-xs font-medium text-text">
               Display Mode
             </span>
             <div role="group" aria-labelledby="display-mode-label" className="grid grid-cols-2 gap-2">
@@ -190,7 +190,7 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
                 Dark Mode
               </button>
             </div>
-            <p className="text-2xs text-muted-foreground">
+            <p className="text-2xs text-text-muted">
               Controls card surfaces, backgrounds, and contrast inside video modals.
             </p>
           </div>
@@ -200,11 +200,11 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
             <div className="flex items-center justify-between">
               <label
                 htmlFor="widget-border-radius"
-                className="text-xs font-medium text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Corner Radius
               </label>
-              <span className="rounded-control bg-muted px-2 py-0.5 font-mono text-2xs font-medium text-foreground">
+              <span className="rounded-control bg-surface-sunken px-2 py-0.5 font-mono text-2xs font-medium text-text">
                 {value.borderRadius}px
               </span>
             </div>

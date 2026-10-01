@@ -151,50 +151,50 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
     }
   }
 
-  if (loading) return <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6 text-sm text-muted-foreground">Loading collection form…</main>;
-  if (!form) return <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6 text-sm text-muted-foreground">{error || "Collection form not found."}</main>;
+  if (loading) return <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6 text-sm text-text-muted">Loading collection form…</main>;
+  if (!form) return <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6 text-sm text-text-muted">{error || "Collection form not found."}</main>;
 
   const accent = form.branding.accentColor || DEFAULT_BRAND_HEX;
   if (complete) return (
     <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6">
-      <section className="w-full rounded-card border bg-card p-5 sm:p-8 text-center shadow-sm">
+      <section className="w-full rounded-card border bg-surface p-5 sm:p-8 text-center shadow-sm">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-pill bg-success-soft text-xl text-success-foreground">✓</div>
         <h1 className="text-2xl font-medium">Thank you for sharing!</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Your testimonial has been sent for review.</p>
-        {form.incentiveType !== "none" && form.incentiveValue && <p className="mt-5 rounded-card bg-muted p-3 text-sm font-medium">{form.incentiveValue}</p>}
+        <p className="mt-2 text-sm text-text-muted">Your testimonial has been sent for review.</p>
+        {form.incentiveType !== "none" && form.incentiveValue && <p className="mt-5 rounded-card bg-surface-sunken p-3 text-sm font-medium">{form.incentiveValue}</p>}
       </section>
     </main>
   );
 
   return (
     <main className="min-h-screen bg-surface-sunken px-4 py-10 sm:py-16" style={userAccentStyle(accent)}>
-      <section className="mx-auto max-w-xl rounded-card border bg-card p-4 shadow-sm sm:p-8">
+      <section className="mx-auto max-w-xl rounded-card border bg-surface p-4 shadow-sm sm:p-8">
         {form.branding.logoUrl && <img className="mb-5 h-10 max-w-48 object-contain" src={form.branding.logoUrl} alt="" />}
         <h1 className="text-2xl font-medium tracking-tight">{form.title}</h1>
-        <p className="mt-3 whitespace-pre-wrap text-muted-foreground">{form.promptText}</p>
-        {error && <p role="alert" className="mt-5 rounded-control bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+        <p className="mt-3 whitespace-pre-wrap text-text-muted">{form.promptText}</p>
+        {error && <p role="alert" className="mt-5 rounded-control bg-danger-soft p-3 text-sm text-danger-foreground">{error}</p>}
         <form onSubmit={submit} className="mt-7 space-y-5">
           <div className="grid grid-cols-2 rounded-card border p-1">
-            {(["video", "text"] as const).map((value) => <button key={value} type="button" onClick={() => { setMode(value); setError(null); }} className={cn("rounded-control py-2 text-sm font-medium", mode === value ? "bg-(--user-accent) text-(--user-accent-fg) shadow-sm" : "text-muted-foreground")}>{value === "video" ? "Video" : "Written"}</button>)}
+            {(["video", "text"] as const).map((value) => <button key={value} type="button" onClick={() => { setMode(value); setError(null); }} className={cn("rounded-control py-2 text-sm font-medium", mode === value ? "bg-(--user-accent) text-(--user-accent-fg) shadow-sm" : "text-text-muted")}>{value === "video" ? "Video" : "Written"}</button>)}
           </div>
           {mode === "video" ? <div className="space-y-3 rounded-card border border-dashed p-4">
             {previewUrl ? <><video className="aspect-video w-full rounded-card bg-scrim" controls src={previewUrl} onLoadedMetadata={(event) => { if (event.currentTarget.duration > MAX_DURATION_SECONDS) { setVideo(null); setPreviewUrl(null); setError("Videos must be five minutes or less."); } }} /><button type="button" onClick={() => { setVideo(null); setPreviewUrl(null); }} className="text-sm font-medium text-(--user-accent)">Choose another video</button></> : <>
-              <p className="text-sm text-muted-foreground">Record up to 5 minutes, or upload an MP4, WebM, MOV, or AVI under 100 MB.</p>
+              <p className="text-sm text-text-muted">Record up to 5 minutes, or upload an MP4, WebM, MOV, or AVI under 100 MB.</p>
               <div className="flex flex-wrap gap-3"><button type="button" onClick={recording ? stopRecording : startRecording} className={cn(buttonVariants({ size: "md" }), "bg-(--user-accent) text-(--user-accent-fg) hover:bg-(--user-accent) hover:opacity-90")}>{recording ? `Stop recording (${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")})` : "Record with camera"}</button><label className={cn(buttonVariants({ variant: "outline", size: "md" }), "cursor-pointer")}>Upload video<input className="sr-only" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-msvideo" onChange={(event) => event.target.files?.[0] && setPreview(event.target.files[0])} /></label></div>
             </>}
           </div> : <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={5000} rows={7} placeholder="Write your testimonial…" className={cn(textareaClass, "focus-visible:border-(--user-accent) focus-visible:shadow-none focus-visible:ring-2 focus-visible:ring-(--user-accent)")} />}
           <div className="grid gap-4 sm:grid-cols-2"><label className="space-y-1 text-sm font-medium">Your name<input required value={name} onChange={(event) => setName(event.target.value)} maxLength={100} className={cn(inputClass, "w-full text-sm")} /></label><label className="space-y-1 text-sm font-medium">Email address<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={200} className={cn(inputClass, "w-full text-sm")} /></label></div>
-          {progress !== null && <div className="h-2 overflow-hidden rounded-pill bg-muted"><div className="h-full bg-(--user-accent) transition-all" style={{ width: `${progress}%` }} /></div>}
+          {progress !== null && <div className="h-2 overflow-hidden rounded-pill bg-surface-sunken"><div className="h-full bg-(--user-accent) transition-all" style={{ width: `${progress}%` }} /></div>}
           <button disabled={submitting} className={cn(buttonVariants({ size: "lg" }), "w-full bg-(--user-accent) text-(--user-accent-fg) hover:bg-(--user-accent) hover:opacity-90")}>{submitting ? (progress !== null ? `Uploading ${progress}%…` : "Submitting…") : "Submit testimonial"}</button>
         </form>
         {!form.branding?.removeBranding && (
-          <div className="mt-8 text-center text-xs text-muted-foreground">
+          <div className="mt-8 text-center text-xs text-text-muted">
             Powered by{" "}
             <a
               href="https://vouchreel.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium underline hover:text-foreground"
+              className="font-medium underline hover:text-text"
             >
               Vouchreel
             </a>

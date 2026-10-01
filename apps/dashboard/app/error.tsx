@@ -21,12 +21,12 @@ export default function Error({
         <h1 className="text-2xl font-medium tracking-tight">
           Something went wrong
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-text-muted">
           An unexpected error occurred while rendering this page. Try again — if
           the problem persists, head back to your dashboard.
         </p>
         {error.digest ? (
-          <p className="font-mono text-xs text-muted-foreground">
+          <p className="font-mono text-xs text-text-muted">
             Reference: {error.digest}
           </p>
         ) : null}

@@ -6,6 +6,7 @@ import { UpgradePromptModal } from "@/components/billing/upgrade-prompt-modal";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { ModalOverlay } from "@/components/ui/modal";
 
 export interface TeamMember {
   id: string;
@@ -215,14 +216,14 @@ export function TeamManager({
       )}
 
       {/* Invite Form */}
-      <section className="rounded-card border bg-card p-4 sm:p-6 shadow-sm">
+      <section className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
         <h2 className="text-lg font-medium tracking-tight">Invite New Member</h2>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-text-muted mt-1">
           Send an invitation magic link to give collaborators access to your spaces.
         </p>
 
         {inviteError && (
-          <div className="mt-4 rounded-control bg-destructive/10 p-3 text-sm text-destructive">
+          <div className="mt-4 rounded-control bg-danger-soft p-3 text-sm text-danger-foreground">
             {inviteError}
           </div>
         )}
@@ -234,8 +235,8 @@ export function TeamManager({
         )}
 
         {lastInviteUrl && (
-          <div className="mt-3 flex items-center gap-2 rounded-control border bg-muted/40 p-2.5 text-xs">
-            <span className="font-medium text-foreground truncate flex-1 select-all">
+          <div className="mt-3 flex items-center gap-2 rounded-control border bg-surface-sunken/40 p-2.5 text-xs">
+            <span className="font-medium text-text truncate flex-1 select-all">
               {lastInviteUrl}
             </span>
             <button
@@ -282,11 +283,11 @@ export function TeamManager({
       </section>
 
       {/* Team Members List */}
-      <section className="rounded-card border bg-card p-4 sm:p-6 shadow-sm">
+      <section className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-medium tracking-tight">Active Members</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-muted">
               {members.length} member{members.length === 1 ? "" : "s"} currently in this workspace.
             </p>
           </div>
@@ -298,22 +299,22 @@ export function TeamManager({
             return (
               <div
                 key={member.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 bg-background"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 bg-surface"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-primary/10 font-medium text-primary text-sm uppercase">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-brand-soft font-medium text-brand text-sm uppercase">
                     {(member.name || member.email).slice(0, 2)}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm text-foreground">{member.name}</span>
+                      <span className="font-medium text-sm text-text">{member.name}</span>
                       {isSelf && (
-                        <span className="rounded-control bg-accent px-1.5 py-0.5 text-xs text-muted-foreground font-normal">
+                        <span className="rounded-control bg-brand-soft px-1.5 py-0.5 text-xs text-text-muted font-normal">
                           You
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">{member.email}</span>
+                    <span className="text-xs text-text-muted">{member.email}</span>
                   </div>
                 </div>
 
@@ -357,10 +358,10 @@ export function TeamManager({
 
       {/* Pending Invites List */}
       {invites.length > 0 && (
-        <section className="rounded-card border bg-card p-4 sm:p-6 shadow-sm">
+        <section className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
           <div className="mb-4">
             <h2 className="text-lg font-medium tracking-tight">Pending Invitations</h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-muted">
               Invitations sent that have not yet been accepted.
             </p>
           </div>
@@ -371,11 +372,11 @@ export function TeamManager({
               return (
                 <div
                   key={invite.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 bg-background"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 bg-surface"
                 >
                   <div>
-                    <span className="font-medium text-sm text-foreground">{invite.email}</span>
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                    <span className="font-medium text-sm text-text">{invite.email}</span>
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-text-muted">
                       <span className="capitalize">{invite.role}</span>
                       <span>•</span>
                       <span>Expires {expiresDate.toLocaleDateString()}</span>
@@ -407,10 +408,10 @@ export function TeamManager({
 
       {/* Confirmation Modal for Member Removal */}
       {memberToRemove && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/50 p-4">
-          <div className="w-full max-w-md rounded-card border bg-card p-4 sm:p-6 shadow-float space-y-4">
+        <ModalOverlay label="Remove team member" onClose={() => setMemberToRemove(null)}>
+          <div className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-4">
             <h3 className="text-lg font-medium">Remove Team Member</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-muted">
               Are you sure you want to remove <strong>{memberToRemove.name || memberToRemove.email}</strong> from your team? They will immediately lose access to your spaces.
             </p>
             <div className="flex justify-end gap-3 pt-2">
@@ -431,7 +432,7 @@ export function TeamManager({
               </button>
             </div>
           </div>
-        </div>
+        </ModalOverlay>
       )}
 
       {/* Upgrade Modal */}

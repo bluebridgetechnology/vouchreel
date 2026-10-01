@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
+import { ModalOverlay } from "@/components/ui/modal";
 
 export interface TranslationItem {
   id: string;
@@ -166,17 +167,12 @@ export function TranslationsModal({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="translations-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/60 p-4 backdrop-blur-sm"
-    >
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-card border bg-card shadow-float overflow-hidden">
+    <ModalOverlay label="Testimonial translations" onClose={onClose}>
+      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-card border bg-surface shadow-float overflow-hidden">
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-control bg-primary/10 text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-control bg-brand-soft text-brand">
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -187,10 +183,10 @@ export function TranslationsModal({
               </svg>
             </div>
             <div>
-              <h3 id="translations-modal-title" className="text-base font-medium text-foreground">
+              <h3 id="translations-modal-title" className="text-base font-medium text-text">
                 Multi-Language Captions & Translations
               </h3>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-muted">
                 {testimonial.customerName
                   ? `Captions for ${testimonial.customerName}`
                   : "Auto-translate captions and quotes for global visitors"}
@@ -213,7 +209,7 @@ export function TranslationsModal({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Notification Banners */}
           {error && (
-            <div className="rounded-card bg-destructive/10 p-3 text-xs text-destructive flex items-center gap-2">
+            <div className="rounded-card bg-danger-soft p-3 text-xs text-danger-foreground flex items-center gap-2">
               <svg className="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -231,23 +227,23 @@ export function TranslationsModal({
           )}
 
           {/* Source Content Preview */}
-          <div className="rounded-card border bg-muted/30 p-4 space-y-2">
+          <div className="rounded-card border bg-surface-sunken/30 p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-1.5 rounded-pill bg-primary/10 px-2.5 py-0.5 text-2xs font-medium text-primary">
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft px-2.5 py-0.5 text-2xs font-medium text-brand">
                 <span>🇺🇸</span> English [Source]
               </span>
-              <span className="text-2xs text-muted-foreground">Original Text</span>
+              <span className="text-2xs text-text-muted">Original Text</span>
             </div>
             {testimonial.quote ? (
-              <p className="text-xs italic text-foreground">"{testimonial.quote}"</p>
+              <p className="text-xs italic text-text">"{testimonial.quote}"</p>
             ) : (
-              <p className="text-xs text-muted-foreground italic">No source quote text provided.</p>
+              <p className="text-xs text-text-muted italic">No source quote text provided.</p>
             )}
           </div>
 
           {/* Action: Auto-translate New Language */}
-          <div className="rounded-card border p-4 bg-card space-y-3">
-            <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="rounded-card border p-4 bg-surface space-y-3">
+            <h4 className="text-xs font-medium uppercase tracking-wider text-text-muted">
               Add or Refresh Translation
             </h4>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -300,7 +296,7 @@ export function TranslationsModal({
                 )}
               </button>
             </div>
-            <p className="text-2xs text-muted-foreground">
+            <p className="text-2xs text-text-muted">
               Translations are generated via configured translation adapters (DeepL, Google Translate, or Mock) and cached in the database for instant visitor delivery.
             </p>
           </div>
@@ -308,15 +304,15 @@ export function TranslationsModal({
           {/* Cached Translations Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <h4 className="text-xs font-medium uppercase tracking-wider text-text-muted">
                 Available Cached Translations ({translations.length})
               </h4>
             </div>
 
             {loading ? (
-              <div className="h-16 animate-pulse rounded-control bg-muted/40" />
+              <div className="h-16 animate-pulse rounded-control bg-surface-sunken/40" />
             ) : translations.length === 0 ? (
-              <div className="rounded-card border border-dashed p-6 text-center text-xs text-muted-foreground">
+              <div className="rounded-card border border-dashed p-6 text-center text-xs text-text-muted">
                 No translations generated yet. Choose a language above and click "Auto-translate".
               </div>
             ) : (
@@ -342,27 +338,27 @@ export function TranslationsModal({
 
                 {/* Selected Translation Detail & Preview */}
                 {activeTranslation && (
-                  <div className="rounded-card border bg-card p-4 space-y-4">
+                  <div className="rounded-card border bg-surface p-4 space-y-4">
                     <div className="flex items-center justify-between border-b pb-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-xs text-foreground uppercase">
+                        <span className="font-medium text-xs text-text uppercase">
                           {activeTranslation.language} Translation
                         </span>
-                        <span className="rounded-control bg-muted px-2 py-0.5 text-2xs font-mono text-muted-foreground">
+                        <span className="rounded-control bg-surface-sunken px-2 py-0.5 text-2xs font-mono text-text-muted">
                           Provider: {activeTranslation.provider}
                         </span>
                       </div>
-                      <span className="text-2xs text-muted-foreground">
+                      <span className="text-2xs text-text-muted">
                         Cached: {new Date(activeTranslation.createdAt).toLocaleDateString()}
                       </span>
                     </div>
 
                     {/* Translated Quote */}
                     <div className="space-y-1">
-                      <label className="text-2xs font-medium text-muted-foreground">
+                      <label className="text-2xs font-medium text-text-muted">
                         Translated Quote
                       </label>
-                      <div className="rounded-control bg-muted/40 p-3 text-xs italic text-foreground">
+                      <div className="rounded-control bg-surface-sunken/40 p-3 text-xs italic text-text">
                         "{activeTranslation.quote || 'No translated quote'}"
                       </div>
                     </div>
@@ -372,22 +368,22 @@ export function TranslationsModal({
                     Array.isArray(activeTranslation.transcript) &&
                     activeTranslation.transcript.length > 0 ? (
                       <div className="space-y-2">
-                        <label className="text-2xs font-medium text-muted-foreground">
+                        <label className="text-2xs font-medium text-text-muted">
                           Subtitle Cues ({activeTranslation.transcript.length})
                         </label>
                         <div className="max-h-40 overflow-y-auto rounded-control border divide-y text-xs">
                           {activeTranslation.transcript.map((cue, idx) => (
-                            <div key={idx} className="flex items-start gap-3 p-2 bg-background hover:bg-muted/30">
-                              <span className="font-mono text-2xs text-muted-foreground pt-0.5 whitespace-nowrap">
+                            <div key={idx} className="flex items-start gap-3 p-2 bg-surface hover:bg-surface-sunken/30">
+                              <span className="font-mono text-2xs text-text-muted pt-0.5 whitespace-nowrap">
                                 {formatTime(cue.start)} - {formatTime(cue.end)}
                               </span>
-                              <span className="text-foreground">{cue.text}</span>
+                              <span className="text-text">{cue.text}</span>
                             </div>
                           ))}
                         </div>
                       </div>
                     ) : (
-                      <p className="text-2xs text-muted-foreground">
+                      <p className="text-2xs text-text-muted">
                         No subtitle cues stored for this testimonial.
                       </p>
                     )}
@@ -399,7 +395,7 @@ export function TranslationsModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="border-t bg-muted/20 px-6 py-3 flex justify-end">
+        <div className="border-t bg-surface-sunken/20 px-6 py-3 flex justify-end">
           <button
             type="button"
             onClick={onClose}
@@ -409,6 +405,6 @@ export function TranslationsModal({
           </button>
         </div>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

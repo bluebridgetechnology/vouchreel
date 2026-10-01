@@ -15,7 +15,7 @@ export const buttonVariants = cva(
         ghost: "text-text-muted hover:bg-surface-sunken hover:text-text",
         danger: "bg-danger text-text-on-accent hover:opacity-90",
         success: "bg-success text-text-on-accent shadow-xs hover:bg-success/90",
-        warning: "bg-warning text-text-on-accent shadow-xs hover:bg-warning/90",
+        warning: "bg-warning text-on-warning shadow-xs hover:bg-warning/90",
         "outline-danger": "border border-danger/30 text-danger-foreground hover:bg-danger-soft",
         "ghost-brand": "text-brand hover:bg-brand-soft",
         "ghost-danger": "text-text-muted hover:bg-danger-soft hover:text-danger-foreground",

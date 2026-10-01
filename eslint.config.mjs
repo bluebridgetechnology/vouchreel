@@ -6,6 +6,7 @@ export default tseslint.config(
       "**/node_modules/**",
       "**/.next/**",
       "**/dist/**",
+      "**/public/widget/**",
       "**/drizzle/**",
       "**/.turbo/**",
     ],

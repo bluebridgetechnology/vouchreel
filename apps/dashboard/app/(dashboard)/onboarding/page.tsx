@@ -279,7 +279,6 @@ export default function OnboardingPage() {
             {(oembedThumbnail || oembedTitle) && (
               <div className="flex items-center gap-3 rounded-card bg-surface-sunken p-3">
                 {oembedThumbnail && (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={oembedThumbnail} alt={oembedTitle} className="h-16 w-28 shrink-0 rounded-control object-cover" />
                 )}
                 <div className="min-w-0 flex-1">

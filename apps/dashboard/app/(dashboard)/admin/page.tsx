@@ -20,7 +20,7 @@ export default async function AdminPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-medium tracking-tight">Admin Settings</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <p className="text-text-muted mt-1 text-sm">
           Manage system-wide settings, payment processing gateways, and developer webhooks.
         </p>
       </div>

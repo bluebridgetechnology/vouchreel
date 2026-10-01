@@ -104,17 +104,17 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-medium text-foreground">Embed on Your Website</h3>
-        <p className="text-xs text-muted-foreground">
+        <h3 className="text-sm font-medium text-text">Embed on Your Website</h3>
+        <p className="text-xs text-text-muted">
           Copy and paste this lightweight script tag onto your website to start displaying your widget.
         </p>
       </div>
 
-      <div className="space-y-5 rounded-card border bg-card p-4 sm:p-5">
+      <div className="space-y-5 rounded-card border bg-surface p-4 sm:p-5">
         {/* Code Box */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-foreground">
+            <span className="text-xs font-medium text-text">
               Script Snippet
             </span>
             {copied && (
@@ -148,7 +148,7 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
         {/* Platform Guides */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-foreground">
+            <label className="text-xs font-medium text-text">
               Installation Guides by Platform
             </label>
           </div>
@@ -168,15 +168,15 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
           </div>
 
           {/* Step by step list */}
-          <div className="rounded-card border bg-muted/20 p-3.5 space-y-2">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+          <div className="rounded-card border bg-surface-sunken/20 p-3.5 space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-text">
               <span>Steps for {activeGuide.name}</span>
             </div>
 
-            <ol className="list-decimal list-inside space-y-1.5 text-xs text-muted-foreground leading-relaxed">
+            <ol className="list-decimal list-inside space-y-1.5 text-xs text-text-muted leading-relaxed">
               {activeGuide.instructions.map((step, idx) => (
                 <li key={idx} className="pl-1">
-                  <span className="text-foreground/90">{step}</span>
+                  <span className="text-text/90">{step}</span>
                 </li>
               ))}
             </ol>

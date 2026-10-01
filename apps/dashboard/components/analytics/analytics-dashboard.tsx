@@ -14,7 +14,7 @@ const TimeSeriesChart = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-72 w-full animate-pulse rounded-control bg-muted" />
+      <div className="h-72 w-full animate-pulse rounded-control bg-surface-sunken" />
     ),
   }
 );
@@ -269,7 +269,6 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
 
   useEffect(() => {
     reloadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     days,
     selectedTestimonial,
@@ -362,7 +361,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
       {/* Top action & date header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-text-muted">
             Track impressions, video plays, click-throughs, and conversions with multi-dimensional segmentation.
           </p>
         </div>
@@ -389,7 +388,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
             title="Export raw analytics data to CSV"
           >
             <svg
-              className="h-3.5 w-3.5 text-muted-foreground"
+              className="h-3.5 w-3.5 text-text-muted"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -430,9 +429,9 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
       </div>
 
       {/* Filter and Comparison Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border bg-card p-3 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border bg-surface p-3 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1 text-2xs font-medium text-muted-foreground">
+          <span className="flex items-center gap-1 text-2xs font-medium text-text-muted">
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -509,7 +508,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
 
         {/* Compare Toggle */}
         <div className="flex items-center gap-1.5">
-          <span className="text-2xs font-medium text-muted-foreground">Compare:</span>
+          <span className="text-2xs font-medium text-text-muted">Compare:</span>
           <div className="inline-flex rounded-control border p-0.5">
             <button
               onClick={() => setCompareMode("none")}
@@ -534,24 +533,24 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
       </div>
 
       {error && (
-        <div className="rounded-control bg-destructive/10 p-4 text-xs text-destructive">{error}</div>
+        <div className="rounded-control bg-danger-soft p-4 text-xs text-danger-foreground">{error}</div>
       )}
 
       {loading ? (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-24 animate-pulse rounded-card border bg-muted/40" />
+              <div key={i} className="h-24 animate-pulse rounded-card border bg-surface-sunken/40" />
             ))}
           </div>
-          <div className="h-72 animate-pulse rounded-card border bg-muted/40" />
-          <div className="h-48 animate-pulse rounded-card border bg-muted/40" />
+          <div className="h-72 animate-pulse rounded-card border bg-surface-sunken/40" />
+          <div className="h-48 animate-pulse rounded-card border bg-surface-sunken/40" />
         </>
       ) : hasNoEvents ? (
         <div className="rounded-card border border-dashed p-12 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-muted">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-surface-sunken">
             <svg
-              className="h-6 w-6 text-muted-foreground"
+              className="h-6 w-6 text-text-muted"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -565,7 +564,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
             </svg>
           </div>
           <h3 className="mt-4 text-base font-medium">No analytics data yet</h3>
-          <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+          <p className="mt-1 max-w-sm text-xs text-text-muted">
             Once your widget is embedded and visitors start interacting, impressions,
             plays, and conversions matching your filters will show up here.
           </p>
@@ -574,20 +573,20 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
         <>
           {/* Comparison Mode Banner */}
           {compareMode === "previous" && (
-            <div className="flex items-center justify-between rounded-control border border-primary/20 bg-primary/5 px-4 py-2 text-xs text-foreground">
+            <div className="flex items-center justify-between rounded-control border border-brand/20 bg-brand-soft px-4 py-2 text-xs text-text">
               <span className="font-medium">
                 Comparing Current Period (Last {days} days) vs Previous Period
               </span>
-              <span className="text-2xs text-muted-foreground">
+              <span className="text-2xs text-text-muted">
                 Showing relative deltas and dual-period metrics
               </span>
             </div>
           )}
 
           {compareMode === "segments" && (
-            <div className="flex items-center justify-between rounded-control border border-primary/20 bg-primary/5 px-4 py-2 text-xs text-foreground">
+            <div className="flex items-center justify-between rounded-control border border-brand/20 bg-brand-soft px-4 py-2 text-xs text-text">
               <span className="font-medium">Comparing Mobile vs Desktop Segment Performance</span>
-              <span className="text-2xs text-muted-foreground">
+              <span className="text-2xs text-text-muted">
                 Side-by-side device segmentation
               </span>
             </div>
@@ -661,10 +660,10 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
           )}
 
           {/* Time-series chart */}
-          <div className="rounded-card border bg-card p-4">
+          <div className="rounded-card border bg-surface p-4">
             <h3 className="mb-4 text-sm font-medium">Impressions & Plays Over Time</h3>
             {points.length === 0 ? (
-              <p className="py-16 text-center text-xs text-muted-foreground">
+              <p className="py-16 text-center text-xs text-text-muted">
                 No events in this period matching the active filters.
               </p>
             ) : (
@@ -673,23 +672,23 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
           </div>
 
           {/* Funnel: Single or Comparative */}
-          <div className="rounded-card border bg-card p-4">
+          <div className="rounded-card border bg-surface p-4">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-medium">Conversion Funnel</h3>
               {compareMode === "previous" && (
-                <div className="flex items-center gap-3 text-2xs text-muted-foreground">
+                <div className="flex items-center gap-3 text-2xs text-text-muted">
                   <span className="flex items-center gap-1">
-                    <span className="inline-block h-2 w-2 rounded-control bg-primary" /> Current Period
+                    <span className="inline-block h-2 w-2 rounded-control bg-brand" /> Current Period
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="inline-block h-2 w-2 rounded-control bg-muted-foreground/40" /> Previous Period
+                    <span className="inline-block h-2 w-2 rounded-control bg-text-muted/40" /> Previous Period
                   </span>
                 </div>
               )}
               {compareMode === "segments" && (
-                <div className="flex items-center gap-3 text-2xs text-muted-foreground">
+                <div className="flex items-center gap-3 text-2xs text-text-muted">
                   <span className="flex items-center gap-1">
-                    <span className="inline-block h-2 w-2 rounded-control bg-primary" /> Mobile
+                    <span className="inline-block h-2 w-2 rounded-control bg-brand" /> Mobile
                   </span>
                   <span className="flex items-center gap-1">
                     <span className="inline-block h-2 w-2 rounded-control bg-chart-3" /> Desktop
@@ -706,9 +705,9 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
                   const delta = segmentComparison.deltas.funnel[step1.step] ?? 0;
 
                   return (
-                    <div key={step1.step} className="rounded-card border bg-muted/20 p-3">
+                    <div key={step1.step} className="rounded-card border bg-surface-sunken/20 p-3">
                       <div className="mb-2 flex items-center justify-between text-xs">
-                        <span className="font-medium text-foreground">
+                        <span className="font-medium text-text">
                           {STEP_LABELS[step1.step] ?? step1.step}
                         </span>
                         <div className="flex items-center gap-2">
@@ -727,13 +726,13 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
 
                       {/* Mobile bar */}
                       <div className="mb-1.5">
-                        <div className="mb-0.5 flex justify-between text-2xs text-muted-foreground">
+                        <div className="mb-0.5 flex justify-between text-2xs text-text-muted">
                           <span>Mobile</span>
                           <span>{step1.count.toLocaleString()}</span>
                         </div>
-                        <div className="h-4 w-full overflow-hidden rounded-control bg-muted">
+                        <div className="h-4 w-full overflow-hidden rounded-control bg-surface-sunken">
                           <div
-                            className="h-full rounded-control bg-primary transition-all"
+                            className="h-full rounded-control bg-brand transition-all"
                             style={{ width: `${Math.max((step1.count / maxStep) * 100, step1.count > 0 ? 5 : 0)}%` }}
                           />
                         </div>
@@ -741,11 +740,11 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
 
                       {/* Desktop bar */}
                       <div>
-                        <div className="mb-0.5 flex justify-between text-2xs text-muted-foreground">
+                        <div className="mb-0.5 flex justify-between text-2xs text-text-muted">
                           <span>Desktop</span>
                           <span>{step2.count.toLocaleString()}</span>
                         </div>
-                        <div className="h-4 w-full overflow-hidden rounded-control bg-muted">
+                        <div className="h-4 w-full overflow-hidden rounded-control bg-surface-sunken">
                           <div
                             className="h-full rounded-control bg-chart-3 transition-all"
                             style={{ width: `${Math.max((step2.count / maxStep) * 100, step2.count > 0 ? 5 : 0)}%` }}
@@ -773,10 +772,10 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
                     <div key={step.step}>
                       <div className="mb-1 flex items-center justify-between text-xs">
                         <span className="font-medium">{STEP_LABELS[step.step] ?? step.step}</span>
-                        <div className="flex items-center gap-2 text-muted-foreground">
+                        <div className="flex items-center gap-2 text-text-muted">
                           <span>{step.count.toLocaleString()}</span>
                           {prevStepCount !== null && (
-                            <span className="text-2xs text-muted-foreground">
+                            <span className="text-2xs text-text-muted">
                               (Prev: {prevStepCount.toLocaleString()})
                             </span>
                           )}
@@ -799,9 +798,9 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
                       </div>
 
                       <div className="space-y-1">
-                        <div className="h-5 w-full overflow-hidden rounded-control bg-muted">
+                        <div className="h-5 w-full overflow-hidden rounded-control bg-surface-sunken">
                           <div
-                            className="flex h-full items-center justify-end rounded-control bg-primary pr-2 text-2xs font-medium text-primary-foreground transition-all"
+                            className="flex h-full items-center justify-end rounded-control bg-brand pr-2 text-2xs font-medium text-text-on-accent transition-all"
                             style={{
                               width: `${Math.max(
                                 (step.count / maxFunnel) * 100,
@@ -811,9 +810,9 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
                           />
                         </div>
                         {prevStepCount !== null && (
-                          <div className="h-2 w-full overflow-hidden rounded-control bg-muted/60">
+                          <div className="h-2 w-full overflow-hidden rounded-control bg-surface-sunken/60">
                             <div
-                              className="h-full rounded-control bg-muted-foreground/40 transition-all"
+                              className="h-full rounded-control bg-text-muted/40 transition-all"
                               style={{
                                 width: `${Math.max(
                                   (prevStepCount / maxFunnel) * 100,
@@ -826,7 +825,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
                       </div>
 
                       {step.dropOffPercent !== null && i > 0 && (
-                        <p className="mt-0.5 text-right text-2xs text-muted-foreground">
+                        <p className="mt-0.5 text-right text-2xs text-text-muted">
                           −{step.dropOffPercent}% drop-off
                         </p>
                       )}
@@ -838,17 +837,17 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
           </div>
 
           {/* Per-testimonial table */}
-          <div className="rounded-card border bg-card p-4">
+          <div className="rounded-card border bg-surface p-4">
             <h3 className="mb-4 text-sm font-medium">Per-Testimonial Performance</h3>
             {rows.length === 0 ? (
-              <p className="py-8 text-center text-xs text-muted-foreground">
+              <p className="py-8 text-center text-xs text-text-muted">
                 No testimonials match the active filter.
               </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b text-muted-foreground">
+                    <tr className="border-b text-text-muted">
                       {(
                         [
                           ["title", "Testimonial"],
@@ -876,14 +875,13 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
                         <td className="px-2 py-2.5">
                           <div className="flex items-center gap-2">
                             {row.thumbnailUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={row.thumbnailUrl}
                                 alt=""
                                 className="h-8 w-12 rounded-control object-cover"
                               />
                             ) : (
-                              <div className="flex h-8 w-12 items-center justify-center rounded-control bg-muted text-muted-foreground">
+                              <div className="flex h-8 w-12 items-center justify-center rounded-control bg-surface-sunken text-text-muted">
                                 <svg
                                   className="h-3.5 w-3.5"
                                   fill="currentColor"
@@ -898,7 +896,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
                                 {row.customerName || row.title || "Untitled testimonial"}
                               </p>
                               {row.isActive === false && (
-                                <p className="text-2xs text-muted-foreground">Inactive</p>
+                                <p className="text-2xs text-text-muted">Inactive</p>
                               )}
                             </div>
                           </div>
@@ -907,7 +905,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
                         <td className="px-2 py-2.5">
                           {row.plays.toLocaleString()}
                           {row.impressions > 0 && (
-                            <span className="ml-1 text-2xs text-muted-foreground">
+                            <span className="ml-1 text-2xs text-text-muted">
                               ({Math.round((row.plays / row.impressions) * 100)}%)
                             </span>
                           )}
@@ -948,12 +946,12 @@ function StatCard({
   trend: string | null;
 }) {
   return (
-    <div className="rounded-card border bg-card p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
+    <div className="rounded-card border bg-surface p-4">
+      <p className="text-xs text-text-muted">{label}</p>
       <div className="mt-1 flex items-baseline gap-2">
         <p className="text-2xl font-medium">{value.toLocaleString()}</p>
         {prevValue !== undefined && (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-text-muted">
             vs {prevValue.toLocaleString()}
           </span>
         )}
@@ -967,7 +965,7 @@ function StatCard({
           </span>
         )}
       </div>
-      {sub && <p className="mt-0.5 text-2xs text-muted-foreground">{sub}</p>}
+      {sub && <p className="mt-0.5 text-2xs text-text-muted">{sub}</p>}
     </div>
   );
 }
@@ -988,9 +986,9 @@ function SegmentStatCard({
   name2: string;
 }) {
   return (
-    <div className="rounded-card border bg-card p-4">
+    <div className="rounded-card border bg-surface p-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-xs text-text-muted">{label}</p>
         <span
           className={`rounded-control px-1.5 py-0.5 text-2xs font-medium ${
             delta >= 0
@@ -1004,11 +1002,11 @@ function SegmentStatCard({
       </div>
       <div className="mt-2 grid grid-cols-2 gap-2 border-t pt-2 text-xs">
         <div>
-          <p className="text-2xs text-muted-foreground">{name1}</p>
-          <p className="text-base font-medium text-primary">{val1.toLocaleString()}</p>
+          <p className="text-2xs text-text-muted">{name1}</p>
+          <p className="text-base font-medium text-brand">{val1.toLocaleString()}</p>
         </div>
         <div>
-          <p className="text-2xs text-muted-foreground">{name2}</p>
+          <p className="text-2xs text-text-muted">{name2}</p>
           <p className="text-base font-medium text-chart-3">{val2.toLocaleString()}</p>
         </div>
       </div>

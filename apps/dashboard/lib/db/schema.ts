@@ -578,7 +578,7 @@ export const socialExportSettings = pgTable("social_export_settings", {
     .unique()
     .references(() => spaces.id, { onDelete: "cascade" }),
   logoUrl: text("logo_url"),
-  brandColor: text("brand_color").default("#d9471b").notNull(),
+  brandColor: text("brand_color").default("#cf3d0b").notNull(),
   watermarkPosition: watermarkPositionEnum("watermark_position")
     .default("bottom-right")
     .notNull(),

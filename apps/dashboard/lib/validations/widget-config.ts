@@ -35,7 +35,7 @@ export const widgetThemeSchema = z.object({
   primaryColor: z
     .string()
     .trim()
-    .regex(hexColorRegex, "Primary color must be a valid hex color (e.g. #d9471b)"),
+    .regex(hexColorRegex, "Primary color must be a valid hex color (e.g. #cf3d0b)"),
   accentColor: z
     .string()
     .trim()

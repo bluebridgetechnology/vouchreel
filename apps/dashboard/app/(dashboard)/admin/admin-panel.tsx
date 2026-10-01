@@ -71,7 +71,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
           className={`rounded-card border p-4 text-sm ${
             message.type === "success"
               ? "border-success/30 bg-success-soft text-success-foreground"
-              : "border-destructive/20 bg-destructive/10 text-destructive"
+              : "border-danger/20 bg-danger-soft text-danger-foreground"
           }`}
         >
           {message.text}
@@ -79,9 +79,9 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
       )}
 
       {/* Payment Provider Selection */}
-      <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm">
+      <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
         <h2 className="text-xl font-medium">Active Payment Provider</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-text-muted">
           Choose which payment processor is used for newly created checkout sessions.
         </p>
 
@@ -90,8 +90,8 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
           <label
             className={`relative flex cursor-pointer flex-col rounded-card border p-5 transition-all ${
               provider === "stripe"
-                ? "border-primary bg-primary/5 ring-2 ring-primary"
-                : "border-border hover:bg-accent/50"
+                ? "border-brand bg-brand-soft ring-2 ring-brand"
+                : "border-border hover:bg-surface-sunken/50"
             }`}
           >
             <div className="flex items-center justify-between">
@@ -102,7 +102,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
                   value="stripe"
                   checked={provider === "stripe"}
                   onChange={() => setProvider("stripe")}
-                  className="h-4 w-4 text-primary focus:ring-primary"
+                  className="h-4 w-4 text-brand focus:ring-brand"
                 />
                 <span className="font-medium">Stripe</span>
               </div>
@@ -110,7 +110,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
                 Default
               </span>
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">
+            <p className="mt-3 text-xs text-text-muted">
               Direct merchant processing via Stripe Checkout. Requires configured Stripe API keys and price IDs.
             </p>
           </label>
@@ -119,8 +119,8 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
           <label
             className={`relative flex cursor-pointer flex-col rounded-card border p-5 transition-all ${
               provider === "dodo"
-                ? "border-primary bg-primary/5 ring-2 ring-primary"
-                : "border-border hover:bg-accent/50"
+                ? "border-brand bg-brand-soft ring-2 ring-brand"
+                : "border-border hover:bg-surface-sunken/50"
             }`}
           >
             <div className="flex items-center justify-between">
@@ -131,7 +131,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
                   value="dodo"
                   checked={provider === "dodo"}
                   onChange={() => setProvider("dodo")}
-                  className="h-4 w-4 text-primary focus:ring-primary"
+                  className="h-4 w-4 text-brand focus:ring-brand"
                 />
                 <span className="font-medium">Dodo Payments</span>
               </div>
@@ -139,7 +139,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
                 MoR
               </span>
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">
+            <p className="mt-3 text-xs text-text-muted">
               Merchant of Record solution handling global sales tax, VAT, and international payment methods.
             </p>
           </label>
@@ -158,17 +158,17 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
       </div>
 
       {/* Webhook Endpoints Info */}
-      <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm space-y-4">
+      <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm space-y-4">
         <div>
           <h2 className="text-xl font-medium">Registered Webhook Endpoints</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-text-muted">
             Both webhook endpoints remain permanently active so event notifications are never missed
             even if you switch active providers. Configure these in your respective provider dashboards.
           </p>
         </div>
 
         {/* Stripe Webhook */}
-        <div className="space-y-2 rounded-card border p-4 bg-muted/40">
+        <div className="space-y-2 rounded-card border p-4 bg-surface-sunken/40">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Stripe Webhook URL</span>
             <button
@@ -179,10 +179,10 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
               {copiedStripe ? "Copied!" : "Copy URL"}
             </button>
           </div>
-          <code className="block rounded-control bg-background p-2 text-xs font-mono text-foreground border break-all">
+          <code className="block rounded-control bg-surface p-2 text-xs font-mono text-text border break-all">
             {stripeWebhookUrl}
           </code>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-text-muted">
             Events to listen for: <code className="text-xs font-mono">checkout.session.completed</code>,{" "}
             <code className="text-xs font-mono">customer.subscription.updated</code>,{" "}
             <code className="text-xs font-mono">customer.subscription.deleted</code>,{" "}
@@ -191,7 +191,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
         </div>
 
         {/* Dodo Webhook */}
-        <div className="space-y-2 rounded-card border p-4 bg-muted/40">
+        <div className="space-y-2 rounded-card border p-4 bg-surface-sunken/40">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Dodo Payments Webhook URL</span>
             <button
@@ -202,10 +202,10 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
               {copiedDodo ? "Copied!" : "Copy URL"}
             </button>
           </div>
-          <code className="block rounded-control bg-background p-2 text-xs font-mono text-foreground border break-all">
+          <code className="block rounded-control bg-surface p-2 text-xs font-mono text-text border break-all">
             {dodoWebhookUrl}
           </code>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-text-muted">
             Events to listen for: <code className="text-xs font-mono">payment.succeeded</code>,{" "}
             <code className="text-xs font-mono">subscription.active</code>,{" "}
             <code className="text-xs font-mono">subscription.updated</code>,{" "}

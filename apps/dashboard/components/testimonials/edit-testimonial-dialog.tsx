@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { ModalOverlay } from "@/components/ui/modal";
 
 interface EditTestimonialDialogProps {
   spaceId: string;
@@ -104,12 +105,9 @@ export function EditTestimonialDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-scrim/60 p-4">
+    <ModalOverlay label="Edit testimonial" onClose={onClose}>
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="edit-testimonial-title"
-        className="relative my-8 w-full max-w-2xl rounded-card border bg-card p-4 sm:p-6 shadow-float"
+        className="relative my-8 w-full max-w-2xl rounded-card border bg-surface p-4 sm:p-6 shadow-float"
       >
         {/* Close Button */}
         <button
@@ -126,23 +124,23 @@ export function EditTestimonialDialog({
           <h2 id="edit-testimonial-title" className="text-xl font-medium tracking-tight">
             Edit Testimonial
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-text-muted">
             Update metadata, customer details, status, and contextual page matching.
           </p>
         </div>
 
         {error && (
-          <div className="mt-4 rounded-control bg-destructive/10 p-3 text-xs text-destructive">
+          <div className="mt-4 rounded-control bg-danger-soft p-3 text-xs text-danger-foreground">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           {/* Active status switch */}
-          <div className="flex items-center justify-between rounded-card border bg-muted/30 p-3">
+          <div className="flex items-center justify-between rounded-card border bg-surface-sunken/30 p-3">
             <div>
-              <span className="text-xs font-medium text-foreground">Active Status</span>
-              <p className="text-2xs text-muted-foreground">
+              <span className="text-xs font-medium text-text">Active Status</span>
+              <p className="text-2xs text-text-muted">
                 When active, this testimonial is eligible to display in the website widget.
               </p>
             </div>
@@ -153,7 +151,7 @@ export function EditTestimonialDialog({
           <div className="space-y-1.5">
             <label
               htmlFor="edit-testimonial-name"
-              className="text-xs font-medium text-foreground"
+              className="text-xs font-medium text-text"
             >
               Title
             </label>
@@ -171,7 +169,7 @@ export function EditTestimonialDialog({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-customer-name"
-                className="text-xs font-medium text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Customer Name
               </label>
@@ -186,7 +184,7 @@ export function EditTestimonialDialog({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit-customer-company"
-                className="text-xs font-medium text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Customer Company / Role
               </label>
@@ -204,7 +202,7 @@ export function EditTestimonialDialog({
           <div className="space-y-1.5">
             <label
               htmlFor="edit-quote"
-              className="text-xs font-medium text-foreground"
+              className="text-xs font-medium text-text"
             >
               Quote / Highlight Soundbite
             </label>
@@ -221,7 +219,7 @@ export function EditTestimonialDialog({
           <div className="space-y-2">
             <label
               htmlFor="edit-tag-input"
-              className="text-xs font-medium text-foreground"
+              className="text-xs font-medium text-text"
             >
               Tags
             </label>
@@ -253,7 +251,7 @@ export function EditTestimonialDialog({
                 {tags.map((t) => (
                   <span
                     key={t}
-                    className="inline-flex items-center gap-1 rounded-control bg-secondary px-2.5 py-0.5 text-2xs font-medium text-secondary-foreground"
+                    className="inline-flex items-center gap-1 rounded-control bg-surface-sunken px-2.5 py-0.5 text-2xs font-medium text-text"
                   >
                     #{t}
                     <button
@@ -295,6 +293,6 @@ export function EditTestimonialDialog({
           </div>
         </form>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

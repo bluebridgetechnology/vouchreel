@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
+import { ModalOverlay } from "@/components/ui/modal";
 
 interface ReviewSource {
   id: string;
@@ -250,10 +251,10 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-6">
         <div>
-          <h2 className="text-2xl font-medium tracking-tight text-foreground">
+          <h2 className="text-2xl font-medium tracking-tight text-text">
             External Reviews
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-text-muted">
             Connect your Google Business and Trustpilot profiles to import verified text
             reviews and showcase them alongside video testimonials.
           </p>
@@ -275,7 +276,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
       {/* Connected Sources Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Google Reviews Card */}
-        <div className="rounded-card border bg-card p-5 shadow-sm space-y-4">
+        <div className="rounded-card border bg-surface p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-control bg-info-soft text-info-foreground font-medium border border-info/30">
@@ -299,8 +300,8 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                 </svg>
               </div>
               <div>
-                <h3 className="font-medium text-foreground text-sm">Google Reviews</h3>
-                <p className="text-xs text-muted-foreground">Google Places API</p>
+                <h3 className="font-medium text-text text-sm">Google Reviews</h3>
+                <p className="text-xs text-text-muted">Google Places API</p>
               </div>
             </div>
 
@@ -310,13 +311,13 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                 Connected
               </span>
             ) : (
-              <span className="rounded-pill bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              <span className="rounded-pill bg-surface-sunken px-2 py-0.5 text-xs font-medium text-text-muted">
                 Not Connected
               </span>
             )}
           </div>
 
-          <div className="rounded-card bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+          <div className="rounded-card bg-surface-sunken/40 p-3 text-xs text-text-muted space-y-1">
             <p>
               <strong>Note:</strong> The official Google Places API caps review retrieval
               to the ~5 most helpful/recent reviews for your place listing.
@@ -343,7 +344,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                   className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   {syncingSourceId === googleSource.id ? (
-                    <span className="h-3 w-3 animate-spin rounded-pill border-2 border-foreground border-t-transparent" />
+                    <span className="h-3 w-3 animate-spin rounded-pill border-2 border-text border-t-transparent" />
                   ) : (
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -377,7 +378,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
         </div>
 
         {/* Trustpilot Reviews Card */}
-        <div className="rounded-card border bg-card p-5 shadow-sm space-y-4">
+        <div className="rounded-card border bg-surface p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-control bg-success-soft text-success-foreground font-medium border border-success/30">
@@ -386,8 +387,8 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                 </svg>
               </div>
               <div>
-                <h3 className="font-medium text-foreground text-sm">Trustpilot Reviews</h3>
-                <p className="text-xs text-muted-foreground">Trustpilot Business API</p>
+                <h3 className="font-medium text-text text-sm">Trustpilot Reviews</h3>
+                <p className="text-xs text-text-muted">Trustpilot Business API</p>
               </div>
             </div>
 
@@ -397,13 +398,13 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                 Connected
               </span>
             ) : (
-              <span className="rounded-pill bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              <span className="rounded-pill bg-surface-sunken px-2 py-0.5 text-xs font-medium text-text-muted">
                 Not Connected
               </span>
             )}
           </div>
 
-          <div className="rounded-card bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+          <div className="rounded-card bg-surface-sunken/40 p-3 text-xs text-text-muted space-y-1">
             <p>
               Import genuine customer reviews directly from your Trustpilot business unit
               with star ratings and verified review text.
@@ -430,7 +431,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                   className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   {syncingSourceId === trustpilotSource.id ? (
-                    <span className="h-3 w-3 animate-spin rounded-pill border-2 border-foreground border-t-transparent" />
+                    <span className="h-3 w-3 animate-spin rounded-pill border-2 border-text border-t-transparent" />
                   ) : (
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -466,10 +467,10 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
 
       {/* Connect Modal */}
       {connectModalProvider && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/60 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-card border bg-card p-4 sm:p-6 shadow-float space-y-4">
+        <ModalOverlay label="Connect review source" onClose={() => setConnectModalProvider(null)}>
+          <div className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-base font-medium text-foreground">
+              <h3 className="text-base font-medium text-text">
                 Connect {connectModalProvider === "google" ? "Google Business" : "Trustpilot"}
               </h3>
               <button
@@ -481,7 +482,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
             </div>
 
             {connectError && (
-              <div className="rounded-card border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+              <div className="rounded-card border border-danger/30 bg-danger-soft p-3 text-xs text-danger-foreground">
                 {connectError}
               </div>
             )}
@@ -490,8 +491,8 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
               {connectModalProvider === "google" ? (
                 <>
                   <div className="space-y-1.5">
-                    <label className="font-medium text-foreground">
-                      Google Place ID <span className="text-destructive">*</span>
+                    <label className="font-medium text-text">
+                      Google Place ID <span className="text-danger-foreground">*</span>
                     </label>
                     <input
                       type="text"
@@ -501,13 +502,13 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                       onChange={(e) => setProviderBusinessId(e.target.value)}
                       className={cn(inputClass, "w-full text-xs font-mono")}
                     />
-                    <p className="text-2xs text-muted-foreground">
+                    <p className="text-2xs text-text-muted">
                       You can look up your Place ID using the official Google Place ID Finder.
                     </p>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-medium text-foreground">
+                    <label className="font-medium text-text">
                       Google Places API Key (Optional)
                     </label>
                     <input
@@ -517,7 +518,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                       onChange={(e) => setApiKey(e.target.value)}
                       className={cn(inputClass, "w-full text-xs font-mono")}
                     />
-                    <p className="text-2xs text-muted-foreground">
+                    <p className="text-2xs text-text-muted">
                       Stored securely encrypted using AES-256-GCM.
                     </p>
                   </div>
@@ -525,9 +526,9 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
               ) : (
                 <>
                   <div className="space-y-1.5">
-                    <label className="font-medium text-foreground">
+                    <label className="font-medium text-text">
                       Trustpilot Business Unit ID or Domain{" "}
-                      <span className="text-destructive">*</span>
+                      <span className="text-danger-foreground">*</span>
                     </label>
                     <input
                       type="text"
@@ -537,13 +538,13 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                       onChange={(e) => setProviderBusinessId(e.target.value)}
                       className={cn(inputClass, "w-full text-xs font-mono")}
                     />
-                    <p className="text-2xs text-muted-foreground">
+                    <p className="text-2xs text-text-muted">
                       Enter your Trustpilot business unit ID or registered domain.
                     </p>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="font-medium text-foreground">
+                    <label className="font-medium text-text">
                       Trustpilot API Key (Optional)
                     </label>
                     <input
@@ -553,7 +554,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                       onChange={(e) => setApiKey(e.target.value)}
                       className={cn(inputClass, "w-full text-xs font-mono")}
                     />
-                    <p className="text-2xs text-muted-foreground">
+                    <p className="text-2xs text-text-muted">
                       Stored securely encrypted using AES-256-GCM.
                     </p>
                   </div>
@@ -578,15 +579,15 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
               </div>
             </form>
           </div>
-        </div>
+        </ModalOverlay>
       )}
 
       {/* Reviews List Section */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-medium text-foreground">Imported Reviews</h3>
-            <span className="rounded-pill bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+            <h3 className="text-lg font-medium text-text">Imported Reviews</h3>
+            <span className="rounded-pill bg-surface-sunken px-2.5 py-0.5 text-xs font-medium text-text-muted">
               {reviewsList.length}
             </span>
           </div>
@@ -600,7 +601,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
               onChange={(e) => setSearch(e.target.value)}
               className={cn(inputClass, "text-xs")}
             />
-            <div className="flex rounded-control border bg-muted/40 p-0.5 text-xs">
+            <div className="flex rounded-control border bg-surface-sunken/40 p-0.5 text-xs">
               {(["all", "approved", "hidden"] as const).map((t) => (
                 <button
                   key={t}
@@ -617,18 +618,18 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-44 animate-pulse rounded-card border bg-muted/30" />
+              <div key={i} className="h-44 animate-pulse rounded-card border bg-surface-sunken/30" />
             ))}
           </div>
         ) : filteredReviews.length === 0 ? (
           <div className="rounded-card border border-dashed p-10 text-center space-y-3">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-muted text-muted-foreground">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-surface-sunken text-text-muted">
               <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
-            <h4 className="font-medium text-foreground text-sm">No reviews found</h4>
-            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            <h4 className="font-medium text-text text-sm">No reviews found</h4>
+            <p className="text-xs text-text-muted max-w-sm mx-auto">
               {reviewsList.length === 0
                 ? "Connect your Google Places or Trustpilot business profile above to import customer reviews."
                 : "No reviews match your search or filter."}
@@ -639,8 +640,8 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
             {filteredReviews.map((review) => (
               <div
                 key={review.id}
-                className={`flex flex-col justify-between rounded-card border bg-card p-4 shadow-xs transition-all ${
-                  review.isApproved ? "border-border" : "border-border/40 opacity-70 bg-muted/20"
+                className={`flex flex-col justify-between rounded-card border bg-surface p-4 shadow-xs transition-all ${
+                  review.isApproved ? "border-border" : "border-border/40 opacity-70 bg-surface-sunken/20"
                 }`}
               >
                 <div className="space-y-3">
@@ -674,14 +675,14 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                         {i < review.rating ? "★" : "☆"}
                       </span>
                     ))}
-                    <span className="text-2xs font-medium text-foreground ml-1">
+                    <span className="text-2xs font-medium text-text ml-1">
                       {review.rating}.0
                     </span>
                   </div>
 
                   {/* Review Text */}
-                  <p className="text-xs text-foreground/90 line-clamp-4 leading-relaxed">
-                    {review.text || <span className="italic text-muted-foreground">No review text</span>}
+                  <p className="text-xs text-text/90 line-clamp-4 leading-relaxed">
+                    {review.text || <span className="italic text-text-muted">No review text</span>}
                   </p>
                 </div>
 
@@ -695,16 +696,16 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                         className="h-6 w-6 rounded-pill object-cover"
                       />
                     ) : (
-                      <div className="h-6 w-6 rounded-pill bg-primary/10 text-primary font-medium text-2xs flex items-center justify-center">
+                      <div className="h-6 w-6 rounded-pill bg-brand-soft text-brand font-medium text-2xs flex items-center justify-center">
                         {review.authorName.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="text-left">
-                      <p className="text-xs font-medium text-foreground truncate max-w-[120px]">
+                      <p className="text-xs font-medium text-text truncate max-w-[120px]">
                         {review.authorName}
                       </p>
                       {review.reviewDate && (
-                        <p className="text-2xs text-muted-foreground">
+                        <p className="text-2xs text-text-muted">
                           {new Date(review.reviewDate).toLocaleDateString()}
                         </p>
                       )}

@@ -147,13 +147,13 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-48 animate-pulse rounded-control bg-muted" />
+        <div className="h-8 w-48 animate-pulse rounded-control bg-surface-sunken" />
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           <div className="space-y-4 lg:col-span-7">
-            <div className="h-48 animate-pulse rounded-card border bg-muted/40" />
-            <div className="h-48 animate-pulse rounded-card border bg-muted/40" />
+            <div className="h-48 animate-pulse rounded-card border bg-surface-sunken/40" />
+            <div className="h-48 animate-pulse rounded-card border bg-surface-sunken/40" />
           </div>
-          <div className="h-96 animate-pulse rounded-card border bg-muted/40 lg:col-span-5" />
+          <div className="h-96 animate-pulse rounded-card border bg-surface-sunken/40 lg:col-span-5" />
         </div>
       </div>
     );
@@ -161,9 +161,9 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
 
   if (error) {
     return (
-      <div className="rounded-card border border-destructive/20 bg-destructive/5 p-6 text-center">
-        <h3 className="text-sm font-medium text-destructive">Error Loading Widget Settings</h3>
-        <p className="mt-1 text-xs text-muted-foreground">{error}</p>
+      <div className="rounded-card border border-danger/20 bg-danger-soft p-6 text-center">
+        <h3 className="text-sm font-medium text-danger-foreground">Error Loading Widget Settings</h3>
+        <p className="mt-1 text-xs text-text-muted">{error}</p>
         <button
           onClick={() => fetchWidgetConfig()}
           className={cn(buttonVariants({ variant: "primary", size: "sm" }), "mt-4")}
@@ -180,7 +180,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-medium tracking-tight text-foreground">
+            <h2 className="text-xl font-medium tracking-tight text-text">
               Widget Customization
             </h2>
             {isDirty && (
@@ -189,7 +189,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
               </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-text-muted">
             Configure how your video widget displays, responds to visitor actions, and targets pages.
           </p>
         </div>
@@ -211,7 +211,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           >
             {saving ? (
               <>
-                <span className="h-3 w-3 animate-spin rounded-pill border-2 border-primary-foreground border-t-transparent" />
+                <span className="h-3 w-3 animate-spin rounded-pill border-2 border-text-on-accent border-t-transparent" />
                 <span>Saving...</span>
               </>
             ) : (
@@ -246,9 +246,9 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
       )}
 
       {saveError && (
-        <div className="flex items-center justify-between rounded-card border border-destructive/30 bg-destructive/10 p-3.5 text-xs text-destructive">
+        <div className="flex items-center justify-between rounded-card border border-danger/30 bg-danger-soft p-3.5 text-xs text-danger-foreground">
           <div className="flex items-center gap-2">
-            <svg className="h-4 w-4 shrink-0 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 shrink-0 text-danger-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>{saveError}</span>
@@ -329,12 +329,12 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           </div>
 
           {/* Sticky / In-page Save Prompt */}
-          <div className="flex items-center justify-between rounded-card border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between rounded-card border bg-surface p-4 shadow-sm">
             <div className="space-y-0.5">
-              <span className="text-xs font-medium text-foreground">
+              <span className="text-xs font-medium text-text">
                 {isDirty ? "Unsaved changes pending" : "All changes up to date"}
               </span>
-              <p className="text-2xs text-muted-foreground">
+              <p className="text-2xs text-text-muted">
                 {isDirty
                   ? "Remember to save your settings to update the production widget."
                   : "Last configuration synced with database."}
@@ -356,7 +356,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
             {embedKey ? (
               <EmbedSnippet embedKey={embedKey} />
             ) : (
-              <div className="h-40 animate-pulse rounded-card border bg-muted/30" />
+              <div className="h-40 animate-pulse rounded-card border bg-surface-sunken/30" />
             )}
           </div>
         </div>

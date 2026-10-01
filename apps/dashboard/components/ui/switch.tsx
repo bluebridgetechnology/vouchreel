@@ -11,7 +11,7 @@ export const Switch = React.forwardRef<
   <SwitchPrimitive.Root
     ref={ref}
     className={cn(
-      "inline-flex h-6 w-11 shrink-0 items-center rounded-pill border border-transparent bg-border-strong p-0.5 transition-colors data-[state=checked]:bg-brand disabled:opacity-50",
+      "inline-flex h-6 w-11 shrink-0 items-center rounded-pill border border-transparent bg-field-border p-0.5 transition-colors data-[state=checked]:bg-brand disabled:opacity-50",
       className,
     )}
     {...props}

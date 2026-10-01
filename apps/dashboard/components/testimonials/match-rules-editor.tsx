@@ -78,12 +78,12 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
   }
 
   return (
-    <div className="space-y-4 rounded-card border bg-muted/20 p-4">
+    <div className="space-y-4 rounded-card border bg-surface-sunken/20 p-4">
       <div className="space-y-1">
-        <span id="match-rules-label" className="block text-sm font-medium text-foreground">
+        <span id="match-rules-label" className="block text-sm font-medium text-text">
           Contextual Page Matching Rules
         </span>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-text-muted">
           Control which pages on your website will display this testimonial.
         </p>
       </div>
@@ -92,7 +92,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
       <div
         role="group"
         aria-labelledby="match-rules-label"
-        className="grid grid-cols-2 gap-2 rounded-card border bg-muted/40 p-1"
+        className="grid grid-cols-2 gap-2 rounded-card border bg-surface-sunken/40 p-1"
       >
         <button
           type="button"
@@ -117,7 +117,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
           <div className="space-y-2">
             <label
               htmlFor="match-url-pattern-input"
-              className="text-xs font-medium text-foreground"
+              className="text-xs font-medium text-text"
             >
               URL Patterns (Glob syntax)
             </label>
@@ -148,7 +148,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
               </button>
             </div>
             {patternError && (
-              <p className="text-2xs text-destructive">{patternError}</p>
+              <p className="text-2xs text-danger-foreground">{patternError}</p>
             )}
 
             {urlPatterns.length > 0 ? (
@@ -156,7 +156,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                 {urlPatterns.map((p) => (
                   <span
                     key={p}
-                    className="inline-flex items-center gap-1 rounded-control bg-background px-2 py-0.5 font-mono text-2xs font-medium border text-foreground"
+                    className="inline-flex items-center gap-1 rounded-control bg-surface px-2 py-0.5 font-mono text-2xs font-medium border text-text"
                   >
                     {p}
                     <button
@@ -171,7 +171,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                 ))}
               </div>
             ) : (
-              <p className="text-2xs text-muted-foreground italic">
+              <p className="text-2xs text-text-muted italic">
                 No patterns added yet. Add patterns like <code>/pricing</code> or <code>/checkout/*</code>.
               </p>
             )}
@@ -181,7 +181,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
           <div className="space-y-2">
             <label
               htmlFor="match-tag-input"
-              className="text-xs font-medium text-foreground"
+              className="text-xs font-medium text-text"
             >
               Match by Page Tags (Optional)
             </label>
@@ -213,7 +213,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                 {tags.map((t) => (
                   <span
                     key={t}
-                    className="inline-flex items-center gap-1 rounded-control bg-secondary px-2 py-0.5 text-2xs font-medium text-secondary-foreground"
+                    className="inline-flex items-center gap-1 rounded-control bg-surface-sunken px-2 py-0.5 text-2xs font-medium text-text"
                   >
                     #{t}
                     <button
@@ -231,21 +231,21 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
           </div>
 
           {/* Rule Preview */}
-          <div className="rounded-control bg-background/80 border p-2.5 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">Matching summary: </span>
+          <div className="rounded-control bg-canvas/80 border p-2.5 text-xs text-text-muted">
+            <span className="font-medium text-text">Matching summary: </span>
             {urlPatterns.length === 0 && tags.length === 0 ? (
               <span>Will not match any specific page until patterns or tags are added.</span>
             ) : (
               <span>
                 Displays on pages matching{" "}
                 {urlPatterns.length > 0 && (
-                  <span className="font-mono font-medium text-foreground">
+                  <span className="font-mono font-medium text-text">
                     {urlPatterns.join(", ")}
                   </span>
                 )}
                 {urlPatterns.length > 0 && tags.length > 0 && " or tags "}
                 {tags.length > 0 && (
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-text">
                     [{tags.join(", ")}]
                   </span>
                 )}

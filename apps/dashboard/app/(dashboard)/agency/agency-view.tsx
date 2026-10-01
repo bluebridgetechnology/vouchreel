@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
+import { ModalOverlay } from "@/components/ui/modal";
 
 interface AgencyViewProps {
   initialData: AgencyOverviewResult;
@@ -127,14 +128,14 @@ export function AgencyView({
     <div className="space-y-8">
       {/* Non-entitled Banner */}
       {!isEntitled && (
-        <div className="rounded-card border border-primary/20 bg-primary/5 p-5 text-foreground">
+        <div className="rounded-card border border-brand/20 bg-brand-soft p-5 text-text">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-1.5 rounded-pill bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary mb-2">
+              <div className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft px-2.5 py-0.5 text-xs font-medium text-brand mb-2">
                 Agency Tier Preview
               </div>
               <h3 className="font-medium text-lg">Multi-Client Agency Cockpit</h3>
-              <p className="text-sm text-muted-foreground mt-0.5">
+              <p className="text-sm text-text-muted mt-0.5">
                 Aggregate analytics, client performance rankings, and 1-click executive PDF reporting across all managed client spaces.
               </p>
             </div>
@@ -154,44 +155,44 @@ export function AgencyView({
 
       {/* Aggregate KPI Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="rounded-card border bg-card p-5 shadow-sm">
-          <span className="text-xs font-medium text-muted-foreground">Managed Clients</span>
-          <div className="mt-2 text-3xl font-medium tracking-tight text-foreground">
+        <div className="rounded-card border bg-surface p-5 shadow-sm">
+          <span className="text-xs font-medium text-text-muted">Managed Clients</span>
+          <div className="mt-2 text-3xl font-medium tracking-tight text-text">
             {summary.totalSpaces}
           </div>
-          <span className="text-xs text-muted-foreground mt-1 block">Active client spaces</span>
+          <span className="text-xs text-text-muted mt-1 block">Active client spaces</span>
         </div>
 
-        <div className="rounded-card border bg-card p-5 shadow-sm">
-          <span className="text-xs font-medium text-muted-foreground">Total Impressions</span>
-          <div className="mt-2 text-3xl font-medium tracking-tight text-foreground">
+        <div className="rounded-card border bg-surface p-5 shadow-sm">
+          <span className="text-xs font-medium text-text-muted">Total Impressions</span>
+          <div className="mt-2 text-3xl font-medium tracking-tight text-text">
             {summary.totalImpressions.toLocaleString()}
           </div>
-          <span className="text-xs text-muted-foreground mt-1 block">Across all client widgets</span>
+          <span className="text-xs text-text-muted mt-1 block">Across all client widgets</span>
         </div>
 
-        <div className="rounded-card border bg-card p-5 shadow-sm">
-          <span className="text-xs font-medium text-muted-foreground">Video Plays</span>
-          <div className="mt-2 text-3xl font-medium tracking-tight text-foreground">
+        <div className="rounded-card border bg-surface p-5 shadow-sm">
+          <span className="text-xs font-medium text-text-muted">Video Plays</span>
+          <div className="mt-2 text-3xl font-medium tracking-tight text-text">
             {summary.totalPlays.toLocaleString()}
           </div>
-          <span className="text-xs text-muted-foreground mt-1 block">Aggregated interactions</span>
+          <span className="text-xs text-text-muted mt-1 block">Aggregated interactions</span>
         </div>
 
-        <div className="rounded-card border bg-card p-5 shadow-sm">
-          <span className="text-xs font-medium text-muted-foreground">Conversions</span>
-          <div className="mt-2 text-3xl font-medium tracking-tight text-foreground text-success-foreground">
+        <div className="rounded-card border bg-surface p-5 shadow-sm">
+          <span className="text-xs font-medium text-text-muted">Conversions</span>
+          <div className="mt-2 text-3xl font-medium tracking-tight text-text text-success-foreground">
             {summary.totalConversions.toLocaleString()}
           </div>
-          <span className="text-xs text-muted-foreground mt-1 block">Attributed outcomes</span>
+          <span className="text-xs text-text-muted mt-1 block">Attributed outcomes</span>
         </div>
 
-        <div className="rounded-card border bg-card p-5 shadow-sm col-span-2 lg:col-span-1">
-          <span className="text-xs font-medium text-muted-foreground">Avg. Conversion Rate</span>
-          <div className="mt-2 text-3xl font-medium tracking-tight text-foreground">
+        <div className="rounded-card border bg-surface p-5 shadow-sm col-span-2 lg:col-span-1">
+          <span className="text-xs font-medium text-text-muted">Avg. Conversion Rate</span>
+          <div className="mt-2 text-3xl font-medium tracking-tight text-text">
             {summary.overallConversionRate}%
           </div>
-          <span className="text-xs text-muted-foreground mt-1 block">Global performance</span>
+          <span className="text-xs text-text-muted mt-1 block">Global performance</span>
         </div>
       </div>
 
@@ -206,7 +207,7 @@ export function AgencyView({
             className={cn(inputClass, "pl-9 pr-4")}
           />
           <svg
-            className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground"
+            className="absolute left-3 top-2.5 h-4 w-4 text-text-muted"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -216,8 +217,8 @@ export function AgencyView({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 rounded-card border bg-card p-1 text-xs font-medium">
-            <span className="px-2 text-muted-foreground">Sort:</span>
+          <div className="flex items-center gap-1.5 rounded-card border bg-surface p-1 text-xs font-medium">
+            <span className="px-2 text-text-muted">Sort:</span>
             <button
               type="button"
               onClick={() => handleSortChange("performance")}
@@ -263,12 +264,12 @@ export function AgencyView({
 
       {/* Client Spaces Grid / Table */}
       {spaces.length === 0 ? (
-        <div className="rounded-card border border-dashed bg-card p-12 text-center space-y-4">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-muted text-muted-foreground text-xl">
+        <div className="rounded-card border border-dashed bg-surface p-12 text-center space-y-4">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-surface-sunken text-text-muted text-xl">
             🏢
           </div>
           <h3 className="text-lg font-medium">No Client Spaces Found</h3>
-          <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+          <p className="text-sm text-text-muted max-w-sm mx-auto">
             {search
               ? `No client spaces matched "${search}". Try clearing your search.`
               : "Create your first client space to begin managing video proof and tracking conversions."}
@@ -282,57 +283,57 @@ export function AgencyView({
           </button>
         </div>
       ) : (
-        <div className="divide-y border rounded-card bg-card overflow-hidden shadow-sm">
+        <div className="divide-y border rounded-card bg-surface overflow-hidden shadow-sm">
           {spaces.map((sp) => (
             <div
               key={sp.id}
-              className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-5 hover:bg-muted/20 transition-colors"
+              className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-5 hover:bg-surface-sunken/20 transition-colors"
             >
               <div className="space-y-1.5 flex-1 min-w-0">
                 <div className="flex items-center gap-3">
                   <Link
                     href={`/spaces/${sp.id}`}
-                    className="font-medium text-base hover:text-primary hover:underline truncate"
+                    className="font-medium text-base hover:text-brand hover:underline truncate"
                   >
                     {sp.name}
                   </Link>
-                  <span className="rounded-pill bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                  <span className="rounded-pill bg-surface-sunken px-2.5 py-0.5 text-xs text-text-muted">
                     {sp.testimonialCount} videos
                   </span>
                   {!sp.isDirectOwner && (
-                    <span className="rounded-control bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground capitalize">
+                    <span className="rounded-control bg-brand-soft px-2 py-0.5 text-xs font-medium text-brand-soft-foreground capitalize">
                       {sp.role}
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground font-mono">
+                <div className="text-xs text-text-muted font-mono">
                   embedKey: {sp.embedKey}
                 </div>
               </div>
 
               {/* Per-space metric spark badges */}
               <div className="grid grid-cols-4 gap-4 text-center shrink-0">
-                <div className="px-3 py-1.5 rounded-control bg-muted/40">
-                  <div className="text-xs text-muted-foreground font-medium">Views</div>
-                  <div className="text-sm font-medium text-foreground mt-0.5">
+                <div className="px-3 py-1.5 rounded-control bg-surface-sunken/40">
+                  <div className="text-xs text-text-muted font-medium">Views</div>
+                  <div className="text-sm font-medium text-text mt-0.5">
                     {sp.impressions.toLocaleString()}
                   </div>
                 </div>
-                <div className="px-3 py-1.5 rounded-control bg-muted/40">
-                  <div className="text-xs text-muted-foreground font-medium">Plays</div>
-                  <div className="text-sm font-medium text-foreground mt-0.5">
+                <div className="px-3 py-1.5 rounded-control bg-surface-sunken/40">
+                  <div className="text-xs text-text-muted font-medium">Plays</div>
+                  <div className="text-sm font-medium text-text mt-0.5">
                     {sp.plays.toLocaleString()}
                   </div>
                 </div>
-                <div className="px-3 py-1.5 rounded-control bg-muted/40">
-                  <div className="text-xs text-muted-foreground font-medium">Conversions</div>
+                <div className="px-3 py-1.5 rounded-control bg-surface-sunken/40">
+                  <div className="text-xs text-text-muted font-medium">Conversions</div>
                   <div className="text-sm font-medium text-success-foreground mt-0.5">
                     {sp.conversions.toLocaleString()}
                   </div>
                 </div>
-                <div className="px-3 py-1.5 rounded-control bg-muted/40">
-                  <div className="text-xs text-muted-foreground font-medium">CR %</div>
-                  <div className="text-sm font-medium text-foreground mt-0.5">
+                <div className="px-3 py-1.5 rounded-control bg-surface-sunken/40">
+                  <div className="text-xs text-text-muted font-medium">CR %</div>
+                  <div className="text-sm font-medium text-text mt-0.5">
                     {sp.conversionRate}%
                   </div>
                 </div>
@@ -356,7 +357,7 @@ export function AgencyView({
                   href={`/api/spaces/${sp.id}/analytics/report?format=pdf`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-control bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors inline-flex items-center gap-1.5"
+                  className="rounded-control bg-surface-sunken px-3 py-1.5 text-xs font-medium text-text hover:bg-surface-sunken/80 transition-colors inline-flex items-center gap-1.5"
                 >
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -371,22 +372,22 @@ export function AgencyView({
 
       {/* Add Client Space Modal */}
       {showAddClientModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/60 p-4">
-          <div className="w-full max-w-md rounded-card border bg-card p-4 sm:p-6 shadow-float space-y-4">
+        <ModalOverlay label="Add new client space" onClose={() => setShowAddClientModal(false)}>
+          <div className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-4">
             <h3 className="text-lg font-medium">Add New Client Space</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-muted">
               Create a dedicated workspace container for your client&apos;s video testimonials and embed widget.
             </p>
 
             {createError && (
-              <div className="rounded-control bg-destructive/10 p-3 text-xs text-destructive">
+              <div className="rounded-control bg-danger-soft p-3 text-xs text-danger-foreground">
                 {createError}
               </div>
             )}
 
             <form onSubmit={handleCreateClient} className="space-y-4 pt-1">
               <div>
-                <label className="text-xs font-medium text-foreground">Client or Business Name</label>
+                <label className="text-xs font-medium text-text">Client or Business Name</label>
                 <input
                   type="text"
                   required
@@ -415,7 +416,7 @@ export function AgencyView({
               </div>
             </form>
           </div>
-        </div>
+        </ModalOverlay>
       )}
 
       {/* Upgrade Prompt Modal */}

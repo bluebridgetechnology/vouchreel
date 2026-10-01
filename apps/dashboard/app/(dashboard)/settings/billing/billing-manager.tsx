@@ -65,13 +65,13 @@ export function BillingManager({
   return (
     <div className="space-y-6">
       {portalError && (
-        <div className="rounded-card border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-card border border-danger/20 bg-danger-soft p-4 text-sm text-danger-foreground">
           {portalError}
         </div>
       )}
 
       {/* Subscription Card */}
-      <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm">
+      <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b">
           <div>
             <div className="flex items-center gap-3">
@@ -82,7 +82,7 @@ export function BillingManager({
                 {status}
               </span>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-text-muted">
               {isFree
                 ? "Free tier with basic widget capability."
                 : `$${(price / 100).toFixed(0)} billed per ${interval}. Powered by ${
@@ -115,25 +115,25 @@ export function BillingManager({
         {/* Details Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6">
           <div>
-            <h4 className="text-xs font-medium uppercase text-muted-foreground tracking-wider">
+            <h4 className="text-xs font-medium uppercase text-text-muted tracking-wider">
               Billing Details
             </h4>
             <div className="mt-3 space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Amount:</span>
+                <span className="text-text-muted">Amount:</span>
                 <span className="font-medium">
                   {isFree ? "Free ($0)" : `$${(price / 100).toFixed(2)}/${interval}`}
                 </span>
               </div>
               {currentPeriodEnd && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Renews on:</span>
+                  <span className="text-text-muted">Renews on:</span>
                   <span className="font-medium">{currentPeriodEnd}</span>
                 </div>
               )}
               {provider && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Provider:</span>
+                  <span className="text-text-muted">Provider:</span>
                   <span className="font-medium capitalize">{provider}</span>
                 </div>
               )}
@@ -141,7 +141,7 @@ export function BillingManager({
           </div>
 
           <div>
-            <h4 className="text-xs font-medium uppercase text-muted-foreground tracking-wider">
+            <h4 className="text-xs font-medium uppercase text-text-muted tracking-wider">
               Included Features
             </h4>
             <ul className="mt-3 space-y-2 text-sm">

@@ -227,3 +227,17 @@ Every build must be deployable to **both** VPS and Vercel:
 - When a sprint is complete, provide a **summary of what was built** and **what to verify manually**.
 - If you discover a bug or design issue in a previous sprint while working on a later one, **flag it** and propose a fix — don't silently change previous work.
 - If a task is significantly more complex than estimated, **inform the user** before spending excessive time.
+
+---
+
+## 13. UI conventions (design tokens)
+
+All dashboard, marketing and auth UI is built from the token system in `apps/dashboard/app/globals.css` and the primitives in `apps/dashboard/components/ui`. Reference page: `/design` (dev only). `npm run lint` enforces this:
+
+- No raw Tailwind palette classes (`bg-emerald-500`, `text-white`), no hex/`rgb()`/`hsl()` literals in TSX, no arbitrary text sizes (`text-[11px]`), no `font-semibold`/`font-bold` (Outfit max weight is 500), no legacy radius (`rounded-md/lg/xl/full`) and no shadcn alias classes (`bg-card`, `text-muted-foreground`, `bg-primary`).
+- Use semantic utilities instead: `bg-surface`, `text-text-muted`, `bg-brand`, `bg-success-soft`, `rounded-card`, `rounded-pill`, `text-sm`, `font-medium`.
+- Every `<button>`, `<input>`, `<select>`, `<textarea>` must use a primitive (`Button`/`buttonVariants`, `toggleStyle`, `Switch`, `Input`/`inputClass`). Modals use `Dialog` or `ModalOverlay`.
+- Icons are Solar Outline via `<Icon name="..." />`; add names in `apps/dashboard/scripts/build-icons.mjs` and run `npm run icons:build -w apps/dashboard`.
+- User-chosen colours (widget theme, collect-form accent, social brand colour) are data: apply with `userAccentStyle()` and `bg-(--user-accent)`. Server defaults use `DEFAULT_BRAND_HEX` from `lib/brand.ts`.
+- Changing `--palette-coral-600` in `globals.css` also requires updating `DEFAULT_BRAND_HEX`, the widget's `--vr-primary` and the DB default (tests catch a mismatch). Contrast of every token pair is checked by `scripts/check-contrast.mjs`.
+- Headlines are Outfit; Playfair Italic is only for one or two emphasised words (`<Em>`) on marketing/auth screens.

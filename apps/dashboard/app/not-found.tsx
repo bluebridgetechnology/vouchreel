@@ -10,11 +10,11 @@ export default function NotFound() {
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-6">
       <div className="w-full max-w-md space-y-6 text-center">
-        <p className="font-mono text-sm font-medium text-muted-foreground">404</p>
+        <p className="font-mono text-sm font-medium text-text-muted">404</p>
         <h1 className="text-2xl font-medium tracking-tight">
           Page not found
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-text-muted">
           The page you&apos;re looking for doesn&apos;t exist or may have been
           moved. If you followed a link to a space, it may have been deleted or
           you don&apos;t have access to it.

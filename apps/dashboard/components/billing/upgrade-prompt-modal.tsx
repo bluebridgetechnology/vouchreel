@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
+import { ModalOverlay } from "@/components/ui/modal";
 
 interface UpgradePromptModalProps {
   feature?:
@@ -69,10 +70,10 @@ export function UpgradePromptModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/60 p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-md rounded-card border bg-card p-4 sm:p-6 shadow-float space-y-5 text-card-foreground">
+    <ModalOverlay label="Upgrade your plan" onClose={onClose}>
+      <div className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-5 text-text">
         <div className="flex items-center justify-between">
-          <div className="inline-flex items-center gap-2 rounded-pill bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+          <div className="inline-flex items-center gap-2 rounded-pill bg-brand-soft px-3 py-1 text-xs font-medium text-brand">
             ✨ {details.targetPlan} Feature
           </div>
           <button
@@ -88,14 +89,14 @@ export function UpgradePromptModal({
 
         <div>
           <h3 className="text-xl font-medium tracking-tight">{details.title}</h3>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          <p className="mt-2 text-sm text-text-muted leading-relaxed">
             {details.description}
           </p>
         </div>
 
-        <div className="rounded-card border bg-muted/30 p-4 space-y-2 text-xs">
-          <div className="font-medium text-foreground">What you will unlock:</div>
-          <ul className="space-y-1 text-muted-foreground">
+        <div className="rounded-card border bg-surface-sunken/30 p-4 space-y-2 text-xs">
+          <div className="font-medium text-text">What you will unlock:</div>
+          <ul className="space-y-1 text-text-muted">
             <li>✓ Multi-seat team members & roles (Editor / Viewer)</li>
             <li>✓ Remove Vouchreel branding from all widgets</li>
             <li>✓ Custom CNAME domain for collection links</li>
@@ -119,6 +120,6 @@ export function UpgradePromptModal({
           </Link>
         </div>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

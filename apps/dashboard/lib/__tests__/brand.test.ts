@@ -5,8 +5,8 @@ import { DEFAULT_BRAND_HEX, readableOn, userAccentStyle } from "../brand";
 describe("brand", () => {
   it("DEFAULT_BRAND_HEX mirrors the coral-600 token in globals.css", () => {
     const css = readFileSync(new URL("../../app/globals.css", import.meta.url), "utf8");
-    expect(css).toContain("--palette-coral-600: oklch(0.6 0.19 36)");
-    expect(DEFAULT_BRAND_HEX).toBe("#d9471b");
+    expect(css).toContain("--palette-coral-600: oklch(0.57 0.19 36)");
+    expect(DEFAULT_BRAND_HEX).toBe("#cf3d0b");
   });
 
   it("picks a readable foreground", () => {

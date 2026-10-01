@@ -170,7 +170,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
 
   if (spaces.length === 0) {
     return (
-      <div className="rounded-card border p-6 text-center text-muted-foreground">
+      <div className="rounded-card border p-6 text-center text-text-muted">
         You need to create a Space first before configuring webhooks.
       </div>
     );
@@ -210,7 +210,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
       </div>
 
       {error && (
-        <div className="rounded-control bg-destructive/10 p-4 text-sm text-destructive">
+        <div className="rounded-control bg-danger-soft p-4 text-sm text-danger-foreground">
           {error}
         </div>
       )}
@@ -226,7 +226,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
               Signing Secret
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-text-muted">
             Save this signing secret. Incoming webhook requests include an HMAC-SHA256 signature in the <code className="font-mono text-xs">X-Vouchreel-Signature</code> header.
           </p>
           <div className="flex items-center gap-2">
@@ -248,11 +248,11 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
 
       {/* Create Webhook Form */}
       {isCreating && !createdSecret && (
-        <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm space-y-4">
+        <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm space-y-4">
           <h3 className="font-medium text-base">Add Webhook Endpoint</h3>
           <form onSubmit={handleCreateWebhook} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">
+              <label className="block text-xs font-medium text-text-muted mb-1">
                 Destination HTTPS URL
               </label>
               <input
@@ -266,14 +266,14 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-2">
+              <label className="block text-xs font-medium text-text-muted mb-2">
                 Events to Send
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {AVAILABLE_EVENTS.map((evt) => (
                   <label
                     key={evt.id}
-                    className="flex items-center gap-2 text-xs border rounded-control p-2 hover:bg-accent cursor-pointer"
+                    className="flex items-center gap-2 text-xs border rounded-control p-2 hover:bg-surface-sunken cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -308,9 +308,9 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
       )}
 
       {/* Webhooks Table */}
-      <div className="rounded-card border bg-card overflow-hidden">
+      <div className="rounded-card border bg-surface overflow-hidden">
         <table className="w-full text-left text-sm">
-          <thead className="border-b bg-muted/50 text-xs font-medium text-muted-foreground">
+          <thead className="border-b bg-surface-sunken/50 text-xs font-medium text-text-muted">
             <tr>
               <th className="px-4 py-3">Endpoint URL</th>
               <th className="px-4 py-3">Subscribed Events</th>
@@ -321,13 +321,13 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
           <tbody className="divide-y">
             {webhooks.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={4} className="px-4 py-8 text-center text-text-muted">
                   {loading ? "Loading webhooks..." : "No webhook endpoints configured for this space."}
                 </td>
               </tr>
             ) : (
               webhooks.map((w) => (
-                <tr key={w.id} className="hover:bg-muted/30 transition-colors">
+                <tr key={w.id} className="hover:bg-surface-sunken/30 transition-colors">
                   <td className="px-4 py-3 font-mono text-xs max-w-xs truncate">
                     {w.url}
                   </td>
@@ -336,7 +336,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
                       {w.events.map((e) => (
                         <span
                           key={e}
-                          className="inline-flex items-center rounded-pill bg-secondary px-2 py-0.5 text-2xs font-medium"
+                          className="inline-flex items-center rounded-pill bg-surface-sunken px-2 py-0.5 text-2xs font-medium"
                         >
                           {e}
                         </span>
@@ -348,7 +348,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
                       className={`inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-medium ${
                         w.isActive
                           ? "bg-success-soft text-success-foreground"
-                          : "bg-muted text-muted-foreground"
+                          : "bg-surface-sunken text-text-muted"
                       }`}
                     >
                       {w.isActive ? "Active" : "Disabled"}
@@ -380,7 +380,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
 
       {/* Delivery Logs Modal / Panel */}
       {inspectingWebhookId && (
-        <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm space-y-4">
+        <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-base">Delivery Logs</h3>
             <button
@@ -392,17 +392,17 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
           </div>
 
           {loadingDeliveries ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">
+            <p className="text-xs text-text-muted py-4 text-center">
               Loading recent deliveries...
             </p>
           ) : deliveries.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">
+            <p className="text-xs text-text-muted py-4 text-center">
               No delivery events logged yet for this endpoint.
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="border-b bg-muted/40">
+                <thead className="border-b bg-surface-sunken/40">
                   <tr>
                     <th className="px-3 py-2">Event</th>
                     <th className="px-3 py-2">Status</th>
@@ -424,7 +424,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
                               ? "bg-warning-soft text-warning-foreground"
                               : d.status === "failed"
                               ? "bg-danger-soft text-danger-foreground"
-                              : "bg-muted text-muted-foreground"
+                              : "bg-surface-sunken text-text-muted"
                           }`}
                         >
                           {d.status}
@@ -434,7 +434,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
                       <td className="px-3 py-2">
                         {d.attemptCount} / {d.maxAttempts}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground">
+                      <td className="px-3 py-2 text-text-muted">
                         {new Date(d.createdAt).toLocaleString()}
                       </td>
                     </tr>

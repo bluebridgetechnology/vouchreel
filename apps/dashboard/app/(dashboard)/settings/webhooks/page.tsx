@@ -38,14 +38,14 @@ export default async function WebhooksSettingsPage() {
         >
           API Keys
         </Link>
-        <span className="text-sm font-medium text-primary border-b-2 border-primary pb-4 -mb-4">
+        <span className="text-sm font-medium text-brand border-b-2 border-brand pb-4 -mb-4">
           Webhooks
         </span>
       </div>
 
       <div>
         <h1 className="text-3xl font-medium tracking-tight">Outbound Webhooks</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <p className="text-text-muted mt-1 text-sm">
           Receive real-time HTTPS notifications when testimonials are submitted, approved, or when conversion goals fire.
         </p>
       </div>

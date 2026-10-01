@@ -58,15 +58,15 @@ export default function NewSpacePage() {
 
       <div className="space-y-1">
         <h1 className="text-2xl font-medium tracking-tight">Create a new space</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-text-muted">
           Spaces organize your video testimonials for a specific website, product, or landing page.
         </p>
       </div>
 
-      <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm">
+      <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-control bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger-foreground">
               {error}
             </div>
           )}
@@ -85,7 +85,7 @@ export default function NewSpacePage() {
               required
               autoFocus
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-muted">
               A unique embed key will be generated automatically for this space.
             </p>
           </div>

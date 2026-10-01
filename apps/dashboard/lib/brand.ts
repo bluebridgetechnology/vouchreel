@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 /** Hex mirror of `--palette-coral-600` (the light-mode `--brand`) for server code
  *  and canvas/OG rendering where CSS variables are unavailable. Keep in sync with
  *  globals.css; lib/__tests__/brand.test.ts enforces it. */
-export const DEFAULT_BRAND_HEX = "#d9471b";
+export const DEFAULT_BRAND_HEX = "#cf3d0b";
 
 function luminance(hex: string): number {
   const n = parseInt(hex.replace("#", "").padEnd(6, "0").slice(0, 6), 16);

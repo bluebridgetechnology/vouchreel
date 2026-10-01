@@ -106,7 +106,7 @@ export default async function TeamSettingsPage() {
         >
           General
         </Link>
-        <span className="text-sm font-medium text-primary border-b-2 border-primary pb-4 -mb-4">
+        <span className="text-sm font-medium text-brand border-b-2 border-brand pb-4 -mb-4">
           Team Members
         </span>
         <Link
@@ -131,7 +131,7 @@ export default async function TeamSettingsPage() {
 
       <div>
         <h1 className="text-3xl font-medium tracking-tight">Team Management</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <p className="text-text-muted mt-1 text-sm">
           Manage account members, configure role permissions, and invite collaborators.
         </p>
       </div>

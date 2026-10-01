@@ -148,10 +148,10 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
     <div className="space-y-8 max-w-6xl pb-12">
       {/* Title */}
       <div>
-        <h2 className="text-2xl font-medium tracking-tight text-foreground">
+        <h2 className="text-2xl font-medium tracking-tight text-text">
           Social Media Repurposing
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-text-muted">
           Configure branding, caption overlays, and watermark positioning for vertical 9:16 video exports (TikTok, Reels, Shorts).
         </p>
       </div>
@@ -162,7 +162,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
           className={`rounded-card border p-4 text-xs font-medium ${
             message.type === "success"
               ? "border-success/30 bg-success-soft text-success-foreground"
-              : "border-destructive/20 bg-destructive/10 text-destructive"
+              : "border-danger/20 bg-danger-soft text-danger-foreground"
           }`}
         >
           {message.text}
@@ -174,15 +174,15 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
         <div className="lg:col-span-7 space-y-6">
           <form
             onSubmit={handleSaveSettings}
-            className="rounded-card border bg-card p-4 sm:p-6 shadow-sm space-y-6"
+            className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm space-y-6"
           >
-            <h3 className="text-base font-medium text-foreground">
+            <h3 className="text-base font-medium text-text">
               Branding & Export Settings
             </h3>
 
             {/* Brand Color */}
             <div className="space-y-2">
-              <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <label className="text-xs font-medium uppercase tracking-wider text-text-muted">
                 Brand Accent Color
               </label>
               <div className="flex items-center gap-3">
@@ -203,7 +203,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                   placeholder={DEFAULT_BRAND_HEX}
                   className={cn(inputClass, "h-9 w-32 text-xs font-mono")}
                 />
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-text-muted">
                   Applied to branding headers and accents
                 </span>
               </div>
@@ -212,7 +212,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
             {/* Logo URL */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <label className="text-xs font-medium uppercase tracking-wider text-text-muted">
                   Logo URL (Optional)
                 </label>
                 {settings.logoUrl && (
@@ -230,14 +230,14 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                 placeholder="https://yourbrand.com/logo.png"
                 className={cn(inputClass, "w-full text-xs")}
               />
-              <p className="text-2xs text-muted-foreground">
+              <p className="text-2xs text-text-muted">
                 Square or horizontal PNG with transparent background works best.
               </p>
             </div>
 
             {/* Default Framing */}
             <div className="space-y-2">
-              <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <label className="text-xs font-medium uppercase tracking-wider text-text-muted">
                 Default Vertical Framing
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -248,10 +248,10 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                   }
                   className={cn("rounded-card border p-3.5 text-left transition-all", toggleStyle("choice", settings.defaultFraming === "blur"))}
                 >
-                  <div className="font-medium text-xs text-foreground">
+                  <div className="font-medium text-xs text-text">
                     Blurred Background
                   </div>
-                  <div className="text-2xs text-muted-foreground mt-0.5">
+                  <div className="text-2xs text-text-muted mt-0.5">
                     Ambient blurred video fills the 9:16 frame behind the original video
                   </div>
                 </button>
@@ -263,10 +263,10 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                   }
                   className={cn("rounded-card border p-3.5 text-left transition-all", toggleStyle("choice", settings.defaultFraming === "letterbox"))}
                 >
-                  <div className="font-medium text-xs text-foreground">
+                  <div className="font-medium text-xs text-text">
                     Solid Letterbox
                   </div>
-                  <div className="text-2xs text-muted-foreground mt-0.5">
+                  <div className="text-2xs text-text-muted mt-0.5">
                     Clean black matte framing preserving the original horizontal framing
                   </div>
                 </button>
@@ -274,9 +274,9 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
             </div>
 
             {/* Watermark Configuration */}
-            <div className="space-y-4 rounded-card border bg-muted/20 p-4">
+            <div className="space-y-4 rounded-card border bg-surface-sunken/20 p-4">
               <div className="space-y-2">
-                <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <label className="text-xs font-medium uppercase tracking-wider text-text-muted">
                   Watermark Position
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -306,7 +306,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
               <div className="border-t pt-3 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-foreground">
+                    <span className="text-xs font-medium text-text">
                       Vouchreel Watermark
                     </span>
                     {!canRemoveWatermark && (
@@ -315,7 +315,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                       </span>
                     )}
                   </div>
-                  <p className="text-2xs text-muted-foreground mt-0.5">
+                  <p className="text-2xs text-text-muted mt-0.5">
                     {canRemoveWatermark
                       ? "Include 'Made with Vouchreel • vouchreel.com' watermark in exported clips"
                       : "Exports on Free plans include watermark attribution. Upgrade to Pro to remove."}
@@ -328,7 +328,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                   onChange={(e) =>
                     setSettings({ ...settings, showWatermark: e.target.checked })
                   }
-                  className="h-4 w-4 rounded-control border-border-strong text-primary focus:ring-primary disabled:opacity-50"
+                  className="h-4 w-4 rounded-control border-border-strong text-brand focus:ring-brand disabled:opacity-50"
                 />
               </div>
 
@@ -358,10 +358,10 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
         <div className="lg:col-span-5 flex flex-col items-center">
           <div className="w-full max-w-xs space-y-3">
             <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <span className="text-xs font-medium uppercase tracking-wider text-text-muted">
                 Live 9:16 Canvas Preview
               </span>
-              <span className="text-2xs text-muted-foreground">
+              <span className="text-2xs text-text-muted">
                 1080 × 1920
               </span>
             </div>
@@ -450,13 +450,13 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
       </div>
 
       {/* Space Export History */}
-      <div className="rounded-card border bg-card p-4 sm:p-6 shadow-sm space-y-4">
+      <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-medium text-foreground">
+            <h3 className="text-base font-medium text-text">
               Recent Social Exports
             </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-text-muted mt-0.5">
               All generated vertical clips ready for download across this space.
             </p>
           </div>
@@ -470,11 +470,11 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
         </div>
 
         {loadingExports ? (
-          <div className="py-8 text-center text-xs text-muted-foreground">
+          <div className="py-8 text-center text-xs text-text-muted">
             Loading recent exports...
           </div>
         ) : exports.length === 0 ? (
-          <div className="rounded-card border border-dashed p-8 text-center text-xs text-muted-foreground">
+          <div className="rounded-card border border-dashed p-8 text-center text-xs text-text-muted">
             No social exports generated yet. Open any testimonial in the{" "}
             <Link
               href={`/spaces/${spaceId}/testimonials`}
@@ -485,14 +485,14 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
             tab and click <strong>Export for Social</strong>.
           </div>
         ) : (
-          <div className="divide-y overflow-hidden rounded-card border bg-background">
+          <div className="divide-y overflow-hidden rounded-card border bg-surface">
             {exports.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 gap-3 transition-all hover:bg-muted/40"
+                className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 gap-3 transition-all hover:bg-surface-sunken/40"
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 flex-shrink-0 rounded-control bg-muted flex items-center justify-center overflow-hidden border">
+                  <div className="h-10 w-10 flex-shrink-0 rounded-control bg-surface-sunken flex items-center justify-center overflow-hidden border">
                     {item.thumbnailUrl ? (
                       <img
                         src={item.thumbnailUrl}
@@ -501,7 +501,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                       />
                     ) : (
                       <svg
-                        className="h-5 w-5 text-muted-foreground"
+                        className="h-5 w-5 text-text-muted"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -518,7 +518,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
 
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-xs text-foreground uppercase">
+                      <span className="font-medium text-xs text-text uppercase">
                         {item.format}
                       </span>
                       <span
@@ -526,14 +526,14 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                           item.status === "done"
                             ? "bg-success-soft text-success-foreground"
                             : item.status === "failed"
-                            ? "bg-destructive/10 text-destructive"
+                            ? "bg-danger-soft text-danger-foreground"
                             : "bg-warning-soft text-warning-foreground"
                         }`}
                       >
                         {item.status}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-xs text-text-muted mt-0.5">
                       {item.customerName || item.testimonialTitle || "Testimonial"} •{" "}
                       {new Date(item.createdAt).toLocaleDateString()}
                     </p>

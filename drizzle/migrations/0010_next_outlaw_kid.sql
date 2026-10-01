@@ -1,0 +1,1 @@
+ALTER TABLE "social_export_settings" ALTER COLUMN "brand_color" SET DEFAULT '#cf3d0b';

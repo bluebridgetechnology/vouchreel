@@ -133,7 +133,7 @@ Order: `spaces`, `testimonials`, `widget` (`live-preview.tsx` + `theme-editor`),
 **Phase 6: Widget + reports + defaults (done)**
 Token-generated widget CSS, hex removal; align transactional email templates in `lib/email` to brand tokens (inline hex required in email; sourced from one `emailTheme` constant).
 
-**Phase 7: Enforcement + QA (1 day)**
+**Phase 7: Enforcement + QA (done)**
 Turn lint rules on as errors, remove shadcn alias layer, a11y pass (contrast >= 4.5:1 for every semantic pair, focus rings, 44px touch targets), responsive pass at 375/768/1280, reduced-motion, dark-mode pass, before/after screenshots.
 
 Total estimate: ~12-14 working days.

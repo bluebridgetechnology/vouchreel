@@ -6,6 +6,7 @@ import { MatchRulesEditor } from "./match-rules-editor";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
+import { ModalOverlay } from "@/components/ui/modal";
 
 interface AddTestimonialDialogProps {
   spaceId: string;
@@ -143,12 +144,9 @@ export function AddTestimonialDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-scrim/60 p-4">
+    <ModalOverlay label="Add testimonial" onClose={onClose}>
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="add-testimonial-title"
-        className="relative my-8 w-full max-w-2xl rounded-card border bg-card p-4 sm:p-6 shadow-float"
+        className="relative my-8 w-full max-w-2xl rounded-card border bg-surface p-4 sm:p-6 shadow-float"
       >
         {/* Close Button */}
         <button
@@ -165,13 +163,13 @@ export function AddTestimonialDialog({
           <h2 id="add-testimonial-title" className="text-xl font-medium tracking-tight">
             Add Video Testimonial
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-text-muted">
             Paste a YouTube, Vimeo, or MP4 link. Metadata will be fetched automatically.
           </p>
         </div>
 
         {submitError && (
-          <div className="mt-4 rounded-control bg-destructive/10 p-3 text-xs text-destructive">
+          <div className="mt-4 rounded-control bg-danger-soft p-3 text-xs text-danger-foreground">
             {submitError}
           </div>
         )}
@@ -181,9 +179,9 @@ export function AddTestimonialDialog({
           <div className="space-y-2">
             <label
               htmlFor="add-video-url"
-              className="text-xs font-medium text-foreground"
+              className="text-xs font-medium text-text"
             >
-              Video URL <span className="text-destructive">*</span>
+              Video URL <span className="text-danger-foreground">*</span>
             </label>
             <div className="flex gap-2">
               <input
@@ -215,13 +213,13 @@ export function AddTestimonialDialog({
               </button>
             </div>
             {oembedError && (
-              <p className="text-2xs text-destructive">{oembedError}</p>
+              <p className="text-2xs text-danger-foreground">{oembedError}</p>
             )}
           </div>
 
           {/* Video Preview Card */}
           {(thumbnailUrl || title || fetchingOembed) && (
-            <div className="flex flex-col gap-3 rounded-card border bg-muted/30 p-3 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3 rounded-card border bg-surface-sunken/30 p-3 sm:flex-row sm:items-center">
               {thumbnailUrl && (
                 <div className="relative aspect-video w-36 flex-shrink-0 overflow-hidden rounded-control border bg-scrim">
                   <img
@@ -250,8 +248,8 @@ export function AddTestimonialDialog({
                   aria-label="Testimonial title"
                   className={cn(inputClass, "w-full text-xs")}
                 />
-                <p className="text-2xs text-muted-foreground">
-                  Detected platform: <span className="font-medium capitalize text-foreground">{platform || "video"}</span>
+                <p className="text-2xs text-text-muted">
+                  Detected platform: <span className="font-medium capitalize text-text">{platform || "video"}</span>
                 </p>
               </div>
             </div>
@@ -262,7 +260,7 @@ export function AddTestimonialDialog({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-customer-name"
-                className="text-xs font-medium text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Customer Name
               </label>
@@ -278,7 +276,7 @@ export function AddTestimonialDialog({
             <div className="space-y-1.5">
               <label
                 htmlFor="add-customer-company"
-                className="text-xs font-medium text-foreground"
+                className="text-xs font-medium text-text"
               >
                 Customer Company / Role
               </label>
@@ -297,7 +295,7 @@ export function AddTestimonialDialog({
           <div className="space-y-1.5">
             <label
               htmlFor="add-quote"
-              className="text-xs font-medium text-foreground"
+              className="text-xs font-medium text-text"
             >
               Quote / Highlight Soundbite
             </label>
@@ -315,7 +313,7 @@ export function AddTestimonialDialog({
           <div className="space-y-2">
             <label
               htmlFor="add-tag-input"
-              className="text-xs font-medium text-foreground"
+              className="text-xs font-medium text-text"
             >
               Tags
             </label>
@@ -347,7 +345,7 @@ export function AddTestimonialDialog({
                 {tags.map((t) => (
                   <span
                     key={t}
-                    className="inline-flex items-center gap-1 rounded-control bg-secondary px-2.5 py-0.5 text-2xs font-medium text-secondary-foreground"
+                    className="inline-flex items-center gap-1 rounded-control bg-surface-sunken px-2.5 py-0.5 text-2xs font-medium text-text"
                   >
                     #{t}
                     <button
@@ -389,6 +387,6 @@ export function AddTestimonialDialog({
           </div>
         </form>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

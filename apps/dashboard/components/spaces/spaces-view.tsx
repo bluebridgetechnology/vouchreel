@@ -6,6 +6,7 @@ import type { SpaceListItem } from "@/lib/spaces/queries";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { ModalOverlay } from "@/components/ui/modal";
 
 interface SpacesViewProps {
   initialSpaces: SpaceListItem[];
@@ -121,7 +122,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-medium tracking-tight">Spaces</h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-text-muted text-sm">
             Manage your testimonial spaces and video widgets
           </p>
         </div>
@@ -139,9 +140,9 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
       {spaces.length === 0 ? (
         /* Empty State */
         <div className="flex flex-col items-center justify-center rounded-card border border-dashed p-12 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-pill bg-muted">
+          <div className="flex h-14 w-14 items-center justify-center rounded-pill bg-surface-sunken">
             <svg
-              className="h-7 w-7 text-muted-foreground"
+              className="h-7 w-7 text-text-muted"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -155,7 +156,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
             </svg>
           </div>
           <h3 className="mt-4 text-lg font-medium">No spaces yet</h3>
-          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+          <p className="mt-1 max-w-sm text-sm text-text-muted">
             Create your first space to start collecting and displaying video testimonials on your website.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
@@ -179,11 +180,11 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
           {spaces.map((space) => (
             <div
               key={space.id}
-              className="flex flex-col justify-between rounded-card border bg-card p-4 sm:p-6 shadow-sm transition-shadow hover:shadow-card"
+              className="flex flex-col justify-between rounded-card border bg-surface p-4 sm:p-6 shadow-sm transition-shadow hover:shadow-card"
             >
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-xl font-medium tracking-tight text-foreground">
+                  <h3 className="text-xl font-medium tracking-tight text-text">
                     {space.name}
                   </h3>
                   <div className="flex items-center gap-1">
@@ -229,7 +230,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
 
                 {/* Embed key pill */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Embed Key:</span>
+                  <span className="text-xs text-text-muted">Embed Key:</span>
                   <button
                     onClick={() => copyEmbedKey(space.embedKey)}
                     className={cn(buttonVariants({ variant: "soft", size: "sm" }), "h-7 px-2.5 font-mono")}
@@ -239,7 +240,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                     {copiedKey === space.embedKey ? (
                       <span className="text-2xs text-success-foreground font-medium">Copied!</span>
                     ) : (
-                      <svg className="h-3 w-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-3 w-3 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -252,7 +253,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                 </div>
 
                 {/* Stats */}
-                <div className="flex items-center gap-4 pt-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-4 pt-1 text-xs text-text-muted">
                   <div className="flex items-center gap-1">
                     <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -297,25 +298,21 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
 
       {/* Rename Space Dialog Modal */}
       {editingSpace && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/50 p-4">
+        <ModalOverlay label="Rename space" onClose={() => setEditingSpace(null)}>
           <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="rename-dialog-title"
-            aria-describedby="rename-dialog-desc"
-            className="w-full max-w-md rounded-card border bg-card p-4 sm:p-6 shadow-float"
+            className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float"
           >
             <h2 id="rename-dialog-title" className="text-lg font-medium">
               Rename Space
             </h2>
-            <p id="rename-dialog-desc" className="mt-1 text-xs text-muted-foreground">
+            <p id="rename-dialog-desc" className="mt-1 text-xs text-text-muted">
               Update the name of this testimonial space.
             </p>
             <form onSubmit={handleRename} className="mt-4 space-y-4">
               <div>
                 <label
                   htmlFor="rename-space-name"
-                  className="block text-xs font-medium text-foreground"
+                  className="block text-xs font-medium text-text"
                 >
                   Space Name
                 </label>
@@ -347,24 +344,20 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
               </div>
             </form>
           </div>
-        </div>
+        </ModalOverlay>
       )}
 
       {/* Delete Space Confirmation Modal */}
       {deletingSpace && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/50 p-4">
+        <ModalOverlay label="Delete space" onClose={() => setDeletingSpace(null)}>
           <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-dialog-title"
-            aria-describedby="delete-dialog-desc"
-            className="w-full max-w-md rounded-card border bg-card p-4 sm:p-6 shadow-float"
+            className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float"
           >
-            <h2 id="delete-dialog-title" className="text-lg font-medium text-destructive">
+            <h2 id="delete-dialog-title" className="text-lg font-medium text-danger-foreground">
               Delete Space
             </h2>
-            <p id="delete-dialog-desc" className="mt-2 text-sm text-muted-foreground">
-              Are you sure you want to delete <span className="font-medium text-foreground">{deletingSpace.name}</span>? This will permanently delete the space, its testimonials, and its widget configuration.
+            <p id="delete-dialog-desc" className="mt-2 text-sm text-text-muted">
+              Are you sure you want to delete <span className="font-medium text-text">{deletingSpace.name}</span>? This will permanently delete the space, its testimonials, and its widget configuration.
             </p>
             <div className="mt-6 flex justify-end gap-2">
               <button
@@ -385,7 +378,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
               </button>
             </div>
           </div>
-        </div>
+        </ModalOverlay>
       )}
     </div>
   );

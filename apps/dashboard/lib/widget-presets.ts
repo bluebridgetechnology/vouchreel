@@ -1,7 +1,7 @@
 /** Colour swatches offered in the widget theme editor. These are user-facing data
  *  (the colour a customer picks for their embedded widget), not design tokens. */
 export const PRIMARY_COLOR_PRESETS = [
-  { name: "Coral", hex: "#d9471b" },
+  { name: "Coral", hex: "#cf3d0b" },
   { name: "Indigo", hex: "#6366f1" },
   { name: "Blue", hex: "#3b82f6" },
   { name: "Emerald", hex: "#10b981" },
