@@ -6,6 +6,7 @@ import { MatchRulesEditor } from "./match-rules-editor";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
 interface EditTestimonialDialogProps {
   spaceId: string;
@@ -114,7 +115,7 @@ export function EditTestimonialDialog({
         <button
           onClick={onClose}
           aria-label="Close dialog"
-          className="absolute right-4 top-4 rounded-control p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "absolute right-4 top-4")}
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -145,22 +146,7 @@ export function EditTestimonialDialog({
                 When active, this testimonial is eligible to display in the website widget.
               </p>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isActive}
-              aria-label="Active status"
-              onClick={() => setIsActive(!isActive)}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-pill border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                isActive ? "bg-primary" : "bg-muted"
-              }`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 transform rounded-pill bg-surface shadow-xs ring-0 transition duration-200 ease-in-out ${
-                  isActive ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
-            </button>
+            <Switch checked={isActive} onCheckedChange={setIsActive} aria-label="Active status" />
           </div>
 
           {/* Title */}
@@ -274,7 +260,7 @@ export function EditTestimonialDialog({
                       type="button"
                       onClick={() => handleRemoveTag(t)}
                       aria-label={`Remove tag ${t}`}
-                      className="text-muted-foreground hover:text-destructive"
+                      className={buttonVariants({ variant: "ghost-danger", size: "bare" })}
                     >
                       ×
                     </button>

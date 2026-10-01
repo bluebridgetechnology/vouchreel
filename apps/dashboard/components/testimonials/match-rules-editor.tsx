@@ -5,6 +5,7 @@ import { MatchRules } from "@/lib/validations/testimonials";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { toggleStyle } from "@/components/ui/toggle";
 
 interface MatchRulesEditorProps {
   value: MatchRules;
@@ -96,22 +97,14 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
         <button
           type="button"
           onClick={() => setMode("all")}
-          className={`rounded-control px-3 py-1.5 text-xs font-medium transition-all ${
-            mode === "all"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={cn("rounded-control px-3 py-1.5 text-xs font-medium transition-all", toggleStyle("raised", mode === "all"))}
         >
           Show on all pages
         </button>
         <button
           type="button"
           onClick={() => setMode("specific")}
-          className={`rounded-control px-3 py-1.5 text-xs font-medium transition-all ${
-            mode === "specific"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+          className={cn("rounded-control px-3 py-1.5 text-xs font-medium transition-all", toggleStyle("raised", mode === "specific"))}
         >
           Show on specific pages
         </button>
@@ -170,7 +163,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                       type="button"
                       onClick={() => handleRemovePattern(p)}
                       aria-label={`Remove pattern ${p}`}
-                      className="text-muted-foreground hover:text-destructive"
+                      className={buttonVariants({ variant: "ghost-danger", size: "bare" })}
                     >
                       ×
                     </button>
@@ -227,7 +220,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                       type="button"
                       onClick={() => handleRemoveTag(t)}
                       aria-label={`Remove tag ${t}`}
-                      className="text-muted-foreground hover:text-destructive"
+                      className={buttonVariants({ variant: "ghost-danger", size: "bare" })}
                     >
                       ×
                     </button>

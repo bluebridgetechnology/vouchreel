@@ -78,7 +78,7 @@ export function UpgradePromptModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-pill p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+            className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -107,7 +107,7 @@ export function UpgradePromptModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-control border px-4 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
+            className={buttonVariants({ variant: "outline", size: "lg" })}
           >
             Maybe Later
           </button>

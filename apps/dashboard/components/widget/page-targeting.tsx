@@ -126,7 +126,7 @@ export function PageTargeting({
                   <button
                     type="button"
                     onClick={() => handleRemoveInclude(pattern)}
-                    className="text-primary/70 hover:text-primary transition-colors"
+                    className={buttonVariants({ variant: "link", size: "bare" })}
                     title="Remove pattern"
                   >
                     ×
@@ -193,7 +193,7 @@ export function PageTargeting({
                   <button
                     type="button"
                     onClick={() => handleRemoveExclude(pattern)}
-                    className="text-destructive/70 hover:text-destructive transition-colors"
+                    className={buttonVariants({ variant: "link-danger", size: "bare" })}
                     title="Remove exclusion"
                   >
                     ×

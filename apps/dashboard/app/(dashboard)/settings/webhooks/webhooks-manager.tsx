@@ -238,7 +238,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
             />
             <button
               onClick={() => copyToClipboard(createdSecret)}
-              className="px-3 py-2 rounded-control text-xs font-medium bg-success text-text-on-accent hover:bg-success/90 transition"
+              className={buttonVariants({ variant: "success", size: "sm" })}
             >
               {copied ? "Copied!" : "Copy"}
             </button>
@@ -291,7 +291,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
               <button
                 type="button"
                 onClick={() => setIsCreating(false)}
-                className="px-3 py-1.5 rounded-control text-sm font-medium border hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Cancel
               </button>
@@ -360,13 +360,13 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
                         setInspectingWebhookId(w.id);
                         fetchDeliveries(w.id);
                       }}
-                      className="text-xs font-medium text-primary hover:underline"
+                      className={cn(buttonVariants({ variant: "link", size: "bare" }), "text-xs")}
                     >
                       Logs
                     </button>
                     <button
                       onClick={() => handleDeleteWebhook(w.id)}
-                      className="text-xs font-medium text-destructive hover:underline"
+                      className={cn(buttonVariants({ variant: "link-danger", size: "bare" }), "text-xs")}
                     >
                       Delete
                     </button>
@@ -385,7 +385,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
             <h3 className="font-medium text-base">Delivery Logs</h3>
             <button
               onClick={() => setInspectingWebhookId(null)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-xs")}
             >
               Close
             </button>

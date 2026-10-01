@@ -7,6 +7,7 @@ import { ConversionGoalsPanel, ConversionGoal } from "./conversion-goals-panel";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { toggleStyle } from "@/components/ui/toggle";
 
 const TimeSeriesChart = dynamic(
   () => import("./time-series-chart").then((m) => m.TimeSeriesChart),
@@ -373,11 +374,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
                 key={opt.label}
                 onClick={() => handleRangeChange(opt.days)}
                 disabled={loading}
-                className={`rounded-control px-2.5 py-1 text-xs font-medium transition-colors ${
-                  days === opt.days
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent"
-                }`}
+                className={cn("rounded-control px-2.5 py-1 text-xs font-medium transition-colors", toggleStyle("solid", days === opt.days))}
               >
                 {opt.label}
               </button>
@@ -503,7 +500,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
           {hasActiveFilters && (
             <button
               onClick={handleResetFilters}
-              className="h-8 rounded-control border border-dashed px-2 text-2xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Reset Filters
             </button>
@@ -516,31 +513,19 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
           <div className="inline-flex rounded-control border p-0.5">
             <button
               onClick={() => setCompareMode("none")}
-              className={`rounded-control px-2 py-0.5 text-xs font-medium transition-colors ${
-                compareMode === "none"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent"
-              }`}
+              className={cn("rounded-control px-2 py-0.5 text-xs font-medium transition-colors", toggleStyle("solid", compareMode === "none"))}
             >
               Off
             </button>
             <button
               onClick={() => setCompareMode("previous")}
-              className={`rounded-control px-2 py-0.5 text-xs font-medium transition-colors ${
-                compareMode === "previous"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent"
-              }`}
+              className={cn("rounded-control px-2 py-0.5 text-xs font-medium transition-colors", toggleStyle("solid", compareMode === "previous"))}
             >
               Previous Period
             </button>
             <button
               onClick={() => setCompareMode("segments")}
-              className={`rounded-control px-2 py-0.5 text-xs font-medium transition-colors ${
-                compareMode === "segments"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent"
-              }`}
+              className={cn("rounded-control px-2 py-0.5 text-xs font-medium transition-colors", toggleStyle("solid", compareMode === "segments"))}
             >
               Mobile vs Desktop
             </button>
@@ -876,7 +861,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
                         <th key={key} className="px-2 py-2 font-medium">
                           <button
                             onClick={() => handleSort(key)}
-                            className="inline-flex items-center gap-1 hover:text-foreground"
+                            className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "gap-1 hover:no-underline")}
                           >
                             {label}
                             {sortKey === key && <span>{sortAsc ? "▲" : "▼"}</span>}

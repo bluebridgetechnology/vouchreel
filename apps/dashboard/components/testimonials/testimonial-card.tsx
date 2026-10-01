@@ -2,6 +2,8 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 export interface TestimonialItem {
   id: string;
@@ -80,7 +82,7 @@ export function TestimonialCard({
         type="button"
         aria-label="Drag to reorder"
         title="Drag to reorder"
-        className="cursor-grab p-1 text-muted-foreground hover:text-foreground active:cursor-grabbing self-center sm:self-auto"
+        className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "cursor-grab self-center sm:self-auto")}
       >
         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -207,7 +209,7 @@ export function TestimonialCard({
             <button
               type="button"
               onClick={() => onToggleActive(testimonial)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-xs")}
             >
               {testimonial.isActive ? "Disable" : "Enable"}
             </button>
@@ -217,7 +219,7 @@ export function TestimonialCard({
               <button
                 type="button"
                 onClick={() => onExportSocial(testimonial)}
-                className="inline-flex items-center gap-1 rounded-control px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+                className={buttonVariants({ variant: "ghost-brand", size: "sm" })}
               >
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -229,7 +231,7 @@ export function TestimonialCard({
               <button
                 type="button"
                 onClick={() => onManageTranslations(testimonial)}
-                className="inline-flex items-center gap-1 rounded-control px-2.5 py-1 text-xs font-medium text-foreground hover:bg-accent transition-colors"
+                className={buttonVariants({ variant: "ghost", size: "sm" })}
                 title="Manage multi-language captions & translations"
               >
                 <svg className="h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,14 +243,14 @@ export function TestimonialCard({
             <button
               type="button"
               onClick={() => onEdit(testimonial)}
-              className="rounded-control px-2.5 py-1 text-xs font-medium text-foreground hover:bg-accent"
+              className={buttonVariants({ variant: "ghost", size: "sm" })}
             >
               Edit
             </button>
             <button
               type="button"
               onClick={() => onDelete(testimonial)}
-              className="rounded-control px-2.5 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
+              className={buttonVariants({ variant: "ghost-danger", size: "sm" })}
             >
               Delete
             </button>

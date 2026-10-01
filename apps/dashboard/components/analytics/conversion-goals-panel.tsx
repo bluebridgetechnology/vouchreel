@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { toggleStyle } from "@/components/ui/toggle";
 
 export interface ConversionGoal {
   id: string;
@@ -103,22 +104,14 @@ export function ConversionGoalsPanel({
           <button
             type="button"
             onClick={() => setGoalType("url-match")}
-            className={`rounded-control px-3 py-1.5 font-medium ${
-              goalType === "url-match"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent"
-            }`}
+            className={cn("rounded-control px-3 py-1.5 font-medium", toggleStyle("solid", goalType === "url-match"))}
           >
             URL match
           </button>
           <button
             type="button"
             onClick={() => setGoalType("pixel")}
-            className={`rounded-control px-3 py-1.5 font-medium ${
-              goalType === "pixel"
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent"
-            }`}
+            className={cn("rounded-control px-3 py-1.5 font-medium", toggleStyle("solid", goalType === "pixel"))}
           >
             Conversion pixel
           </button>
@@ -181,14 +174,14 @@ export function ConversionGoalsPanel({
                 {goal.goalType === "pixel" && (
                   <button
                     onClick={() => handleCopy(goal)}
-                    className="rounded-control border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+                    className={buttonVariants({ variant: "outline", size: "sm" })}
                   >
                     {copiedGoalId === goal.id ? "Copied!" : "Copy snippet"}
                   </button>
                 )}
                 <button
                   onClick={() => handleDelete(goal.id)}
-                  className="rounded-control border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
+                  className={buttonVariants({ variant: "outline-danger", size: "sm" })}
                 >
                   Delete
                 </button>

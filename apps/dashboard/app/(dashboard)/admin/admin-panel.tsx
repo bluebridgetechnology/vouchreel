@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface AdminPanelProps {
   initialProvider: "stripe" | "dodo";
@@ -173,7 +174,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
             <button
               type="button"
               onClick={() => copyToClipboard(stripeWebhookUrl, "stripe")}
-              className="text-xs font-medium text-primary hover:underline"
+              className={cn(buttonVariants({ variant: "link", size: "bare" }), "text-xs")}
             >
               {copiedStripe ? "Copied!" : "Copy URL"}
             </button>
@@ -196,7 +197,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
             <button
               type="button"
               onClick={() => copyToClipboard(dodoWebhookUrl, "dodo")}
-              className="text-xs font-medium text-primary hover:underline"
+              className={cn(buttonVariants({ variant: "link", size: "bare" }), "text-xs")}
             >
               {copiedDodo ? "Copied!" : "Copy URL"}
             </button>

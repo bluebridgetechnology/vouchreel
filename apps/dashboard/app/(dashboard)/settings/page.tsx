@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth/session";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -16,25 +17,25 @@ export default async function SettingsPage() {
         </span>
         <Link
           href="/settings/team"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           Team Members
         </Link>
         <Link
           href="/settings/billing"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           Billing & Subscription
         </Link>
         <Link
           href="/settings/api-keys"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           API Keys
         </Link>
         <Link
           href="/settings/webhooks"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           Webhooks
         </Link>
@@ -92,7 +93,7 @@ export default async function SettingsPage() {
             </Link>
             <Link
               href="/settings/webhooks"
-              className="text-xs font-medium px-3 py-1.5 rounded-control border hover:bg-accent"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Webhooks
             </Link>

@@ -8,6 +8,7 @@ import { UpgradePromptModal } from "@/components/billing/upgrade-prompt-modal";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { toggleStyle } from "@/components/ui/toggle";
 
 interface AgencyViewProps {
   initialData: AgencyOverviewResult;
@@ -202,7 +203,7 @@ export function AgencyView({
             value={search}
             onChange={handleSearchChange}
             placeholder="Search clients by name…"
-            className="w-full rounded-card border bg-background pl-9 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+            className={cn(inputClass, "pl-9 pr-4")}
           />
           <svg
             className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground"
@@ -220,27 +221,21 @@ export function AgencyView({
             <button
               type="button"
               onClick={() => handleSortChange("performance")}
-              className={`rounded-control px-2.5 py-1 transition-colors ${
-                sortBy === "performance" ? "bg-primary text-primary-foreground font-medium" : "hover:bg-accent"
-              }`}
+              className={cn("rounded-control px-2.5 py-1 transition-colors", toggleStyle("solid", sortBy === "performance"))}
             >
               CR% {sortBy === "performance" && (sortOrder === "asc" ? "↑" : "↓")}
             </button>
             <button
               type="button"
               onClick={() => handleSortChange("plays")}
-              className={`rounded-control px-2.5 py-1 transition-colors ${
-                sortBy === "plays" ? "bg-primary text-primary-foreground font-medium" : "hover:bg-accent"
-              }`}
+              className={cn("rounded-control px-2.5 py-1 transition-colors", toggleStyle("solid", sortBy === "plays"))}
             >
               Plays {sortBy === "plays" && (sortOrder === "asc" ? "↑" : "↓")}
             </button>
             <button
               type="button"
               onClick={() => handleSortChange("name")}
-              className={`rounded-control px-2.5 py-1 transition-colors ${
-                sortBy === "name" ? "bg-primary text-primary-foreground font-medium" : "hover:bg-accent"
-              }`}
+              className={cn("rounded-control px-2.5 py-1 transition-colors", toggleStyle("solid", sortBy === "name"))}
             >
               Name {sortBy === "name" && (sortOrder === "asc" ? "↑" : "↓")}
             </button>
@@ -347,13 +342,13 @@ export function AgencyView({
               <div className="flex items-center gap-2 shrink-0 pt-2 lg:pt-0">
                 <Link
                   href={`/spaces/${sp.id}/analytics`}
-                  className="rounded-control border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   Analytics
                 </Link>
                 <Link
                   href={`/spaces/${sp.id}/testimonials`}
-                  className="rounded-control border px-3 py-1.5 text-xs font-medium hover:bg-accent transition-colors"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   Videos
                 </Link>
@@ -406,7 +401,7 @@ export function AgencyView({
                 <button
                   type="button"
                   onClick={() => setShowAddClientModal(false)}
-                  className="rounded-control border px-4 py-2 text-sm font-medium hover:bg-accent"
+                  className={buttonVariants({ variant: "outline", size: "md" })}
                 >
                   Cancel
                 </button>

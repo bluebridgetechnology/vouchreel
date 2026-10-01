@@ -1,6 +1,8 @@
 "use client";
 
 import { WidgetPosition } from "@/lib/validations/widget-config";
+import { cn } from "@/lib/utils";
+import { toggleStyle } from "@/components/ui/toggle";
 
 interface PositionPickerProps {
   value: WidgetPosition;
@@ -60,11 +62,7 @@ export function PositionPicker({ value, onChange }: PositionPickerProps) {
               key={pos.id}
               type="button"
               onClick={() => onChange(pos.id)}
-              className={`group relative flex flex-col rounded-card border p-4 text-left transition-all ${
-                isSelected
-                  ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm"
-                  : "border-border bg-card hover:border-foreground/30 hover:bg-muted/30"
-              }`}
+              className={cn("group relative flex flex-col rounded-card border p-4 text-left transition-all", toggleStyle("choice", isSelected))}
             >
               {/* Wireframe Mockup */}
               <div className="mb-3 h-28 w-full overflow-hidden rounded-control border bg-muted/20 p-2.5">

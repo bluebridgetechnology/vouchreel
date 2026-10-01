@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { toggleStyle } from "@/components/ui/toggle";
+import { buttonVariants } from "@/components/ui/button";
 
 interface EmbedSnippetProps {
   embedKey: string;
@@ -133,7 +136,7 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
             <button
               type="button"
               onClick={handleCopy}
-              className="absolute right-2 rounded-control bg-text-inverse/10 px-3 py-1.5 text-xs font-medium text-text-inverse shadow-xs hover:bg-text-inverse/20 active:scale-95 transition-all"
+              className={cn(buttonVariants({ variant: "outline-inverse", size: "sm" }), "absolute right-2")}
             >
               {copied ? "Copied!" : "Copy Code"}
             </button>
@@ -157,11 +160,7 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
                 key={platform.id}
                 type="button"
                 onClick={() => setSelectedPlatform(platform.id)}
-                className={`rounded-control px-2.5 py-1 text-xs font-medium transition-colors ${
-                  selectedPlatform === platform.id
-                    ? "border border-primary bg-primary/10 text-primary font-medium"
-                    : "border border-border bg-background text-muted-foreground hover:bg-muted"
-                }`}
+                className={cn("rounded-control px-2.5 py-1 text-xs font-medium transition-colors", toggleStyle("choice", selectedPlatform === platform.id))}
               >
                 {platform.name}
               </button>

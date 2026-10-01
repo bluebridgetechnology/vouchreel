@@ -340,7 +340,7 @@ export function TeamManager({
                     <button
                       type="button"
                       onClick={() => setMemberToRemove(member)}
-                      className="rounded-control p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      className={buttonVariants({ variant: "ghost-danger", size: "icon-sm" })}
                       title="Remove member"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -386,14 +386,14 @@ export function TeamManager({
                     <button
                       type="button"
                       onClick={() => handleResendInvite(invite.id)}
-                      className="rounded-control border px-2.5 py-1 text-xs font-medium hover:bg-accent transition-colors"
+                      className={buttonVariants({ variant: "outline", size: "sm" })}
                     >
                       Resend
                     </button>
                     <button
                       type="button"
                       onClick={() => handleCancelInvite(invite.id)}
-                      className="rounded-control border border-destructive/20 text-destructive px-2.5 py-1 text-xs font-medium hover:bg-destructive/10 transition-colors"
+                      className={buttonVariants({ variant: "outline-danger", size: "sm" })}
                     >
                       Cancel
                     </button>
@@ -417,7 +417,7 @@ export function TeamManager({
               <button
                 type="button"
                 onClick={() => setMemberToRemove(null)}
-                className="rounded-control border px-4 py-2 text-sm font-medium hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "md" })}
               >
                 Cancel
               </button>

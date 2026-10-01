@@ -11,6 +11,7 @@ import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { toggleStyle } from "@/components/ui/toggle";
 
 interface SocialPageProps {
   params: Promise<{ id: string }>;
@@ -245,11 +246,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                   onClick={() =>
                     setSettings({ ...settings, defaultFraming: "blur" })
                   }
-                  className={`rounded-card border p-3.5 text-left transition-all ${
-                    settings.defaultFraming === "blur"
-                      ? "border-primary bg-primary/5 ring-2 ring-primary"
-                      : "border-border hover:bg-muted/50"
-                  }`}
+                  className={cn("rounded-card border p-3.5 text-left transition-all", toggleStyle("choice", settings.defaultFraming === "blur"))}
                 >
                   <div className="font-medium text-xs text-foreground">
                     Blurred Background
@@ -264,11 +261,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                   onClick={() =>
                     setSettings({ ...settings, defaultFraming: "letterbox" })
                   }
-                  className={`rounded-card border p-3.5 text-left transition-all ${
-                    settings.defaultFraming === "letterbox"
-                      ? "border-primary bg-primary/5 ring-2 ring-primary"
-                      : "border-border hover:bg-muted/50"
-                  }`}
+                  className={cn("rounded-card border p-3.5 text-left transition-all", toggleStyle("choice", settings.defaultFraming === "letterbox"))}
                 >
                   <div className="font-medium text-xs text-foreground">
                     Solid Letterbox
@@ -301,11 +294,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                       onClick={() =>
                         setSettings({ ...settings, watermarkPosition: pos })
                       }
-                      className={`rounded-control border px-3 py-2 text-xs font-medium text-center transition-all ${
-                        settings.watermarkPosition === pos
-                          ? "border-primary bg-primary text-primary-foreground font-medium"
-                          : "border-border bg-card text-foreground hover:bg-muted"
-                      }`}
+                      className={cn("rounded-control border px-3 py-2 text-xs font-medium text-center transition-all", toggleStyle("solid", settings.watermarkPosition === pos))}
                     >
                       {label}
                     </button>
@@ -347,7 +336,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                 <div className="pt-1">
                   <Link
                     href="/settings/billing"
-                    className="text-xs font-medium text-primary hover:underline"
+                    className={cn(buttonVariants({ variant: "link", size: "bare" }), "text-xs")}
                   >
                     Upgrade to Pro to remove watermark →
                   </Link>
@@ -474,7 +463,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
           <button
             type="button"
             onClick={loadExports}
-            className="text-xs text-muted-foreground hover:text-foreground"
+            className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-xs")}
           >
             Refresh
           </button>
@@ -489,7 +478,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
             No social exports generated yet. Open any testimonial in the{" "}
             <Link
               href={`/spaces/${spaceId}/testimonials`}
-              className="font-medium text-primary hover:underline"
+              className={buttonVariants({ variant: "link", size: "bare" })}
             >
               Testimonials
             </Link>{" "}

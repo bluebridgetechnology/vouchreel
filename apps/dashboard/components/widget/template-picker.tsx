@@ -1,6 +1,8 @@
 "use client";
 
 import { WidgetTemplate, WIDGET_TEMPLATES } from "@/lib/validations/widget-config";
+import { cn } from "@/lib/utils";
+import { toggleStyle } from "@/components/ui/toggle";
 
 interface TemplatePickerProps {
   value?: WidgetTemplate;
@@ -125,11 +127,7 @@ export function TemplatePicker({
               key={tmpl.id}
               type="button"
               onClick={() => onChange(tmpl.id)}
-              className={`relative flex flex-col justify-between rounded-card border p-4 text-left transition-all hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary ${
-                isSelected
-                  ? "border-primary bg-primary/5 shadow-xs ring-1 ring-primary"
-                  : "border-border bg-card/60"
-              }`}
+              className={cn("relative flex flex-col justify-between rounded-card border p-4 text-left transition-all focus:outline-none focus:ring-2 focus:ring-primary", toggleStyle("choice", isSelected))}
             >
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">

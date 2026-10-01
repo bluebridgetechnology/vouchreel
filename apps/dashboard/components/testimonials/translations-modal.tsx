@@ -5,6 +5,7 @@ import { TestimonialItem } from "./testimonial-card";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { toggleStyle } from "@/components/ui/toggle";
 
 export interface TranslationItem {
   id: string;
@@ -199,7 +200,7 @@ export function TranslationsModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-card p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
             aria-label="Close dialog"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,11 +331,7 @@ export function TranslationsModal({
                         key={item.id}
                         type="button"
                         onClick={() => setSelectedLang(item.language)}
-                        className={`inline-flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-xs font-medium transition-all ${
-                          isSelected
-                            ? "border-primary bg-primary/10 text-primary font-medium shadow-sm"
-                            : "border-border bg-card text-foreground hover:bg-accent"
-                        }`}
+                        className={cn("inline-flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-xs font-medium transition-all", toggleStyle("choice", isSelected))}
                       >
                         <span>{meta?.flag || "🌐"}</span>
                         <span>{meta?.label.split(" ")[0] || item.language.toUpperCase()}</span>

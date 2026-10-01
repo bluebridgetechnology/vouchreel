@@ -8,6 +8,9 @@ import {
   TriggerType,
 } from "@/lib/validations/widget-config";
 import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { toggleStyle } from "@/components/ui/toggle";
+import { Switch } from "@/components/ui/switch";
 
 interface LivePreviewProps {
   template?: WidgetTemplate;
@@ -74,11 +77,7 @@ export function LivePreview({
           <button
             type="button"
             onClick={() => setViewport("desktop")}
-            className={`flex items-center gap-1 rounded-control px-2.5 py-1 text-xs font-medium transition-all ${
-              viewport === "desktop"
-                ? "bg-background text-foreground shadow-xs font-medium"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={cn("flex items-center gap-1 rounded-control px-2.5 py-1 text-xs font-medium transition-all", toggleStyle("raised", viewport === "desktop"))}
           >
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -89,11 +88,7 @@ export function LivePreview({
           <button
             type="button"
             onClick={() => setViewport("mobile")}
-            className={`flex items-center gap-1 rounded-control px-2.5 py-1 text-xs font-medium transition-all ${
-              viewport === "mobile"
-                ? "bg-background text-foreground shadow-xs font-medium"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={cn("flex items-center gap-1 rounded-control px-2.5 py-1 text-xs font-medium transition-all", toggleStyle("raised", viewport === "mobile"))}
           >
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -186,7 +181,7 @@ export function LivePreview({
                   <button
                     type="button"
                     onClick={() => setIsExpanded(true)}
-                    className="flex flex-col text-left rounded-card border bg-card/80 p-2 shadow-xs hover:border-primary/50 transition-all cursor-pointer"
+                    className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "cursor-pointer")}
                   >
                     <div className="relative aspect-video w-full rounded-control bg-scrim overflow-hidden mb-1.5">
                       <img
@@ -224,7 +219,7 @@ export function LivePreview({
                         date: "2 days ago",
                       })
                     }
-                    className="flex flex-col text-left rounded-card border bg-card/80 p-2 shadow-xs hover:border-primary/50 transition-all cursor-pointer justify-between"
+                    className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "cursor-pointer")}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1">
@@ -254,7 +249,7 @@ export function LivePreview({
                         date: "1 week ago",
                       })
                     }
-                    className="flex flex-col text-left rounded-card border bg-card/80 p-2 shadow-xs hover:border-primary/50 transition-all cursor-pointer justify-between"
+                    className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "cursor-pointer")}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1">
@@ -276,7 +271,7 @@ export function LivePreview({
                   <button
                     type="button"
                     onClick={() => setIsExpanded(true)}
-                    className="flex flex-col text-left rounded-card border bg-card/80 p-2 shadow-xs hover:border-primary/50 transition-all cursor-pointer"
+                    className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "cursor-pointer")}
                   >
                     <div className="relative aspect-video w-full rounded-control bg-scrim overflow-hidden mb-1.5">
                       <img
@@ -399,7 +394,7 @@ export function LivePreview({
                     <button
                       type="button"
                       onClick={() => setIsExpanded(true)}
-                      className="w-full text-left rounded-card border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer"
+                      className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "w-full cursor-pointer")}
                     >
                       <div className="relative aspect-video w-full rounded-control bg-scrim overflow-hidden mb-1">
                         <img
@@ -422,7 +417,7 @@ export function LivePreview({
                           date: "1 week ago",
                         })
                       }
-                      className="w-full text-left rounded-card border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer"
+                      className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "w-full cursor-pointer")}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-3xs font-medium px-1 rounded-control bg-success-soft text-success-foreground">Trustpilot</span>
@@ -444,7 +439,7 @@ export function LivePreview({
                           date: "2 days ago",
                         })
                       }
-                      className="w-full text-left rounded-card border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer"
+                      className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "w-full cursor-pointer")}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-3xs font-medium px-1 rounded-control bg-info-soft text-info-foreground">Google</span>
@@ -455,7 +450,7 @@ export function LivePreview({
                     <button
                       type="button"
                       onClick={() => setIsExpanded(true)}
-                      className="w-full text-left rounded-card border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer"
+                      className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "w-full cursor-pointer")}
                     >
                       <div className="relative aspect-video w-full rounded-control bg-scrim overflow-hidden mb-1">
                         <img
@@ -646,22 +641,7 @@ export function LivePreview({
           </p>
         </div>
 
-        <button
-          type="button"
-          role="switch"
-          aria-checked={autoplayPreview}
-          aria-label="Autoplay video previews"
-          onClick={() => onAutoplayChange?.(!autoplayPreview)}
-          className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-pill border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-            autoplayPreview ? "bg-primary" : "bg-muted"
-          }`}
-        >
-          <span
-            className={`pointer-events-none inline-block h-4 w-4 transform rounded-pill bg-background shadow-float ring-0 transition duration-200 ease-in-out ${
-              autoplayPreview ? "translate-x-4" : "translate-x-0"
-            }`}
-          />
-        </button>
+        <Switch checked={autoplayPreview} onCheckedChange={(v) => onAutoplayChange?.(v)} aria-label="Autoplay video previews" />
       </div>
 
       <p className="text-center text-2xs text-muted-foreground">

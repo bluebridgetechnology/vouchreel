@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { toggleStyle } from "@/components/ui/toggle";
 
 interface ReviewSource {
   id: string;
@@ -264,7 +265,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
           <span>{syncMessage}</span>
           <button
             onClick={() => setSyncMessage(null)}
-            className="text-xs font-medium hover:opacity-75 ml-2"
+            className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "ml-2 text-xs")}
           >
             ✕
           </button>
@@ -353,7 +354,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                 <button
                   type="button"
                   onClick={() => handleDisconnectSource(googleSource.id)}
-                  className="rounded-control border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
+                  className={buttonVariants({ variant: "outline-danger", size: "sm" })}
                 >
                   Disconnect
                 </button>
@@ -440,7 +441,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                 <button
                   type="button"
                   onClick={() => handleDisconnectSource(trustpilotSource.id)}
-                  className="rounded-control border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/10"
+                  className={buttonVariants({ variant: "outline-danger", size: "sm" })}
                 >
                   Disconnect
                 </button>
@@ -473,7 +474,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
               </h3>
               <button
                 onClick={() => setConnectModalProvider(null)}
-                className="text-muted-foreground hover:text-foreground text-sm"
+                className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
               >
                 ✕
               </button>
@@ -604,11 +605,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                 <button
                   key={t}
                   onClick={() => setFilter(t)}
-                  className={`rounded-control px-2.5 py-1 capitalize font-medium transition-all ${
-                    filter === t
-                      ? "bg-background text-foreground shadow-xs font-medium"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  className={cn("rounded-control px-2.5 py-1 capitalize font-medium transition-all", toggleStyle("raised", filter === t))}
                 >
                   {t}
                 </button>
@@ -719,18 +716,14 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                     <button
                       type="button"
                       onClick={() => handleToggleApprove(review)}
-                      className={`rounded-control px-2 py-1 text-2xs font-medium transition-colors ${
-                        review.isApproved
-                          ? "bg-muted text-muted-foreground hover:bg-muted/80"
-                          : "bg-primary text-primary-foreground hover:bg-primary/90"
-                      }`}
+                      className={cn(buttonVariants({ variant: review.isApproved ? "outline" : "primary", size: "sm" }), "h-7 px-2.5 text-2xs")}
                     >
                       {review.isApproved ? "Hide" : "Approve"}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteReview(review.id)}
-                      className="rounded-control p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      className={buttonVariants({ variant: "ghost-danger", size: "icon-sm" })}
                       title="Delete review"
                     >
                       <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

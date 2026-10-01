@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth/session";
 import { getSpacesWithCounts } from "@/lib/spaces/queries";
 import { ApiKeysManager } from "./api-keys-manager";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -20,13 +22,13 @@ export default async function ApiKeysSettingsPage() {
       <div className="flex items-center gap-4 border-b pb-4">
         <Link
           href="/settings"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           General
         </Link>
         <Link
           href="/settings/billing"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           Billing & Subscription
         </Link>
@@ -35,7 +37,7 @@ export default async function ApiKeysSettingsPage() {
         </span>
         <Link
           href="/settings/webhooks"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           Webhooks
         </Link>

@@ -9,6 +9,7 @@ import {
 } from "@/lib/social/presets";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { toggleStyle } from "@/components/ui/toggle";
 
 export interface SocialExportItem {
   id: string;
@@ -195,7 +196,7 @@ export function SocialExportModal({
             type="button"
             onClick={onClose}
             aria-label="Close export dialog"
-            className="rounded-card p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+            className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -208,22 +209,14 @@ export function SocialExportModal({
           <button
             type="button"
             onClick={() => setActiveTab("create")}
-            className={`border-b-2 px-4 py-2.5 text-xs font-medium transition-all ${
-              activeTab === "create"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+            className={cn("px-4 py-2.5 text-xs font-medium transition-all", toggleStyle("tab", activeTab === "create"))}
           >
             Create Export
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("history")}
-            className={`border-b-2 px-4 py-2.5 text-xs font-medium transition-all flex items-center gap-1.5 ${
-              activeTab === "history"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+            className={cn("px-4 py-2.5 text-xs font-medium transition-all flex items-center gap-1.5", toggleStyle("tab", activeTab === "history"))}
           >
             Previous Exports
             {exportHistory.length > 0 && (
@@ -263,7 +256,7 @@ export function SocialExportModal({
                     <button
                       type="button"
                       onClick={() => setActiveExport(null)}
-                      className="text-xs text-muted-foreground hover:text-foreground underline"
+                      className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-xs underline")}
                     >
                       Export another format
                     </button>
@@ -345,11 +338,7 @@ export function SocialExportModal({
                             key={platform}
                             type="button"
                             onClick={() => setSelectedPlatform(platform)}
-                            className={`flex flex-col items-start rounded-card border p-3.5 text-left transition-all ${
-                              isSelected
-                                ? "border-primary bg-primary/5 ring-2 ring-primary"
-                                : "border-border hover:bg-muted/50"
-                            }`}
+                            className={cn("flex flex-col items-start rounded-card border p-3.5 text-left transition-all", toggleStyle("choice", isSelected))}
                           >
                             <span className="font-medium text-sm text-foreground">
                               {preset.name}
@@ -372,11 +361,7 @@ export function SocialExportModal({
                       <button
                         type="button"
                         onClick={() => setFraming("blur")}
-                        className={`rounded-card border p-3.5 text-left transition-all ${
-                          framing === "blur"
-                            ? "border-primary bg-primary/5 ring-2 ring-primary"
-                            : "border-border hover:bg-muted/50"
-                        }`}
+                        className={cn("rounded-card border p-3.5 text-left transition-all", toggleStyle("choice", framing === "blur"))}
                       >
                         <div className="font-medium text-xs text-foreground">
                           Blurred Background
@@ -389,11 +374,7 @@ export function SocialExportModal({
                       <button
                         type="button"
                         onClick={() => setFraming("letterbox")}
-                        className={`rounded-card border p-3.5 text-left transition-all ${
-                          framing === "letterbox"
-                            ? "border-primary bg-primary/5 ring-2 ring-primary"
-                            : "border-border hover:bg-muted/50"
-                        }`}
+                        className={cn("rounded-card border p-3.5 text-left transition-all", toggleStyle("choice", framing === "letterbox"))}
                       >
                         <div className="font-medium text-xs text-foreground">
                           Solid Letterbox
@@ -474,7 +455,7 @@ export function SocialExportModal({
                     type="button"
                     onClick={handleTriggerExport}
                     disabled={isExporting}
-                    className="flex w-full items-center justify-center gap-2 rounded-card bg-primary py-3 text-xs font-medium text-primary-foreground shadow-xs hover:opacity-90 disabled:opacity-50"
+                    className={cn(buttonVariants({ variant: "primary", size: "lg" }), "w-full")}
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -534,7 +515,7 @@ export function SocialExportModal({
                           <button
                             type="button"
                             onClick={() => handleCopyLink(item.outputUrl!)}
-                            className="rounded-control border px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                            className={buttonVariants({ variant: "outline", size: "sm" })}
                           >
                             Copy Link
                           </button>

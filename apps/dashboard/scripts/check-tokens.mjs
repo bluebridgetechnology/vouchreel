@@ -8,6 +8,8 @@
 //   size      arbitrary text sizes (text-[11px])
 //   weight    font-semibold / bold / extrabold / black (Outfit max weight is 500)
 //   radius    legacy radius classes (rounded, rounded-md/lg/xl/2xl/full/sm/xs)
+//   control   hand-rolled <button>/<input>/<select>/<textarea> (use buttonVariants, toggleStyle,
+//             Switch, inputClass / textareaClass or the components in components/ui)
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -48,7 +50,32 @@ function* walk(dir) {
   }
 }
 
-const totals = Object.fromEntries(Object.keys(rules).map((k) => [k, 0]));
+// Files that legitimately draw their own controls: the primitives themselves and the
+// widget live-preview, which mimics the customer-facing widget rather than app chrome.
+const CONTROL_ALLOW = [
+  /components[\/]ui[\/]/,
+  /components[\/]widget[\/]live-preview\.tsx$/,
+  /components[\/]theme-toggle\.tsx$/,
+  /app[\/]design[\/]/,
+];
+const OK_CONTROL = /buttonVariants|toggleStyle|inputClass|textareaClass|--user-accent|<Switch|type="(?:checkbox|radio|file|range|color|hidden)"/;
+
+function tagEnd(src, start) {
+  let depth = 0;
+  let quote = null;
+  for (let i = start; i < src.length; i++) {
+    const c = src[i];
+    if (quote) {
+      if (c === quote && src[i - 1] !== "\\") quote = null;
+    } else if (c === '"' || c === "'" || c === "`") quote = c;
+    else if (c === "{") depth++;
+    else if (c === "}") depth--;
+    else if (c === ">" && depth === 0) return i + 1;
+  }
+  return -1;
+}
+
+const totals = { ...Object.fromEntries(Object.keys(rules).map((k) => [k, 0])), control: 0 };
 const byFile = new Map();
 const lines = [];
 
@@ -58,7 +85,20 @@ for (const base of ["app", "components"]) {
     if (ALLOW.some((r) => r.test(rel))) continue;
     // Server/route code (no JSX class names) is out of scope for class rules except hex.
     const isApi = rel.split(sep).includes("api");
-    readFileSync(file, "utf8")
+    const source = readFileSync(file, "utf8");
+    if (!isApi && file.endsWith(".tsx") && !CONTROL_ALLOW.some((r) => r.test(rel.split(sep).join("/")))) {
+      for (const m of source.matchAll(/<(button|input|select|textarea)(?=[\s/>])/g)) {
+        const end = tagEnd(source, m.index + m[0].length);
+        const tag = end < 0 ? "" : source.slice(m.index, end);
+        if (end > 0 && !OK_CONTROL.test(tag)) {
+          totals.control++;
+          byFile.set(rel, (byFile.get(rel) ?? 0) + 1);
+          const lineNo = source.slice(0, m.index).split("\n").length;
+          if (LIST) lines.push(`${rel}:${lineNo} [control] <${m[1]}> without a primitive`);
+        }
+      }
+    }
+    source
       .split("\n")
       .forEach((line, i) => {
         if (LINE_ALLOW.test(line)) return;

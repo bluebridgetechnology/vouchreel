@@ -5,6 +5,8 @@ import { teamMembers, teamInvites, user } from "@/lib/db/schema";
 import { eq, and, isNotNull, gt } from "drizzle-orm";
 import { canAccess } from "@/lib/auth/feature-gate";
 import { TeamManager } from "./team-manager";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -100,7 +102,7 @@ export default async function TeamSettingsPage() {
       <div className="flex items-center gap-4 border-b pb-4 overflow-x-auto">
         <Link
           href="/settings"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           General
         </Link>
@@ -109,19 +111,19 @@ export default async function TeamSettingsPage() {
         </span>
         <Link
           href="/settings/billing"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           Billing & Subscription
         </Link>
         <Link
           href="/settings/api-keys"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           API Keys
         </Link>
         <Link
           href="/settings/webhooks"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           Webhooks
         </Link>

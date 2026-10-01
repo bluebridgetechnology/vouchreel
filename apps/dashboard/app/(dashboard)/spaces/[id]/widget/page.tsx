@@ -18,6 +18,7 @@ import { LivePreview } from "@/components/widget/live-preview";
 import { EmbedSnippet } from "@/components/widget/embed-snippet";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { toggleStyle } from "@/components/ui/toggle";
 
 interface WidgetPageProps {
   params: Promise<{ id: string }>;
@@ -237,7 +238,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           <button
             type="button"
             onClick={() => setSaveSuccess(false)}
-            className="text-success-foreground hover:opacity-75"
+            className={buttonVariants({ variant: "link-success", size: "bare" })}
           >
             ✕
           </button>
@@ -255,7 +256,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           <button
             type="button"
             onClick={() => setSaveError(null)}
-            className="text-destructive hover:opacity-75"
+            className={buttonVariants({ variant: "link-danger", size: "bare" })}
           >
             ✕
           </button>
@@ -274,11 +275,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
             key={tab.id}
             type="button"
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex-1 border-b-2 py-2 text-center text-xs font-medium ${
-              activeTab === tab.id
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+            className={cn("flex-1 py-2 text-center text-xs font-medium", toggleStyle("tab", activeTab === tab.id))}
           >
             {tab.label}
           </button>

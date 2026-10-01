@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireSession } from "@/lib/auth/session";
 import { getUserSubscription } from "@/lib/payments/subscription";
 import { BillingManager } from "./billing-manager";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +47,7 @@ export default async function BillingSettingsPage() {
       <div className="flex items-center gap-4 border-b pb-4">
         <Link
           href="/settings"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
         >
           General
         </Link>

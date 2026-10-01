@@ -177,7 +177,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
             />
             <button
               onClick={() => copyToClipboard(createdRawKey)}
-              className="px-3 py-2 rounded-control text-xs font-medium bg-success text-text-on-accent hover:bg-success/90 transition"
+              className={buttonVariants({ variant: "success", size: "sm" })}
             >
               {copied ? "Copied!" : "Copy"}
             </button>
@@ -207,7 +207,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
               <button
                 type="button"
                 onClick={() => setIsCreating(false)}
-                className="px-3 py-1.5 rounded-control text-sm font-medium border hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Cancel
               </button>
@@ -260,7 +260,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => handleDeleteKey(k.id)}
-                      className="text-xs font-medium text-destructive hover:underline"
+                      className={cn(buttonVariants({ variant: "link-danger", size: "bare" }), "text-xs")}
                     >
                       Revoke
                     </button>

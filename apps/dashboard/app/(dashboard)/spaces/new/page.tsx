@@ -47,7 +47,7 @@ export default function NewSpacePage() {
       <div>
         <Link
           href="/spaces"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-xs")}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 19.5 8.25 12l7.5-7.5" />

@@ -195,7 +195,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                       }}
                       title="Rename Space"
                       aria-label={`Rename space ${space.name}`}
-                      className="rounded-control p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
                     >
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -213,7 +213,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                       }}
                       title="Delete Space"
                       aria-label={`Delete space ${space.name}`}
-                      className="rounded-control p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      className={buttonVariants({ variant: "ghost-danger", size: "icon-sm" })}
                     >
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -232,7 +232,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                   <span className="text-xs text-muted-foreground">Embed Key:</span>
                   <button
                     onClick={() => copyEmbedKey(space.embedKey)}
-                    className="inline-flex items-center gap-1.5 rounded-control bg-muted px-2 py-1 font-mono text-xs font-medium text-foreground transition-colors hover:bg-accent"
+                    className={cn(buttonVariants({ variant: "soft", size: "sm" }), "h-7 px-2.5 font-mono")}
                     title="Click to copy embed key"
                   >
                     <span>{space.embedKey}</span>

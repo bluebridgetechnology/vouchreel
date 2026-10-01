@@ -14,6 +14,7 @@ import type { ExperimentWithStats, VariantStats } from "@/lib/experiments/querie
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { toggleStyle } from "@/components/ui/toggle";
 
 interface ExperimentsViewProps {
   spaceId: string;
@@ -307,7 +308,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
           <span>{feedback.text}</span>
           <button
             onClick={() => setFeedback(null)}
-            className="text-xs opacity-70 hover:opacity-100"
+            className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-xs")}
           >
             ✕
           </button>
@@ -320,7 +321,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
           <div className="flex items-center justify-between">
             <button
               onClick={() => setSelectedExp(null)}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+              className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-xs")}
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -333,7 +334,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 <button
                   disabled={actionLoading}
                   onClick={() => handleStatusChange(selectedExp.id, "running")}
-                  className="rounded-control bg-success px-3 py-1.5 text-xs font-medium text-text-on-accent shadow-xs hover:bg-success/90 disabled:opacity-50"
+                  className={buttonVariants({ variant: "success", size: "sm" })}
                 >
                   Start Experiment
                 </button>
@@ -342,7 +343,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 <button
                   disabled={actionLoading}
                   onClick={() => handleStatusChange(selectedExp.id, "completed")}
-                  className="rounded-control bg-warning px-3 py-1.5 text-xs font-medium text-text-on-accent shadow-xs hover:bg-warning/90 disabled:opacity-50"
+                  className={buttonVariants({ variant: "warning", size: "sm" })}
                 >
                   Stop Experiment
                 </button>
@@ -351,7 +352,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 <button
                   disabled={actionLoading}
                   onClick={() => handleStatusChange(selectedExp.id, "running")}
-                  className="rounded-control border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   Resume Experiment
                 </button>
@@ -359,7 +360,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               <button
                 disabled={actionLoading}
                 onClick={() => handleDelete(selectedExp.id)}
-                className="rounded-control border border-destructive/20 text-destructive px-3 py-1.5 text-xs font-medium hover:bg-destructive/10 disabled:opacity-50"
+                className={buttonVariants({ variant: "outline-danger", size: "sm" })}
               >
                 Delete
               </button>
@@ -599,11 +600,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                     <button
                       disabled={actionLoading || isWinner}
                       onClick={() => handleApplyWinner(selectedExp.id, idx, variant.name)}
-                      className={`w-full py-2.5 px-4 rounded-card text-xs font-medium transition shadow-sm ${
-                        isWinner
-                          ? "bg-brand text-text-on-accent opacity-80 cursor-default"
-                          : "bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50"
-                      }`}
+                      className={cn(buttonVariants({ variant: isWinner ? "soft" : "primary", size: "md" }), "w-full text-xs", isWinner && "cursor-default")}
                     >
                       {isWinner ? "✓ Applied as Widget Winner" : "Apply as Winner to Widget"}
                     </button>
@@ -634,11 +631,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 <button
                   key={key}
                   onClick={() => setFilter(key)}
-                  className={`rounded-control px-3 py-1.5 transition ${
-                    filter === key
-                      ? "bg-primary text-primary-foreground font-medium"
-                      : "text-muted-foreground hover:bg-muted"
-                  }`}
+                  className={cn("rounded-control px-3 py-1.5 transition", toggleStyle("solid", filter === key))}
                 >
                   {label} ({count})
                 </button>
@@ -742,7 +735,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       <button
                         disabled={actionLoading}
                         onClick={() => handleStatusChange(exp.id, "running")}
-                        className="rounded-control bg-success px-3 py-2 text-xs font-medium text-text-on-accent hover:bg-success/90 disabled:opacity-50"
+                        className={buttonVariants({ variant: "success", size: "sm" })}
                       >
                         Start
                       </button>
@@ -751,7 +744,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       <button
                         disabled={actionLoading}
                         onClick={() => handleStatusChange(exp.id, "completed")}
-                        className="rounded-control border border-border px-3 py-2 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                        className={buttonVariants({ variant: "outline", size: "sm" })}
                       >
                         Complete
                       </button>
@@ -777,7 +770,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               </div>
               <button
                 onClick={() => setIsCreateOpen(false)}
-                className="text-muted-foreground hover:text-foreground text-sm font-medium p-1"
+                className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
               >
                 ✕
               </button>
@@ -809,11 +802,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       key={t}
                       type="button"
                       onClick={() => handleTypeChange(t)}
-                      className={`rounded-card border p-3 text-left transition-all ${
-                        formData.type === t
-                          ? "border-primary bg-primary/10 ring-2 ring-primary"
-                          : "border-border hover:bg-muted/50"
-                      }`}
+                      className={cn("rounded-card border p-3 text-left transition-all", toggleStyle("choice", formData.type === t))}
                     >
                       <div className="font-medium text-xs uppercase text-foreground">{t}</div>
                       <div className="text-2xs text-muted-foreground mt-0.5 capitalize">
@@ -851,11 +840,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                       key={preset}
                       type="button"
                       onClick={() => setFormData({ ...formData, split: preset })}
-                      className={`rounded-control border px-2.5 py-1 text-2xs font-medium transition ${
-                        formData.split === preset
-                          ? "bg-primary text-primary-foreground font-medium"
-                          : "bg-card text-muted-foreground hover:text-foreground"
-                      }`}
+                      className={cn("rounded-control border px-2.5 py-1 text-2xs font-medium transition", toggleStyle("solid", formData.split === preset))}
                     >
                       {preset} / {100 - preset}
                     </button>
@@ -1103,7 +1088,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 type="button"
                 disabled={actionLoading}
                 onClick={() => setIsCreateOpen(false)}
-                className="rounded-card border px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Cancel
               </button>
