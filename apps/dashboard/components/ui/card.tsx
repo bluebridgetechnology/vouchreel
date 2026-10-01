@@ -15,14 +15,18 @@ export const cardVariants = cva("text-text", {
       inverse: "rounded-panel bg-surface-inverse text-text-inverse",
     },
     padding: { none: "", sm: "p-4", md: "p-6", lg: "p-8" },
+    interactive: {
+      true: "transition-[transform,box-shadow] duration-(--duration-base) ease-(--ease-out) hover:-translate-y-0.5 hover:shadow-float",
+      false: "",
+    },
   },
-  defaultVariants: { variant: "default", padding: "none" },
+  defaultVariants: { variant: "default", padding: "none", interactive: false },
 });
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof cardVariants> {}
 
-export function Card({ className, variant, padding, ...props }: CardProps) {
-  return <div className={cn(cardVariants({ variant, padding }), className)} {...props} />;
+export function Card({ className, variant, padding, interactive, ...props }: CardProps) {
+  return <div className={cn(cardVariants({ variant, padding, interactive }), className)} {...props} />;
 }
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={cn("space-y-1 p-6 pb-0", className)} {...props} />;

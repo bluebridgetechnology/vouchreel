@@ -97,7 +97,7 @@ All in `app/globals.css`, three layers, Tailwind v4 `@theme`. **Rule: components
 
 ## 5. Component primitives (`components/ui`)
 
-Install `class-variance-authority`, `@iconify/react` + `@iconify-json/solar` (offline icon data, no runtime API fetch; only `solar:*-outline` names; single `<Icon name size />` wrapper), `@radix-ui/*` (as needed), `next-themes`. Build, each token-only with `cva` variants:
+Install `class-variance-authority`, `@iconify-json/solar` + `@iconify/utils` (offline subset rendered as server-side inline SVG, no runtime API fetch, no client JS; only `solar:*-outline` names; single `<Icon name size />` wrapper), `@radix-ui/*` (as needed), `next-themes`. Build, each token-only with `cva` variants:
 
 - `Button` (primary coral, dark/ink, outline, soft, ghost, destructive; sizes sm/md/lg; pill shape; loading state)
 - `Input`, `Textarea`, `Select`, `Checkbox`, `Switch`, `Label`, `Field` (label + hint + error)
