@@ -180,7 +180,7 @@ describe("Widget Config API Routes", () => {
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.widgetConfig.position).toBe("bottom-right");
-      expect(json.widgetConfig.theme.primaryColor).toBe("#4f46e5");
+      expect(json.widgetConfig.theme.primaryColor).toBe("#d9471b");
       expect(json.widgetConfig.triggerType).toBe("delay");
       expect(json.widgetConfig.autoplayPreview).toBe(true);
       expect(json.space.embedKey).toBe("emb_abc");

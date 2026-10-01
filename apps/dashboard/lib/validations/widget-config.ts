@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 
 export const WIDGET_POSITIONS = [
   "bottom-right",
@@ -34,7 +35,7 @@ export const widgetThemeSchema = z.object({
   primaryColor: z
     .string()
     .trim()
-    .regex(hexColorRegex, "Primary color must be a valid hex color (e.g. #4f46e5)"),
+    .regex(hexColorRegex, "Primary color must be a valid hex color (e.g. #d9471b)"),
   accentColor: z
     .string()
     .trim()
@@ -124,7 +125,7 @@ export const DEFAULT_WIDGET_CONFIG: Omit<WidgetConfigRecord, "id" | "spaceId" | 
   template: "floating-card",
   position: "bottom-right",
   theme: {
-    primaryColor: "#4f46e5",
+    primaryColor: DEFAULT_BRAND_HEX,
     accentColor: "#ffffff",
     mode: "light",
     borderRadius: 12,

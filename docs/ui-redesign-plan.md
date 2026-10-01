@@ -130,7 +130,7 @@ Sidebar (Solar Outline icons, active pill, workspace switcher), top bar, `(auth)
 **Phase 5: Dashboard screens migration (3-4 days, by worst offender)**
 Order: `spaces`, `testimonials`, `widget` (`live-preview.tsx` + `theme-editor`), `experiments-view`, `analytics-dashboard` + charts, `reviews`, `social`, `collect`, `settings/*`, `agency`, `admin`, `billing`. Per file: swap controls for primitives, raw colours to status tokens (emerald to `success`, amber to `warning`, blue to `info`), `text-[Npx]` to scale tokens, radius/shadow to named tokens. Public `/collect/[slug]` page gets user-accent via the single custom property.
 
-**Phase 6: Widget + emails (1 day)**
+**Phase 6: Widget + reports + defaults (done)**
 Token-generated widget CSS, hex removal; align transactional email templates in `lib/email` to brand tokens (inline hex required in email; sourced from one `emailTheme` constant).
 
 **Phase 7: Enforcement + QA (1 day)**

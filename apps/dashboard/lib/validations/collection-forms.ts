@@ -4,7 +4,7 @@ export const collectionFormBrandingSchema = z.object({
   accentColor: z
     .string()
     .trim()
-    .regex(/^#[0-9a-fA-F]{6}$/, "Accent color must be a hex color like #7c3aed")
+    .regex(/^#[0-9a-fA-F]{6}$/, "Accent color must be a hex color like #d9471b")
     .optional(),
   logoUrl: z
     .string()
