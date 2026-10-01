@@ -4,7 +4,7 @@ import { subscriptions, plans } from "../db/schema";
 import type { SubscriptionStatus } from "./types";
 
 export interface PlanLimits {
-  tier: "free" | "pro" | "business";
+  tier: "free" | "pro" | "agency" | "business";
   maxSpaces: number;
   maxTestimonialsPerSpace: number;
   removeWatermark: boolean;
@@ -12,6 +12,9 @@ export interface PlanLimits {
   canUseAllTriggers: boolean;
   canAccessAnalytics: boolean;
   canUseCustomRules: boolean;
+  multiSeat: boolean;
+  whiteLabel: boolean;
+  exportableReports: boolean;
 }
 
 export const PLAN_LIMITS: Record<string, PlanLimits> = {
@@ -24,16 +27,35 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
     canUseAllTriggers: false,
     canAccessAnalytics: false,
     canUseCustomRules: false,
+    multiSeat: false,
+    whiteLabel: false,
+    exportableReports: false,
   },
   pro: {
     tier: "pro",
+    maxSpaces: 5,
+    maxTestimonialsPerSpace: Infinity,
+    removeWatermark: true,
+    canCustomizeBranding: true,
+    canUseAllTriggers: true,
+    canAccessAnalytics: true,
+    canUseCustomRules: true,
+    multiSeat: false,
+    whiteLabel: false,
+    exportableReports: true,
+  },
+  agency: {
+    tier: "agency",
     maxSpaces: Infinity,
     maxTestimonialsPerSpace: Infinity,
     removeWatermark: true,
     canCustomizeBranding: true,
     canUseAllTriggers: true,
     canAccessAnalytics: true,
-    canUseCustomRules: false,
+    canUseCustomRules: true,
+    multiSeat: true,
+    whiteLabel: true,
+    exportableReports: true,
   },
   business: {
     tier: "business",
@@ -44,6 +66,9 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
     canUseAllTriggers: true,
     canAccessAnalytics: true,
     canUseCustomRules: true,
+    multiSeat: true,
+    whiteLabel: true,
+    exportableReports: true,
   },
 };
 
@@ -51,6 +76,10 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
  * Retrieves the user's current subscription and associated plan from the database.
  */
 export async function getUserSubscription(userId: string) {
+  if (!db.query?.subscriptions) {
+    return null;
+  }
+
   const userSub = await db.query.subscriptions.findFirst({
     where: eq(subscriptions.userId, userId),
   });
@@ -73,6 +102,10 @@ export async function getUserSubscription(userId: string) {
  * Checks whether the user has an active, valid subscription (active or trialing).
  */
 export async function hasActiveSubscription(userId: string): Promise<boolean> {
+  if (!db.query?.subscriptions) {
+    return false;
+  }
+
   const userSub = await db.query.subscriptions.findFirst({
     where: eq(subscriptions.userId, userId),
   });
@@ -90,6 +123,10 @@ export async function hasActiveSubscription(userId: string): Promise<boolean> {
  * Defaults to Free tier limits if no subscription exists or subscription is not active.
  */
 export async function getSubscriptionLimits(userId: string): Promise<PlanLimits> {
+  if (!db.query?.subscriptions) {
+    return PLAN_LIMITS.free;
+  }
+
   const userSub = await db.query.subscriptions.findFirst({
     where: eq(subscriptions.userId, userId),
   });
@@ -107,6 +144,9 @@ export async function getSubscriptionLimits(userId: string): Promise<PlanLimits>
   }
 
   const normalizedName = plan.name.toLowerCase().trim();
+  if (normalizedName.includes("agency")) {
+    return PLAN_LIMITS.agency;
+  }
   if (normalizedName.includes("business")) {
     return PLAN_LIMITS.business;
   }

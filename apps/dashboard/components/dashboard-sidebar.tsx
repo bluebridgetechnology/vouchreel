@@ -22,9 +22,13 @@ function isAdminUser(user: DashboardUser) {
 }
 
 function isItemActive(pathname: string, href: string) {
-  return href === "/spaces"
-    ? pathname === "/spaces" || pathname.startsWith("/spaces/")
-    : pathname === href;
+  if (href === "/spaces") {
+    return pathname === "/spaces" || pathname.startsWith("/spaces/");
+  }
+  if (href === "/agency") {
+    return pathname === "/agency" || pathname.startsWith("/agency/");
+  }
+  return pathname === href;
 }
 
 function getNavItems(isAdmin: boolean) {
@@ -39,6 +43,20 @@ function getNavItems(isAdmin: boolean) {
             strokeLinejoin="round"
             strokeWidth={1.5}
             d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z"
+          />
+        </svg>
+      ),
+    },
+    {
+      label: "Agency",
+      href: "/agency",
+      icon: (className: string) => (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"
           />
         </svg>
       ),
@@ -148,7 +166,12 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           </div>
           <div className="flex-1 overflow-hidden">
             <p className="truncate text-sm font-medium">{user.name || "User"}</p>
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+              <span className="text-[11px] font-medium text-muted-foreground capitalize">
+                {user.role || "owner"} workspace
+              </span>
+            </div>
           </div>
         </div>
         <button

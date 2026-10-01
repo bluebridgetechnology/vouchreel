@@ -9,10 +9,16 @@ export default async function SettingsPage() {
   return (
     <div className="max-w-4xl space-y-6">
       {/* Settings Navigation Subheader */}
-      <div className="flex items-center gap-4 border-b pb-4">
+      <div className="flex items-center gap-4 border-b pb-4 overflow-x-auto">
         <span className="text-sm font-medium text-primary border-b-2 border-primary pb-4 -mb-4">
           General
         </span>
+        <Link
+          href="/settings/team"
+          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Team Members
+        </Link>
         <Link
           href="/settings/billing"
           className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -36,7 +42,7 @@ export default async function SettingsPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Manage your personal profile, credentials, and developer platform settings.
+          Manage your personal profile, team members, credentials, and developer platform settings.
         </p>
       </div>
 
@@ -54,8 +60,24 @@ export default async function SettingsPage() {
           </div>
         </div>
 
-        {/* Developer Integrations Card */}
+        {/* Team Collaboration Card */}
         <div className="rounded-lg border bg-card p-6 space-y-3">
+          <h2 className="text-base font-semibold">Team Collaboration</h2>
+          <p className="text-sm text-muted-foreground">
+            Invite editors and viewers to collaborate on spaces, testimonials, and widgets.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/settings/team"
+              className="text-xs font-semibold px-3 py-1.5 rounded bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Manage Team Members
+            </Link>
+          </div>
+        </div>
+
+        {/* Developer Integrations Card */}
+        <div className="rounded-lg border bg-card p-6 space-y-3 md:col-span-2">
           <h2 className="text-base font-semibold">Developer & API</h2>
           <p className="text-sm text-muted-foreground">
             Connect Vouchreel to Shopify, WordPress, Zapier, or your own custom backend services.

@@ -10,7 +10,7 @@ type CollectionForm = {
   promptText: string;
   incentiveType: "none" | "discount" | "custom";
   incentiveValue: string | null;
-  branding: { accentColor?: string; logoUrl?: string };
+  branding: { accentColor?: string; logoUrl?: string | null; removeBranding?: boolean };
 };
 
 export default function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -183,6 +183,19 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
           {progress !== null && <div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full transition-all" style={{ width: `${progress}%`, backgroundColor: accent }} /></div>}
           <button disabled={submitting} className="w-full rounded-md px-4 py-3 text-sm font-semibold text-white disabled:opacity-60" style={{ backgroundColor: accent }}>{submitting ? (progress !== null ? `Uploading ${progress}%…` : "Submitting…") : "Submit testimonial"}</button>
         </form>
+        {!form.branding?.removeBranding && (
+          <div className="mt-8 text-center text-xs text-muted-foreground">
+            Powered by{" "}
+            <a
+              href="https://vouchreel.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold underline hover:text-foreground"
+            >
+              Vouchreel
+            </a>
+          </div>
+        )}
       </section>
     </main>
   );

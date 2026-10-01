@@ -24,6 +24,13 @@ vi.mock("@/lib/db", () => ({
 describe("Spaces API Routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    const mockQuery: any = Promise.resolve([]);
+    mockQuery.orderBy = vi.fn().mockResolvedValue([]);
+    (db.select as any).mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue(mockQuery),
+      }),
+    });
   });
 
   describe("GET /api/spaces", () => {

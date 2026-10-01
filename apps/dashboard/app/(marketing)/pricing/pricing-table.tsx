@@ -33,8 +33,8 @@ export function PricingTable({
     (p) => p.isActive && (p.price === 0 || p.interval === interval)
   );
 
-  // Group by unique plan tier name (Free, Pro, Business)
-  const tierOrder = ["Free", "Pro", "Business"];
+  // Group by unique plan tier name (Free, Pro, Agency / Business)
+  const tierOrder = ["Free", "Pro", "Agency", "Business"];
   const displayPlans = tierOrder
     .map((tierName) =>
       filteredPlans.find((p) => p.name.toLowerCase() === tierName.toLowerCase())
@@ -167,6 +167,8 @@ export function PricingTable({
                     ? "Perfect for side projects and evaluating Vouchreel."
                     : plan.name === "Pro"
                     ? "Everything you need to collect and showcase high-converting videos."
+                    : plan.name === "Agency"
+                    ? "For agencies and teams managing multiple client brands with white-label proof."
                     : "For fast-growing companies and agencies demanding maximum power."}
                 </p>
 
