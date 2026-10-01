@@ -26,10 +26,9 @@ const PLATFORMS: PlatformGuide[] = [
     id: "wordpress",
     name: "WordPress",
     instructions: [
-      "Log in to your WordPress Admin dashboard.",
-      "Navigate to Plugins → Add New and install 'WPCode' (or any header/footer injection plugin).",
-      "Go to Code Snippets → Header & Footer, and paste the code into the 'Footer' box.",
-      "Click 'Save Changes'.",
+      "Option 1 (Plugin): Install the official VouchReel WordPress plugin from wp-content/plugins/vouchreel and enter your embed key in Settings → VouchReel.",
+      "Option 2 (Gutenberg): Insert the 'VouchReel Widget' block directly into any page or post.",
+      "Option 3 (Script): Install 'WPCode' (or any header/footer injection plugin) via Plugins → Add New, go to Code Snippets → Header & Footer, paste the script snippet into the 'Footer' box, and click 'Save Changes'.",
     ],
   },
   {
@@ -41,15 +40,6 @@ const PLATFORMS: PlatformGuide[] = [
       "Under Layout, open theme.liquid and paste the script snippet right before </body>.",
       "For product-specific matching: paste the snippet into product templates with data-tags=\"product-{{ product.id }}\".",
       "Click 'Save' in the top right corner.",
-    ],
-  },
-  {
-    id: "wordpress",
-    name: "WordPress",
-    instructions: [
-      "Option 1 (Plugin): Install the official VouchReel WordPress plugin from wp-content/plugins/vouchreel and enter your embed key in Settings → VouchReel.",
-      "Option 2 (Gutenberg): Insert the 'VouchReel Widget' block directly into any page or post.",
-      "Option 3 (Script): In WPCode or Theme Header/Footer, paste the script snippet into the Footer.",
     ],
   },
   {
