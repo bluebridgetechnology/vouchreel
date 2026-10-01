@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { eq, count } from "drizzle-orm";
-import { apiError } from "@/lib/api/errors";
+import { apiError, unauthorized } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, testimonials } from "@/lib/db/schema";
 import { updateSpaceSchema } from "@/lib/validations/spaces";
+import { verifySpaceAccess } from "@/lib/auth/permissions";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -12,29 +13,23 @@ interface RouteParams {
 
 /**
  * GET /api/spaces/[id]
- * Fetch a single space by ID. Ensures user is the owner.
+ * Fetch a single space by ID. Allows owner, editor, or viewer.
  */
 export async function GET(request: Request, { params }: RouteParams) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return apiError(401, "UNAUTHORIZED", "Unauthorized");
+    return unauthorized();
   }
 
   const { id } = await params;
 
   try {
-    const [space] = await db
-      .select()
-      .from(spaces)
-      .where(eq(spaces.id, id));
-
-    if (!space) {
-      return apiError(404, "NOT_FOUND", "Space not found");
+    const authCheck = await verifySpaceAccess(session.user.id, id, "viewer");
+    if (!authCheck.success) {
+      return authCheck.errorResponse;
     }
 
-    if (space.ownerId !== session.user.id) {
-      return apiError(403, "FORBIDDEN", "Forbidden: You do not own this space");
-    }
+    const { space, role, isDirectOwner } = authCheck.access;
 
     const [testimonialCount] = await db
       .select({ value: count() })
@@ -45,6 +40,8 @@ export async function GET(request: Request, { params }: RouteParams) {
       space: {
         ...space,
         testimonialCount: testimonialCount?.value ?? 0,
+        role,
+        isDirectOwner,
       },
     });
   } catch (error) {
@@ -55,28 +52,20 @@ export async function GET(request: Request, { params }: RouteParams) {
 
 /**
  * PUT /api/spaces/[id]
- * Update space name. Ensures user is the owner.
+ * Update space name. Allows owner or editor.
  */
 export async function PUT(request: Request, { params }: RouteParams) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return apiError(401, "UNAUTHORIZED", "Unauthorized");
+    return unauthorized();
   }
 
   const { id } = await params;
 
   try {
-    const [space] = await db
-      .select()
-      .from(spaces)
-      .where(eq(spaces.id, id));
-
-    if (!space) {
-      return apiError(404, "NOT_FOUND", "Space not found");
-    }
-
-    if (space.ownerId !== session.user.id) {
-      return apiError(403, "FORBIDDEN", "Forbidden: You do not own this space");
+    const authCheck = await verifySpaceAccess(session.user.id, id, "editor");
+    if (!authCheck.success) {
+      return authCheck.errorResponse;
     }
 
     const body = await request.json();
@@ -96,7 +85,13 @@ export async function PUT(request: Request, { params }: RouteParams) {
       .where(eq(spaces.id, id))
       .returning();
 
-    return NextResponse.json({ space: updatedSpace });
+    return NextResponse.json({
+      space: {
+        ...updatedSpace,
+        role: authCheck.access.role,
+        isDirectOwner: authCheck.access.isDirectOwner,
+      },
+    });
   } catch (error) {
     console.error("Failed to update space:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to update space");
@@ -105,28 +100,20 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
 /**
  * DELETE /api/spaces/[id]
- * Delete a space. Ensures user is the owner.
+ * Delete a space. Strictly requires owner role (editors and viewers cannot delete spaces).
  */
 export async function DELETE(request: Request, { params }: RouteParams) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return apiError(401, "UNAUTHORIZED", "Unauthorized");
+    return unauthorized();
   }
 
   const { id } = await params;
 
   try {
-    const [space] = await db
-      .select()
-      .from(spaces)
-      .where(eq(spaces.id, id));
-
-    if (!space) {
-      return apiError(404, "NOT_FOUND", "Space not found");
-    }
-
-    if (space.ownerId !== session.user.id) {
-      return apiError(403, "FORBIDDEN", "Forbidden: You do not own this space");
+    const authCheck = await verifySpaceAccess(session.user.id, id, "owner");
+    if (!authCheck.success) {
+      return authCheck.errorResponse;
     }
 
     await db.delete(spaces).where(eq(spaces.id, id));

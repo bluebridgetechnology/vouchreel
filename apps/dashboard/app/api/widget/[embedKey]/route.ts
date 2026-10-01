@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { spaces, testimonials, widgetConfigs, conversionGoals, reviews, experiments, testimonialTranslations } from "@/lib/db/schema";
+import { spaces, testimonials, widgetConfigs, conversionGoals, reviews, experiments, testimonialTranslations, whiteLabelSettings } from "@/lib/db/schema";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import { badRequest, notFound, internalError } from "@/lib/api/errors";
+import { canAccess } from "@/lib/auth/feature-gate";
 
 interface RouteParams {
   params: Promise<{ embedKey: string }>;
@@ -43,6 +44,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       .select({
         id: spaces.id,
         name: spaces.name,
+        ownerId: spaces.ownerId,
         embedKey: spaces.embedKey,
       })
       .from(spaces)
@@ -219,6 +221,30 @@ export async function GET(request: Request, { params }: RouteParams) {
       .orderBy(desc(experiments.startedAt), desc(experiments.createdAt))
       .limit(1);
 
+    // Fetch white-label settings & entitlement
+    let whiteLabel = { removeBranding: false, logoUrl: null as string | null };
+    try {
+      const isWhiteLabelEntitled = space.ownerId
+        ? await canAccess(space.ownerId, "white-label")
+        : false;
+
+      if (isWhiteLabelEntitled) {
+        const [wlRecord] = await db
+          .select()
+          .from(whiteLabelSettings)
+          .where(eq(whiteLabelSettings.spaceId, space.id));
+
+        if (wlRecord) {
+          whiteLabel = {
+            removeBranding: wlRecord.removeBranding,
+            logoUrl: wlRecord.logoUrl,
+          };
+        }
+      }
+    } catch {
+      // Ignore if unconfigured or mocked
+    }
+
     return NextResponse.json(
       {
         spaceId: space.id,
@@ -235,6 +261,7 @@ export async function GET(request: Request, { params }: RouteParams) {
               trafficSplit: activeExp.trafficSplit,
             }
           : null,
+        whiteLabel,
       },
       {
         status: 200,

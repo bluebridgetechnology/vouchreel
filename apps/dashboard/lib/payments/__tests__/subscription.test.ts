@@ -112,10 +112,34 @@ describe("Subscription Feature Gating Helpers", () => {
 
       const limits = await getSubscriptionLimits("user-1");
       expect(limits.tier).toBe("pro");
+      expect(limits.maxSpaces).toBe(5);
+      expect(limits.maxTestimonialsPerSpace).toBe(Infinity);
+      expect(limits.removeWatermark).toBe(true);
+      expect(limits.canAccessAnalytics).toBe(true);
+      expect(limits.multiSeat).toBe(false);
+      expect(limits.whiteLabel).toBe(false);
+    });
+
+    it("returns Agency tier limits for active Agency subscriber", async () => {
+      (db.query.subscriptions.findFirst as any).mockResolvedValue({
+        planId: "plan-agency",
+        status: "active",
+      });
+
+      (db.query.plans.findFirst as any).mockResolvedValue({
+        id: "plan-agency",
+        name: "Agency Monthly",
+      });
+
+      const limits = await getSubscriptionLimits("user-1");
+      expect(limits.tier).toBe("agency");
       expect(limits.maxSpaces).toBe(Infinity);
       expect(limits.maxTestimonialsPerSpace).toBe(Infinity);
       expect(limits.removeWatermark).toBe(true);
       expect(limits.canAccessAnalytics).toBe(true);
+      expect(limits.multiSeat).toBe(true);
+      expect(limits.whiteLabel).toBe(true);
+      expect(limits.exportableReports).toBe(true);
     });
 
     it("correctly gates space creation based on limits", async () => {

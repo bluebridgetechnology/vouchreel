@@ -9,9 +9,16 @@ import {
   jsonb,
   pgEnum,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 // ─── Enums ──────────────────────────────────────────────────────────────────
+
+export const teamRoleEnum = pgEnum("team_role", [
+  "owner",
+  "editor",
+  "viewer",
+]);
 
 export const platformEnum = pgEnum("platform", [
   "youtube",
@@ -674,6 +681,73 @@ export const testimonialTranslations = pgTable("testimonial_translations", {
   index("testimonial_translations_testimonial_lang_idx").on(table.testimonialId, table.language),
 ]);
 
+/**
+ * Team members — multi-seat accounts linking invited users to account owners with roles.
+ */
+export const teamMembers = pgTable("team_members", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  teamOwnerId: text("team_owner_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  role: teamRoleEnum("role").default("editor").notNull(),
+  invitedAt: timestamp("invited_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+}, (table) => [
+  uniqueIndex("team_members_owner_user_idx").on(table.teamOwnerId, table.userId),
+  index("team_members_owner_idx").on(table.teamOwnerId),
+  index("team_members_user_idx").on(table.userId),
+]);
+
+/**
+ * Team invites — pending invitations with secure tokens.
+ */
+export const teamInvites = pgTable("team_invites", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  teamOwnerId: text("team_owner_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  role: teamRoleEnum("role").default("editor").notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index("team_invites_owner_email_idx").on(table.teamOwnerId, table.email),
+  index("team_invites_token_idx").on(table.token),
+]);
+
+/**
+ * White-label settings — space-level branding customizations for Agency/Pro tiers.
+ */
+export const whiteLabelSettings = pgTable("white_label_settings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  spaceId: uuid("space_id")
+    .notNull()
+    .unique()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  logoUrl: text("logo_url"),
+  customDomain: text("custom_domain"),
+  cnameVerified: boolean("cname_verified").default(false).notNull(),
+  removeBranding: boolean("remove_branding").default(false).notNull(),
+  customEmailSender: text("custom_email_sender"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index("white_label_settings_space_idx").on(table.spaceId),
+  index("white_label_settings_custom_domain_idx").on(table.customDomain),
+]);
+
 // ─── Relations ──────────────────────────────────────────────────────────────
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -681,6 +755,9 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   spaces: many(spaces),
   subscriptions: many(subscriptions),
+  ownedTeams: many(teamMembers, { relationName: "teamOwner" }),
+  teamMemberships: many(teamMembers, { relationName: "teamMember" }),
+  sentInvites: many(teamInvites),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -714,6 +791,7 @@ export const spacesRelations = relations(spaces, ({ many, one }) => ({
   socialExportSettings: one(socialExportSettings),
   socialExports: many(socialExports),
   experiments: many(experiments),
+  whiteLabelSettings: one(whiteLabelSettings),
 }));
 
 export const collectionFormsRelations = relations(
@@ -883,5 +961,33 @@ export const testimonialTranslationsRelations = relations(
     }),
   })
 );
+
+export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
+  teamOwner: one(user, {
+    fields: [teamMembers.teamOwnerId],
+    references: [user.id],
+    relationName: "teamOwner",
+  }),
+  user: one(user, {
+    fields: [teamMembers.userId],
+    references: [user.id],
+    relationName: "teamMember",
+  }),
+}));
+
+export const teamInvitesRelations = relations(teamInvites, ({ one }) => ({
+  teamOwner: one(user, {
+    fields: [teamInvites.teamOwnerId],
+    references: [user.id],
+  }),
+}));
+
+export const whiteLabelSettingsRelations = relations(whiteLabelSettings, ({ one }) => ({
+  space: one(spaces, {
+    fields: [whiteLabelSettings.spaceId],
+    references: [spaces.id],
+  }),
+}));
+
 
 

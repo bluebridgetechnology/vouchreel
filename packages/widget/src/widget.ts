@@ -32,12 +32,18 @@ export interface WidgetConfig {
   [key: string]: unknown;
 }
 
+export interface WidgetWhiteLabelConfig {
+  removeBranding?: boolean;
+  logoUrl?: string | null;
+}
+
 export interface WidgetOptions {
   embedKey: string;
   config: WidgetConfig;
   testimonials: TestimonialItem[];
   reviews?: ReviewItem[];
   analytics?: AnalyticsTracker;
+  whiteLabel?: WidgetWhiteLabelConfig;
 }
 
 export class VouchreelWidget {
@@ -46,6 +52,7 @@ export class VouchreelWidget {
   private testimonials: TestimonialItem[];
   private reviews: ReviewItem[];
   private analytics?: AnalyticsTracker;
+  private whiteLabel?: WidgetWhiteLabelConfig;
 
   private hostElement: HTMLElement | null = null;
   private shadowRoot: ShadowRoot | null = null;
@@ -66,6 +73,7 @@ export class VouchreelWidget {
     this.testimonials = options.testimonials || [];
     this.reviews = options.reviews || [];
     this.analytics = options.analytics;
+    this.whiteLabel = options.whiteLabel || (options.config as Record<string, unknown>)?.whiteLabel as WidgetWhiteLabelConfig | undefined;
   }
 
   /**
@@ -950,10 +958,25 @@ export class VouchreelWidget {
     body.appendChild(meta);
     modal.appendChild(body);
 
-    const poweredBy = document.createElement("div");
-    poweredBy.className = "vr-powered-by";
-    poweredBy.textContent = "Verified by Vouchreel";
-    modal.appendChild(poweredBy);
+    if (!this.whiteLabel?.removeBranding) {
+      const poweredBy = document.createElement("div");
+      poweredBy.className = "vr-powered-by";
+      if (this.whiteLabel?.logoUrl) {
+        const logoImg = document.createElement("img");
+        logoImg.src = this.whiteLabel.logoUrl;
+        logoImg.alt = "Brand Logo";
+        logoImg.className = "vr-powered-by-logo";
+        logoImg.style.maxHeight = "14px";
+        logoImg.style.marginRight = "6px";
+        logoImg.style.verticalAlign = "middle";
+        poweredBy.appendChild(logoImg);
+      }
+      const textNode = document.createTextNode(
+        this.whiteLabel?.logoUrl ? "Powered by our community" : "Verified by Vouchreel"
+      );
+      poweredBy.appendChild(textNode);
+      modal.appendChild(poweredBy);
+    }
 
     this.rootWrapper.appendChild(modal);
     modal.focus();

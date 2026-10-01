@@ -1,64 +1,34 @@
 import { NextResponse } from "next/server";
-import { eq, and, asc, max } from "drizzle-orm";
-import { apiError } from "@/lib/api/errors";
+import { eq, and, asc, max, count } from "drizzle-orm";
+import { apiError, forbidden, unauthorized } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { spaces, testimonials } from "@/lib/db/schema";
+import { testimonials } from "@/lib/db/schema";
 import { createTestimonialSchema } from "@/lib/validations/testimonials";
 import { getOEmbedMetadata, detectPlatform, validateUrl } from "@/lib/oembed";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
+import { verifySpaceAccess } from "@/lib/auth/permissions";
+import { canAddTestimonial } from "@/lib/payments/subscription";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 /**
- * Verifies that the authenticated user owns the space.
- */
-async function verifySpaceOwner(spaceId: string, userId: string) {
-  const [space] = await db
-    .select({ id: spaces.id, ownerId: spaces.ownerId })
-    .from(spaces)
-    .where(eq(spaces.id, spaceId));
-
-  if (!space) {
-    return {
-      error: { code: "NOT_FOUND" as const, message: "Space not found" },
-      status: 404 as const,
-    };
-  }
-
-  if (space.ownerId !== userId) {
-    return {
-      error: {
-        code: "FORBIDDEN" as const,
-        message: "Forbidden: You do not own this space",
-      },
-      status: 403 as const,
-    };
-  }
-
-  return { space };
-}
-
-/**
  * GET /api/spaces/[id]/testimonials
  * List testimonials for a space, ordered by sortOrder ascending.
+ * Allows owner, editor, or viewer.
  */
 export async function GET(request: Request, { params }: RouteParams) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return apiError(401, "UNAUTHORIZED", "Unauthorized");
+    return unauthorized();
   }
 
   const { id } = await params;
-  const authResult = await verifySpaceOwner(id, session.user.id);
-  if (authResult.error) {
-    return apiError(
-      authResult.status,
-      authResult.error.code,
-      authResult.error.message
-    );
+  const authCheck = await verifySpaceAccess(session.user.id, id, "viewer");
+  if (!authCheck.success) {
+    return authCheck.errorResponse;
   }
 
   const { searchParams } = new URL(request.url);
@@ -86,24 +56,35 @@ export async function GET(request: Request, { params }: RouteParams) {
 /**
  * POST /api/spaces/[id]/testimonials
  * Create a new testimonial in the space with auto-fetched oEmbed metadata.
+ * Allows owner or editor. Enforces testimonial plan limits.
  */
 export async function POST(request: Request, { params }: RouteParams) {
   const session = await getSession();
   if (!session?.user?.id) {
-    return apiError(401, "UNAUTHORIZED", "Unauthorized");
+    return unauthorized();
   }
 
   const { id } = await params;
-  const authResult = await verifySpaceOwner(id, session.user.id);
-  if (authResult.error) {
-    return apiError(
-      authResult.status,
-      authResult.error.code,
-      authResult.error.message
-    );
+  const authCheck = await verifySpaceAccess(session.user.id, id, "editor");
+  if (!authCheck.success) {
+    return authCheck.errorResponse;
   }
 
+  const spaceOwnerId = authCheck.access.space.ownerId;
+
   try {
+    // Check testimonial count against space owner's plan limits
+    const [countResult] = await db
+      .select({ value: count() })
+      .from(testimonials)
+      .where(eq(testimonials.spaceId, id));
+
+    const currentCount = countResult?.value ?? 0;
+    const canAdd = await canAddTestimonial(spaceOwnerId, currentCount);
+    if (!canAdd) {
+      return forbidden("Testimonial limit reached for this space under the current plan.");
+    }
+
     const body = await request.json();
     const validated = createTestimonialSchema.safeParse(body);
 
@@ -144,7 +125,6 @@ export async function POST(request: Request, { params }: RouteParams) {
         if (!platform) platform = meta.platform;
       } catch (err) {
         console.warn("Could not auto-fetch oEmbed metadata for testimonial:", err);
-        // If title still empty, fallback to video URL
         if (!title) title = "Video Testimonial";
       }
     }

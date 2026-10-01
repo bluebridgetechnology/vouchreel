@@ -32,6 +32,10 @@ export interface WidgetApiResponse {
   reviews?: ReviewItem[];
   conversionGoals?: ConversionGoal[];
   activeExperiment?: ActiveExperiment | null;
+  whiteLabel?: {
+    removeBranding?: boolean;
+    logoUrl?: string | null;
+  };
 }
 
 /**
@@ -332,6 +336,7 @@ export async function initLoader(): Promise<void> {
       testimonials: matchingTestimonials,
       reviews: matchingReviews,
       analytics,
+      whiteLabel: data.whiteLabel,
     });
 
     // Determine trigger configuration
