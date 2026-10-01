@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { buttonVariants } from "@/components/ui/button";
 
 interface AdminPanelProps {
   initialProvider: "stripe" | "dodo";
@@ -148,7 +149,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
             type="button"
             disabled={saving}
             onClick={handleSave}
-            className="rounded-control bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className={buttonVariants({ variant: "primary", size: "lg" })}
           >
             {saving ? "Saving changes..." : "Save Provider Configuration"}
           </button>

@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { SpaceListItem } from "@/lib/spaces/queries";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 interface SpacesViewProps {
   initialSpaces: SpaceListItem[];
@@ -124,7 +127,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
         </div>
         <Link
           href="/spaces/new"
-          className="inline-flex items-center justify-center gap-2 rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
+          className={buttonVariants({ variant: "primary", size: "md" })}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
@@ -158,13 +161,13 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href="/spaces/new"
-              className="inline-flex items-center justify-center rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
+              className={buttonVariants({ variant: "primary", size: "md" })}
             >
               Create Space
             </Link>
             <Link
               href="/onboarding"
-              className="inline-flex items-center justify-center rounded-control border bg-background px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm hover:bg-accent hover:text-accent-foreground"
+              className={buttonVariants({ variant: "outline", size: "md" })}
             >
               Start Onboarding Wizard
             </Link>
@@ -276,13 +279,13 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
               <div className="mt-6 flex items-center gap-2 border-t pt-4">
                 <Link
                   href={`/spaces/${space.id}/testimonials`}
-                  className="inline-flex flex-1 items-center justify-center rounded-control bg-primary px-3 py-2 text-xs font-medium text-primary-foreground shadow-sm hover:bg-primary/90"
+                  className={cn(buttonVariants({ variant: "primary", size: "sm" }), "flex-1")}
                 >
                   Manage Testimonials
                 </Link>
                 <Link
                   href={`/spaces/${space.id}/widget`}
-                  className="inline-flex items-center justify-center rounded-control border bg-background px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   Widget
                 </Link>
@@ -321,7 +324,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                   type="text"
                   value={renameValue}
                   onChange={(e) => setRenameValue(e.target.value)}
-                  className="mt-1 w-full rounded-control border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className={cn(inputClass, "mt-1 w-full text-sm")}
                   required
                   autoFocus
                 />
@@ -330,14 +333,14 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                 <button
                   type="button"
                   onClick={closeRenameModal}
-                  className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={renameSaving || !renameValue.trim()}
-                  className="rounded-control bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className={buttonVariants({ variant: "primary", size: "sm" })}
                 >
                   {renameSaving ? "Saving..." : "Save Name"}
                 </button>
@@ -368,7 +371,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                 type="button"
                 onClick={closeDeleteModal}
                 autoFocus
-                className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Cancel
               </button>
@@ -376,7 +379,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleteLoading}
-                className="rounded-control bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                className={buttonVariants({ variant: "danger", size: "sm" })}
               >
                 {deleteLoading ? "Deleting..." : "Delete Space"}
               </button>

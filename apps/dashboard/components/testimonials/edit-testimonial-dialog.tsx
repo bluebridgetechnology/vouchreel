@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { MatchRules } from "@/lib/validations/testimonials";
 import { MatchRulesEditor } from "./match-rules-editor";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass, textareaClass } from "@/components/ui/input";
 
 interface EditTestimonialDialogProps {
   spaceId: string;
@@ -173,7 +176,7 @@ export function EditTestimonialDialog({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-control border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className={cn(inputClass, "w-full text-xs")}
             />
           </div>
 
@@ -191,7 +194,7 @@ export function EditTestimonialDialog({
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full rounded-control border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "w-full text-xs")}
               />
             </div>
             <div className="space-y-1.5">
@@ -206,7 +209,7 @@ export function EditTestimonialDialog({
                 type="text"
                 value={customerCompany}
                 onChange={(e) => setCustomerCompany(e.target.value)}
-                className="w-full rounded-control border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "w-full text-xs")}
               />
             </div>
           </div>
@@ -224,7 +227,7 @@ export function EditTestimonialDialog({
               rows={2}
               value={quote}
               onChange={(e) => setQuote(e.target.value)}
-              className="w-full rounded-control border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className={cn(textareaClass, "w-full text-xs")}
             />
           </div>
 
@@ -249,12 +252,12 @@ export function EditTestimonialDialog({
                   }
                 }}
                 placeholder="Type tag and press Add"
-                className="flex-1 rounded-control border bg-background px-3 py-1.5 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "flex-1 text-xs")}
               />
               <button
                 type="button"
                 onClick={handleAddTag}
-                className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Add Tag
               </button>
@@ -292,14 +295,14 @@ export function EditTestimonialDialog({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-control border bg-background px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-accent"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center justify-center rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90 disabled:opacity-50"
+              className={buttonVariants({ variant: "primary", size: "sm" })}
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>

@@ -1,6 +1,9 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 interface ReviewSource {
   id: string;
@@ -336,7 +339,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                   type="button"
                   onClick={() => handleSyncSource(googleSource.id)}
                   disabled={syncingSourceId === googleSource.id}
-                  className="inline-flex items-center gap-1.5 rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-xs hover:bg-muted disabled:opacity-50"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   {syncingSourceId === googleSource.id ? (
                     <span className="h-3 w-3 animate-spin rounded-pill border-2 border-foreground border-t-transparent" />
@@ -364,7 +367,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                   setApiKey("");
                   setConnectError(null);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-control bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
+                className={buttonVariants({ variant: "primary", size: "sm" })}
               >
                 Connect Google Business
               </button>
@@ -423,7 +426,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                   type="button"
                   onClick={() => handleSyncSource(trustpilotSource.id)}
                   disabled={syncingSourceId === trustpilotSource.id}
-                  className="inline-flex items-center gap-1.5 rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-xs hover:bg-muted disabled:opacity-50"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   {syncingSourceId === trustpilotSource.id ? (
                     <span className="h-3 w-3 animate-spin rounded-pill border-2 border-foreground border-t-transparent" />
@@ -451,7 +454,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                   setApiKey("");
                   setConnectError(null);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-control bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
+                className={buttonVariants({ variant: "primary", size: "sm" })}
               >
                 Connect Trustpilot Business
               </button>
@@ -495,7 +498,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                       placeholder="e.g. ChIJN1t_tDeuEmsRUsoyG83frY4"
                       value={providerBusinessId}
                       onChange={(e) => setProviderBusinessId(e.target.value)}
-                      className="w-full rounded-control border bg-background px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                      className={cn(inputClass, "w-full text-xs font-mono")}
                     />
                     <p className="text-2xs text-muted-foreground">
                       You can look up your Place ID using the official Google Place ID Finder.
@@ -511,7 +514,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                       placeholder="AIzaSy... (uses server key if left blank)"
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
-                      className="w-full rounded-control border bg-background px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                      className={cn(inputClass, "w-full text-xs font-mono")}
                     />
                     <p className="text-2xs text-muted-foreground">
                       Stored securely encrypted using AES-256-GCM.
@@ -531,7 +534,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                       placeholder="e.g. 46a627cd000064000500e056 or yourbrand.com"
                       value={providerBusinessId}
                       onChange={(e) => setProviderBusinessId(e.target.value)}
-                      className="w-full rounded-control border bg-background px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                      className={cn(inputClass, "w-full text-xs font-mono")}
                     />
                     <p className="text-2xs text-muted-foreground">
                       Enter your Trustpilot business unit ID or registered domain.
@@ -547,7 +550,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                       placeholder="Enter Trustpilot API key (if required)"
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
-                      className="w-full rounded-control border bg-background px-3 py-2 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+                      className={cn(inputClass, "w-full text-xs font-mono")}
                     />
                     <p className="text-2xs text-muted-foreground">
                       Stored securely encrypted using AES-256-GCM.
@@ -560,14 +563,14 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                 <button
                   type="button"
                   onClick={() => setConnectModalProvider(null)}
-                  className="rounded-control border bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-muted"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={connecting}
-                  className="inline-flex items-center gap-1.5 rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90 disabled:opacity-50"
+                  className={buttonVariants({ variant: "primary", size: "sm" })}
                 >
                   {connecting ? "Connecting & Syncing..." : "Connect Source"}
                 </button>
@@ -594,7 +597,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
               placeholder="Search author or review..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="rounded-control border bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className={cn(inputClass, "text-xs")}
             />
             <div className="flex rounded-control border bg-muted/40 p-0.5 text-xs">
               {(["all", "approved", "hidden"] as const).map((t) => (

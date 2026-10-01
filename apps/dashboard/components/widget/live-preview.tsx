@@ -7,6 +7,7 @@ import {
   WidgetTheme,
   TriggerType,
 } from "@/lib/validations/widget-config";
+import { buttonVariants } from "@/components/ui/button";
 
 interface LivePreviewProps {
   template?: WidgetTemplate;
@@ -169,7 +170,7 @@ export function LivePreview({
                 </button>
                 <button
                   type="button"
-                  className="rounded-control border bg-background px-3 py-1 text-2xs font-medium text-foreground hover:bg-muted"
+                  className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   Book Demo
                 </button>

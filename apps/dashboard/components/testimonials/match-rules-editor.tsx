@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { MatchRules } from "@/lib/validations/testimonials";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 interface MatchRulesEditorProps {
   value: MatchRules;
@@ -141,12 +144,12 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                   }
                 }}
                 placeholder="e.g. /products/*, /pricing"
-                className="flex-1 rounded-control border bg-background px-3 py-1.5 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "flex-1 text-xs")}
               />
               <button
                 type="button"
                 onClick={() => handleAddPattern()}
-                className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Add
               </button>
@@ -202,12 +205,12 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
                   }
                 }}
                 placeholder="e.g. enterprise, checkout, product-a"
-                className="flex-1 rounded-control border bg-background px-3 py-1.5 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "flex-1 text-xs")}
               />
               <button
                 type="button"
                 onClick={() => handleAddTag()}
-                className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Add
               </button>

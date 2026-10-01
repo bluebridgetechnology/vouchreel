@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { MatchRules } from "@/lib/validations/testimonials";
 import { MatchRulesEditor } from "./match-rules-editor";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass, textareaClass } from "@/components/ui/input";
 
 interface AddTestimonialDialogProps {
   spaceId: string;
@@ -194,7 +197,7 @@ export function AddTestimonialDialog({
                   }
                 }}
                 placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
-                className="flex-1 rounded-control border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "flex-1 text-xs")}
                 required
                 autoFocus
               />
@@ -202,7 +205,7 @@ export function AddTestimonialDialog({
                 type="button"
                 onClick={() => handleFetchMetadata()}
                 disabled={fetchingOembed || !videoUrl.trim()}
-                className="inline-flex items-center gap-1.5 rounded-control border bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-accent disabled:opacity-50"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 {fetchingOembed ? (
                   <span className="animate-spin text-xs">⟳</span>
@@ -245,7 +248,7 @@ export function AddTestimonialDialog({
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Testimonial Title"
                   aria-label="Testimonial title"
-                  className="w-full rounded-control border bg-background px-2.5 py-1 text-xs font-medium focus:border-primary focus:outline-none"
+                  className={cn(inputClass, "w-full text-xs")}
                 />
                 <p className="text-2xs text-muted-foreground">
                   Detected platform: <span className="font-medium capitalize text-foreground">{platform || "video"}</span>
@@ -269,7 +272,7 @@ export function AddTestimonialDialog({
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="e.g., Sarah Johnson"
-                className="w-full rounded-control border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "w-full text-xs")}
               />
             </div>
             <div className="space-y-1.5">
@@ -285,7 +288,7 @@ export function AddTestimonialDialog({
                 value={customerCompany}
                 onChange={(e) => setCustomerCompany(e.target.value)}
                 placeholder="e.g., Founder at Acme Corp"
-                className="w-full rounded-control border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "w-full text-xs")}
               />
             </div>
           </div>
@@ -304,7 +307,7 @@ export function AddTestimonialDialog({
               value={quote}
               onChange={(e) => setQuote(e.target.value)}
               placeholder="e.g., 'Vouchreel boosted our landing page conversion by 34% in week one!'"
-              className="w-full rounded-control border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className={cn(textareaClass, "w-full text-xs")}
             />
           </div>
 
@@ -329,12 +332,12 @@ export function AddTestimonialDialog({
                   }
                 }}
                 placeholder="Type tag and press Add"
-                className="flex-1 rounded-control border bg-background px-3 py-1.5 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "flex-1 text-xs")}
               />
               <button
                 type="button"
                 onClick={handleAddTag}
-                className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Add Tag
               </button>
@@ -372,14 +375,14 @@ export function AddTestimonialDialog({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-control border bg-background px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-accent"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting || !videoUrl.trim()}
-              className="inline-flex items-center justify-center rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90 disabled:opacity-50"
+              className={buttonVariants({ variant: "primary", size: "sm" })}
             >
               {submitting ? "Saving..." : "Add Testimonial"}
             </button>

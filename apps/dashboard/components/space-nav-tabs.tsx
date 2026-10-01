@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 interface SpaceNavTabsProps {
   spaceId: string;
@@ -66,7 +67,7 @@ export function SpaceNavTabs({
           type="button"
           onClick={copyEmbedKey}
           title="Click to copy embed key"
-          className="inline-flex max-w-full items-center gap-2 self-start rounded-pill border bg-surface px-3.5 py-2 text-xs transition-colors hover:bg-surface-sunken sm:self-auto"
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "max-w-full self-start sm:self-auto")}
         >
           <span className="shrink-0 text-text-muted">Embed key</span>
           <span className="min-w-0 truncate font-mono">{embedKey}</span>

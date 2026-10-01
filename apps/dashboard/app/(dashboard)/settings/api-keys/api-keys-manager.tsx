@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 interface SpaceOption {
   id: string;
@@ -124,7 +127,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
             id="spaceSelect"
             value={selectedSpaceId}
             onChange={(e) => setSelectedSpaceId(e.target.value)}
-            className="rounded-control border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-primary"
+            className={cn(inputClass, "text-sm")}
           >
             {spaces.map((s) => (
               <option key={s.id} value={s.id}>
@@ -139,7 +142,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
             setIsCreating(true);
             setCreatedRawKey(null);
           }}
-          className="inline-flex items-center justify-center rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
+          className={buttonVariants({ variant: "primary", size: "md" })}
         >
           + Generate New API Key
         </button>
@@ -170,7 +173,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
               type="text"
               readOnly
               value={createdRawKey}
-              className="flex-1 font-mono text-xs bg-background border rounded-control px-3 py-2 select-all"
+              className={cn(inputClass, "flex-1 font-mono text-xs")}
             />
             <button
               onClick={() => copyToClipboard(createdRawKey)}
@@ -197,7 +200,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
                 value={keyName}
                 onChange={(e) => setKeyName(e.target.value)}
                 required
-                className="w-full rounded-control border border-input bg-background px-3 py-2 text-sm"
+                className={cn(inputClass, "w-full text-sm")}
               />
             </div>
             <div className="flex items-center justify-end gap-2">
@@ -211,7 +214,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-1.5 rounded-control text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
+                className={buttonVariants({ variant: "primary", size: "sm" })}
               >
                 {loading ? "Generating..." : "Generate"}
               </button>

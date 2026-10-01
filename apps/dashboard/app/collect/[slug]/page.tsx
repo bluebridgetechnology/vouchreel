@@ -2,6 +2,8 @@
 
 import { FormEvent, use, useEffect, useRef, useState } from "react";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
+import { cn } from "@/lib/utils";
+import { inputClass } from "@/components/ui/input";
 
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 const MAX_DURATION_SECONDS = 5 * 60;
@@ -180,7 +182,7 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
               <div className="flex flex-wrap gap-3"><button type="button" onClick={recording ? stopRecording : startRecording} className="rounded-control px-4 py-2 text-sm font-medium text-on-media" style={{ backgroundColor: accent }}>{recording ? `Stop recording (${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")})` : "Record with camera"}</button><label className="cursor-pointer rounded-control border px-4 py-2 text-sm font-medium">Upload video<input className="sr-only" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-msvideo" onChange={(event) => event.target.files?.[0] && setPreview(event.target.files[0])} /></label></div>
             </>}
           </div> : <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={5000} rows={7} placeholder="Write your testimonial…" className="w-full rounded-control border bg-background p-3 text-sm outline-none focus:ring-2" style={{ "--tw-ring-color": accent } as React.CSSProperties} />}
-          <div className="grid gap-4 sm:grid-cols-2"><label className="space-y-1 text-sm font-medium">Your name<input required value={name} onChange={(event) => setName(event.target.value)} maxLength={100} className="w-full rounded-control border bg-background px-3 py-2 text-sm" /></label><label className="space-y-1 text-sm font-medium">Email address<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={200} className="w-full rounded-control border bg-background px-3 py-2 text-sm" /></label></div>
+          <div className="grid gap-4 sm:grid-cols-2"><label className="space-y-1 text-sm font-medium">Your name<input required value={name} onChange={(event) => setName(event.target.value)} maxLength={100} className={cn(inputClass, "w-full text-sm")} /></label><label className="space-y-1 text-sm font-medium">Email address<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={200} className={cn(inputClass, "w-full text-sm")} /></label></div>
           {progress !== null && <div className="h-2 overflow-hidden rounded-pill bg-muted"><div className="h-full transition-all" style={{ width: `${progress}%`, backgroundColor: accent }} /></div>}
           <button disabled={submitting} className="w-full rounded-control px-4 py-3 text-sm font-medium text-on-media disabled:opacity-60" style={{ backgroundColor: accent }}>{submitting ? (progress !== null ? `Uploading ${progress}%…` : "Submitting…") : "Submit testimonial"}</button>
         </form>

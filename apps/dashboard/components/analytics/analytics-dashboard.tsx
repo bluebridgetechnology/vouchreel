@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type { TimeSeriesPoint } from "./time-series-chart";
 import { ConversionGoalsPanel, ConversionGoal } from "./conversion-goals-panel";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 const TimeSeriesChart = dynamic(
   () => import("./time-series-chart").then((m) => m.TimeSeriesChart),
@@ -385,7 +388,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
           <a
             href={exportCsvUrl}
             download={`vouchreel-analytics-${spaceId}.csv`}
-            className="inline-flex items-center gap-1.5 rounded-control border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
             title="Export raw analytics data to CSV"
           >
             <svg
@@ -408,7 +411,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
             href={exportPdfUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-control bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className={buttonVariants({ variant: "primary", size: "sm" })}
             title="Download executive summary PDF report"
           >
             <svg
@@ -448,7 +451,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
           <select
             value={selectedTestimonial}
             onChange={(e) => setSelectedTestimonial(e.target.value)}
-            className="h-8 rounded-control border border-input bg-background px-2 text-xs text-foreground focus:ring-1 focus:ring-primary"
+            className={cn(inputClass, "h-8 text-xs")}
           >
             <option value="">All Testimonials</option>
             {rows.map((row) => (
@@ -462,7 +465,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
           <select
             value={selectedDevice}
             onChange={(e) => setSelectedDevice(e.target.value)}
-            className="h-8 rounded-control border border-input bg-background px-2 text-xs text-foreground focus:ring-1 focus:ring-primary"
+            className={cn(inputClass, "h-8 text-xs")}
           >
             <option value="">All Devices</option>
             <option value="desktop">Desktop</option>
@@ -473,7 +476,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
           <select
             value={selectedTrafficSource}
             onChange={(e) => setSelectedTrafficSource(e.target.value)}
-            className="h-8 rounded-control border border-input bg-background px-2 text-xs text-foreground focus:ring-1 focus:ring-primary"
+            className={cn(inputClass, "h-8 text-xs")}
           >
             <option value="">All Traffic Sources</option>
             <option value="direct">Direct</option>
@@ -493,7 +496,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
               placeholder="Filter by Page URL..."
               value={searchPageUrl}
               onChange={(e) => setSearchPageUrl(e.target.value)}
-              className="h-8 w-44 rounded-control border border-input bg-background px-2 text-xs text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary"
+              className={cn(inputClass, "h-8 w-44 text-xs")}
             />
           </div>
 

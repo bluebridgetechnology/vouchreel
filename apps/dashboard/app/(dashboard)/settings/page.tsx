@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth/session";
+import { buttonVariants } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
 
@@ -69,7 +70,7 @@ export default async function SettingsPage() {
           <div className="pt-2">
             <Link
               href="/settings/team"
-              className="text-xs font-medium px-3 py-1.5 rounded-control bg-primary text-primary-foreground hover:bg-primary/90"
+              className={buttonVariants({ variant: "primary", size: "sm" })}
             >
               Manage Team Members
             </Link>
@@ -85,7 +86,7 @@ export default async function SettingsPage() {
           <div className="flex items-center gap-3 pt-2">
             <Link
               href="/settings/api-keys"
-              className="text-xs font-medium px-3 py-1.5 rounded-control bg-primary text-primary-foreground hover:bg-primary/90"
+              className={buttonVariants({ variant: "primary", size: "sm" })}
             >
               API Keys
             </Link>

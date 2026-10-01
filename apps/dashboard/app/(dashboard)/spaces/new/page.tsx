@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 export default function NewSpacePage() {
   const router = useRouter();
@@ -78,7 +81,7 @@ export default function NewSpacePage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Marketing Website, SaaS Landing Page"
-              className="w-full rounded-control border bg-background px-3 py-2 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className={cn(inputClass, "w-full text-sm")}
               required
               autoFocus
             />
@@ -90,14 +93,14 @@ export default function NewSpacePage() {
           <div className="flex items-center justify-end gap-3 pt-2">
             <Link
               href="/spaces"
-              className="rounded-control border bg-background px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-accent"
+              className={buttonVariants({ variant: "outline", size: "md" })}
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={loading || !name.trim()}
-              className="inline-flex items-center justify-center rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs hover:bg-primary/90 disabled:opacity-50"
+              className={buttonVariants({ variant: "primary", size: "md" })}
             >
               {loading ? "Creating..." : "Create Space"}
             </button>

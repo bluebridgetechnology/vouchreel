@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { UpgradePromptModal } from "@/components/billing/upgrade-prompt-modal";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 export interface TeamMember {
   id: string;
@@ -203,7 +206,7 @@ export function TeamManager({
             <button
               type="button"
               onClick={() => setShowUpgradeModal(true)}
-              className="shrink-0 rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+              className={cn(buttonVariants({ variant: "primary", size: "md" }), "shrink-0")}
             >
               Upgrade to Agency
             </button>
@@ -241,7 +244,7 @@ export function TeamManager({
                 navigator.clipboard.writeText(lastInviteUrl);
                 alert("Invite link copied to clipboard!");
               }}
-              className="rounded-control bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+              className={buttonVariants({ variant: "primary", size: "sm" })}
             >
               Copy Link
             </button>
@@ -255,14 +258,14 @@ export function TeamManager({
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="colleague@example.com"
             disabled={inviting}
-            className="flex-1 rounded-control border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+            className={cn(inputClass, "flex-1 text-sm")}
           />
 
           <select
             value={inviteRole}
             onChange={(e) => setInviteRole(e.target.value as "editor" | "viewer")}
             disabled={inviting}
-            className="rounded-control border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+            className={cn(inputClass, "text-sm")}
           >
             <option value="editor">Editor (Can edit testimonials & widgets)</option>
             <option value="viewer">Viewer (Read-only access)</option>
@@ -271,7 +274,7 @@ export function TeamManager({
           <button
             type="submit"
             disabled={inviting}
-            className="rounded-control bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className={buttonVariants({ variant: "primary", size: "md" })}
           >
             {inviting ? "Sending…" : "Send Invite"}
           </button>
@@ -326,7 +329,7 @@ export function TeamManager({
                       onChange={(e) =>
                         handleRoleChange(member.id, e.target.value as "editor" | "viewer")
                       }
-                      className="rounded-control border bg-background px-2.5 py-1 text-xs font-medium outline-none focus:ring-2 focus:ring-primary"
+                      className={cn(inputClass, "text-xs")}
                     >
                       <option value="editor">Editor</option>
                       <option value="viewer">Viewer</option>
@@ -422,7 +425,7 @@ export function TeamManager({
                 type="button"
                 disabled={removing}
                 onClick={confirmRemoveMember}
-                className="rounded-control bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                className={buttonVariants({ variant: "danger", size: "md" })}
               >
                 {removing ? "Removing…" : "Remove Member"}
               </button>

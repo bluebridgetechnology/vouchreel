@@ -11,6 +11,9 @@ import {
   TRIGGER_TYPES,
 } from "@/lib/validations/widget-config";
 import type { ExperimentWithStats, VariantStats } from "@/lib/experiments/queries";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 interface ExperimentsViewProps {
   spaceId: string;
@@ -282,7 +285,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
             resetForm();
             setIsCreateOpen(true);
           }}
-          className="inline-flex items-center justify-center gap-2 rounded-card bg-primary px-4 py-2.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:opacity-90"
+          className={buttonVariants({ variant: "primary", size: "sm" })}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -663,7 +666,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   resetForm();
                   setIsCreateOpen(true);
                 }}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-card bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs hover:opacity-90"
+                className={cn(buttonVariants({ variant: "primary", size: "sm" }), "mt-2")}
               >
                 Create Experiment
               </button>
@@ -731,7 +734,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   <div className="flex items-center gap-2 self-end md:self-center">
                     <button
                       onClick={() => setSelectedExp(exp)}
-                      className="rounded-control bg-primary px-3.5 py-2 text-xs font-medium text-primary-foreground shadow-xs hover:opacity-90"
+                      className={buttonVariants({ variant: "primary", size: "sm" })}
                     >
                       View Results
                     </button>
@@ -791,7 +794,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Exit Intent vs 5s Delay"
-                  className="w-full rounded-card border border-input bg-background px-3.5 py-2.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className={cn(inputClass, "w-full text-xs")}
                 />
               </div>
 
@@ -878,7 +881,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                     value={formData.controlName}
                     onChange={(e) => setFormData({ ...formData, controlName: e.target.value })}
                     placeholder="Control Name"
-                    className="w-full rounded-control border border-input bg-background px-3 py-1.5 text-xs text-foreground"
+                    className={cn(inputClass, "w-full text-xs")}
                   />
 
                   {formData.type === "trigger" && (
@@ -897,7 +900,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                               },
                             })
                           }
-                          className="w-full rounded-control border border-input bg-background px-2.5 py-1.5 text-xs"
+                          className={cn(inputClass, "w-full text-xs")}
                         >
                           {TRIGGER_TYPES.map((trig) => (
                             <option key={trig} value={trig}>
@@ -925,7 +928,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                                 },
                               })
                             }
-                            className="w-full rounded-control border border-input bg-background px-2.5 py-1.5 text-xs"
+                            className={cn(inputClass, "w-full text-xs")}
                           />
                         </div>
                       )}
@@ -943,7 +946,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                             controlConfig: { position: e.target.value },
                           })
                         }
-                        className="w-full rounded-control border border-input bg-background px-2.5 py-1.5 text-xs"
+                        className={cn(inputClass, "w-full text-xs")}
                       >
                         {WIDGET_POSITIONS.map((pos) => (
                           <option key={pos} value={pos}>
@@ -965,7 +968,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                             controlConfig: { template: e.target.value },
                           })
                         }
-                        className="w-full rounded-control border border-input bg-background px-2.5 py-1.5 text-xs"
+                        className={cn(inputClass, "w-full text-xs")}
                       >
                         {WIDGET_TEMPLATES.map((tmpl) => (
                           <option key={tmpl} value={tmpl}>
@@ -993,7 +996,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                     value={formData.variantName}
                     onChange={(e) => setFormData({ ...formData, variantName: e.target.value })}
                     placeholder="Variant B Name"
-                    className="w-full rounded-control border border-input bg-background px-3 py-1.5 text-xs text-foreground"
+                    className={cn(inputClass, "w-full text-xs")}
                   />
 
                   {formData.type === "trigger" && (
@@ -1012,7 +1015,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                               },
                             })
                           }
-                          className="w-full rounded-control border border-input bg-background px-2.5 py-1.5 text-xs"
+                          className={cn(inputClass, "w-full text-xs")}
                         >
                           {TRIGGER_TYPES.map((trig) => (
                             <option key={trig} value={trig}>
@@ -1040,7 +1043,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                                 },
                               })
                             }
-                            className="w-full rounded-control border border-input bg-background px-2.5 py-1.5 text-xs"
+                            className={cn(inputClass, "w-full text-xs")}
                           />
                         </div>
                       )}
@@ -1058,7 +1061,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                             variantConfig: { position: e.target.value },
                           })
                         }
-                        className="w-full rounded-control border border-input bg-background px-2.5 py-1.5 text-xs"
+                        className={cn(inputClass, "w-full text-xs")}
                       >
                         {WIDGET_POSITIONS.map((pos) => (
                           <option key={pos} value={pos}>
@@ -1080,7 +1083,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                             variantConfig: { template: e.target.value },
                           })
                         }
-                        className="w-full rounded-control border border-input bg-background px-2.5 py-1.5 text-xs"
+                        className={cn(inputClass, "w-full text-xs")}
                       >
                         {WIDGET_TEMPLATES.map((tmpl) => (
                           <option key={tmpl} value={tmpl}>
@@ -1108,7 +1111,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 type="button"
                 disabled={actionLoading}
                 onClick={() => handleCreate(false)}
-                className="rounded-card border border-input bg-background px-4 py-2 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Save as Draft
               </button>
@@ -1116,7 +1119,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
                 type="button"
                 disabled={actionLoading}
                 onClick={() => handleCreate(true)}
-                className="rounded-card bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs hover:opacity-90 disabled:opacity-50"
+                className={buttonVariants({ variant: "primary", size: "sm" })}
               >
                 {actionLoading ? "Creating..." : "Create & Start Now"}
               </button>

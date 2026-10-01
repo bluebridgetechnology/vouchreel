@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SpaceAgencyMetrics, AgencyOverviewResult } from "@/lib/agency/queries";
 import { UpgradePromptModal } from "@/components/billing/upgrade-prompt-modal";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 interface AgencyViewProps {
   initialData: AgencyOverviewResult;
@@ -140,7 +143,7 @@ export function AgencyView({
                 setUpgradeFeature("agency-dashboard");
                 setShowUpgradeModal(true);
               }}
-              className="shrink-0 rounded-control bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+              className={cn(buttonVariants({ variant: "primary", size: "lg" }), "shrink-0")}
             >
               Upgrade to Agency Plan
             </button>
@@ -253,7 +256,7 @@ export function AgencyView({
                 setShowAddClientModal(true);
               }
             }}
-            className="inline-flex items-center gap-2 rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+            className={buttonVariants({ variant: "primary", size: "md" })}
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -278,7 +281,7 @@ export function AgencyView({
           <button
             type="button"
             onClick={() => setShowAddClientModal(true)}
-            className="rounded-control bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            className={buttonVariants({ variant: "primary", size: "md" })}
           >
             Create Client Space
           </button>
@@ -395,7 +398,7 @@ export function AgencyView({
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   placeholder="e.g. Acme Corporation"
-                  className="mt-1 w-full rounded-control border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
+                  className={cn(inputClass, "mt-1 w-full text-sm")}
                 />
               </div>
 
@@ -410,7 +413,7 @@ export function AgencyView({
                 <button
                   type="submit"
                   disabled={creatingClient}
-                  className="rounded-control bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className={buttonVariants({ variant: "primary", size: "md" })}
                 >
                   {creatingClient ? "Creating…" : "Create Space"}
                 </button>

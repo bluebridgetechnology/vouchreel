@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 export interface ConversionGoal {
   id: string;
@@ -130,13 +133,13 @@ export function ConversionGoalsPanel({
                 ? "/thank-you or /order-confirmation/*"
                 : "Goal name, e.g. Purchase complete"
             }
-            className="flex-1 rounded-control border bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-primary"
+            className={cn(inputClass, "flex-1 text-xs")}
             required
           />
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className={buttonVariants({ variant: "primary", size: "sm" })}
           >
             {submitting ? "Creating..." : "Create Goal"}
           </button>

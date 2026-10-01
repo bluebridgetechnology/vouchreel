@@ -3,6 +3,8 @@
 import { WidgetTheme } from "@/lib/validations/widget-config";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 import { ACCENT_COLOR_PRESETS, PRIMARY_COLOR_PRESETS } from "@/lib/widget-presets";
+import { cn } from "@/lib/utils";
+import { inputClass } from "@/components/ui/input";
 
 interface ThemeEditorProps {
   value: WidgetTheme;
@@ -87,7 +89,7 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
                 value={value.primaryColor}
                 onChange={(e) => handlePrimaryChange(e.target.value)}
                 placeholder={DEFAULT_BRAND_HEX}
-                className="w-full rounded-control border bg-background px-3 py-1.5 font-mono text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "w-full font-mono text-xs")}
               />
             </div>
 
@@ -139,7 +141,7 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
                 value={value.accentColor}
                 onChange={(e) => handleAccentChange(e.target.value)}
                 placeholder={ACCENT_COLOR_PRESETS[0].hex}
-                className="w-full rounded-control border bg-background px-3 py-1.5 font-mono text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className={cn(inputClass, "w-full font-mono text-xs")}
               />
             </div>
 

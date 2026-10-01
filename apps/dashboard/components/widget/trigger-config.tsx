@@ -1,6 +1,8 @@
 "use client";
 
 import { TriggerType } from "@/lib/validations/widget-config";
+import { cn } from "@/lib/utils";
+import { inputClass } from "@/components/ui/input";
 
 interface TriggerConfigProps {
   triggerType: TriggerType;
@@ -91,7 +93,7 @@ export function TriggerConfig({
             id="trigger-event-type"
             value={triggerType}
             onChange={(e) => handleTypeSelect(e.target.value as TriggerType)}
-            className="w-full rounded-control border bg-background px-3 py-2 text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className={cn(inputClass, "w-full text-xs")}
           >
             {TRIGGER_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>
@@ -143,7 +145,7 @@ export function TriggerConfig({
                 onChange={(e) =>
                   handleValueUpdate("seconds", Math.max(1, Number(e.target.value)))
                 }
-                className="w-16 rounded-control border bg-background px-2 py-1 text-center font-mono text-xs focus:border-primary focus:outline-none"
+                className={cn(inputClass, "w-16 font-mono text-xs")}
               />
             </div>
             <p className="text-2xs text-muted-foreground">
@@ -187,7 +189,7 @@ export function TriggerConfig({
                 onChange={(e) =>
                   handleValueUpdate("percentage", Math.max(1, Math.min(100, Number(e.target.value))))
                 }
-                className="w-16 rounded-control border bg-background px-2 py-1 text-center font-mono text-xs focus:border-primary focus:outline-none"
+                className={cn(inputClass, "w-16 font-mono text-xs")}
               />
             </div>
             <p className="text-2xs text-muted-foreground">
@@ -231,7 +233,7 @@ export function TriggerConfig({
                 onChange={(e) =>
                   handleValueUpdate("count", Math.max(1, Number(e.target.value)))
                 }
-                className="w-16 rounded-control border bg-background px-2 py-1 text-center font-mono text-xs focus:border-primary focus:outline-none"
+                className={cn(inputClass, "w-16 font-mono text-xs")}
               />
             </div>
             <p className="text-2xs text-muted-foreground">

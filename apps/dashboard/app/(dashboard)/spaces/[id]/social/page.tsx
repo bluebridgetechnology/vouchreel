@@ -8,6 +8,9 @@ import {
   type WatermarkPosition,
 } from "@/lib/social/presets";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 interface SocialPageProps {
   params: Promise<{ id: string }>;
@@ -197,7 +200,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                     setSettings({ ...settings, brandColor: e.target.value })
                   }
                   placeholder={DEFAULT_BRAND_HEX}
-                  className="h-9 w-32 rounded-control border border-input bg-background px-3 text-xs font-mono"
+                  className={cn(inputClass, "h-9 w-32 text-xs font-mono")}
                 />
                 <span className="text-xs text-muted-foreground">
                   Applied to branding headers and accents
@@ -224,7 +227,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                   setSettings({ ...settings, logoUrl: e.target.value })
                 }
                 placeholder="https://yourbrand.com/logo.png"
-                className="w-full rounded-control border border-input bg-background px-3.5 py-2 text-xs"
+                className={cn(inputClass, "w-full text-xs")}
               />
               <p className="text-2xs text-muted-foreground">
                 Square or horizontal PNG with transparent background works best.
@@ -355,7 +358,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
             <button
               type="submit"
               disabled={saving || loading}
-              className="flex items-center justify-center gap-2 rounded-card bg-primary px-6 py-2.5 text-xs font-medium text-primary-foreground shadow-xs hover:opacity-90 disabled:opacity-50"
+              className={buttonVariants({ variant: "primary", size: "sm" })}
             >
               {saving ? "Saving Changes..." : "Save Export Settings"}
             </button>
@@ -553,7 +556,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                     <a
                       href={item.outputUrl}
                       download={`vouchreel-${item.format}-${item.id}.mp4`}
-                      className="rounded-control bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs hover:opacity-90 flex items-center gap-1.5"
+                      className={buttonVariants({ variant: "primary", size: "sm" })}
                     >
                       <svg
                         className="h-3.5 w-3.5"

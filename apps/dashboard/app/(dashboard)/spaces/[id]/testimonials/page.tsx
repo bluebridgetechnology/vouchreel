@@ -25,6 +25,8 @@ import { AddTestimonialDialog } from "@/components/testimonials/add-testimonial-
 import { EditTestimonialDialog } from "@/components/testimonials/edit-testimonial-dialog";
 import { SocialExportModal } from "@/components/social/social-export-modal";
 import { TranslationsModal } from "@/components/testimonials/translations-modal";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 interface TestimonialsPageProps {
   params: Promise<{ id: string }>;
@@ -233,7 +235,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
         <button
           type="button"
           onClick={openAddDialog}
-          className="inline-flex items-center justify-center gap-2 rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90"
+          className={buttonVariants({ variant: "primary", size: "sm" })}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.5v15m7.5-7.5h-15" />
@@ -283,7 +285,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
           <button
             type="button"
             onClick={openAddDialog}
-            className="mt-6 inline-flex items-center justify-center rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs hover:bg-primary/90"
+            className={cn(buttonVariants({ variant: "primary", size: "sm" }), "mt-6")}
           >
             Add your first testimonial
           </button>
@@ -393,7 +395,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
                 type="button"
                 onClick={closeDeleteDialog}
                 autoFocus
-                className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Cancel
               </button>
@@ -401,7 +403,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleteLoading}
-                className="rounded-control bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                className={buttonVariants({ variant: "danger", size: "sm" })}
               >
                 {deleteLoading ? "Deleting..." : "Delete Testimonial"}
               </button>

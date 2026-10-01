@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 interface PageTargetingProps {
   pagesIncluded: string[];
@@ -100,13 +103,13 @@ export function PageTargeting({
                 }
               }}
               placeholder="e.g. *, /pricing, /products/*"
-              className="flex-1 rounded-control border bg-background px-3 py-1.5 font-mono text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className={cn(inputClass, "flex-1 font-mono text-xs")}
             />
             <button
               type="button"
               onClick={handleAddInclude}
               disabled={!includeInput.trim()}
-              className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent disabled:opacity-50"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Add Pattern
             </button>
@@ -167,13 +170,13 @@ export function PageTargeting({
                 }
               }}
               placeholder="e.g. /admin/*, /checkout/*, /login"
-              className="flex-1 rounded-control border bg-background px-3 py-1.5 font-mono text-xs shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className={cn(inputClass, "flex-1 font-mono text-xs")}
             />
             <button
               type="button"
               onClick={handleAddExclude}
               disabled={!excludeInput.trim()}
-              className="rounded-control border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent disabled:opacity-50"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
             >
               Add Exclusion
             </button>

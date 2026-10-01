@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { TestimonialItem } from "./testimonial-card";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { inputClass } from "@/components/ui/input";
 
 export interface TranslationItem {
   id: string;
@@ -251,7 +254,7 @@ export function TranslationsModal({
                 value={targetLang}
                 onChange={(e) => setTargetLang(e.target.value)}
                 disabled={translating}
-                className="flex-1 rounded-control border bg-background px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                className={cn(inputClass, "flex-1 text-xs")}
               >
                 {SUPPORTED_LANGUAGES.map((lang) => {
                   const alreadyCached = translations.some((t) => t.language.toLowerCase() === lang.code);
@@ -267,7 +270,7 @@ export function TranslationsModal({
                 type="button"
                 onClick={handleAutoTranslate}
                 disabled={translating}
-                className="inline-flex items-center justify-center gap-1.5 rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs transition hover:bg-primary/90 disabled:opacity-50"
+                className={buttonVariants({ variant: "primary", size: "sm" })}
               >
                 {translating ? (
                   <>
@@ -403,7 +406,7 @@ export function TranslationsModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-control border bg-background px-4 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             Done
           </button>

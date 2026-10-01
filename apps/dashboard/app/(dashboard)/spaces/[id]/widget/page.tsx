@@ -16,6 +16,8 @@ import { TriggerConfig } from "@/components/widget/trigger-config";
 import { PageTargeting } from "@/components/widget/page-targeting";
 import { LivePreview } from "@/components/widget/live-preview";
 import { EmbedSnippet } from "@/components/widget/embed-snippet";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 interface WidgetPageProps {
   params: Promise<{ id: string }>;
@@ -163,7 +165,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
         <p className="mt-1 text-xs text-muted-foreground">{error}</p>
         <button
           onClick={() => fetchWidgetConfig()}
-          className="mt-4 inline-flex items-center rounded-control bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+          className={cn(buttonVariants({ variant: "primary", size: "sm" }), "mt-4")}
         >
           Try Again
         </button>
@@ -196,7 +198,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           <button
             type="button"
             onClick={handleResetDefaults}
-            className="rounded-control border bg-background px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             Reset Defaults
           </button>
@@ -204,7 +206,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
+            className={buttonVariants({ variant: "primary", size: "sm" })}
           >
             {saving ? (
               <>
@@ -346,7 +348,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center gap-1.5 rounded-control bg-primary px-4 py-2 text-xs font-medium text-primary-foreground shadow-xs transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className={buttonVariants({ variant: "primary", size: "sm" })}
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>
