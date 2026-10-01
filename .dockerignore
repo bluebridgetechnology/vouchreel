@@ -1,0 +1,26 @@
+# Dependencies (installed inside the image)
+**/node_modules
+
+# Build artifacts are rebuilt inside the image
+**/.next
+**/dist
+**/.turbo
+**/*.tsbuildinfo
+
+# Secrets and local env files
+.env
+.env.*
+
+# VCS and local tooling
+.git
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose*.yml
+
+# Docs and specs are not needed for the build
+README.md
+AGENT.md
+docs
+video-testimonial-widget-mvp-spec.md
+video-testimonial-widget-phase2-spec.md

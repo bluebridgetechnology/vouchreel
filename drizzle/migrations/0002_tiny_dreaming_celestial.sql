@@ -1,0 +1,2 @@
+CREATE INDEX "events_space_type_ts_idx" ON "events" USING btree ("space_id","event_type","timestamp");--> statement-breakpoint
+CREATE INDEX "events_space_testimonial_type_idx" ON "events" USING btree ("space_id","testimonial_id","event_type");

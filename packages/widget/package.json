@@ -6,11 +6,13 @@
   "main": "dist/widget.js",
   "scripts": {
     "build": "node esbuild.config.mjs",
+    "widget:build": "node esbuild.config.mjs && node check-size.mjs",
     "lint": "eslint .",
-    "test": "node --version"
+    "test": "vitest run"
   },
   "devDependencies": {
     "esbuild": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "vitest": "^5.0.0"
   }
 }

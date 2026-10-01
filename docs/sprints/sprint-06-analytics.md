@@ -7,6 +7,14 @@
 
 ---
 
+## Status — implemented & runtime-verified 2026-09-29
+
+- 6.1–6.5 code complete: `lib/analytics/queries.ts`, index migration `0002_tiny_dreaming_celestial.sql`, `/api/spaces/[id]/analytics`, `/api/spaces/[id]/conversion-goals`, analytics dashboard (overview cards w/ trends, Recharts time series, CSS funnel, sortable per-testimonial table, skeletons, empty state), conversion goals UI with copyable pixel snippet, `window.vouchreelConvert` wired in widget loader (bundle rebuilt, 8.9KB gz).
+- 6.6: seed script `apps/dashboard/scripts/seed-events.mjs` + `db:seed` script created; 7 new validation tests added. `turbo build` and `turbo test` (154 tests) pass.
+- Runtime verification (local Docker Postgres): migration applied (both `events` indexes present); seed inserted 2,887 events (1,892 impressions / 698 plays / 256 clicks / 41 conversions) over 35 days; all 4 analytics API types return correct data; goal CRUD works (create pixel + url-match, validation rejections, delete); access control verified (401 unauthenticated, 403 other-owner, 404 unknown space); analytics page rendered in browser — cards with trends & play/conversion rates, chart, funnel with drop-off %, sortable table, goals panel; 7d/30d range switching verified; pixel goal created via UI with snippet display; no console errors.
+
+---
+
 ## Tasks
 
 ### Task 6.1 — Analytics Data Layer

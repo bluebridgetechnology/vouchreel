@@ -16,7 +16,8 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "db:start": "docker compose up -d",
+    "widget:build": "turbo run widget:build",
+    "db:start": "docker compose up -d postgres",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "db:studio": "turbo run db:studio"

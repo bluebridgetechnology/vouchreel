@@ -1,0 +1,50 @@
+{
+  "name": "@vouchreel/dashboard",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "node scripts/seed-events.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1131.0",
+    "@aws-sdk/s3-request-presigner": "^3.1131.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "better-auth": "^1.7.4",
+    "clsx": "^2.1.1",
+    "dodopayments": "^2.50.0",
+    "drizzle-orm": "^0.45.2",
+    "geist": "^1.7.2",
+    "nanoid": "^3.3.19",
+    "next": "latest",
+    "pdf-lib": "^1.17.1",
+    "pg": "^8.23.0",
+    "react": "latest",
+    "react-dom": "latest",
+    "recharts": "^3.10.1",
+    "stripe": "^22.6.2",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/pg": "^8.23.1",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "drizzle-kit": "^0.31.10",
+    "postcss": "latest",
+    "tailwindcss": "^4.0.0",
+    "typescript": "latest",
+    "vitest": "^5.0.0"
+  }
+}

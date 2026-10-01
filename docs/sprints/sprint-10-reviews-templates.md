@@ -11,50 +11,50 @@
 
 ### Task 10.1 — Reviews Database Schema
 
-- [ ] Add `reviewSources` table: `id`, `spaceId` FK, `provider` (enum: google/trustpilot), `providerBusinessId`, `credentials` (encrypted jsonb), `lastSyncAt`, `isActive`, `createdAt`
-- [ ] Add `reviews` table: `id`, `spaceId` FK, `sourceId` FK, `provider`, `authorName`, `rating`, `text`, `reviewDate`, `providerReviewId` (unique), `isApproved`, `createdAt`
-- [ ] Run migration
+- [x] Add `reviewSources` table: `id`, `spaceId` FK, `provider` (enum: google/trustpilot), `providerBusinessId`, `credentials` (encrypted jsonb), `lastSyncAt`, `isActive`, `createdAt`
+- [x] Add `reviews` table: `id`, `spaceId` FK, `sourceId` FK, `provider`, `authorName`, `rating`, `text`, `reviewDate`, `providerReviewId` (unique), `isApproved`, `createdAt`
+- [x] Run migration
 
 **Expected Outcomes:**
-- [ ] Tables exist with correct schema and relationships
+- [x] Tables exist with correct schema and relationships
 
 ---
 
 ### Task 10.2 — Google Reviews Integration
 
-- [ ] Implement Google Places API / Business Profile API integration
-- [ ] OAuth flow or API key setup for connecting a Google Business
-- [ ] Fetch reviews (official API caps at ~5 most recent reviews)
-- [ ] Store reviews in the `reviews` table
-- [ ] Scheduled sync job (cron or background task) respecting rate limits
-- [ ] Caching strategy to minimize API calls
+- [x] Implement Google Places API / Business Profile API integration
+- [x] OAuth flow or API key setup for connecting a Google Business
+- [x] Fetch reviews (official API caps at ~5 most recent reviews)
+- [x] Store reviews in the `reviews` table
+- [x] Scheduled sync job (cron or background task) respecting rate limits
+- [x] Caching strategy to minimize API calls
 
 **Expected Outcomes:**
-- [ ] Owner can connect their Google Business listing
-- [ ] Reviews are fetched and stored
-- [ ] Sync runs periodically without exceeding rate limits
-- [ ] API limitations (5 review cap) are clearly communicated to the user
+- [x] Owner can connect their Google Business listing
+- [x] Reviews are fetched and stored
+- [x] Sync runs periodically without exceeding rate limits
+- [x] API limitations (5 review cap) are clearly communicated to the user
 
 ---
 
 ### Task 10.3 — Trustpilot Reviews Integration
 
-- [ ] Implement Trustpilot Business API integration
-- [ ] API key setup for connecting Trustpilot business
-- [ ] Fetch reviews with pagination
-- [ ] Store in `reviews` table
-- [ ] Scheduled sync respecting rate limits
+- [x] Implement Trustpilot Business API integration
+- [x] API key setup for connecting Trustpilot business
+- [x] Fetch reviews with pagination
+- [x] Store in `reviews` table
+- [x] Scheduled sync respecting rate limits
 
 **Expected Outcomes:**
-- [ ] Owner can connect their Trustpilot business
-- [ ] Reviews are fetched and stored
-- [ ] Sync runs periodically
+- [x] Owner can connect their Trustpilot business
+- [x] Reviews are fetched and stored
+- [x] Sync runs periodically
 
 ---
 
 ### Task 10.4 — Reviews Management UI
 
-- [ ] Create `apps/dashboard/app/(dashboard)/spaces/[id]/reviews/page.tsx`
+- [x] Create `apps/dashboard/app/(dashboard)/spaces/[id]/reviews/page.tsx`
   - List imported reviews with source badge (Google/Trustpilot)
   - Approve/hide individual reviews
   - Show sync status and last sync time
@@ -62,43 +62,43 @@
   - Manual refresh button
 
 **Expected Outcomes:**
-- [ ] Reviews are listed with source indicators
-- [ ] Owner can approve/hide reviews
-- [ ] Sync status is visible
+- [x] Reviews are listed with source indicators
+- [x] Owner can approve/hide reviews
+- [x] Sync status is visible
 
 ---
 
 ### Task 10.5 — Curated Display Templates
 
-- [ ] Build 3–5 distinct widget/embed templates:
+- [x] Build 3–5 distinct widget/embed templates:
   1. **Wall of Love** — masonry grid mixing video thumbnails and text review cards
   2. **Carousel / Slider** — horizontal scrolling testimonials (video + text)
   3. **Story Strip** — Instagram-style circles at top/bottom of page
   4. **Minimal Floating Card** — evolved version of the MVP widget
   5. **Masonry Grid** — Pinterest-style layout
-- [ ] Template selection UI in widget settings
-- [ ] Each template uses the contextual matching engine from MVP
-- [ ] Templates blend video testimonials + text reviews in a unified display
-- [ ] Responsive across all templates
+- [x] Template selection UI in widget settings
+- [x] Each template uses the contextual matching engine from MVP
+- [x] Templates blend video testimonials + text reviews in a unified display
+- [x] Responsive across all templates
 
 **Expected Outcomes:**
-- [ ] 3–5 templates are available in widget settings
-- [ ] Each template renders both video and text testimonials
-- [ ] Templates are visually distinct and polished
-- [ ] Contextual matching applies within each template
+- [x] 3–5 templates are available in widget settings
+- [x] Each template renders both video and text testimonials
+- [x] Templates are visually distinct and polished
+- [x] Contextual matching applies within each template
 
 ---
 
 ## Sprint 10 — Verification Checklist
 
-- [ ] Google reviews import works via official API
-- [ ] Trustpilot reviews import works via official API
-- [ ] Reviews appear in dashboard with source badges
-- [ ] Owner can approve/hide reviews
-- [ ] Sync runs on schedule without rate limit errors
-- [ ] All 3–5 templates render correctly
-- [ ] Templates blend video + text testimonials
-- [ ] Contextual matching works within templates
-- [ ] Templates are responsive on mobile
-- [ ] `turbo build` passes
-- [ ] `turbo test` passes
+- [x] Google reviews import works via official API
+- [x] Trustpilot reviews import works via official API
+- [x] Reviews appear in dashboard with source badges
+- [x] Owner can approve/hide reviews
+- [x] Sync runs on schedule without rate limit errors
+- [x] All 3–5 templates render correctly
+- [x] Templates blend video + text testimonials
+- [x] Contextual matching works within templates
+- [x] Templates are responsive on mobile
+- [x] `turbo build` passes
+- [x] `turbo test` passes
