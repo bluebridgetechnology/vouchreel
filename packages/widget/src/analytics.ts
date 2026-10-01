@@ -23,6 +23,8 @@ export interface AnalyticsConfig {
   apiBase: string;
   conversionGoals?: ConversionGoal[];
   flushIntervalMs?: number;
+  experimentId?: string | null;
+  variantIndex?: number | null;
 }
 
 /**
@@ -76,6 +78,8 @@ export class AnalyticsTracker {
   private flushTimer: ReturnType<typeof setTimeout> | null = null;
   private flushIntervalMs: number;
   private isDestroyed = false;
+  private experimentId: string | null = null;
+  private variantIndex: number | null = null;
 
   constructor(config: AnalyticsConfig) {
     this.spaceId = config.spaceId;
@@ -83,9 +87,16 @@ export class AnalyticsTracker {
     this.sessionId = getOrCreateSessionId();
     this.conversionGoals = config.conversionGoals || [];
     this.flushIntervalMs = config.flushIntervalMs ?? 5000;
+    this.experimentId = config.experimentId ?? null;
+    this.variantIndex = config.variantIndex ?? null;
 
     this.bindLifecycleListeners();
     this.checkConversionGoals();
+  }
+
+  public setExperiment(experimentId: string | null, variantIndex: number | null): void {
+    this.experimentId = experimentId;
+    this.variantIndex = variantIndex;
   }
 
   /**
@@ -103,6 +114,34 @@ export class AnalyticsTracker {
         ? window.location.href.split("#")[0]
         : "";
 
+    const deviceType =
+      typeof window !== "undefined" &&
+      (window.matchMedia?.("(max-width: 768px)").matches ||
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          typeof navigator !== "undefined" ? navigator.userAgent : ""
+        ))
+        ? "mobile"
+        : "desktop";
+
+    let referrer = "direct";
+    if (typeof document !== "undefined" && document.referrer) {
+      try {
+        referrer = new URL(document.referrer).hostname || "direct";
+      } catch {
+        referrer = "direct";
+      }
+    }
+
+    const mergedMetadata: Record<string, unknown> = {
+      deviceType,
+      referrer,
+      ...(this.experimentId ? { experimentId: this.experimentId } : {}),
+      ...(this.variantIndex !== null && this.variantIndex !== undefined
+        ? { variantIndex: this.variantIndex }
+        : {}),
+      ...metadata,
+    };
+
     const event: AnalyticsEvent = {
       spaceId: this.spaceId,
       testimonialId: testimonialId || null,
@@ -110,7 +149,7 @@ export class AnalyticsTracker {
       eventType,
       pageUrl,
       timestamp: new Date().toISOString(),
-      metadata: metadata || null,
+      metadata: mergedMetadata,
     };
 
     this.queue.push(event);

@@ -28,6 +28,7 @@ interface TestimonialCardProps {
   onDelete: (t: TestimonialItem) => void;
   onToggleActive: (t: TestimonialItem) => void;
   onExportSocial?: (t: TestimonialItem) => void;
+  onManageTranslations?: (t: TestimonialItem) => void;
 }
 
 export function TestimonialCard({
@@ -36,6 +37,7 @@ export function TestimonialCard({
   onDelete,
   onToggleActive,
   onExportSocial,
+  onManageTranslations,
 }: TestimonialCardProps) {
   const {
     attributes,
@@ -221,6 +223,19 @@ export function TestimonialCard({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
                 Export for social
+              </button>
+            )}
+            {onManageTranslations && (
+              <button
+                type="button"
+                onClick={() => onManageTranslations(testimonial)}
+                className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-accent transition-colors"
+                title="Manage multi-language captions & translations"
+              >
+                <svg className="h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                </svg>
+                Translations
               </button>
             )}
             <button

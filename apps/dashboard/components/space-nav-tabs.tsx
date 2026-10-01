@@ -56,6 +56,11 @@ export function SpaceNavTabs({
       active: pathname.startsWith(`/spaces/${spaceId}/widget`),
     },
     {
+      label: "Experiments",
+      href: `/spaces/${spaceId}/experiments`,
+      active: pathname.startsWith(`/spaces/${spaceId}/experiments`),
+    },
+    {
       label: "Analytics",
       href: `/spaces/${spaceId}/analytics`,
       active: pathname.startsWith(`/spaces/${spaceId}/analytics`),

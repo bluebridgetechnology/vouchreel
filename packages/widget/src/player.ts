@@ -1,9 +1,17 @@
+export interface SubtitleCue {
+  start: number;
+  end: number;
+  text: string;
+}
+
 export interface VideoPlayerOptions {
   container: HTMLElement;
   videoUrl: string;
   platform?: "youtube" | "vimeo" | "mp4" | string;
   thumbnailUrl?: string | null;
   autoplayPreview?: boolean;
+  subtitles?: Array<SubtitleCue> | null;
+  subtitleLanguage?: string | null;
   onPlay?: () => void;
   onEnded?: () => void;
 }
@@ -114,6 +122,10 @@ export function createVideoPlayer(options: VideoPlayerOptions): VideoPlayerContr
 
   let isPlaying = false;
   let activeElement: HTMLIFrameElement | HTMLVideoElement | null = null;
+  const subtitleCues = options.subtitles || [];
+  let subtitleOverlay: HTMLElement | null = null;
+  let subtitleTimer: ReturnType<typeof setInterval> | null = null;
+  let playStartTime = 0;
 
   // Clear container
   container.innerHTML = "";
@@ -223,6 +235,47 @@ export function createVideoPlayer(options: VideoPlayerOptions): VideoPlayerContr
       });
     }
 
+    if (subtitleCues.length > 0) {
+      subtitleOverlay = document.createElement("div");
+      subtitleOverlay.className = "vr-player-subtitles";
+      subtitleOverlay.setAttribute("aria-live", "polite");
+      subtitleOverlay.style.display = "none";
+      container.appendChild(subtitleOverlay);
+
+      const isVideo =
+        (typeof HTMLVideoElement !== "undefined" && activeElement instanceof HTMLVideoElement) ||
+        (activeElement && (activeElement as any).tagName === "VIDEO");
+
+      if (isVideo) {
+        activeElement.addEventListener("timeupdate", () => {
+          const currentTime = (activeElement as HTMLVideoElement).currentTime || 0;
+          const activeCue = subtitleCues.find(
+            (c) => currentTime >= c.start && currentTime <= c.end
+          );
+          if (activeCue && activeCue.text) {
+            subtitleOverlay!.textContent = activeCue.text;
+            subtitleOverlay!.style.display = "block";
+          } else {
+            subtitleOverlay!.style.display = "none";
+          }
+        });
+      } else {
+        playStartTime = Date.now();
+        subtitleTimer = setInterval(() => {
+          const elapsedSec = (Date.now() - playStartTime) / 1000;
+          const activeCue = subtitleCues.find(
+            (c) => elapsedSec >= c.start && elapsedSec <= c.end
+          );
+          if (activeCue && activeCue.text) {
+            subtitleOverlay!.textContent = activeCue.text;
+            subtitleOverlay!.style.display = "block";
+          } else {
+            subtitleOverlay!.style.display = "none";
+          }
+        }, 250);
+      }
+    }
+
     if (onPlay) {
       onPlay();
     }
@@ -240,11 +293,22 @@ export function createVideoPlayer(options: VideoPlayerOptions): VideoPlayerContr
   return {
     play: mountActivePlayer,
     pause: () => {
-      if (activeElement instanceof HTMLVideoElement) {
+      if (
+        (typeof HTMLVideoElement !== "undefined" && activeElement instanceof HTMLVideoElement) ||
+        (activeElement && (activeElement as any).tagName === "VIDEO")
+      ) {
         activeElement.pause();
       }
     },
     destroy: () => {
+      if (subtitleTimer) {
+        clearInterval(subtitleTimer);
+        subtitleTimer = null;
+      }
+      if (subtitleOverlay) {
+        subtitleOverlay.remove();
+        subtitleOverlay = null;
+      }
       if (previewVideo) {
         previewVideo.pause();
         previewVideo.src = "";
@@ -252,7 +316,10 @@ export function createVideoPlayer(options: VideoPlayerOptions): VideoPlayerContr
         previewVideo = null;
       }
       if (activeElement) {
-        if (activeElement instanceof HTMLVideoElement) {
+        if (
+          (typeof HTMLVideoElement !== "undefined" && activeElement instanceof HTMLVideoElement) ||
+          (activeElement && (activeElement as any).tagName === "VIDEO")
+        ) {
           activeElement.pause();
           activeElement.src = "";
         }

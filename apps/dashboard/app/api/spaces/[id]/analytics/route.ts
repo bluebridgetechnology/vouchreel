@@ -5,12 +5,20 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces } from "@/lib/db/schema";
 import {
+  AnalyticsFilter,
+  getComparativeAnalytics,
   getConversionFunnel,
+  getFilterOptions,
   getOverviewStats,
   getPerTestimonialStats,
+  getSegmentComparison,
   getTimeSeries,
 } from "@/lib/analytics/queries";
-import { analyticsQuerySchema, resolveDateRange } from "@/lib/validations/analytics";
+import {
+  analyticsQuerySchema,
+  resolveDateRange,
+  resolvePreviousDateRange,
+} from "@/lib/validations/analytics";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -18,8 +26,11 @@ interface RouteParams {
 
 /**
  * GET /api/spaces/[id]/analytics
- * Query params: type (overview|testimonials|timeseries|funnel),
- * startDate, endDate (YYYY-MM-DD), interval (day|week). Defaults to last 30 days.
+ * Query params:
+ *   - type: overview | testimonials | timeseries | funnel | comparison | segment-comparison | filter-options
+ *   - startDate, endDate (YYYY-MM-DD), interval (day|week)
+ *   - Filters: testimonialId, pageUrl, deviceType, trafficSource, experimentId, variantIndex
+ *   - Comparison: compareRange (boolean/string), compareSegment (device), prevStartDate, prevEndDate
  */
 export async function GET(request: Request, { params }: RouteParams) {
   const session = await getSession();
@@ -34,6 +45,16 @@ export async function GET(request: Request, { params }: RouteParams) {
     startDate: url.searchParams.get("startDate") ?? undefined,
     endDate: url.searchParams.get("endDate") ?? undefined,
     interval: url.searchParams.get("interval") ?? undefined,
+    testimonialId: url.searchParams.get("testimonialId") ?? undefined,
+    pageUrl: url.searchParams.get("pageUrl") ?? undefined,
+    deviceType: url.searchParams.get("deviceType") ?? undefined,
+    trafficSource: url.searchParams.get("trafficSource") ?? undefined,
+    experimentId: url.searchParams.get("experimentId") ?? undefined,
+    variantIndex: url.searchParams.get("variantIndex") ?? undefined,
+    compareRange: url.searchParams.get("compareRange") ?? undefined,
+    compareSegment: url.searchParams.get("compareSegment") ?? undefined,
+    prevStartDate: url.searchParams.get("prevStartDate") ?? undefined,
+    prevEndDate: url.searchParams.get("prevEndDate") ?? undefined,
   });
 
   if (!parsed.success) {
@@ -54,27 +75,114 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     const dateRange = resolveDateRange(parsed.data);
+    const filter: AnalyticsFilter = {
+      testimonialId: parsed.data.testimonialId,
+      pageUrl: parsed.data.pageUrl,
+      deviceType: parsed.data.deviceType,
+      trafficSource: parsed.data.trafficSource,
+      experimentId: parsed.data.experimentId,
+      variantIndex: parsed.data.variantIndex,
+    };
 
     switch (parsed.data.type) {
+      case "comparison": {
+        const prevRange = resolvePreviousDateRange(dateRange, parsed.data);
+        const comparison = await getComparativeAnalytics(
+          space.id,
+          dateRange,
+          prevRange,
+          filter
+        );
+        return NextResponse.json({ comparison, dateRange, prevRange, filter });
+      }
+      case "segment-comparison": {
+        const seg1: AnalyticsFilter = { ...filter, deviceType: "mobile" };
+        const seg2: AnalyticsFilter = { ...filter, deviceType: "desktop" };
+        const segmentComparison = await getSegmentComparison(
+          space.id,
+          dateRange,
+          seg1,
+          seg2
+        );
+        return NextResponse.json({
+          segmentComparison,
+          dateRange,
+          compareSegment: parsed.data.compareSegment ?? "device",
+        });
+      }
+      case "filter-options": {
+        const filterOptions = await getFilterOptions(space.id, dateRange);
+        return NextResponse.json({ filterOptions });
+      }
       case "overview": {
-        const stats = await getOverviewStats(space.id, dateRange);
-        return NextResponse.json({ stats, dateRange });
+        const stats = await getOverviewStats(space.id, dateRange, filter);
+        let comparison = undefined;
+        if (parsed.data.compareRange) {
+          const prevRange = resolvePreviousDateRange(dateRange, parsed.data);
+          comparison = await getComparativeAnalytics(
+            space.id,
+            dateRange,
+            prevRange,
+            filter
+          );
+        }
+        let segmentComparison = undefined;
+        if (parsed.data.compareSegment) {
+          segmentComparison = await getSegmentComparison(
+            space.id,
+            dateRange,
+            { ...filter, deviceType: "mobile" },
+            { ...filter, deviceType: "desktop" }
+          );
+        }
+        return NextResponse.json({
+          stats,
+          dateRange,
+          filter,
+          ...(comparison ? { comparison } : {}),
+          ...(segmentComparison ? { segmentComparison } : {}),
+        });
       }
       case "testimonials": {
-        const testimonials = await getPerTestimonialStats(space.id, dateRange);
-        return NextResponse.json({ testimonials, dateRange });
+        const testimonials = await getPerTestimonialStats(
+          space.id,
+          dateRange,
+          filter
+        );
+        return NextResponse.json({ testimonials, dateRange, filter });
       }
       case "timeseries": {
         const points = await getTimeSeries(
           space.id,
           dateRange,
-          parsed.data.interval
+          parsed.data.interval,
+          filter
         );
-        return NextResponse.json({ points, dateRange, interval: parsed.data.interval });
+        return NextResponse.json({
+          points,
+          dateRange,
+          interval: parsed.data.interval,
+          filter,
+        });
       }
       case "funnel": {
-        const funnel = await getConversionFunnel(space.id, dateRange);
-        return NextResponse.json({ funnel, dateRange });
+        const funnel = await getConversionFunnel(space.id, dateRange, filter);
+        let comparison = undefined;
+        if (parsed.data.compareRange) {
+          const prevRange = resolvePreviousDateRange(dateRange, parsed.data);
+          comparison = await getComparativeAnalytics(
+            space.id,
+            dateRange,
+            prevRange,
+            filter
+          );
+        }
+        return NextResponse.json({
+          funnel,
+          dateRange,
+          filter,
+          ...(comparison ? { comparison } : {}),
+        });
       }
     }
   } catch (error) {

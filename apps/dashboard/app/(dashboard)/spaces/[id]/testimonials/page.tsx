@@ -24,6 +24,7 @@ import {
 import { AddTestimonialDialog } from "@/components/testimonials/add-testimonial-dialog";
 import { EditTestimonialDialog } from "@/components/testimonials/edit-testimonial-dialog";
 import { SocialExportModal } from "@/components/social/social-export-modal";
+import { TranslationsModal } from "@/components/testimonials/translations-modal";
 
 interface TestimonialsPageProps {
   params: Promise<{ id: string }>;
@@ -41,6 +42,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
   const [editingTestimonial, setEditingTestimonial] = useState<TestimonialItem | null>(null);
   const [deletingTestimonial, setDeletingTestimonial] = useState<TestimonialItem | null>(null);
   const [exportingTestimonial, setExportingTestimonial] = useState<TestimonialItem | null>(null);
+  const [translatingTestimonial, setTranslatingTestimonial] = useState<TestimonialItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
 
@@ -306,6 +308,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
                   onDelete={openDeleteDialog}
                   onToggleActive={handleToggleActive}
                   onExportSocial={(t) => setExportingTestimonial(t)}
+                  onManageTranslations={(t) => setTranslatingTestimonial(t)}
                 />
               ))}
             </div>
@@ -345,6 +348,16 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
           testimonial={exportingTestimonial}
           isOpen={true}
           onClose={() => setExportingTestimonial(null)}
+        />
+      )}
+
+      {/* Multi-Language Captions & Translations Modal */}
+      {translatingTestimonial && (
+        <TranslationsModal
+          spaceId={spaceId}
+          testimonial={translatingTestimonial}
+          isOpen={true}
+          onClose={() => setTranslatingTestimonial(null)}
         />
       )}
 

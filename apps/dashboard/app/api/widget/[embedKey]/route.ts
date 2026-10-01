@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { eq, and, asc, desc } from "drizzle-orm";
+import { eq, and, asc, desc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { spaces, testimonials, widgetConfigs, conversionGoals, reviews } from "@/lib/db/schema";
+import { spaces, testimonials, widgetConfigs, conversionGoals, reviews, experiments, testimonialTranslations } from "@/lib/db/schema";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import { badRequest, notFound, internalError } from "@/lib/api/errors";
 
@@ -113,6 +113,66 @@ export async function GET(request: Request, { params }: RouteParams) {
       )
       .orderBy(asc(testimonials.sortOrder), asc(testimonials.createdAt));
 
+    // Optional visitor language query param filter
+    const url = new URL(request.url);
+    const requestedLang = url.searchParams.get("lang")?.toLowerCase()?.trim();
+
+    // Fetch translations for active testimonials
+    const testimonialIds = activeTestimonials.map((t) => t.id);
+    let translationsList: Array<{
+      testimonialId: string;
+      language: string;
+      quote: string | null;
+      transcript: unknown;
+    }> = [];
+
+    if (testimonialIds.length > 0) {
+      try {
+        const query = db
+          .select({
+            testimonialId: testimonialTranslations.testimonialId,
+            language: testimonialTranslations.language,
+            quote: testimonialTranslations.quote,
+            transcript: testimonialTranslations.transcript,
+          })
+          .from(testimonialTranslations)
+          .where(
+            requestedLang
+              ? and(
+                  inArray(testimonialTranslations.testimonialId, testimonialIds),
+                  eq(testimonialTranslations.language, requestedLang)
+                )
+              : inArray(testimonialTranslations.testimonialId, testimonialIds)
+          );
+
+        const res = await query;
+        if (Array.isArray(res)) {
+          translationsList = res;
+        }
+      } catch (err) {
+        console.warn("Could not load translations for widget testimonials:", err);
+      }
+    }
+
+    const translationsMap = new Map<
+      string,
+      Array<{ language: string; quote: string | null; transcript: unknown }>
+    >();
+    for (const tr of translationsList) {
+      const current = translationsMap.get(tr.testimonialId) || [];
+      current.push({
+        language: tr.language,
+        quote: tr.quote,
+        transcript: tr.transcript,
+      });
+      translationsMap.set(tr.testimonialId, current);
+    }
+
+    const testimonialsWithTranslations = activeTestimonials.map((t) => ({
+      ...t,
+      translations: translationsMap.get(t.id) || [],
+    }));
+
     // Fetch approved text reviews for this space
     const approvedReviews = await db
       .select({
@@ -140,13 +200,41 @@ export async function GET(request: Request, { params }: RouteParams) {
       .from(conversionGoals)
       .where(eq(conversionGoals.spaceId, space.id));
 
+    // Fetch active running experiment for this space if one exists
+    const [activeExp] = await db
+      .select({
+        id: experiments.id,
+        name: experiments.name,
+        type: experiments.type,
+        variants: experiments.variants,
+        trafficSplit: experiments.trafficSplit,
+      })
+      .from(experiments)
+      .where(
+        and(
+          eq(experiments.spaceId, space.id),
+          eq(experiments.status, "running")
+        )
+      )
+      .orderBy(desc(experiments.startedAt), desc(experiments.createdAt))
+      .limit(1);
+
     return NextResponse.json(
       {
         spaceId: space.id,
         config,
-        testimonials: activeTestimonials,
+        testimonials: testimonialsWithTranslations,
         reviews: approvedReviews,
         conversionGoals: goals,
+        activeExperiment: activeExp
+          ? {
+              id: activeExp.id,
+              name: activeExp.name,
+              type: activeExp.type,
+              variants: activeExp.variants,
+              trafficSplit: activeExp.trafficSplit,
+            }
+          : null,
       },
       {
         status: 200,

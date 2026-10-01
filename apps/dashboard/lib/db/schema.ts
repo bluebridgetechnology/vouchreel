@@ -60,6 +60,18 @@ export const goalTypeEnum = pgEnum("goal_type", [
   "pixel",
 ]);
 
+export const experimentTypeEnum = pgEnum("experiment_type", [
+  "trigger",
+  "position",
+  "template",
+]);
+
+export const experimentStatusEnum = pgEnum("experiment_status", [
+  "draft",
+  "running",
+  "completed",
+]);
+
 export const clipStatusEnum = pgEnum("clip_status", [
   "none",
   "pending",
@@ -598,6 +610,70 @@ export const socialExports = pgTable("social_exports", {
   index("social_exports_testimonial_idx").on(table.testimonialId, table.createdAt),
 ]);
 
+/**
+ * Experiments — A/B testing configurations for widget variations.
+ */
+export const experiments = pgTable("experiments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  spaceId: uuid("space_id")
+    .notNull()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  type: experimentTypeEnum("type").notNull(),
+  variants: jsonb("variants")
+    .$type<Array<{ id: string; name: string; config: Record<string, unknown> }>>()
+    .notNull(),
+  trafficSplit: jsonb("traffic_split").$type<number[]>().notNull(),
+  status: experimentStatusEnum("status").default("draft").notNull(),
+  winnerVariantIndex: integer("winner_variant_index"),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index("experiments_space_status_idx").on(table.spaceId, table.status),
+]);
+
+/**
+ * Experiment assignments — tracks session variant assignments for deterministic A/B testing.
+ */
+export const experimentAssignments = pgTable("experiment_assignments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  experimentId: uuid("experiment_id")
+    .notNull()
+    .references(() => experiments.id, { onDelete: "cascade" }),
+  sessionId: text("session_id").notNull(),
+  variantIndex: integer("variant_index").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index("experiment_assignments_exp_session_idx").on(table.experimentId, table.sessionId),
+]);
+
+/**
+ * Testimonial translations — cached translated transcripts and quotes for multi-language captions.
+ */
+export const testimonialTranslations = pgTable("testimonial_translations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  testimonialId: uuid("testimonial_id")
+    .notNull()
+    .references(() => testimonials.id, { onDelete: "cascade" }),
+  language: text("language").notNull(),
+  quote: text("quote"),
+  transcript: jsonb("transcript").$type<unknown>(),
+  provider: text("provider").default("auto").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index("testimonial_translations_testimonial_lang_idx").on(table.testimonialId, table.language),
+]);
+
 // ─── Relations ──────────────────────────────────────────────────────────────
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -637,6 +713,7 @@ export const spacesRelations = relations(spaces, ({ many, one }) => ({
   webhookEndpoints: many(webhookEndpoints),
   socialExportSettings: one(socialExportSettings),
   socialExports: many(socialExports),
+  experiments: many(experiments),
 }));
 
 export const collectionFormsRelations = relations(
@@ -663,6 +740,7 @@ export const testimonialsRelations = relations(testimonials, ({ one, many }) => 
     references: [spaces.id],
   }),
   socialExports: many(socialExports),
+  translations: many(testimonialTranslations),
 }));
 
 export const widgetConfigsRelations = relations(widgetConfigs, ({ one }) => ({
@@ -777,4 +855,33 @@ export const socialExportsRelations = relations(
     }),
   })
 );
+
+export const experimentsRelations = relations(experiments, ({ one, many }) => ({
+  space: one(spaces, {
+    fields: [experiments.spaceId],
+    references: [spaces.id],
+  }),
+  assignments: many(experimentAssignments),
+}));
+
+export const experimentAssignmentsRelations = relations(
+  experimentAssignments,
+  ({ one }) => ({
+    experiment: one(experiments, {
+      fields: [experimentAssignments.experimentId],
+      references: [experiments.id],
+    }),
+  })
+);
+
+export const testimonialTranslationsRelations = relations(
+  testimonialTranslations,
+  ({ one }) => ({
+    testimonial: one(testimonials, {
+      fields: [testimonialTranslations.testimonialId],
+      references: [testimonials.id],
+    }),
+  })
+);
+
 

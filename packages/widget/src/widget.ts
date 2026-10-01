@@ -1,5 +1,11 @@
 import styles from "./styles.css";
-import { TestimonialItem, ReviewItem } from "./matcher";
+import {
+  TestimonialItem,
+  ReviewItem,
+  detectVisitorLocale,
+  resolveTestimonialTranslation,
+  TranscriptCue,
+} from "./matcher";
 import { createVideoPlayer, VideoPlayerController } from "./player";
 import { AnalyticsTracker } from "./analytics";
 import { markDismissed } from "./triggers";
@@ -60,6 +66,46 @@ export class VouchreelWidget {
     this.testimonials = options.testimonials || [];
     this.reviews = options.reviews || [];
     this.analytics = options.analytics;
+  }
+
+  /**
+   * Detects the visitor locale via browser preferences or HTML lang attribute.
+   */
+  public getVisitorLocale(): string {
+    return detectVisitorLocale();
+  }
+
+  private getEffectiveQuote(item: TestimonialItem): {
+    text: string | null;
+    isTranslated: boolean;
+    lang?: string;
+  } {
+    const visitorLang = this.getVisitorLocale();
+    const translation = resolveTestimonialTranslation(item, visitorLang);
+    if (translation?.quote) {
+      return {
+        text: translation.quote,
+        isTranslated: true,
+        lang: translation.language,
+      };
+    }
+    return {
+      text: item.quote || item.title || null,
+      isTranslated: false,
+    };
+  }
+
+  private getEffectiveCues(item: TestimonialItem): Array<TranscriptCue> | null {
+    const visitorLang = this.getVisitorLocale();
+    const translation = resolveTestimonialTranslation(item, visitorLang);
+    if (
+      translation?.transcript &&
+      Array.isArray(translation.transcript) &&
+      translation.transcript.length > 0
+    ) {
+      return translation.transcript;
+    }
+    return null;
   }
 
   /**
@@ -279,11 +325,15 @@ export class VouchreelWidget {
     badgeRow.innerHTML = `<span class="vr-provider-badge vr-badge-video">📹 Video Testimonial</span>`;
     card.appendChild(badgeRow);
 
-    // Quote / Title
-    if (item.quote || item.title) {
+    // Quote / Title (with multi-language translation support)
+    const effective = this.getEffectiveQuote(item);
+    if (effective.text) {
       const text = document.createElement("p");
       text.className = "vr-card-quote-text";
-      text.textContent = `"${item.quote || item.title}"`;
+      text.textContent = `"${effective.text}"`;
+      if (effective.isTranslated) {
+        text.setAttribute("data-translated-lang", effective.lang || "");
+      }
       card.appendChild(text);
     }
 
@@ -687,10 +737,14 @@ export class VouchreelWidget {
     name.textContent = current.customerName || current.title || "Video Testimonial";
     info.appendChild(name);
 
-    if (current.quote) {
+    const effectiveQuote = this.getEffectiveQuote(current);
+    if (effectiveQuote.text) {
       const quote = document.createElement("div");
       quote.className = "vr-card-quote";
-      quote.textContent = `"${current.quote}"`;
+      quote.textContent = `"${effectiveQuote.text}"`;
+      if (effectiveQuote.isTranslated) {
+        quote.setAttribute("data-translated-lang", effectiveQuote.lang || "");
+      }
       info.appendChild(quote);
     }
     openBtn.appendChild(info);
@@ -806,12 +860,17 @@ export class VouchreelWidget {
     playerContainer.className = "vr-player-container";
     modal.appendChild(playerContainer);
 
+    const cues = this.getEffectiveCues(current);
+    const visitorLang = this.getVisitorLocale();
+
     this.activePlayer = createVideoPlayer({
       container: playerContainer,
       videoUrl: current.videoUrl,
       platform: current.platform,
       thumbnailUrl: current.thumbnailUrl,
       autoplayPreview: this.config.autoplayPreview,
+      subtitles: cues,
+      subtitleLanguage: visitorLang,
       onPlay: () => {
         if (this.analytics) {
           this.analytics.track("play", current.id);
@@ -825,10 +884,18 @@ export class VouchreelWidget {
     const body = document.createElement("div");
     body.className = "vr-modal-body";
 
-    if (current.quote) {
+    const effectiveModalQuote = this.getEffectiveQuote(current);
+    if (effectiveModalQuote.text) {
       const quote = document.createElement("p");
       quote.className = "vr-modal-quote";
-      quote.textContent = `"${current.quote}"`;
+      if (effectiveModalQuote.isTranslated) {
+        const langBadge = document.createElement("span");
+        langBadge.className = "vr-lang-badge";
+        langBadge.textContent = (effectiveModalQuote.lang || visitorLang).toUpperCase();
+        quote.appendChild(langBadge);
+      }
+      const textNode = document.createTextNode(`"${effectiveModalQuote.text}"`);
+      quote.appendChild(textNode);
       body.appendChild(quote);
     }
 

@@ -96,60 +96,46 @@ describe("Widget Data Public API Route", () => {
       },
     ];
 
+    const createChainable = (val: any) => ({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockImplementation(() => {
+          const promise = Promise.resolve(val);
+          return Object.assign(promise, {
+            orderBy: vi.fn().mockImplementation(() => {
+              const orderPromise = Promise.resolve(val);
+              return Object.assign(orderPromise, {
+                limit: vi.fn().mockResolvedValue(val),
+              });
+            }),
+            limit: vi.fn().mockResolvedValue(val),
+          });
+        }),
+      }),
+    });
+
     let queryCount = 0;
     (db.select as any).mockImplementation(() => {
       queryCount++;
-      if (queryCount === 1) {
-        // Space lookup
-        return {
-          from: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue([mockSpace]),
-          }),
-        };
+      if (queryCount === 1) return createChainable([mockSpace]);
+      if (queryCount === 2) return createChainable([mockConfig]);
+      if (queryCount === 3) return createChainable(mockTestimonials);
+      if (queryCount === 4) return createChainable([]); // Testimonial translations
+      if (queryCount === 5) {
+        // Approved reviews
+        return createChainable([
+          {
+            id: "rev-1",
+            provider: "google",
+            authorName: "Alice M.",
+            rating: 5,
+            text: "Great experience!",
+            reviewDate: new Date(),
+          },
+        ]);
       }
-      if (queryCount === 2) {
-        // Widget config lookup
-        return {
-          from: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue([mockConfig]),
-          }),
-        };
-      }
-      if (queryCount === 3) {
-        // Active testimonials lookup
-        return {
-          from: vi.fn().mockReturnValue({
-            where: vi.fn().mockReturnValue({
-              orderBy: vi.fn().mockResolvedValue(mockTestimonials),
-            }),
-          }),
-        };
-      }
-      if (queryCount === 4) {
-        // Approved reviews lookup
-        return {
-          from: vi.fn().mockReturnValue({
-            where: vi.fn().mockReturnValue({
-              orderBy: vi.fn().mockResolvedValue([
-                {
-                  id: "rev-1",
-                  provider: "google",
-                  authorName: "Alice M.",
-                  rating: 5,
-                  text: "Great experience!",
-                  reviewDate: new Date(),
-                },
-              ]),
-            }),
-          }),
-        };
-      }
-      // Conversion goals lookup
-      return {
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(mockGoals),
-        }),
-      };
+      if (queryCount === 6) return createChainable(mockGoals); // Conversion goals
+      // Query 7: Active experiment lookup
+      return createChainable([]);
     });
 
     const res = await getWidgetData(new Request("http://localhost/api/widget/emb_valid_123"), {
@@ -173,5 +159,156 @@ describe("Widget Data Public API Route", () => {
     expect(json.reviews[0].authorName).toBe("Alice M.");
     expect(json.conversionGoals).toHaveLength(1);
     expect(json.conversionGoals[0].goalValue).toBe("/thank-you");
+    expect(json.activeExperiment).toBeNull();
+  });
+
+  it("returns activeExperiment details when a running experiment exists", async () => {
+    const mockSpace = {
+      id: "space-uuid-1",
+      name: "Acme Space",
+      embedKey: "emb_valid_123",
+    };
+
+    const mockRunningExperiment = {
+      id: "exp-1",
+      name: "Test Trigger Delay vs Exit Intent",
+      type: "trigger",
+      variants: [
+        { id: "var-control", name: "Delay 5s", config: { type: "delay", value: { seconds: 5 } } },
+        { id: "var-b", name: "Exit Intent", config: { type: "exit-intent", value: {} } },
+      ],
+      trafficSplit: [50, 50],
+    };
+
+    let count = 0;
+    (db.select as any).mockImplementation(() => {
+      count++;
+      if (count === 1) {
+        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockSpace]) }) };
+      }
+      if (count === 2) {
+        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) };
+      }
+      if (count === 3) {
+        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ orderBy: vi.fn().mockResolvedValue([]) }) }) };
+      }
+      if (count === 4) {
+        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ orderBy: vi.fn().mockResolvedValue([]) }) }) };
+      }
+      if (count === 5) {
+        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) };
+      }
+      return {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([mockRunningExperiment]),
+            }),
+          }),
+        }),
+      };
+    });
+
+    const res = await getWidgetData(new Request("http://localhost/api/widget/emb_valid_123"), {
+      params: Promise.resolve({ embedKey: "emb_valid_123" }),
+    });
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.activeExperiment).toBeDefined();
+    expect(json.activeExperiment.id).toBe("exp-1");
+    expect(json.activeExperiment.name).toBe("Test Trigger Delay vs Exit Intent");
+    expect(json.activeExperiment.type).toBe("trigger");
+    expect(json.activeExperiment.trafficSplit).toEqual([50, 50]);
+    expect(json.activeExperiment.variants).toHaveLength(2);
+  });
+
+  it("includes cached translations for active testimonials", async () => {
+    const mockSpace = {
+      id: "space-uuid-trans",
+      name: "Acme Translations Space",
+      embedKey: "emb_trans_456",
+    };
+
+    const mockTestimonial = {
+      id: "testi-trans-1",
+      videoUrl: "https://example.com/video.mp4",
+      platform: "mp4",
+      quote: "Original quote",
+      customerName: "Jane Doe",
+      durationSeconds: 30,
+    };
+
+    const mockTranslation = {
+      testimonialId: "testi-trans-1",
+      language: "es",
+      quote: "Cita traducida",
+      transcript: [{ start: 0, end: 5, text: "Subtítulo" }],
+    };
+
+    let count = 0;
+    (db.select as any).mockImplementation(() => {
+      count++;
+      if (count === 1) {
+        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockSpace]) }) };
+      }
+      if (count === 2) {
+        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) };
+      }
+      if (count === 3) {
+        return {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue([mockTestimonial]),
+            }),
+          }),
+        };
+      }
+      if (count === 4) {
+        // Translation query
+        return {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([mockTranslation]),
+          }),
+        };
+      }
+      if (count === 5) {
+        // Reviews
+        return {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue([]),
+            }),
+          }),
+        };
+      }
+      if (count === 6) {
+        // Conversion goals
+        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) };
+      }
+      // Experiments
+      return {
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
+      };
+    });
+
+    const res = await getWidgetData(
+      new Request("http://localhost/api/widget/emb_trans_456?lang=es"),
+      { params: Promise.resolve({ embedKey: "emb_trans_456" }) }
+    );
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.testimonials).toHaveLength(1);
+    expect(json.testimonials[0].id).toBe("testi-trans-1");
+    expect(json.testimonials[0].translations).toHaveLength(1);
+    expect(json.testimonials[0].translations[0].language).toBe("es");
+    expect(json.testimonials[0].translations[0].quote).toBe("Cita traducida");
   });
 });

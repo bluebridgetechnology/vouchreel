@@ -5,6 +5,18 @@ export interface MatchRules {
   [key: string]: unknown;
 }
 
+export interface TranscriptCue {
+  start: number;
+  end: number;
+  text: string;
+}
+
+export interface TestimonialTranslation {
+  language: string;
+  quote?: string | null;
+  transcript?: Array<TranscriptCue> | null;
+}
+
 export interface TestimonialItem {
   id: string;
   videoUrl: string;
@@ -18,7 +30,56 @@ export interface TestimonialItem {
   matchRules?: MatchRules | null;
   tags?: string[] | null;
   sortOrder?: number;
+  translations?:
+    | TestimonialTranslation[]
+    | Record<string, { quote?: string | null; transcript?: Array<TranscriptCue> | null }>;
   [key: string]: unknown;
+}
+
+/**
+ * Detects visitor locale via navigator.language or document.documentElement.lang.
+ */
+export function detectVisitorLocale(): string {
+  if (typeof document !== "undefined" && document.documentElement?.lang) {
+    const docLang = document.documentElement.lang.trim().slice(0, 2).toLowerCase();
+    if (docLang) return docLang;
+  }
+  if (typeof navigator !== "undefined" && navigator.language) {
+    return navigator.language.slice(0, 2).toLowerCase();
+  }
+  return "en";
+}
+
+/**
+ * Finds matching translation for a testimonial in the visitor's language.
+ * Returns null if no translation exists for the language.
+ */
+export function resolveTestimonialTranslation(
+  testimonial: TestimonialItem,
+  targetLang: string
+): TestimonialTranslation | null {
+  if (!testimonial || !testimonial.translations) return null;
+  const lang = targetLang.trim().toLowerCase();
+
+  if (Array.isArray(testimonial.translations)) {
+    const found = testimonial.translations.find(
+      (t) => t.language?.trim().toLowerCase() === lang
+    );
+    return found || null;
+  }
+
+  if (typeof testimonial.translations === "object") {
+    const entry = (testimonial.translations as Record<string, any>)[lang];
+    if (entry) {
+      return {
+        language: lang,
+        quote: entry.quote ?? null,
+        transcript: entry.transcript ?? null,
+      };
+    }
+  }
+
+  return null;
 }
 
 export interface WidgetTargetingConfig {
@@ -51,7 +112,7 @@ export function normalizePath(inputPath: string): string {
  * - `**` matches any characters across path segments (including `/`).
  */
 export function globToRegex(pattern: string): RegExp {
-  let normalizedPattern = normalizePath(pattern);
+  const normalizedPattern = normalizePath(pattern);
 
   // If pattern is wildcard
   if (normalizedPattern === "/*" || normalizedPattern === "/**") {

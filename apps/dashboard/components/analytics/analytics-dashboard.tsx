@@ -41,12 +41,64 @@ export interface PerTestimonialStats {
   conversions: number;
 }
 
+export interface ComparativeAnalyticsData {
+  current: {
+    stats: OverviewStats;
+    funnel: FunnelStep[];
+    playRate: number | null;
+    conversionRate: number | null;
+  };
+  previous: {
+    stats: OverviewStats;
+    funnel: FunnelStep[];
+    playRate: number | null;
+    conversionRate: number | null;
+  };
+  deltas: {
+    impressions: number;
+    plays: number;
+    clicks: number;
+    conversions: number;
+    playRate: number | null;
+    conversionRate: number | null;
+    funnel: Record<string, number>;
+  };
+}
+
+export interface SegmentComparisonData {
+  segment1: {
+    filter: Record<string, unknown>;
+    stats: OverviewStats;
+    funnel: FunnelStep[];
+    playRate: number | null;
+    conversionRate: number | null;
+  };
+  segment2: {
+    filter: Record<string, unknown>;
+    stats: OverviewStats;
+    funnel: FunnelStep[];
+    playRate: number | null;
+    conversionRate: number | null;
+  };
+  deltas: {
+    impressions: number;
+    plays: number;
+    clicks: number;
+    conversions: number;
+    playRate: number | null;
+    conversionRate: number | null;
+    funnel: Record<string, number>;
+  };
+}
+
 type SortKey =
   | "title"
   | "impressions"
   | "plays"
   | "clicks"
   | "conversions";
+
+type CompareMode = "none" | "previous" | "segments";
 
 const RANGE_OPTIONS = [
   { label: "7d", days: 7 },
@@ -74,6 +126,23 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Segmentation Filters
+  const [selectedTestimonial, setSelectedTestimonial] = useState<string>("");
+  const [selectedDevice, setSelectedDevice] = useState<string>("");
+  const [selectedTrafficSource, setSelectedTrafficSource] = useState<string>("");
+  const [searchPageUrl, setSearchPageUrl] = useState<string>("");
+
+  // Comparison Options
+  const [compareMode, setCompareMode] = useState<CompareMode>("none");
+
+  // Dynamic filter options discovered from events
+  const [filterOptions, setFilterOptions] = useState<{
+    devices: string[];
+    trafficSources: string[];
+    pageUrls: string[];
+  }>({ devices: [], trafficSources: [], pageUrls: [] });
+
+  // Data states
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [prevStats, setPrevStats] = useState<OverviewStats | null>(null);
   const [points, setPoints] = useState<TimeSeriesPoint[]>([]);
@@ -81,42 +150,96 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
   const [rows, setRows] = useState<PerTestimonialStats[]>([]);
   const [goals, setGoals] = useState<ConversionGoal[]>([]);
 
+  // Detailed comparative state
+  const [comparison, setComparison] = useState<ComparativeAnalyticsData | null>(null);
+  const [segmentComparison, setSegmentComparison] = useState<SegmentComparisonData | null>(null);
+
   const [sortKey, setSortKey] = useState<SortKey>("impressions");
   const [sortAsc, setSortAsc] = useState(false);
 
-  async function load(range: { startDate: string; endDate: string }, prevRange: { startDate: string; endDate: string }) {
+  // Build query string helper
+  const buildFilterQuery = (baseRange: { startDate: string; endDate: string }) => {
+    const params = new URLSearchParams({
+      startDate: baseRange.startDate,
+      endDate: baseRange.endDate,
+    });
+    if (selectedTestimonial) params.set("testimonialId", selectedTestimonial);
+    if (selectedDevice) params.set("deviceType", selectedDevice);
+    if (selectedTrafficSource) params.set("trafficSource", selectedTrafficSource);
+    if (searchPageUrl) params.set("pageUrl", searchPageUrl);
+    return params.toString();
+  };
+
+  async function load(
+    range: { startDate: string; endDate: string },
+    prevRange: { startDate: string; endDate: string }
+  ) {
     setLoading(true);
     setError(null);
     try {
-      const qs = (r: { startDate: string; endDate: string }) =>
-        `startDate=${r.startDate}&endDate=${r.endDate}`;
-      const [overviewRes, prevRes, tsRes, funnelRes, tableRes, goalsRes] =
-        await Promise.all([
-          fetch(`/api/spaces/${spaceId}/analytics?type=overview&${qs(range)}`),
-          fetch(`/api/spaces/${spaceId}/analytics?type=overview&${qs(prevRange)}`),
-          fetch(`/api/spaces/${spaceId}/analytics?type=timeseries&${qs(range)}`),
-          fetch(`/api/spaces/${spaceId}/analytics?type=funnel&${qs(range)}`),
-          fetch(`/api/spaces/${spaceId}/analytics?type=testimonials&${qs(range)}`),
-          fetch(`/api/spaces/${spaceId}/conversion-goals`),
-        ]);
+      const filterQs = buildFilterQuery(range);
+      const prevFilterQs = buildFilterQuery(prevRange);
 
-      if (!overviewRes.ok || !tsRes.ok || !funnelRes.ok || !tableRes.ok || !goalsRes.ok) {
+      const fetches: Promise<Response>[] = [
+        fetch(`/api/spaces/${spaceId}/analytics?type=overview&${filterQs}`),
+        fetch(`/api/spaces/${spaceId}/analytics?type=overview&${prevFilterQs}`),
+        fetch(`/api/spaces/${spaceId}/analytics?type=timeseries&${filterQs}`),
+        fetch(`/api/spaces/${spaceId}/analytics?type=funnel&${filterQs}`),
+        fetch(`/api/spaces/${spaceId}/analytics?type=testimonials&${filterQs}`),
+        fetch(`/api/spaces/${spaceId}/conversion-goals`),
+        fetch(`/api/spaces/${spaceId}/analytics?type=filter-options&${filterQs}`),
+      ];
+
+      if (compareMode === "previous") {
+        fetches.push(
+          fetch(
+            `/api/spaces/${spaceId}/analytics?type=comparison&${filterQs}&prevStartDate=${prevRange.startDate}&prevEndDate=${prevRange.endDate}`
+          )
+        );
+      } else if (compareMode === "segments") {
+        fetches.push(
+          fetch(
+            `/api/spaces/${spaceId}/analytics?type=segment-comparison&${filterQs}&compareSegment=device`
+          )
+        );
+      }
+
+      const responses = await Promise.all(fetches);
+
+      if (responses.some((r) => !r.ok)) {
         throw new Error("Failed to load analytics");
       }
 
-      const overviewData = await overviewRes.json();
-      const prevData = await prevRes.json();
-      const tsData = await tsRes.json();
-      const funnelData = await funnelRes.json();
-      const tableData = await tableRes.json();
-      const goalsData = await goalsRes.json();
+      const overviewData = await responses[0].json();
+      const prevData = await responses[1].json();
+      const tsData = await responses[2].json();
+      const funnelData = await responses[3].json();
+      const tableData = await responses[4].json();
+      const goalsData = await responses[5].json();
+      const optionsData = await responses[6].json();
 
       setStats(overviewData.stats);
-      setPrevStats(prevRes.ok ? prevData.stats : null);
+      setPrevStats(prevData.stats);
       setPoints(tsData.points);
       setFunnel(funnelData.funnel);
       setRows(tableData.testimonials);
       setGoals(goalsData.goals);
+      if (optionsData.filterOptions) {
+        setFilterOptions(optionsData.filterOptions);
+      }
+
+      if (compareMode === "previous" && responses[7]) {
+        const compData = await responses[7].json();
+        setComparison(compData.comparison);
+        setSegmentComparison(null);
+      } else if (compareMode === "segments" && responses[7]) {
+        const segData = await responses[7].json();
+        setSegmentComparison(segData.segmentComparison);
+        setComparison(null);
+      } else {
+        setComparison(null);
+        setSegmentComparison(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load analytics");
     } finally {
@@ -124,23 +247,33 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
     }
   }
 
-  function handleRangeChange(nextDays: number) {
-    setDays(nextDays);
-    const range = rangeFor(nextDays);
+  function reloadData() {
+    const range = rangeFor(days);
     const prevEnd = new Date();
-    prevEnd.setDate(prevEnd.getDate() - nextDays);
+    prevEnd.setDate(prevEnd.getDate() - days);
     const prevStart = new Date(prevEnd);
-    prevStart.setDate(prevStart.getDate() - nextDays);
+    prevStart.setDate(prevStart.getDate() - days);
     load(range, {
       startDate: prevStart.toISOString().slice(0, 10),
       endDate: prevEnd.toISOString().slice(0, 10),
     });
   }
 
+  function handleRangeChange(nextDays: number) {
+    setDays(nextDays);
+  }
+
   useEffect(() => {
-    handleRangeChange(30);
+    reloadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    days,
+    selectedTestimonial,
+    selectedDevice,
+    selectedTrafficSource,
+    searchPageUrl,
+    compareMode,
+  ]);
 
   function handleSort(key: SortKey) {
     if (sortKey === key) {
@@ -150,6 +283,20 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
       setSortAsc(false);
     }
   }
+
+  function handleResetFilters() {
+    setSelectedTestimonial("");
+    setSelectedDevice("");
+    setSelectedTrafficSource("");
+    setSearchPageUrl("");
+    setCompareMode("none");
+  }
+
+  const hasActiveFilters =
+    Boolean(selectedTestimonial) ||
+    Boolean(selectedDevice) ||
+    Boolean(selectedTrafficSource) ||
+    Boolean(searchPageUrl);
 
   const sortedRows = useMemo(() => {
     const copy = [...rows];
@@ -198,28 +345,203 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
 
   const maxFunnel = funnel.length > 0 ? Math.max(...funnel.map((f) => f.count), 1) : 1;
 
+  const currentRange = rangeFor(days);
+  const exportCsvUrl = `/api/spaces/${spaceId}/analytics/export?format=csv&${buildFilterQuery(
+    currentRange
+  )}`;
+  const exportPdfUrl = `/api/spaces/${spaceId}/analytics/report?format=pdf&${buildFilterQuery(
+    currentRange
+  )}`;
+
   return (
     <div className="space-y-6">
-      {/* Date range selector */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          Track impressions, video plays, click-throughs, and conversions.
-        </p>
-        <div className="flex gap-1 rounded-md border p-0.5">
-          {RANGE_OPTIONS.map((opt) => (
+      {/* Top action & date header */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-xs text-muted-foreground">
+            Track impressions, video plays, click-throughs, and conversions with multi-dimensional segmentation.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Date range picker buttons */}
+          <div className="flex gap-1 rounded-md border p-0.5">
+            {RANGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.label}
+                onClick={() => handleRangeChange(opt.days)}
+                disabled={loading}
+                className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                  days === opt.days
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Export buttons */}
+          <a
+            href={exportCsvUrl}
+            download={`vouchreel-analytics-${spaceId}.csv`}
+            className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+            title="Export raw analytics data to CSV"
+          >
+            <svg
+              className="h-3.5 w-3.5 text-muted-foreground"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            Export CSV
+          </a>
+
+          <a
+            href={exportPdfUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2.5 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            title="Download executive summary PDF report"
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+              />
+            </svg>
+            Download PDF Report
+          </a>
+        </div>
+      </div>
+
+      {/* Filter and Comparison Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+              />
+            </svg>
+            Filters:
+          </span>
+
+          {/* Testimonial Filter */}
+          <select
+            value={selectedTestimonial}
+            onChange={(e) => setSelectedTestimonial(e.target.value)}
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:ring-1 focus:ring-primary"
+          >
+            <option value="">All Testimonials</option>
+            {rows.map((row) => (
+              <option key={row.testimonialId} value={row.testimonialId}>
+                {row.customerName || row.title || "Untitled Testimonial"}
+              </option>
+            ))}
+          </select>
+
+          {/* Device Filter */}
+          <select
+            value={selectedDevice}
+            onChange={(e) => setSelectedDevice(e.target.value)}
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:ring-1 focus:ring-primary"
+          >
+            <option value="">All Devices</option>
+            <option value="desktop">Desktop</option>
+            <option value="mobile">Mobile</option>
+          </select>
+
+          {/* Traffic Source Filter */}
+          <select
+            value={selectedTrafficSource}
+            onChange={(e) => setSelectedTrafficSource(e.target.value)}
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground focus:ring-1 focus:ring-primary"
+          >
+            <option value="">All Traffic Sources</option>
+            <option value="direct">Direct</option>
+            {filterOptions.trafficSources
+              .filter((src) => src !== "direct")
+              .map((src) => (
+                <option key={src} value={src}>
+                  {src}
+                </option>
+              ))}
+          </select>
+
+          {/* Page URL Search */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Filter by Page URL..."
+              value={searchPageUrl}
+              onChange={(e) => setSearchPageUrl(e.target.value)}
+              className="h-8 w-44 rounded-md border border-input bg-background px-2 text-xs text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-primary"
+            />
+          </div>
+
+          {hasActiveFilters && (
             <button
-              key={opt.label}
-              onClick={() => handleRangeChange(opt.days)}
-              disabled={loading}
-              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                days === opt.days
+              onClick={handleResetFilters}
+              className="h-8 rounded-md border border-dashed px-2 text-[11px] font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
+
+        {/* Compare Toggle */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] font-semibold text-muted-foreground">Compare:</span>
+          <div className="inline-flex rounded-md border p-0.5">
+            <button
+              onClick={() => setCompareMode("none")}
+              className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+                compareMode === "none"
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-accent"
               }`}
             >
-              {opt.label}
+              Off
             </button>
-          ))}
+            <button
+              onClick={() => setCompareMode("previous")}
+              className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+                compareMode === "previous"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              Previous Period
+            </button>
+            <button
+              onClick={() => setCompareMode("segments")}
+              className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+                compareMode === "segments"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              Mobile vs Desktop
+            </button>
+          </div>
         </div>
       </div>
 
@@ -240,81 +562,291 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
       ) : hasNoEvents ? (
         <div className="rounded-xl border border-dashed p-12 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <svg className="h-6 w-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+            <svg
+              className="h-6 w-6 text-muted-foreground"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"
+              />
             </svg>
           </div>
           <h3 className="mt-4 text-base font-semibold">No analytics data yet</h3>
           <p className="mt-1 max-w-sm text-xs text-muted-foreground">
             Once your widget is embedded and visitors start interacting, impressions,
-            plays, and conversions will show up here.
+            plays, and conversions matching your filters will show up here.
           </p>
         </div>
       ) : (
         <>
-          {/* Overview cards */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard
-              label="Impressions"
-              value={stats?.impressions ?? 0}
-              trend={trend(stats?.impressions, prevStats?.impressions)}
-            />
-            <StatCard
-              label="Plays"
-              value={stats?.plays ?? 0}
-              sub={playRate !== null ? `${playRate}% play rate` : undefined}
-              trend={trend(stats?.plays, prevStats?.plays)}
-            />
-            <StatCard label="Clicks" value={stats?.clicks ?? 0} trend={trend(stats?.clicks, prevStats?.clicks)} />
-            <StatCard
-              label="Conversions"
-              value={stats?.conversions ?? 0}
-              sub={conversionRate !== null ? `${conversionRate}% conversion rate` : undefined}
-              trend={trend(stats?.conversions, prevStats?.conversions)}
-            />
-          </div>
+          {/* Comparison Mode Banner */}
+          {compareMode === "previous" && (
+            <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 text-xs text-foreground">
+              <span className="font-medium">
+                Comparing Current Period (Last {days} days) vs Previous Period
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                Showing relative deltas and dual-period metrics
+              </span>
+            </div>
+          )}
+
+          {compareMode === "segments" && (
+            <div className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 px-4 py-2 text-xs text-foreground">
+              <span className="font-medium">Comparing Mobile vs Desktop Segment Performance</span>
+              <span className="text-[11px] text-muted-foreground">
+                Side-by-side device segmentation
+              </span>
+            </div>
+          )}
+
+          {/* Overview Cards: Normal or Comparative */}
+          {compareMode === "segments" && segmentComparison ? (
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <SegmentStatCard
+                label="Impressions"
+                val1={segmentComparison.segment1.stats.impressions}
+                val2={segmentComparison.segment2.stats.impressions}
+                delta={segmentComparison.deltas.impressions}
+                name1="Mobile"
+                name2="Desktop"
+              />
+              <SegmentStatCard
+                label="Plays"
+                val1={segmentComparison.segment1.stats.plays}
+                val2={segmentComparison.segment2.stats.plays}
+                delta={segmentComparison.deltas.plays}
+                name1="Mobile"
+                name2="Desktop"
+              />
+              <SegmentStatCard
+                label="Clicks"
+                val1={segmentComparison.segment1.stats.clicks}
+                val2={segmentComparison.segment2.stats.clicks}
+                delta={segmentComparison.deltas.clicks}
+                name1="Mobile"
+                name2="Desktop"
+              />
+              <SegmentStatCard
+                label="Conversions"
+                val1={segmentComparison.segment1.stats.conversions}
+                val2={segmentComparison.segment2.stats.conversions}
+                delta={segmentComparison.deltas.conversions}
+                name1="Mobile"
+                name2="Desktop"
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <StatCard
+                label="Impressions"
+                value={stats?.impressions ?? 0}
+                prevValue={compareMode === "previous" ? prevStats?.impressions : undefined}
+                trend={trend(stats?.impressions, prevStats?.impressions)}
+              />
+              <StatCard
+                label="Plays"
+                value={stats?.plays ?? 0}
+                prevValue={compareMode === "previous" ? prevStats?.plays : undefined}
+                sub={playRate !== null ? `${playRate}% play rate` : undefined}
+                trend={trend(stats?.plays, prevStats?.plays)}
+              />
+              <StatCard
+                label="Clicks"
+                value={stats?.clicks ?? 0}
+                prevValue={compareMode === "previous" ? prevStats?.clicks : undefined}
+                trend={trend(stats?.clicks, prevStats?.clicks)}
+              />
+              <StatCard
+                label="Conversions"
+                value={stats?.conversions ?? 0}
+                prevValue={compareMode === "previous" ? prevStats?.conversions : undefined}
+                sub={conversionRate !== null ? `${conversionRate}% conversion rate` : undefined}
+                trend={trend(stats?.conversions, prevStats?.conversions)}
+              />
+            </div>
+          )}
 
           {/* Time-series chart */}
           <div className="rounded-xl border bg-card p-4">
             <h3 className="mb-4 text-sm font-semibold">Impressions & Plays Over Time</h3>
             {points.length === 0 ? (
               <p className="py-16 text-center text-xs text-muted-foreground">
-                No events in this period.
+                No events in this period matching the active filters.
               </p>
             ) : (
               <TimeSeriesChart points={points} />
             )}
           </div>
 
-          {/* Funnel */}
+          {/* Funnel: Single or Comparative */}
           <div className="rounded-xl border bg-card p-4">
-            <h3 className="mb-4 text-sm font-semibold">Conversion Funnel</h3>
-            <div className="space-y-2">
-              {funnel.map((step, i) => (
-                <div key={step.step}>
-                  <div className="mb-1 flex items-center justify-between text-xs">
-                    <span className="font-medium">{STEP_LABELS[step.step] ?? step.step}</span>
-                    <span className="text-muted-foreground">
-                      {step.count.toLocaleString()}
-                      {step.conversionFromPrevious !== null && i > 0 && (
-                        <> · {step.conversionFromPrevious}% from previous</>
-                      )}
-                    </span>
-                  </div>
-                  <div className="h-6 w-full overflow-hidden rounded-md bg-muted">
-                    <div
-                      className="flex h-full items-center justify-end rounded-md bg-primary pr-2 text-[10px] font-semibold text-primary-foreground transition-all"
-                      style={{ width: `${Math.max((step.count / maxFunnel) * 100, step.count > 0 ? 8 : 0)}%` }}
-                    />
-                  </div>
-                  {step.dropOffPercent !== null && i > 0 && (
-                    <p className="mt-0.5 text-right text-[10px] text-muted-foreground">
-                      −{step.dropOffPercent}% drop-off
-                    </p>
-                  )}
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Conversion Funnel</h3>
+              {compareMode === "previous" && (
+                <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-xs bg-primary" /> Current Period
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-xs bg-muted-foreground/40" /> Previous Period
+                  </span>
                 </div>
-              ))}
+              )}
+              {compareMode === "segments" && (
+                <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-xs bg-primary" /> Mobile
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-xs bg-indigo-400" /> Desktop
+                  </span>
+                </div>
+              )}
             </div>
+
+            {compareMode === "segments" && segmentComparison ? (
+              <div className="space-y-4">
+                {segmentComparison.segment1.funnel.map((step1, i) => {
+                  const step2 = segmentComparison.segment2.funnel[i] || { count: 0, dropOffPercent: null };
+                  const maxStep = Math.max(step1.count, step2.count, 1);
+                  const delta = segmentComparison.deltas.funnel[step1.step] ?? 0;
+
+                  return (
+                    <div key={step1.step} className="rounded-lg border bg-muted/20 p-3">
+                      <div className="mb-2 flex items-center justify-between text-xs">
+                        <span className="font-semibold text-foreground">
+                          {STEP_LABELS[step1.step] ?? step1.step}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                              delta >= 0
+                                ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                                : "bg-red-500/10 text-red-700 dark:text-red-400"
+                            }`}
+                          >
+                            {delta >= 0 ? "+" : ""}
+                            {delta}% (Mobile vs Desktop)
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Mobile bar */}
+                      <div className="mb-1.5">
+                        <div className="mb-0.5 flex justify-between text-[11px] text-muted-foreground">
+                          <span>Mobile</span>
+                          <span>{step1.count.toLocaleString()}</span>
+                        </div>
+                        <div className="h-4 w-full overflow-hidden rounded bg-muted">
+                          <div
+                            className="h-full rounded bg-primary transition-all"
+                            style={{ width: `${Math.max((step1.count / maxStep) * 100, step1.count > 0 ? 5 : 0)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Desktop bar */}
+                      <div>
+                        <div className="mb-0.5 flex justify-between text-[11px] text-muted-foreground">
+                          <span>Desktop</span>
+                          <span>{step2.count.toLocaleString()}</span>
+                        </div>
+                        <div className="h-4 w-full overflow-hidden rounded bg-muted">
+                          <div
+                            className="h-full rounded bg-indigo-400 transition-all"
+                            style={{ width: `${Math.max((step2.count / maxStep) * 100, step2.count > 0 ? 5 : 0)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {funnel.map((step, i) => {
+                  const prevStepCount =
+                    compareMode === "previous" && comparison
+                      ? comparison.previous.funnel[i]?.count ?? 0
+                      : null;
+
+                  const delta =
+                    compareMode === "previous" && comparison
+                      ? comparison.deltas.funnel[step.step] ?? null
+                      : null;
+
+                  return (
+                    <div key={step.step}>
+                      <div className="mb-1 flex items-center justify-between text-xs">
+                        <span className="font-medium">{STEP_LABELS[step.step] ?? step.step}</span>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <span>{step.count.toLocaleString()}</span>
+                          {prevStepCount !== null && (
+                            <span className="text-[11px] text-muted-foreground">
+                              (Prev: {prevStepCount.toLocaleString()})
+                            </span>
+                          )}
+                          {delta !== null && (
+                            <span
+                              className={`rounded px-1.5 py-0.2 text-[10px] font-bold ${
+                                delta >= 0
+                                  ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                                  : "bg-red-500/10 text-red-700 dark:text-red-400"
+                              }`}
+                            >
+                              {delta >= 0 ? "+" : ""}
+                              {delta}%
+                            </span>
+                          )}
+                          {step.conversionFromPrevious !== null && i > 0 && (
+                            <span> · {step.conversionFromPrevious}% from prev</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="h-5 w-full overflow-hidden rounded-md bg-muted">
+                          <div
+                            className="flex h-full items-center justify-end rounded-md bg-primary pr-2 text-[10px] font-semibold text-primary-foreground transition-all"
+                            style={{
+                              width: `${Math.max(
+                                (step.count / maxFunnel) * 100,
+                                step.count > 0 ? 8 : 0
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                        {prevStepCount !== null && (
+                          <div className="h-2 w-full overflow-hidden rounded bg-muted/60">
+                            <div
+                              className="h-full rounded bg-muted-foreground/40 transition-all"
+                              style={{
+                                width: `${Math.max(
+                                  (prevStepCount / maxFunnel) * 100,
+                                  prevStepCount > 0 ? 8 : 0
+                                )}%`,
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {step.dropOffPercent !== null && i > 0 && (
+                        <p className="mt-0.5 text-right text-[10px] text-muted-foreground">
+                          −{step.dropOffPercent}% drop-off
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Per-testimonial table */}
@@ -322,7 +854,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
             <h3 className="mb-4 text-sm font-semibold">Per-Testimonial Performance</h3>
             {rows.length === 0 ? (
               <p className="py-8 text-center text-xs text-muted-foreground">
-                No testimonials in this space yet.
+                No testimonials match the active filter.
               </p>
             ) : (
               <div className="overflow-x-auto">
@@ -364,7 +896,11 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
                               />
                             ) : (
                               <div className="flex h-8 w-12 items-center justify-center rounded bg-muted text-muted-foreground">
-                                <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                <svg
+                                  className="h-3.5 w-3.5"
+                                  fill="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
                                   <path d="M8 5v14l11-7z" />
                                 </svg>
                               </div>
@@ -413,11 +949,13 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
 function StatCard({
   label,
   value,
+  prevValue,
   sub,
   trend,
 }: {
   label: string;
   value: number;
+  prevValue?: number;
   sub?: string;
   trend: string | null;
 }) {
@@ -426,6 +964,11 @@ function StatCard({
       <p className="text-xs text-muted-foreground">{label}</p>
       <div className="mt-1 flex items-baseline gap-2">
         <p className="text-2xl font-bold">{value.toLocaleString()}</p>
+        {prevValue !== undefined && (
+          <span className="text-xs text-muted-foreground">
+            vs {prevValue.toLocaleString()}
+          </span>
+        )}
         {trend && (
           <span
             className={`text-[10px] font-semibold ${
@@ -437,6 +980,50 @@ function StatCard({
         )}
       </div>
       {sub && <p className="mt-0.5 text-[10px] text-muted-foreground">{sub}</p>}
+    </div>
+  );
+}
+
+function SegmentStatCard({
+  label,
+  val1,
+  val2,
+  delta,
+  name1,
+  name2,
+}: {
+  label: string;
+  val1: number;
+  val2: number;
+  delta: number;
+  name1: string;
+  name2: string;
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <span
+          className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
+            delta >= 0
+              ? "bg-green-500/10 text-green-700 dark:text-green-400"
+              : "bg-red-500/10 text-red-700 dark:text-red-400"
+          }`}
+        >
+          {delta >= 0 ? "+" : ""}
+          {delta}%
+        </span>
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-2 border-t pt-2 text-xs">
+        <div>
+          <p className="text-[10px] text-muted-foreground">{name1}</p>
+          <p className="text-base font-bold text-primary">{val1.toLocaleString()}</p>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground">{name2}</p>
+          <p className="text-base font-bold text-indigo-400">{val2.toLocaleString()}</p>
+        </div>
+      </div>
     </div>
   );
 }
