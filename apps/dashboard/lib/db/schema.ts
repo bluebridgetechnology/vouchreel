@@ -447,6 +447,8 @@ export const submissions = pgTable("submissions", {
   processingStatus: processingStatusEnum("processing_status")
     .default("none")
     .notNull(),
+  /** User-safe reason when processing_status is "failed". */
+  processingError: text("processing_error"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

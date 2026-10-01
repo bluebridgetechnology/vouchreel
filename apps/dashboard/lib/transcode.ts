@@ -1,5 +1,4 @@
 import { randomUUID } from "crypto";
-import { spawn } from "child_process";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
@@ -7,17 +6,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { submissions } from "@/lib/db/schema";
 import { getStorage } from "@/lib/storage";
-
-function runFfmpeg(args: string[]) {
-  return new Promise<void>((resolve, reject) => {
-    const process = spawn("ffmpeg", ["-y", ...args], { stdio: "ignore" });
-    process.once("error", reject);
-    process.once("exit", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`ffmpeg exited with code ${code}`));
-    });
-  });
-}
+import { ensureFfmpeg, friendlyMediaError, runFfmpeg } from "@/lib/media/ffmpeg";
 
 /**
  * Runs in-process in the self-hosted deployment after a video upload. A durable
@@ -49,6 +38,9 @@ export async function transcodeSubmission(submissionId: string) {
   const thumbnailPath = path.join(directory, "thumbnail.jpg");
 
   try {
+    // Fail fast with a clear reason instead of downloading a video we cannot process
+    await ensureFfmpeg();
+
     const source = await fetch(submission.videoUrl);
     if (!source.ok) throw new Error(`Unable to download video (${source.status})`);
     const contentLength = Number(source.headers.get("content-length") || 0);
@@ -84,13 +76,13 @@ export async function transcodeSubmission(submissionId: string) {
 
     await db
       .update(submissions)
-      .set({ videoUrl, thumbnailUrl, processingStatus: "done" })
+      .set({ videoUrl, thumbnailUrl, processingStatus: "done", processingError: null })
       .where(eq(submissions.id, submissionId));
   } catch (error) {
     console.error(`Failed to transcode submission ${submissionId}:`, error);
     await db
       .update(submissions)
-      .set({ processingStatus: "failed" })
+      .set({ processingStatus: "failed", processingError: friendlyMediaError(error) })
       .where(eq(submissions.id, submissionId));
   } finally {
     await rm(directory, { recursive: true, force: true });

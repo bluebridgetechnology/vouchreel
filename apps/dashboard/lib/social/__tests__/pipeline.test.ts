@@ -149,3 +149,19 @@ describe("Social Repurposing Pipeline", () => {
     });
   });
 });
+
+describe("drawtext font handling", () => {
+  it("embeds an escaped fontfile in every drawtext when a font is provided", async () => {
+    const { buildFfmpegFiltergraph } = await import("../pipeline");
+    const graph = buildFfmpegFiltergraph({
+      framing: "blur",
+      customerName: "Ada",
+      quote: "Great",
+      showWatermark: true,
+      fontFile: "C:\\Windows\\Fonts\\arial.ttf",
+    } as never);
+    const drawtexts = graph.match(/drawtext=/g) ?? [];
+    expect(drawtexts.length).toBeGreaterThanOrEqual(3);
+    expect((graph.match(/fontfile='C\\:\/Windows\/Fonts\/arial\.ttf'/g) ?? []).length).toBe(drawtexts.length);
+  });
+});

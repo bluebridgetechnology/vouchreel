@@ -1,4 +1,3 @@
-import { spawn } from "child_process";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
@@ -13,6 +12,13 @@ import {
 } from "@/lib/db/schema";
 import { getSubscriptionLimits } from "@/lib/payments/subscription";
 import { getStorage } from "@/lib/storage";
+import {
+  ensureFfmpeg,
+  escapeFilterPath,
+  friendlyMediaError,
+  resolveFontFile,
+  runFfmpeg,
+} from "@/lib/media/ffmpeg";
 import {
   PLATFORM_PRESETS,
   type FramingMode,
@@ -32,6 +38,8 @@ export interface FiltergraphOptions {
   showWatermark?: boolean;
   watermarkPosition?: WatermarkPosition;
   hasLogoInput?: boolean;
+  /** Absolute path to a font for drawtext (see resolveFontFile). */
+  fontFile?: string;
 }
 
 /**
@@ -71,6 +79,8 @@ export function getWatermarkCoordinates(position: WatermarkPosition = "bottom-ri
  */
 export function buildFfmpegFiltergraph(options: FiltergraphOptions): string {
   const filters: string[] = [];
+  // Without an explicit font, drawtext depends on fontconfig and fails on minimal images
+  const font = options.fontFile ? `fontfile='${escapeFilterPath(options.fontFile)}':` : "";
   let currentLayer = "base";
 
   if (options.framing === "blur") {
@@ -112,7 +122,7 @@ export function buildFfmpegFiltergraph(options: FiltergraphOptions): string {
     const safeHeader = escapeFfmpegText(headerTitle);
 
     filters.push(
-      `[${currentLayer}]drawtext=text='${safeHeader}':fontsize=32:fontcolor=white:box=1:boxcolor=black@0.6:boxborderw=12:x=(w-text_w)/2:y=240[${nextLayer}]`
+      `[${currentLayer}]drawtext=${font}text='${safeHeader}':fontsize=32:fontcolor=white:box=1:boxcolor=black@0.6:boxborderw=12:x=(w-text_w)/2:y=240[${nextLayer}]`
     );
     currentLayer = nextLayer;
   }
@@ -123,7 +133,7 @@ export function buildFfmpegFiltergraph(options: FiltergraphOptions): string {
     const safeQuote = escapeFfmpegText(options.quote);
 
     filters.push(
-      `[${currentLayer}]drawtext=text='\\"${safeQuote}\\"':fontsize=42:fontcolor=white:box=1:boxcolor=black@0.7:boxborderw=16:line_spacing=10:x=(w-text_w)/2:y=h-420[${nextLayer}]`
+      `[${currentLayer}]drawtext=${font}text='\\"${safeQuote}\\"':fontsize=42:fontcolor=white:box=1:boxcolor=black@0.7:boxborderw=16:line_spacing=10:x=(w-text_w)/2:y=h-420[${nextLayer}]`
     );
     currentLayer = nextLayer;
   }
@@ -135,7 +145,7 @@ export function buildFfmpegFiltergraph(options: FiltergraphOptions): string {
     const watermarkText = escapeFfmpegText("Made with Vouchreel • vouchreel.com");
 
     filters.push(
-      `[${currentLayer}]drawtext=text='${watermarkText}':fontsize=24:fontcolor=white@0.85:box=1:boxcolor=black@0.5:boxborderw=8:x=${x}:y=${y}[${nextLayer}]`
+      `[${currentLayer}]drawtext=${font}text='${watermarkText}':fontsize=24:fontcolor=white@0.85:box=1:boxcolor=black@0.5:boxborderw=8:x=${x}:y=${y}[${nextLayer}]`
     );
     currentLayer = nextLayer;
   }
@@ -211,19 +221,6 @@ export function buildFfmpegArgs(options: BuildFfmpegArgsOptions): string[] {
 
   args.push(options.outputPath);
   return args;
-}
-
-function runFfmpegProcess(args: string[]): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    const proc = spawn("ffmpeg", ["-y", ...args], { stdio: "ignore" });
-    proc.once("error", (err) => {
-      reject(new Error(`FFmpeg execution failed or FFmpeg is not installed: ${err.message}`));
-    });
-    proc.once("exit", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`FFmpeg process exited with code ${code}`));
-    });
-  });
 }
 
 /**
@@ -305,6 +302,8 @@ export async function renderSocialExport(exportId: string): Promise<void> {
   let logoPath: string | undefined;
 
   try {
+    await ensureFfmpeg();
+
     // Download source video
     const videoResponse = await fetch(rawVideoUrl);
     if (!videoResponse.ok) {
@@ -327,6 +326,7 @@ export async function renderSocialExport(exportId: string): Promise<void> {
     }
 
     const ffmpegArgs = buildFfmpegArgs({
+      fontFile: resolveFontFile(),
       sourcePath,
       outputPath,
       logoPath,
@@ -342,7 +342,7 @@ export async function renderSocialExport(exportId: string): Promise<void> {
       maxDurationSeconds: preset.maxDurationSeconds,
     });
 
-    await runFfmpegProcess(ffmpegArgs);
+    await runFfmpeg(ffmpegArgs);
 
     // Upload rendered video to storage
     const storage = getStorage();
@@ -376,8 +376,7 @@ export async function renderSocialExport(exportId: string): Promise<void> {
       })
       .where(eq(socialExports.id, exportId));
   } catch (error) {
-    const errorMsg =
-      error instanceof Error ? error.message : "Social video rendering failed";
+    const errorMsg = friendlyMediaError(error);
     console.error(`Social export rendering error for ${exportId}:`, error);
 
     await db

@@ -7,6 +7,7 @@ A video-testimonial widget SaaS that lets website owners paste a video link and 
 - [Node.js](https://nodejs.org/) v20 or later
 - [Docker](https://www.docker.com/) (for local PostgreSQL)
 - npm (comes with Node.js)
+- [FFmpeg](https://ffmpeg.org/download.html) on your PATH (video transcoding and social exports). Windows: `winget install Gyan.FFmpeg`; macOS: `brew install ffmpeg`; Debian/Ubuntu: `sudo apt install ffmpeg`. Set `FFMPEG_PATH` if it is installed elsewhere. The dashboard still runs without it, but video processing fails with a clear message; check `GET /api/health`.
 
 ## Quick Start
 

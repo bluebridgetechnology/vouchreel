@@ -31,7 +31,9 @@ CMD ["npx", "drizzle-kit", "migrate"]
 
 # ---- runner: minimal production image ----
 FROM node:24-alpine AS runner
-RUN apk add --no-cache libc6-compat ffmpeg
+# ffmpeg for transcoding/social exports; fontconfig + Noto fonts so drawtext (burned-in captions) works
+RUN apk add --no-cache libc6-compat ffmpeg fontconfig font-noto \
+ && ffmpeg -hide_banner -filters | grep -q drawtext
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
