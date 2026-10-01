@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { collectionForms, spaces, submissions, testimonials } from "@/lib/db/schema";
 import { updateSubmissionStatusSchema } from "@/lib/validations/collection-forms";
+import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 
 interface RouteParams { params: Promise<{ id: string; formId: string; submissionId: string }> }
 export async function PATCH(request: Request, { params }: RouteParams) {
@@ -35,6 +36,20 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return { submission, testimonial };
     });
     if (!result) return apiError(400, "BAD_REQUEST", "Submission has already been reviewed or was not found");
+    if (parsed.data.status === "approved" && result.submission) {
+      dispatchWebhookEvent({
+        event: "submission.approved",
+        spaceId: id,
+        payload: { submission: result.submission },
+      }).catch(() => {});
+      if (result.testimonial) {
+        dispatchWebhookEvent({
+          event: "testimonial.created",
+          spaceId: id,
+          payload: { testimonial: result.testimonial },
+        }).catch(() => {});
+      }
+    }
     return NextResponse.json(result);
   } catch (err) { console.error("Failed to review submission:", err); return apiError(500, "INTERNAL_ERROR", "Failed to review submission"); }
 }

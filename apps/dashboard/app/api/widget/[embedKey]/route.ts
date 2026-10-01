@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { spaces, testimonials, widgetConfigs, conversionGoals } from "@/lib/db/schema";
+import { spaces, testimonials, widgetConfigs, conversionGoals, reviews } from "@/lib/db/schema";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import { badRequest, notFound, internalError } from "@/lib/api/errors";
 
@@ -80,6 +80,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const pagesExcluded = configRecord?.pagesExcluded || DEFAULT_WIDGET_CONFIG.pagesExcluded;
 
     const config = {
+      template: configRecord?.template || DEFAULT_WIDGET_CONFIG.template,
       position: configRecord?.position || DEFAULT_WIDGET_CONFIG.position,
       theme,
       trigger: {
@@ -112,6 +113,23 @@ export async function GET(request: Request, { params }: RouteParams) {
       )
       .orderBy(asc(testimonials.sortOrder), asc(testimonials.createdAt));
 
+    // Fetch approved text reviews for this space
+    const approvedReviews = await db
+      .select({
+        id: reviews.id,
+        provider: reviews.provider,
+        authorName: reviews.authorName,
+        authorPhotoUrl: reviews.authorPhotoUrl,
+        rating: reviews.rating,
+        text: reviews.text,
+        reviewDate: reviews.reviewDate,
+      })
+      .from(reviews)
+      .where(
+        and(eq(reviews.spaceId, space.id), eq(reviews.isApproved, true))
+      )
+      .orderBy(desc(reviews.reviewDate), desc(reviews.createdAt));
+
     // Fetch conversion goals for this space
     const goals = await db
       .select({
@@ -127,6 +145,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         spaceId: space.id,
         config,
         testimonials: activeTestimonials,
+        reviews: approvedReviews,
         conversionGoals: goals,
       },
       {

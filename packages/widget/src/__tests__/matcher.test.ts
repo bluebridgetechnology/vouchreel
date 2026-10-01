@@ -5,7 +5,9 @@ import {
   matchTags,
   isPageAllowed,
   filterTestimonials,
+  filterReviews,
   TestimonialItem,
+  ReviewItem,
 } from "../matcher";
 
 describe("URL and Tag Matcher Module", () => {
@@ -164,4 +166,53 @@ describe("URL and Tag Matcher Module", () => {
       expect(filterTestimonials([], { pathname: "/pricing" })).toEqual([]);
     });
   });
+
+  describe("filterReviews", () => {
+    const mockReviews: ReviewItem[] = [
+      {
+        id: "rev-all",
+        provider: "google",
+        authorName: "John Doe",
+        rating: 5,
+        text: "Great experience everywhere!",
+        matchRules: { mode: "all" },
+      },
+      {
+        id: "rev-pricing",
+        provider: "trustpilot",
+        authorName: "Jane Smith",
+        rating: 5,
+        text: "Loved the clear pricing",
+        matchRules: { mode: "specific", urlPatterns: ["/pricing"] },
+      },
+      {
+        id: "rev-enterprise",
+        provider: "google",
+        authorName: "Enterprise Client",
+        rating: 5,
+        text: "Huge ROI",
+        matchRules: { mode: "specific", tags: ["enterprise"] },
+      },
+    ];
+
+    it("includes reviews with mode 'all' on any page", () => {
+      const result = filterReviews(mockReviews, { pathname: "/about" });
+      expect(result.map((r) => r.id)).toEqual(["rev-all"]);
+    });
+
+    it("matches URL specific reviews", () => {
+      const result = filterReviews(mockReviews, { pathname: "/pricing" });
+      expect(result.map((r) => r.id)).toEqual(["rev-all", "rev-pricing"]);
+    });
+
+    it("matches tag specific reviews", () => {
+      const result = filterReviews(mockReviews, { pathname: "/pricing" }, ["enterprise"]);
+      expect(result.map((r) => r.id)).toEqual(["rev-all", "rev-pricing", "rev-enterprise"]);
+    });
+
+    it("returns empty array for empty input", () => {
+      expect(filterReviews([])).toEqual([]);
+    });
+  });
 });
+

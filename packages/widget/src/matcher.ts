@@ -211,3 +211,57 @@ export function filterTestimonials(
     return true;
   });
 }
+
+export interface ReviewItem {
+  id: string;
+  provider: "google" | "trustpilot" | string;
+  authorName: string;
+  authorPhotoUrl?: string | null;
+  rating: number;
+  text?: string | null;
+  reviewDate?: string | Date | null;
+  matchRules?: MatchRules | null;
+  tags?: string[] | null;
+  [key: string]: unknown;
+}
+
+/**
+ * Filters text reviews based on match rules and current URL/page context.
+ */
+export function filterReviews(
+  reviews: ReviewItem[],
+  location: { pathname: string; href?: string } = { pathname: "/" },
+  hostTags: string[] = getHostPageTags()
+): ReviewItem[] {
+  if (!Array.isArray(reviews) || reviews.length === 0) {
+    return [];
+  }
+
+  const currentPath = normalizePath(location.pathname);
+
+  return reviews.filter((item) => {
+    const rules = item.matchRules;
+
+    if (!rules || !rules.mode || rules.mode === "all") {
+      return true;
+    }
+
+    if (rules.mode === "specific") {
+      let matchesUrl = false;
+      if (Array.isArray(rules.urlPatterns) && rules.urlPatterns.length > 0) {
+        matchesUrl = rules.urlPatterns.some((pattern) =>
+          matchPattern(pattern, currentPath)
+        );
+      } else {
+        matchesUrl = true;
+      }
+
+      const matchesTag = matchTags(rules.tags, hostTags);
+
+      return matchesUrl && matchesTag;
+    }
+
+    return true;
+  });
+}
+

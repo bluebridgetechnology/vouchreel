@@ -47,10 +47,9 @@ Paste the snippet just before your closing `</body>` tag (or in `<head>`). It lo
 
 ### WordPress
 
-1. In WP Admin, go to **Plugins → Add New** and install **WPCode** (or any header/footer injection plugin).
-2. Go to **Code Snippets → Header & Footer**.
-3. Paste the snippet into the **Footer** box.
-4. Click **Save Changes**.
+1. **Official Plugin**: Install our [WordPress Plugin](integrations/wordpress.md) for automated footer injection and Gutenberg block support.
+2. **Manual / WPCode**: In WP Admin, go to **Code Snippets → Header & Footer**, and paste the snippet into the **Footer** box.
+3. See the full [WordPress Integration Guide](integrations/wordpress.md).
 
 ### Shopify
 
@@ -58,13 +57,20 @@ Paste the snippet just before your closing `</body>` tag (or in `<head>`). It lo
 2. Click **...** next to your active theme → **Edit code**.
 3. Under **Layout**, open `theme.liquid`.
 4. Paste the snippet right before `</body>`.
-5. Click **Save**.
+5. For dynamic product-level matching and Shopify 2.0 blocks, see the [Shopify Integration Guide](integrations/shopify.md).
 
 ### Webflow
 
 1. Open **Project Settings → Custom Code**.
 2. Paste the snippet into the **Footer Code** area.
 3. Save and **republish** your site.
+4. For CMS collections and custom embeds, see the [Webflow Integration Guide](integrations/webflow.md).
+
+### Framer
+
+1. In Framer, open **Project Settings → General → Custom Code**.
+2. Paste the snippet into the End of `<body>` section.
+3. For drag-and-drop React code components, see the [Framer Integration Guide](integrations/framer.md).
 
 ### Next.js / React
 
@@ -89,7 +95,7 @@ export default function RootLayout({ children }) {
 }
 ```
 
-### Other builders (Squarespace, Wix, Framer, …)
+### Other builders (Squarespace, Wix, …)
 
 Any platform that allows custom code in the site footer works. Look for "Custom Code", "Footer Code", or "Embed" settings and paste the snippet there.
 

@@ -35,6 +35,11 @@ export function SpaceNavTabs({
       active: pathname.startsWith(`/spaces/${spaceId}/testimonials`),
     },
     {
+      label: "Reviews",
+      href: `/spaces/${spaceId}/reviews`,
+      active: pathname.startsWith(`/spaces/${spaceId}/reviews`),
+    },
+    {
       label: "Collect",
       href: `/spaces/${spaceId}/collect`,
       active: pathname.startsWith(`/spaces/${spaceId}/collect`),

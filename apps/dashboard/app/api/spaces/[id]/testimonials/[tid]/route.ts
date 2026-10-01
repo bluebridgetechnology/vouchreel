@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, testimonials } from "@/lib/db/schema";
 import { updateTestimonialSchema } from "@/lib/validations/testimonials";
+import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 
 interface RouteParams {
   params: Promise<{ id: string; tid: string }>;
@@ -138,6 +139,13 @@ export async function PUT(request: Request, { params }: RouteParams) {
       )
       .returning();
 
+    // Dispatch webhook event (non-blocking)
+    dispatchWebhookEvent({
+      event: "testimonial.updated",
+      spaceId: id,
+      payload: { testimonial: updated },
+    }).catch(() => {});
+
     return NextResponse.json({ testimonial: updated });
   } catch (error) {
     console.error("Failed to update testimonial:", error);
@@ -176,6 +184,13 @@ export async function DELETE(request: Request, { params }: RouteParams) {
           eq(testimonials.spaceId, id)
         )
       );
+
+    // Dispatch webhook event (non-blocking)
+    dispatchWebhookEvent({
+      event: "testimonial.deleted",
+      spaceId: id,
+      payload: { testimonialId: tid },
+    }).catch(() => {});
 
     return NextResponse.json({ success: true, id: tid });
   } catch (error) {

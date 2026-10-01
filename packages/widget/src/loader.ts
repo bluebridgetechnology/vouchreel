@@ -1,4 +1,4 @@
-import { filterTestimonials, isPageAllowed, TestimonialItem } from "./matcher";
+import { filterTestimonials, filterReviews, isPageAllowed, TestimonialItem, ReviewItem } from "./matcher";
 import { setupTrigger, isDismissed, TriggerType } from "./triggers";
 import { AnalyticsTracker, ConversionGoal } from "./analytics";
 import { VouchreelWidget, WidgetConfig } from "./widget";
@@ -6,6 +6,7 @@ import { VouchreelWidget, WidgetConfig } from "./widget";
 export interface WidgetApiResponse {
   spaceId: string;
   config: WidgetConfig & {
+    template?: string;
     trigger?: {
       type: TriggerType;
       value?: Record<string, unknown>;
@@ -14,6 +15,7 @@ export interface WidgetApiResponse {
     pagesExcluded?: string[];
   };
   testimonials: TestimonialItem[];
+  reviews?: ReviewItem[];
   conversionGoals?: ConversionGoal[];
 }
 
@@ -146,13 +148,19 @@ export async function initLoader(): Promise<void> {
       return;
     }
 
-    // Filter matching testimonials
+    // Filter matching testimonials and reviews
+    const currentLocation =
+      typeof window !== "undefined" ? window.location : { pathname: "/" };
+
     const matchingTestimonials = filterTestimonials(
-      data.testimonials,
-      typeof window !== "undefined" ? window.location : { pathname: "/" }
+      data.testimonials || [],
+      currentLocation
     );
 
-    if (matchingTestimonials.length === 0) {
+    const rawReviews = Array.isArray(data.reviews) ? data.reviews : [];
+    const matchingReviews = filterReviews(rawReviews, currentLocation);
+
+    if (matchingTestimonials.length === 0 && matchingReviews.length === 0) {
       return;
     }
 
@@ -177,6 +185,7 @@ export async function initLoader(): Promise<void> {
       embedKey,
       config: data.config,
       testimonials: matchingTestimonials,
+      reviews: matchingReviews,
       analytics,
     });
 

@@ -37,10 +37,28 @@ const PLATFORMS: PlatformGuide[] = [
     name: "Shopify",
     instructions: [
       "In Shopify Admin, go to Online Store → Themes.",
-      "Click the '...' button next to your active theme and choose 'Edit code'.",
-      "Under Layout, click theme.liquid.",
-      "Scroll down to the bottom and paste the script snippet right before </body>.",
+      "Click '...' next to your active theme → 'Edit code'.",
+      "Under Layout, open theme.liquid and paste the script snippet right before </body>.",
+      "For product-specific matching: paste the snippet into product templates with data-tags=\"product-{{ product.id }}\".",
       "Click 'Save' in the top right corner.",
+    ],
+  },
+  {
+    id: "wordpress",
+    name: "WordPress",
+    instructions: [
+      "Option 1 (Plugin): Install the official VouchReel WordPress plugin from wp-content/plugins/vouchreel and enter your embed key in Settings → VouchReel.",
+      "Option 2 (Gutenberg): Insert the 'VouchReel Widget' block directly into any page or post.",
+      "Option 3 (Script): In WPCode or Theme Header/Footer, paste the script snippet into the Footer.",
+    ],
+  },
+  {
+    id: "framer",
+    name: "Framer",
+    instructions: [
+      "In Framer, open your Project Settings → General → Custom Code.",
+      "Paste the script snippet into the End of <body> section and publish.",
+      "Or create a custom Code Component using the Vouchreel React snippet from our Framer guide.",
     ],
   },
   {
@@ -72,8 +90,14 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
     process.env.NEXT_PUBLIC_WIDGET_URL ||
     (typeof window !== "undefined" ? window.location.origin : "https://cdn.vouchreel.com");
 
-  // Clean format: <script async src="https://{DOMAIN}/widget/{embedKey}.js"></script>
-  const snippet = `<script async src="${widgetBaseUrl}/widget/${embedKey}.js"></script>`;
+  // Dynamic snippet formatting based on selected platform
+  let snippet = `<script async src="${widgetBaseUrl}/widget/${embedKey}.js"></script>`;
+
+  if (selectedPlatform === "shopify") {
+    snippet = `<script async src="${widgetBaseUrl}/widget/${embedKey}.js" data-key="${embedKey}"{% if product %} data-tags="product-{{ product.id }}"{% endif %}></script>`;
+  } else if (selectedPlatform === "nextjs") {
+    snippet = `<Script async strategy="afterInteractive" src="${widgetBaseUrl}/widget/${embedKey}.js" />`;
+  }
 
   function handleCopy() {
     navigator.clipboard.writeText(snippet);

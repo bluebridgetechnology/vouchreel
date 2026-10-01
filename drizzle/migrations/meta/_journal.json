@@ -29,6 +29,20 @@
       "when": 1790770034648,
       "tag": "0003_curious_spot",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790810188022,
+      "tag": "0004_third_sabra",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790813493707,
+      "tag": "0005_chief_marten_broadcloak",
+      "breakpoints": true
     }
   ]
 }

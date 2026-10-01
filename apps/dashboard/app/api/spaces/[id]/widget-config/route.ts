@@ -74,6 +74,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       return NextResponse.json({
         widgetConfig: {
           ...existingConfig,
+          template: existingConfig.template || DEFAULT_WIDGET_CONFIG.template,
           theme,
           triggerValue,
           pagesIncluded,
@@ -156,6 +157,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       const [updated] = await db
         .update(widgetConfigs)
         .set({
+          template: validated.data.template,
           position: validated.data.position,
           theme: validated.data.theme,
           triggerType: validated.data.triggerType,

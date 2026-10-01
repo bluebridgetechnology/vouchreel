@@ -11,6 +11,7 @@ import {
   notFound,
   internalError,
 } from "@/lib/api/errors";
+import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 
 // navigator.sendBeacon sends cross-origin requests with credentials mode "include",
 // for which browsers reject `Access-Control-Allow-Origin: *`. Reflect the request
@@ -166,6 +167,17 @@ export async function POST(request: Request) {
     });
 
     await db.insert(events).values(insertValues);
+
+    // Dispatch webhook for conversions (non-blocking)
+    for (const evt of insertValues) {
+      if (evt.eventType === "convert") {
+        dispatchWebhookEvent({
+          event: "conversion.tracked",
+          spaceId: evt.spaceId,
+          payload: { event: evt },
+        }).catch(() => {});
+      }
+    }
 
     return NextResponse.json(
       { success: true, count: insertValues.length },

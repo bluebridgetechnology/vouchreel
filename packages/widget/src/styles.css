@@ -603,3 +603,304 @@
     transition: none !important;
   }
 }
+
+/* ─── Curated Display Templates Styles ──────────────────────────── */
+
+.vr-card {
+  background-color: var(--vr-bg);
+  border: 1px solid var(--vr-border);
+  border-radius: var(--vr-radius);
+  box-shadow: var(--vr-shadow);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  user-select: none;
+  position: relative;
+  text-align: left;
+  color: var(--vr-text);
+  font: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vr-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px -4px rgba(0, 0, 0, 0.16);
+}
+
+.vr-card-video-thumb {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  border-radius: calc(var(--vr-radius) - 4px);
+  overflow: hidden;
+  background-color: #000;
+}
+
+.vr-card-video-thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vr-card-duration {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.vr-provider-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.vr-badge-google {
+  background-color: #e8f0fe;
+  color: #1a73e8;
+  border: 1px solid #dadce0;
+}
+
+.vr-dark .vr-badge-google {
+  background-color: rgba(26, 115, 232, 0.2);
+  color: #8ab4f8;
+  border-color: rgba(26, 115, 232, 0.4);
+}
+
+.vr-badge-trustpilot {
+  background-color: #e6f7f0;
+  color: #008554;
+  border: 1px solid #b8ebd8;
+}
+
+.vr-dark .vr-badge-trustpilot {
+  background-color: rgba(0, 182, 122, 0.2);
+  color: #00b67a;
+  border-color: rgba(0, 182, 122, 0.4);
+}
+
+.vr-badge-video {
+  background-color: rgba(79, 70, 229, 0.1);
+  color: var(--vr-primary);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+.vr-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #f59e0b;
+  font-size: 14px;
+}
+
+.vr-card-quote-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--vr-text);
+  word-break: break-word;
+}
+
+.vr-card-author-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--vr-border);
+}
+
+.vr-card-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: var(--vr-primary);
+  color: var(--vr-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.vr-card-author-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vr-text);
+}
+
+.vr-card-author-sub {
+  font-size: 11px;
+  color: var(--vr-text-muted);
+}
+
+/* 1. Wall of Love Template */
+.vr-wall-wrapper {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.vr-wall-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+/* 2. Carousel Template */
+.vr-carousel-container {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 16px 44px;
+  box-sizing: border-box;
+}
+
+.vr-carousel-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 4px;
+}
+
+.vr-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.vr-carousel-track .vr-card {
+  flex: 0 0 290px;
+  scroll-snap-align: start;
+}
+
+.vr-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--vr-bg);
+  border: 1px solid var(--vr-border);
+  color: var(--vr-text);
+  box-shadow: var(--vr-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.vr-carousel-arrow:hover {
+  background-color: var(--vr-primary);
+  color: var(--vr-accent);
+}
+
+.vr-carousel-prev {
+  left: 4px;
+}
+
+.vr-carousel-next {
+  right: 4px;
+}
+
+/* 3. Masonry Grid Template */
+.vr-masonry-wrapper {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+  column-count: 3;
+  column-gap: 16px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 800px) {
+  .vr-masonry-wrapper {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 500px) {
+  .vr-masonry-wrapper {
+    column-count: 1;
+  }
+}
+
+.vr-masonry-wrapper .vr-card {
+  break-inside: avoid;
+  margin-bottom: 16px;
+}
+
+/* Story Strip Reviews Avatar Ring */
+.vr-story-review-google {
+  border-color: #1a73e8 !important;
+}
+
+.vr-story-review-trustpilot {
+  border-color: #00b67a !important;
+}
+
+.vr-story-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f59e0b;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  border: 1.5px solid var(--vr-bg);
+}
+
+/* Review Detail Modal */
+.vr-review-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.vr-review-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vr-review-modal-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--vr-text);
+  white-space: pre-line;
+}
+

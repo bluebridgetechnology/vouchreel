@@ -3,11 +3,13 @@
 import { useState } from "react";
 import {
   WidgetPosition,
+  WidgetTemplate,
   WidgetTheme,
   TriggerType,
 } from "@/lib/validations/widget-config";
 
 interface LivePreviewProps {
+  template?: WidgetTemplate;
   position: WidgetPosition;
   theme: WidgetTheme;
   triggerType: TriggerType;
@@ -17,6 +19,7 @@ interface LivePreviewProps {
 }
 
 export function LivePreview({
+  template = "floating-card",
   position,
   theme,
   triggerType,
@@ -26,6 +29,13 @@ export function LivePreview({
 }: LivePreviewProps) {
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [expandedReview, setExpandedReview] = useState<{
+    authorName: string;
+    rating: number;
+    text: string;
+    provider: string;
+    date: string;
+  } | null>(null);
 
   const isDark = theme.mode === "dark";
 
@@ -166,160 +176,297 @@ export function LivePreview({
               </div>
             </div>
 
-            {/* Mock Content Cards */}
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <div className="rounded-lg border bg-card/60 p-2.5 space-y-1">
-                <div className="h-2 w-16 rounded bg-primary/30" />
-                <div className="h-1.5 w-full rounded bg-muted" />
-                <div className="h-1.5 w-3/4 rounded bg-muted" />
-              </div>
-              <div className="rounded-lg border bg-card/60 p-2.5 space-y-1">
-                <div className="h-2 w-16 rounded bg-primary/30" />
-                <div className="h-1.5 w-full rounded bg-muted" />
-                <div className="h-1.5 w-2/3 rounded bg-muted" />
-              </div>
-            </div>
-
-            {/* WIDGET LAUNCHER RENDERING */}
-
-            {/* 1. Bottom Right or Bottom Left Floating Launcher */}
-            {(position === "bottom-right" || position === "bottom-left") && (
-              <div
-                className={`absolute z-20 transition-all duration-300 ${
-                  position === "bottom-right" ? "bottom-4 right-4" : "bottom-4 left-4"
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  className="group relative flex items-center gap-2 p-1.5 shadow-xl transition-transform hover:scale-105"
-                  style={{
-                    backgroundColor: theme.primaryColor,
-                    color: theme.accentColor,
-                    borderRadius: `${theme.borderRadius}px`,
-                  }}
-                >
-                  {/* Circular Avatar Thumbnail */}
-                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-white/50 bg-black shadow-inner">
-                    <img
-                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-                      alt="Customer"
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                      <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-black shadow-sm">
-                        <svg className="h-2.5 w-2.5 ml-0.5 fill-current" viewBox="0 0 24 24">
-                          <polygon points="5 3 19 12 5 21 5 3" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Text Badge */}
-                  <div className="pr-2 text-left">
-                    <div className="text-[11px] font-bold leading-tight">
-                      Hear Sarah’s Story
-                    </div>
-                    <div className="text-[9px] opacity-80 leading-none">
-                      Verified Customer • 1:42
-                    </div>
-                  </div>
-                </button>
-              </div>
-            )}
-
-            {/* 2. Bottom Bar Launcher */}
-            {position === "bottom-bar" && (
-              <div className="absolute bottom-0 left-0 right-0 z-20">
-                <button
-                  type="button"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  className="flex w-full items-center justify-between px-3 py-2 shadow-2xl transition-opacity hover:opacity-95"
-                  style={{
-                    backgroundColor: theme.primaryColor,
-                    color: theme.accentColor,
-                  }}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-white/60 bg-black">
-                      <img
-                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
-                        alt="Customer"
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="text-left">
-                      <p className="text-[11px] font-bold leading-tight">
-                        &ldquo;Vouchreel doubled our conversion in 2 weeks!&rdquo;
-                      </p>
-                      <p className="text-[9px] opacity-80">
-                        Sarah Johnson, Founder of CloudScale
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-semibold backdrop-blur-xs">
-                    <svg className="h-2.5 w-2.5 fill-current" viewBox="0 0 24 24">
-                      <polygon points="5 3 19 12 5 21 5 3" />
-                    </svg>
-                    Watch Story
-                  </div>
-                </button>
-              </div>
-            )}
-
-            {/* 3. Story Strip Launcher */}
-            {position === "story-strip" && (
-              <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center gap-3 overflow-x-auto rounded-xl border bg-background/90 p-2 backdrop-blur-xs shadow-lg">
-                {[
-                  {
-                    name: "Sarah J.",
-                    img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-                    watched: false,
-                  },
-                  {
-                    name: "David K.",
-                    img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-                    watched: true,
-                  },
-                  {
-                    name: "Elena R.",
-                    img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
-                    watched: false,
-                  },
-                ].map((story, i) => (
+            {/* Mock Content Cards or Curated Templates */}
+            {template === "wall-of-love" && (
+              <div className="pt-3 space-y-2">
+                <div className="text-[11px] font-bold text-foreground">Wall of Love Preview</div>
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Video Testimonial Card */}
                   <button
-                    key={i}
                     type="button"
                     onClick={() => setIsExpanded(true)}
-                    className="flex flex-col items-center gap-1 shrink-0 group focus:outline-none"
+                    className="flex flex-col text-left rounded-lg border bg-card/80 p-2 shadow-xs hover:border-primary/50 transition-all cursor-pointer"
                   >
-                    <div
-                      className="relative h-11 w-11 rounded-full p-0.5 transition-transform group-hover:scale-105"
-                      style={{
-                        background: story.watched
-                          ? "rgba(150,150,150,0.4)"
-                          : `linear-gradient(45deg, ${theme.primaryColor}, #f43f5e)`,
-                      }}
-                    >
-                      <div className="h-full w-full overflow-hidden rounded-full border-2 border-background">
-                        <img
-                          src={story.img}
-                          alt={story.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs">
-                        <svg className="h-2 w-2 fill-current" viewBox="0 0 24 24">
-                          <polygon points="5 3 19 12 5 21 5 3" />
-                        </svg>
+                    <div className="relative aspect-video w-full rounded bg-black overflow-hidden mb-1.5">
+                      <img
+                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80"
+                        alt="Customer"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div
+                          className="h-6 w-6 rounded-full flex items-center justify-center text-white shadow"
+                          style={{ backgroundColor: theme.primaryColor }}
+                        >
+                          <svg className="h-3 w-3 ml-0.5 fill-current" viewBox="0 0 24 24">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                          </svg>
+                        </div>
                       </div>
                     </div>
-                    <span className="text-[9px] font-medium text-foreground max-w-[50px] truncate">
-                      {story.name}
-                    </span>
+                    <span className="text-[9px] font-bold text-primary">📹 Video Testimonial</span>
+                    <p className="text-[10px] text-foreground line-clamp-2 mt-0.5">
+                      &ldquo;Conversions spiked immediately!&rdquo;
+                    </p>
+                    <p className="text-[9px] text-muted-foreground mt-1">Sarah Johnson • 1:42</p>
                   </button>
-                ))}
+
+                  {/* Google Review Card */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedReview({
+                        authorName: "Alex Morgan",
+                        rating: 5,
+                        text: "Vouchreel transformed our landing page social proof. Conversions increased by 38% in our first month!",
+                        provider: "Google Reviews",
+                        date: "2 days ago",
+                      })
+                    }
+                    className="flex flex-col text-left rounded-lg border bg-card/80 p-2 shadow-xs hover:border-primary/50 transition-all cursor-pointer justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                          Google
+                        </span>
+                        <span className="text-amber-500 text-[10px]">★★★★★</span>
+                      </div>
+                      <p className="text-[10px] text-foreground line-clamp-3">
+                        &ldquo;Vouchreel transformed our landing page social proof. Conversions increased by 38%!&rdquo;
+                      </p>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground mt-2 border-t pt-1">
+                      Alex Morgan • 2 days ago
+                    </p>
+                  </button>
+
+                  {/* Trustpilot Review Card */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedReview({
+                        authorName: "Elena Rostova",
+                        rating: 5,
+                        text: "Incredible tool. Collecting and displaying customer feedback has never been easier.",
+                        provider: "Trustpilot",
+                        date: "1 week ago",
+                      })
+                    }
+                    className="flex flex-col text-left rounded-lg border bg-card/80 p-2 shadow-xs hover:border-primary/50 transition-all cursor-pointer justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                          Trustpilot
+                        </span>
+                        <span className="text-amber-500 text-[10px]">★★★★★</span>
+                      </div>
+                      <p className="text-[10px] text-foreground line-clamp-3">
+                        &ldquo;Incredible tool. Collecting customer feedback has never been easier.&rdquo;
+                      </p>
+                    </div>
+                    <p className="text-[9px] text-muted-foreground mt-2 border-t pt-1">
+                      Elena Rostova • 1 week ago
+                    </p>
+                  </button>
+
+                  {/* Second Video Testimonial Card */}
+                  <button
+                    type="button"
+                    onClick={() => setIsExpanded(true)}
+                    className="flex flex-col text-left rounded-lg border bg-card/80 p-2 shadow-xs hover:border-primary/50 transition-all cursor-pointer"
+                  >
+                    <div className="relative aspect-video w-full rounded bg-black overflow-hidden mb-1.5">
+                      <img
+                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80"
+                        alt="Customer"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div
+                          className="h-6 w-6 rounded-full flex items-center justify-center text-white shadow"
+                          style={{ backgroundColor: theme.primaryColor }}
+                        >
+                          <svg className="h-3 w-3 ml-0.5 fill-current" viewBox="0 0 24 24">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-bold text-primary">📹 Video Testimonial</span>
+                    <p className="text-[10px] text-foreground line-clamp-2 mt-0.5">
+                      &ldquo;Our best marketing investment.&rdquo;
+                    </p>
+                    <p className="text-[9px] text-muted-foreground mt-1">David K. • 0:54</p>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {template === "carousel" && (
+              <div className="pt-3 space-y-2">
+                <div className="text-[11px] font-bold text-foreground">Carousel Preview</div>
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                  {/* Card 1: Video */}
+                  <button
+                    type="button"
+                    onClick={() => setIsExpanded(true)}
+                    className="flex flex-col text-left shrink-0 w-36 rounded-lg border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer"
+                  >
+                    <div className="relative aspect-video w-full rounded bg-black overflow-hidden mb-1">
+                      <img
+                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80"
+                        alt="Customer"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div
+                          className="h-5 w-5 rounded-full flex items-center justify-center text-white"
+                          style={{ backgroundColor: theme.primaryColor }}
+                        >
+                          <svg className="h-2.5 w-2.5 ml-0.5 fill-current" viewBox="0 0 24 24">
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-[9px] font-bold text-foreground truncate">Sarah Johnson</p>
+                    <p className="text-[8px] text-muted-foreground line-clamp-1">&ldquo;Doubled conversions&rdquo;</p>
+                  </button>
+
+                  {/* Card 2: Google Review */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedReview({
+                        authorName: "Alex Morgan",
+                        rating: 5,
+                        text: "Vouchreel transformed our landing page social proof. Highly recommend!",
+                        provider: "Google Reviews",
+                        date: "2 days ago",
+                      })
+                    }
+                    className="flex flex-col text-left shrink-0 w-36 rounded-lg border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[7px] font-bold px-1 rounded bg-blue-50 text-blue-700">Google</span>
+                        <span className="text-amber-500 text-[8px]">★★★★★</span>
+                      </div>
+                      <p className="text-[8px] text-foreground line-clamp-2">
+                        &ldquo;Transformed our social proof!&rdquo;
+                      </p>
+                    </div>
+                    <p className="text-[8px] text-muted-foreground mt-1 border-t pt-0.5">Alex M.</p>
+                  </button>
+
+                  {/* Card 3: Trustpilot Review */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedReview({
+                        authorName: "Elena Rostova",
+                        rating: 5,
+                        text: "Incredible tool. Collecting customer feedback has never been easier.",
+                        provider: "Trustpilot",
+                        date: "1 week ago",
+                      })
+                    }
+                    className="flex flex-col text-left shrink-0 w-36 rounded-lg border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[7px] font-bold px-1 rounded bg-emerald-50 text-emerald-700">Trustpilot</span>
+                        <span className="text-amber-500 text-[8px]">★★★★★</span>
+                      </div>
+                      <p className="text-[8px] text-foreground line-clamp-2">
+                        &ldquo;Never been easier to gather proof.&rdquo;
+                      </p>
+                    </div>
+                    <p className="text-[8px] text-muted-foreground mt-1 border-t pt-0.5">Elena R.</p>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {template === "masonry" && (
+              <div className="pt-3 space-y-2">
+                <div className="text-[11px] font-bold text-foreground">Masonry Grid Preview</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsExpanded(true)}
+                      className="w-full text-left rounded-lg border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer"
+                    >
+                      <div className="relative aspect-video w-full rounded bg-black overflow-hidden mb-1">
+                        <img
+                          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80"
+                          alt="Customer"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <p className="text-[9px] font-bold text-foreground">Sarah J. • 1:42</p>
+                      <p className="text-[8px] text-muted-foreground">&ldquo;Super simple to use&rdquo;</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedReview({
+                          authorName: "Elena Rostova",
+                          rating: 5,
+                          text: "Very polished widget and easy integration.",
+                          provider: "Trustpilot",
+                          date: "1 week ago",
+                        })
+                      }
+                      className="w-full text-left rounded-lg border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[7px] font-bold px-1 rounded bg-emerald-50 text-emerald-700">Trustpilot</span>
+                        <span className="text-amber-500 text-[8px]">★★★★★</span>
+                      </div>
+                      <p className="text-[9px] text-foreground">&ldquo;Very polished widget and easy integration.&rdquo;</p>
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedReview({
+                          authorName: "Alex Morgan",
+                          rating: 5,
+                          text: "Top-tier social proof tool. The video plus text blends seamlessly.",
+                          provider: "Google Reviews",
+                          date: "2 days ago",
+                        })
+                      }
+                      className="w-full text-left rounded-lg border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[7px] font-bold px-1 rounded bg-blue-50 text-blue-700">Google</span>
+                        <span className="text-amber-500 text-[8px]">★★★★★</span>
+                      </div>
+                      <p className="text-[9px] text-foreground">&ldquo;Top-tier social proof tool. The video plus text blends seamlessly.&rdquo;</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsExpanded(true)}
+                      className="w-full text-left rounded-lg border bg-card/80 p-2 shadow-xs hover:border-primary/50 cursor-pointer"
+                    >
+                      <div className="relative aspect-video w-full rounded bg-black overflow-hidden mb-1">
+                        <img
+                          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80"
+                          alt="Customer"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <p className="text-[9px] font-bold text-foreground">David K. • 0:54</p>
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -424,6 +571,62 @@ export function LivePreview({
                       >
                         Get Started Like Sarah
                       </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* EXPANDED REVIEW PREVIEW MODAL */}
+            {expandedReview && (
+              <div
+                className={`absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 transition-opacity ${
+                  viewport === "mobile" ? "items-end p-0" : ""
+                }`}
+              >
+                <div
+                  className={`relative w-full overflow-hidden shadow-2xl transition-all ${
+                    viewport === "mobile"
+                      ? "rounded-t-2xl border-t border-border"
+                      : "max-w-[280px] border border-border"
+                  } ${isDark ? "bg-neutral-900 text-white" : "bg-white text-neutral-900"}`}
+                  style={{
+                    borderRadius:
+                      viewport === "mobile"
+                        ? `${theme.borderRadius}px ${theme.borderRadius}px 0 0`
+                        : `${theme.borderRadius}px`,
+                  }}
+                >
+                  <button
+                    type="button"
+                    aria-label="Close review modal"
+                    onClick={() => setExpandedReview(null)}
+                    className="absolute right-2.5 top-2.5 z-40 flex h-6 w-6 items-center justify-center rounded-full bg-black/20 text-foreground hover:bg-black/40 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+
+                  <div className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary">
+                        {expandedReview.provider}
+                      </span>
+                      <span className="text-amber-500 text-xs">
+                        {Array.from({ length: 5 }).map((_, i) =>
+                          i < expandedReview.rating ? "★" : "☆"
+                        )}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-foreground/90 italic leading-relaxed">
+                      &ldquo;{expandedReview.text}&rdquo;
+                    </p>
+
+                    <div className="pt-2 border-t flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span className="font-semibold text-foreground">
+                        {expandedReview.authorName}
+                      </span>
+                      <span>{expandedReview.date}</span>
                     </div>
                   </div>
                 </div>

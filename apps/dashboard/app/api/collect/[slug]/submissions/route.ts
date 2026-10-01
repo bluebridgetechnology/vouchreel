@@ -8,6 +8,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { getStorage } from "@/lib/storage";
 import { queueTranscode } from "@/lib/transcode";
 import { submissionMetaSchema } from "@/lib/validations/collection-forms";
+import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 
 export const runtime = "nodejs";
 
@@ -69,7 +70,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   try {
     const [form] = await db
-      .select({ id: collectionForms.id })
+      .select({ id: collectionForms.id, spaceId: collectionForms.spaceId })
       .from(collectionForms)
       .where(and(eq(collectionForms.slug, slug), eq(collectionForms.isActive, true)));
     if (!form) return notFound("Collection form not found");
@@ -101,6 +102,14 @@ export async function POST(request: Request, { params }: RouteParams) {
       .returning();
 
     if (hasVideo) queueTranscode(submission.id);
+
+    // Dispatch webhook event (non-blocking)
+    dispatchWebhookEvent({
+      event: "submission.received",
+      spaceId: form.spaceId,
+      payload: { submission },
+    }).catch(() => {});
+
     return NextResponse.json({ submission }, { status: 201 });
   } catch (error) {
     console.error("Failed to create collection submission:", error);

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "vouchreel/widget",
+  "title": "VouchReel Video Testimonials",
+  "category": "widgets",
+  "icon": "video-alt3",
+  "description": "Embed high-converting video testimonials and review widgets.",
+  "keywords": ["testimonials", "video", "reviews", "vouchreel"],
+  "textdomain": "vouchreel",
+  "attributes": {
+    "embedKey": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "editorScript": "vouchreel-block-editor"
+}

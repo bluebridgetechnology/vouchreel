@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { spaces, testimonials } from "@/lib/db/schema";
 import { createTestimonialSchema } from "@/lib/validations/testimonials";
 import { getOEmbedMetadata, detectPlatform, validateUrl } from "@/lib/oembed";
+import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -178,6 +179,13 @@ export async function POST(request: Request, { params }: RouteParams) {
         clipStatus: "none",
       })
       .returning();
+
+    // Dispatch webhook event (non-blocking)
+    dispatchWebhookEvent({
+      event: "testimonial.created",
+      spaceId: id,
+      payload: { testimonial: newTestimonial },
+    }).catch(() => {});
 
     return NextResponse.json(
       { testimonial: newTestimonial },

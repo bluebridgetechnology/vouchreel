@@ -5,9 +5,11 @@ import {
   DEFAULT_WIDGET_CONFIG,
   UpdateWidgetConfigInput,
   WidgetPosition,
+  WidgetTemplate,
   WidgetTheme,
   TriggerType,
 } from "@/lib/validations/widget-config";
+import { TemplatePicker } from "@/components/widget/template-picker";
 import { PositionPicker } from "@/components/widget/position-picker";
 import { ThemeEditor } from "@/components/widget/theme-editor";
 import { TriggerConfig } from "@/components/widget/trigger-config";
@@ -50,6 +52,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
       const data = await res.json();
       if (data.widgetConfig) {
         setConfig({
+          template: data.widgetConfig.template || DEFAULT_WIDGET_CONFIG.template,
           position: data.widgetConfig.position || DEFAULT_WIDGET_CONFIG.position,
           theme: data.widgetConfig.theme || DEFAULT_WIDGET_CONFIG.theme,
           triggerType: data.widgetConfig.triggerType || DEFAULT_WIDGET_CONFIG.triggerType,
@@ -73,6 +76,11 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
   useEffect(() => {
     fetchWidgetConfig();
   }, [spaceId]);
+
+  function handleTemplateChange(template: WidgetTemplate) {
+    setConfig((prev) => ({ ...prev, template }));
+    setIsDirty(true);
+  }
 
   function handlePositionChange(position: WidgetPosition) {
     setConfig((prev) => ({ ...prev, position }));
@@ -279,6 +287,14 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         {/* Left Column: Settings Form */}
         <div className="space-y-8 lg:col-span-7">
+          {/* Section 0: Template Picker */}
+          <div className={`${activeTab === "appearance" ? "block" : "hidden sm:block"}`}>
+            <TemplatePicker
+              value={config.template}
+              onChange={handleTemplateChange}
+            />
+          </div>
+
           {/* Section 1: Position Picker */}
           <div className={`${activeTab === "appearance" ? "block" : "hidden sm:block"}`}>
             <PositionPicker
@@ -350,6 +366,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
         <div className="lg:col-span-5">
           <div className="sticky top-6">
             <LivePreview
+              template={config.template}
               position={config.position}
               theme={config.theme}
               triggerType={config.triggerType}

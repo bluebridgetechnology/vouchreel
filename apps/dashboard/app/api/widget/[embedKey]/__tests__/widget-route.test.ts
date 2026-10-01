@@ -125,6 +125,25 @@ describe("Widget Data Public API Route", () => {
           }),
         };
       }
+      if (queryCount === 4) {
+        // Approved reviews lookup
+        return {
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue([
+                {
+                  id: "rev-1",
+                  provider: "google",
+                  authorName: "Alice M.",
+                  rating: 5,
+                  text: "Great experience!",
+                  reviewDate: new Date(),
+                },
+              ]),
+            }),
+          }),
+        };
+      }
       // Conversion goals lookup
       return {
         from: vi.fn().mockReturnValue({
@@ -150,6 +169,8 @@ describe("Widget Data Public API Route", () => {
     expect(json.testimonials).toHaveLength(2);
     expect(json.testimonials[0].id).toBe("testi-1");
     expect(json.testimonials[0].customerName).toBe("Jane Doe");
+    expect(json.reviews).toHaveLength(1);
+    expect(json.reviews[0].authorName).toBe("Alice M.");
     expect(json.conversionGoals).toHaveLength(1);
     expect(json.conversionGoals[0].goalValue).toBe("/thank-you");
   });

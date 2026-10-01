@@ -7,6 +7,14 @@ export const WIDGET_POSITIONS = [
   "story-strip",
 ] as const;
 
+export const WIDGET_TEMPLATES = [
+  "wall-of-love",
+  "carousel",
+  "story-strip",
+  "floating-card",
+  "masonry",
+] as const;
+
 export const TRIGGER_TYPES = [
   "delay",
   "exit-intent",
@@ -20,6 +28,7 @@ export const THEME_MODES = ["light", "dark"] as const;
 const hexColorRegex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 export const widgetPositionSchema = z.enum(WIDGET_POSITIONS);
+export const widgetTemplateSchema = z.enum(WIDGET_TEMPLATES);
 
 export const widgetThemeSchema = z.object({
   primaryColor: z
@@ -76,6 +85,7 @@ export const triggerValueSchema = z
   });
 
 export const updateWidgetConfigSchema = z.object({
+  template: widgetTemplateSchema.default("floating-card"),
   position: widgetPositionSchema,
   theme: widgetThemeSchema,
   triggerType: triggerTypeSchema,
@@ -90,6 +100,7 @@ export const updateWidgetConfigSchema = z.object({
 });
 
 export type WidgetPosition = z.infer<typeof widgetPositionSchema>;
+export type WidgetTemplate = z.infer<typeof widgetTemplateSchema>;
 export type WidgetTheme = z.infer<typeof widgetThemeSchema>;
 export type TriggerType = z.infer<typeof triggerTypeSchema>;
 export type TriggerValue = z.infer<typeof triggerValueSchema>;
@@ -98,6 +109,7 @@ export type UpdateWidgetConfigInput = z.infer<typeof updateWidgetConfigSchema>;
 export interface WidgetConfigRecord {
   id: string;
   spaceId: string;
+  template: WidgetTemplate;
   position: WidgetPosition;
   theme: WidgetTheme;
   triggerType: TriggerType;
@@ -109,6 +121,7 @@ export interface WidgetConfigRecord {
 }
 
 export const DEFAULT_WIDGET_CONFIG: Omit<WidgetConfigRecord, "id" | "spaceId" | "createdAt"> = {
+  template: "floating-card",
   position: "bottom-right",
   theme: {
     primaryColor: "#4f46e5",

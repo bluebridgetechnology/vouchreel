@@ -20,6 +20,19 @@ export const platformEnum = pgEnum("platform", [
   "text",
 ]);
 
+export const reviewProviderEnum = pgEnum("review_provider", [
+  "google",
+  "trustpilot",
+]);
+
+export const widgetTemplateEnum = pgEnum("widget_template", [
+  "wall-of-love",
+  "carousel",
+  "story-strip",
+  "floating-card",
+  "masonry",
+]);
+
 export const widgetPositionEnum = pgEnum("widget_position", [
   "bottom-right",
   "bottom-left",
@@ -92,6 +105,22 @@ export const processingStatusEnum = pgEnum("processing_status", [
   "processing",
   "done",
   "failed",
+]);
+
+export const webhookEventEnum = pgEnum("webhook_event", [
+  "testimonial.created",
+  "testimonial.updated",
+  "testimonial.deleted",
+  "submission.received",
+  "submission.approved",
+  "conversion.tracked",
+]);
+
+export const deliveryStatusEnum = pgEnum("delivery_status", [
+  "pending",
+  "success",
+  "failed",
+  "retrying",
 ]);
 
 export interface CollectionFormBranding {
@@ -226,6 +255,7 @@ export const widgetConfigs = pgTable("widget_configs", {
     .notNull()
     .unique()
     .references(() => spaces.id, { onDelete: "cascade" }),
+  template: widgetTemplateEnum("template").default("floating-card").notNull(),
   position: widgetPositionEnum("position").default("bottom-right").notNull(),
   theme: jsonb("theme").$type<Record<string, unknown>>().default({}),
   triggerType: triggerTypeEnum("trigger_type").default("delay").notNull(),
@@ -378,6 +408,121 @@ export const submissions = pgTable("submissions", {
   index("submissions_form_status_idx").on(table.formId, table.status),
 ]);
 
+/**
+ * Review Sources — accounts/businesses connected to import external reviews
+ * (e.g. Google Places, Trustpilot Business).
+ */
+export const reviewSources = pgTable("review_sources", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  spaceId: uuid("space_id")
+    .notNull()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  provider: reviewProviderEnum("provider").notNull(),
+  providerBusinessId: text("provider_business_id").notNull(),
+  credentials: jsonb("credentials")
+    .$type<Record<string, unknown>>()
+    .default({})
+    .notNull(),
+  lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index("review_sources_space_provider_idx").on(table.spaceId, table.provider),
+]);
+
+/**
+ * Reviews — imported text reviews from external sources (Google, Trustpilot).
+ */
+export const reviews = pgTable("reviews", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  spaceId: uuid("space_id")
+    .notNull()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  sourceId: uuid("source_id")
+    .references(() => reviewSources.id, { onDelete: "cascade" }),
+  provider: reviewProviderEnum("provider").notNull(),
+  authorName: text("author_name").notNull(),
+  authorPhotoUrl: text("author_photo_url"),
+  rating: integer("rating").notNull(),
+  text: text("text"),
+  reviewDate: timestamp("review_date", { withTimezone: true }),
+  providerReviewId: text("provider_review_id").notNull().unique(),
+  isApproved: boolean("is_approved").default(true).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index("reviews_space_approved_idx").on(table.spaceId, table.isApproved),
+  index("reviews_source_idx").on(table.sourceId),
+]);
+
+/**
+ * API keys — enables programmatic access to the public v1 API.
+ * Scoped per space. Stores a SHA-256 hash of the key; the raw key is never stored.
+ */
+export const apiKeys = pgTable("api_keys", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  spaceId: uuid("space_id")
+    .notNull()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  keyHash: text("key_hash").notNull().unique(),
+  keyPrefix: text("key_prefix").notNull(),
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index("api_keys_space_idx").on(table.spaceId),
+]);
+
+/**
+ * Webhook endpoints — configured destination URLs for outbound event notifications.
+ */
+export const webhookEndpoints = pgTable("webhook_endpoints", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  spaceId: uuid("space_id")
+    .notNull()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  secret: text("secret").notNull(),
+  events: text("events").array().notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+}, (table) => [
+  index("webhook_endpoints_space_idx").on(table.spaceId),
+]);
+
+/**
+ * Webhook deliveries — log of dispatched webhook attempts and retry scheduling.
+ */
+export const webhookDeliveries = pgTable("webhook_deliveries", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  endpointId: uuid("endpoint_id")
+    .notNull()
+    .references(() => webhookEndpoints.id, { onDelete: "cascade" }),
+  event: text("event").notNull(),
+  payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+  status: deliveryStatusEnum("status").default("pending").notNull(),
+  httpStatus: integer("http_status"),
+  responseBody: text("response_body"),
+  attemptCount: integer("attempt_count").default(0).notNull(),
+  maxAttempts: integer("max_attempts").default(4).notNull(),
+  nextRetryAt: timestamp("next_retry_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+}, (table) => [
+  index("webhook_deliveries_endpoint_idx").on(table.endpointId),
+  index("webhook_deliveries_status_retry_idx").on(table.status, table.nextRetryAt),
+]);
+
 // ─── Relations ──────────────────────────────────────────────────────────────
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -411,6 +556,10 @@ export const spacesRelations = relations(spaces, ({ many, one }) => ({
   events: many(events),
   conversionGoals: many(conversionGoals),
   collectionForms: many(collectionForms),
+  reviewSources: many(reviewSources),
+  reviews: many(reviews),
+  apiKeys: many(apiKeys),
+  webhookEndpoints: many(webhookEndpoints),
 }));
 
 export const collectionFormsRelations = relations(
@@ -476,3 +625,54 @@ export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
     references: [plans.id],
   }),
 }));
+
+export const reviewSourcesRelations = relations(
+  reviewSources,
+  ({ one, many }) => ({
+    space: one(spaces, {
+      fields: [reviewSources.spaceId],
+      references: [spaces.id],
+    }),
+    reviews: many(reviews),
+  })
+);
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  space: one(spaces, {
+    fields: [reviews.spaceId],
+    references: [spaces.id],
+  }),
+  source: one(reviewSources, {
+    fields: [reviews.sourceId],
+    references: [reviewSources.id],
+  }),
+}));
+
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  space: one(spaces, {
+    fields: [apiKeys.spaceId],
+    references: [spaces.id],
+  }),
+}));
+
+export const webhookEndpointsRelations = relations(
+  webhookEndpoints,
+  ({ one, many }) => ({
+    space: one(spaces, {
+      fields: [webhookEndpoints.spaceId],
+      references: [spaces.id],
+    }),
+    deliveries: many(webhookDeliveries),
+  })
+);
+
+export const webhookDeliveriesRelations = relations(
+  webhookDeliveries,
+  ({ one }) => ({
+    endpoint: one(webhookEndpoints, {
+      fields: [webhookDeliveries.endpointId],
+      references: [webhookEndpoints.id],
+    }),
+  })
+);
+
