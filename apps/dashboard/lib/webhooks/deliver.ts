@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { webhookDeliveries, webhookEndpoints } from "@/lib/db/schema";
 import { notifySpaceOwner } from "@/lib/notifications/service";
+import { assertPublicUrl } from "@/lib/security/ssrf";
 
 // Backoff schedule in seconds: attempt 1 -> 30s, attempt 2 -> 5m, attempt 3 -> 30m
 const RETRY_BACKOFF_SECONDS = [30, 300, 1800];
@@ -27,7 +28,11 @@ export async function attemptDelivery(
   const signature = createHmac("sha256", secret).update(body).digest("hex");
 
   try {
+    // Re-check at send time: the stored URL may now resolve somewhere internal
+    await assertPublicUrl(url);
+
     const response = await fetch(url, {
+      redirect: "manual",
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -49,7 +49,7 @@ export function withApiKeyAuth<TParams = Record<string, string>>(
     // 2. Enforce Rate Limiting
     const max = options?.rateLimitMax ?? 60;
     const windowMs = options?.rateLimitWindowMs ?? 60_000;
-    const limit = rateLimit(`api_${apiKey.apiKeyId}`, { windowMs, max });
+    const limit = await rateLimit(`api_${apiKey.apiKeyId}`, { windowMs, max });
 
     if (!limit.success) {
       const retryAfterSec = Math.max(

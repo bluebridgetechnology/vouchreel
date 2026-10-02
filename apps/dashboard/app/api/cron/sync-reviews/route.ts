@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { syncAllActiveReviewSources } from "@/lib/reviews/sync";
+import { authorizeCron } from "@/lib/security/cron-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -16,12 +17,8 @@ export async function POST(request: Request) {
 }
 
 async function handleSync(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const denied = authorizeCron(request);
+  if (denied) return denied;
 
   try {
     const result = await syncAllActiveReviewSources();

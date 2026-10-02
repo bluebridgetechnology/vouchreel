@@ -8,6 +8,7 @@ import {
   internalError,
   type ApiErrorCode,
 } from "@/lib/api/errors";
+import { getClientIp } from "@/lib/security/client-ip";
 
 /**
  * GET /api/oembed?url=...
@@ -15,13 +16,10 @@ import {
  */
 export async function GET(request: Request) {
   const reqHeaders = await headers();
-  const ip =
-    reqHeaders.get("x-forwarded-for")?.split(",")[0].trim() ||
-    reqHeaders.get("x-real-ip") ||
-    "127.0.0.1";
+  const ip = getClientIp(reqHeaders);
 
   // Rate limit: 40 requests per minute per IP
-  const rateLimitResult = rateLimit(`oembed:${ip}`, {
+  const rateLimitResult = await rateLimit(`oembed:${ip}`, {
     windowMs: 60 * 1000,
     max: 40,
   });
