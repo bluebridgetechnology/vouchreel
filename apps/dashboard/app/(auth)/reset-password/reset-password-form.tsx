@@ -9,8 +9,10 @@ import { Em } from "@/components/ui/em";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { notify } from "@/lib/notify";
+import { useHydrated } from "@/lib/use-hydrated";
 
 export function ResetPasswordForm({ token }: { token: string }) {
+  const hydrated = useHydrated();
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -60,7 +62,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       </div>
 
       <Card padding="lg">
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form method="post" onSubmit={handleSubmit} className="space-y-5">
           {error && (
             <div role="alert" className="rounded-control bg-danger-soft px-3.5 py-2.5 text-sm text-danger-foreground">
               {error}
@@ -91,7 +93,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
             />
           </Field>
 
-          <Button type="submit" size="lg" className="w-full" loading={loading}>
+          <Button type="submit" size="lg" className="w-full" loading={loading} disabled={!hydrated}>
             {loading ? "Updating…" : "Update password"}
           </Button>
         </form>
