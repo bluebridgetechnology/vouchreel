@@ -126,7 +126,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r bg-surface lg:flex">
       <div className="flex h-18 items-center justify-between gap-2 px-6">
         <Logo href="/dashboard" />
-        <NotificationBell />
+        <NotificationBell align="start" />
       </div>
       <NavLinks user={user} />
       <UserPanel user={user} />

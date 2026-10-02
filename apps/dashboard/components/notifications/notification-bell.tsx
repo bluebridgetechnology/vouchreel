@@ -23,7 +23,7 @@ interface NotificationItem {
 const POLL_MS = 60_000;
 
 /** Bell with unread badge and inbox dropdown. Polls while visible and refreshes on focus. */
-export function NotificationBell({ className }: { className?: string }) {
+export function NotificationBell({ className, align = "end" }: { className?: string; align?: "start" | "end" }) {
   const router = useRouter();
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unread, setUnread] = useState(0);
@@ -104,7 +104,7 @@ export function NotificationBell({ className }: { className?: string }) {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[min(22rem,calc(100vw-2rem))] p-0">
+      <DropdownMenuContent align={align} collisionPadding={12} className="w-[min(22rem,calc(100vw-2rem))] p-0">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <p className="text-sm font-medium">Notifications</p>
           <Button variant="link" size="bare" className="text-xs" onClick={markAllRead} disabled={unread === 0}>
