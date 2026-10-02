@@ -3,6 +3,8 @@ import { GET as getSpaces } from "../spaces/route";
 import { GET as getSingleSpace } from "../spaces/[id]/route";
 import { GET as getTestimonials, POST as createTestimonial } from "../testimonials/route";
 import * as apiKeysModule from "@/lib/api/api-keys";
+import { enforceTestimonialLimit } from "@/lib/payments/enforce";
+import { apiError } from "@/lib/api/errors";
 
 const mockDbSelect = vi.fn();
 const mockDbInsert = vi.fn();
@@ -12,6 +14,10 @@ vi.mock("@/lib/db", () => ({
     select: () => mockDbSelect(),
     insert: () => mockDbInsert(),
   },
+}));
+
+vi.mock("@/lib/payments/enforce", () => ({
+  enforceTestimonialLimit: vi.fn(() => Promise.resolve(null)),
 }));
 
 vi.mock("@/lib/webhooks/dispatch", () => ({
@@ -97,6 +103,30 @@ describe("Public v1 REST API", () => {
   });
 
   describe("POST /api/v1/testimonials", () => {
+    it("rejects creation with 403 PLAN_LIMIT when the space is at its plan limit", async () => {
+      vi.spyOn(apiKeysModule, "authenticateApiKey").mockResolvedValueOnce({
+        apiKeyId: "key-1",
+        spaceId: "space-alpha",
+        ownerId: "user-1",
+      });
+      vi.mocked(enforceTestimonialLimit).mockResolvedValueOnce(
+        apiError(403, "PLAN_LIMIT", "Testimonial limit reached (3/3). Upgrade your plan to add more.") as never
+      );
+
+      const res = await createTestimonial(
+        new Request("https://api.vouchreel.com/api/v1/testimonials", {
+          method: "POST",
+          headers: { Authorization: "Bearer vr_live_testkey", "Content-Type": "application/json" },
+          body: JSON.stringify({ title: "One too many", customerName: "Jane", quote: "Nice" }),
+        })
+      );
+
+      expect(res.status).toBe(403);
+      expect((await res.json()).error.code).toBe("PLAN_LIMIT");
+      expect(enforceTestimonialLimit).toHaveBeenCalledWith("space-alpha");
+      expect(mockDbInsert).not.toHaveBeenCalled();
+    });
+
     it("creates a testimonial for the authenticated space", async () => {
       vi.spyOn(apiKeysModule, "authenticateApiKey").mockResolvedValueOnce({
         apiKeyId: "key-1",

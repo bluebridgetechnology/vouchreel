@@ -15,6 +15,9 @@ export interface PlanItem {
   price: number;
   interval: "month" | "year";
   features: string[] | null;
+  description?: string | null;
+  badge?: string | null;
+  sortOrder?: number;
   isActive: boolean;
 }
 
@@ -24,27 +27,24 @@ interface PricingTableProps {
   currentPlanId?: string | null;
 }
 
-const descriptions: Record<string, string> = {
-  free: "Perfect for side projects and evaluating Vouchreel.",
-  pro: "Everything you need to collect and showcase high-converting videos.",
-  agency: "For agencies and teams managing multiple client brands with white-label proof.",
-};
-const fallbackDescription = "For fast-growing companies and agencies demanding maximum power.";
-
 export function PricingTable({ plans, user, currentPlanId }: PricingTableProps) {
   const [interval, setInterval] = useState<"month" | "year">("month");
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
 
-  // Filter active plans by chosen interval
-  const filteredPlans = plans.filter((p) => p.isActive && (p.price === 0 || p.interval === interval));
-
-  // Group by unique plan tier name (Free, Pro, Agency / Business)
-  const tierOrder = ["Free", "Pro", "Agency", "Business"];
-  const displayPlans = tierOrder
-    .map((tierName) => filteredPlans.find((p) => p.name.toLowerCase() === tierName.toLowerCase()))
-    .filter(Boolean) as PlanItem[];
+  // One card per plan name, in admin-defined order. Free ($0) plans show on both intervals;
+  // paid plans show the variant that matches the selected billing interval.
+  const byName = new Map<string, PlanItem>();
+  for (const p of plans) {
+    if (!p.isActive) continue;
+    if (p.price !== 0 && p.interval !== interval) continue;
+    const key = p.name.toLowerCase();
+    if (!byName.has(key)) byName.set(key, p);
+  }
+  const displayPlans = [...byName.values()].sort(
+    (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.price - b.price
+  );
 
   async function handleSelectPlan(plan: PlanItem) {
     setErrorMessage(null);
@@ -115,7 +115,7 @@ export function PricingTable({ plans, user, currentPlanId }: PricingTableProps) 
       {/* Cards grid */}
       <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-3">
         {displayPlans.map((plan) => {
-          const isPro = plan.name.toLowerCase() === "pro";
+          const isFeatured = Boolean(plan.badge);
           const isCurrent = currentPlanId === plan.id;
           const isLoading = loadingPlanId === plan.id;
 
@@ -125,13 +125,13 @@ export function PricingTable({ plans, user, currentPlanId }: PricingTableProps) 
           return (
             <Card
               key={plan.id}
-              variant={isPro ? "inverse" : "default"}
+              variant={isFeatured ? "inverse" : "default"}
               padding="lg"
-              className={cn("relative flex flex-col justify-between", isPro && "shadow-float")}
+              className={cn("relative flex flex-col justify-between", isFeatured && "shadow-float")}
             >
-              {isPro && (
+              {isFeatured && (
                 <Badge variant="brand" className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-text-on-accent">
-                  Most popular
+                  {plan.badge}
                 </Badge>
               )}
 
@@ -141,19 +141,19 @@ export function PricingTable({ plans, user, currentPlanId }: PricingTableProps) 
                   {isCurrent && <Badge variant="brand">Current plan</Badge>}
                 </div>
 
-                <p className={cn("mt-2 text-sm", isPro ? "opacity-70" : "text-text-muted")}>
-                  {descriptions[plan.name.toLowerCase()] ?? fallbackDescription}
+                <p className={cn("mt-2 text-sm", isFeatured ? "opacity-70" : "text-text-muted")}>
+                  {plan.description}
                 </p>
 
                 <div className="mt-6 flex items-baseline gap-1">
                   <span className="text-5xl font-medium tracking-tight tabular-nums">{formattedPrice}</span>
-                  <span className={cn("text-sm", isPro ? "opacity-70" : "text-text-muted")}>{priceSubtext}</span>
+                  <span className={cn("text-sm", isFeatured ? "opacity-70" : "text-text-muted")}>{priceSubtext}</span>
                 </div>
 
                 <ul className="mt-8 space-y-3.5 text-sm">
                   {(plan.features || []).map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <Icon name="check-circle" size="sm" className={cn("mt-0.5", isPro ? "text-brand" : "text-success")} />
+                      <Icon name="check-circle" size="sm" className={cn("mt-0.5", isFeatured ? "text-brand" : "text-success")} />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -164,7 +164,7 @@ export function PricingTable({ plans, user, currentPlanId }: PricingTableProps) 
                 <Button
                   type="button"
                   size="lg"
-                  variant={isCurrent ? "soft" : isPro ? "primary" : "outline"}
+                  variant={isCurrent ? "soft" : isFeatured ? "primary" : "outline"}
                   className="w-full"
                   loading={isLoading}
                   disabled={isCurrent}

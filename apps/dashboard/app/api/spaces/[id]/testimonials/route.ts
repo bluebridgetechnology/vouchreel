@@ -9,6 +9,7 @@ import { getOEmbedMetadata, detectPlatform, validateUrl } from "@/lib/oembed";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 import { verifySpaceAccess } from "@/lib/auth/permissions";
 import { canAddTestimonial } from "@/lib/payments/subscription";
+import { enforceTestimonialLimit } from "@/lib/payments/enforce";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -70,20 +71,10 @@ export async function POST(request: Request, { params }: RouteParams) {
     return authCheck.errorResponse;
   }
 
-  const spaceOwnerId = authCheck.access.space.ownerId;
-
   try {
-    // Check testimonial count against space owner's plan limits
-    const [countResult] = await db
-      .select({ value: count() })
-      .from(testimonials)
-      .where(eq(testimonials.spaceId, id));
-
-    const currentCount = countResult?.value ?? 0;
-    const canAdd = await canAddTestimonial(spaceOwnerId, currentCount);
-    if (!canAdd) {
-      return forbidden("Testimonial limit reached for this space under the current plan.");
-    }
+    // Enforce the space owner's plan limit (shared with the API and approval paths)
+    const blocked = await enforceTestimonialLimit(id);
+    if (blocked) return blocked;
 
     const body = await request.json();
     const validated = createTestimonialSchema.safeParse(body);

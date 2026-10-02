@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { plans, subscriptions } from "@/lib/db/schema";
 import { seedPlans } from "@/lib/db/seed-plans";
@@ -22,6 +22,7 @@ export default async function PricingPage() {
 
   let dbPlans = await db.query.plans.findMany({
     where: eq(plans.isActive, true),
+    orderBy: [asc(plans.sortOrder), asc(plans.price)],
   });
 
   // Automatically seed initial plans if table is empty
@@ -47,6 +48,9 @@ export default async function PricingPage() {
     price: p.price,
     interval: p.interval as "month" | "year",
     features: (p.features as string[]) || [],
+    description: p.description,
+    badge: p.badge,
+    sortOrder: p.sortOrder,
     isActive: p.isActive,
   }));
 

@@ -1,70 +1,222 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth/session";
-import { getActivePaymentProviderName } from "@/lib/payments";
 import { isPlatformAdmin } from "@/lib/auth/platform-admin";
+import { getActivePaymentProviderName } from "@/lib/payments";
 import { getFfmpegStatus } from "@/lib/media/ffmpeg";
+import { listAdminPlans } from "@/lib/admin/plans";
+import { listAdminUsers, listAuditLog } from "@/lib/admin/queries";
+import { timeAgo } from "@/lib/time-ago";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { AdminPanel } from "./admin-panel";
+import { PlansManager } from "./plans-manager";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title: "Admin" };
 
-export default async function AdminPage() {
+const TABS = [
+  { id: "plans", label: "Plans & pricing" },
+  { id: "payments", label: "Payments" },
+  { id: "users", label: "Users" },
+  { id: "audit", label: "Audit log" },
+  { id: "system", label: "System" },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
+
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; q?: string }>;
+}) {
   const session = await requireSession();
-
   if (!isPlatformAdmin(session.user)) {
     redirect("/dashboard");
   }
 
-  const activeProvider = await getActivePaymentProviderName();
-  const ffmpeg = await getFfmpegStatus(true);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const { tab: rawTab, q } = await searchParams;
+  const tab: TabId = TABS.some((t) => t.id === rawTab) ? (rawTab as TabId) : "plans";
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-medium tracking-tight">Admin Settings</h1>
-        <p className="text-text-muted mt-1 text-sm">
-          Manage system-wide settings, payment processing gateways, and developer webhooks.
+        <h1 className="text-3xl font-medium tracking-tight">Admin</h1>
+        <p className="mt-1 text-sm text-text-muted">
+          Platform settings, plans and pricing, customers and an audit trail of changes made here.
         </p>
       </div>
 
-      <AdminPanel initialProvider={activeProvider} appUrl={appUrl} />
+      <nav aria-label="Admin sections" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div className="inline-flex min-w-max items-center gap-1 rounded-pill bg-surface-sunken p-1">
+          {TABS.map((t) => (
+            <Link
+              key={t.id}
+              href={`/admin?tab=${t.id}`}
+              aria-current={tab === t.id ? "page" : undefined}
+              className={cn(
+                "inline-flex h-9 items-center whitespace-nowrap rounded-pill px-4 text-sm font-medium transition-colors",
+                tab === t.id ? "bg-surface text-text shadow-sm" : "text-text-muted hover:text-text",
+              )}
+            >
+              {t.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>System health</CardTitle>
-          <CardDescription>
-            Video transcoding and social exports need FFmpeg on the server. Serverless hosts cannot run it.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <div className="flex items-center justify-between gap-3">
-            <span>FFmpeg</span>
-            {ffmpeg.available ? (
-              <Badge variant="success">Installed{ffmpeg.version ? ` · ${ffmpeg.version}` : ""}</Badge>
-            ) : (
-              <Badge variant="danger">Not installed</Badge>
-            )}
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <span>Burned-in captions (drawtext)</span>
-            {ffmpeg.available ? (
-              <Badge variant={ffmpeg.drawtext ? "success" : "warning"}>
-                {ffmpeg.drawtext ? "Available" : "Missing filter"}
-              </Badge>
-            ) : (
-              <Badge>Unknown</Badge>
-            )}
-          </div>
-          {!ffmpeg.available && (
-            <p className="rounded-control bg-danger-soft px-3 py-2 text-xs text-danger-foreground">
-              {ffmpeg.error} Install it (winget install Gyan.FFmpeg, brew install ffmpeg, apt install ffmpeg) or set
-              FFMPEG_PATH, then restart the server.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      {tab === "plans" && <PlansTab />}
+      {tab === "payments" && <PaymentsTab />}
+      {tab === "users" && <UsersTab q={q} />}
+      {tab === "audit" && <AuditTab />}
+      {tab === "system" && <SystemTab />}
     </div>
+  );
+}
+
+async function PlansTab() {
+  const plans = await listAdminPlans();
+  return <PlansManager plans={plans} />;
+}
+
+async function PaymentsTab() {
+  const activeProvider = await getActivePaymentProviderName();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return <AdminPanel initialProvider={activeProvider} appUrl={appUrl} />;
+}
+
+async function UsersTab({ q }: { q?: string }) {
+  const users = await listAdminUsers(q);
+  return (
+    <div className="space-y-4">
+      <form action="/admin" className="flex max-w-md gap-2">
+        <input type="hidden" name="tab" value="users" />
+        <Input name="q" defaultValue={q} placeholder="Search by name or email" aria-label="Search users" />
+        <Button type="submit" variant="outline">
+          Search
+        </Button>
+      </form>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>User</TableHead>
+            <TableHead>Plan</TableHead>
+            <TableHead>Spaces</TableHead>
+            <TableHead>Joined</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {users.map((u) => (
+            <TableRow key={u.id}>
+              <TableCell>
+                <div className="flex items-center gap-2 font-medium">
+                  {u.name}
+                  {u.isPlatformAdmin && <Badge variant="brand">Admin</Badge>}
+                </div>
+                <div className="text-xs text-text-muted">{u.email}</div>
+              </TableCell>
+              <TableCell>
+                {u.planName ? (
+                  <span className="flex items-center gap-2">
+                    {u.planName}
+                    {u.subscriptionStatus && u.subscriptionStatus !== "active" && (
+                      <Badge variant="warning">{u.subscriptionStatus}</Badge>
+                    )}
+                  </span>
+                ) : (
+                  <span className="text-text-muted">Free</span>
+                )}
+              </TableCell>
+              <TableCell className="tabular-nums">{u.spaceCount}</TableCell>
+              <TableCell className="text-text-muted">{timeAgo(u.createdAt)}</TableCell>
+            </TableRow>
+          ))}
+          {users.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={4} className="py-10 text-center text-text-muted">
+                No users match.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+      <p className="text-xs text-text-subtle">Showing the 100 most recent matches. Grant platform admin with npm run admin:grant.</p>
+    </div>
+  );
+}
+
+async function AuditTab() {
+  const entries = await listAuditLog();
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>When</TableHead>
+          <TableHead>Who</TableHead>
+          <TableHead>What</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {entries.map((e) => (
+          <TableRow key={e.id}>
+            <TableCell className="whitespace-nowrap text-text-muted">{timeAgo(e.createdAt)}</TableCell>
+            <TableCell className="text-text-muted">{e.actorEmail ?? "Deleted user"}</TableCell>
+            <TableCell>
+              <div>{e.summary}</div>
+              <div className="text-xs text-text-subtle">{e.action}</div>
+            </TableCell>
+          </TableRow>
+        ))}
+        {entries.length === 0 && (
+          <TableRow>
+            <TableCell colSpan={3} className="py-10 text-center text-text-muted">
+              Nothing recorded yet. Plan edits and payment-provider changes appear here.
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
+  );
+}
+
+async function SystemTab() {
+  const ffmpeg = await getFfmpegStatus(true);
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>System health</CardTitle>
+        <CardDescription>
+          Video transcoding and social exports need FFmpeg on the server. Serverless hosts cannot run it.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <div className="flex items-center justify-between gap-3">
+          <span>FFmpeg</span>
+          {ffmpeg.available ? (
+            <Badge variant="success">Installed{ffmpeg.version ? ` · ${ffmpeg.version}` : ""}</Badge>
+          ) : (
+            <Badge variant="danger">Not installed</Badge>
+          )}
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span>Burned-in captions (drawtext)</span>
+          {ffmpeg.available ? (
+            <Badge variant={ffmpeg.drawtext ? "success" : "warning"}>{ffmpeg.drawtext ? "Available" : "Missing filter"}</Badge>
+          ) : (
+            <Badge>Unknown</Badge>
+          )}
+        </div>
+        {!ffmpeg.available && (
+          <p className="rounded-control bg-danger-soft px-3 py-2 text-xs text-danger-foreground">
+            {ffmpeg.error} Install it (winget install Gyan.FFmpeg, brew install ffmpeg, apt install ffmpeg) or set FFMPEG_PATH,
+            then restart the server.
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }

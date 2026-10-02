@@ -1,76 +1,10 @@
-import { eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "../db";
 import { subscriptions, plans } from "../db/schema";
 import type { SubscriptionStatus } from "./types";
+import { PLAN_LIMIT_PRESETS, normalizeLimits, type PlanLimits } from "./plan-limits";
 
-export interface PlanLimits {
-  tier: "free" | "pro" | "agency" | "business";
-  maxSpaces: number;
-  maxTestimonialsPerSpace: number;
-  removeWatermark: boolean;
-  canCustomizeBranding: boolean;
-  canUseAllTriggers: boolean;
-  canAccessAnalytics: boolean;
-  canUseCustomRules: boolean;
-  multiSeat: boolean;
-  whiteLabel: boolean;
-  exportableReports: boolean;
-}
-
-export const PLAN_LIMITS: Record<string, PlanLimits> = {
-  free: {
-    tier: "free",
-    maxSpaces: 1,
-    maxTestimonialsPerSpace: 3,
-    removeWatermark: false,
-    canCustomizeBranding: false,
-    canUseAllTriggers: false,
-    canAccessAnalytics: false,
-    canUseCustomRules: false,
-    multiSeat: false,
-    whiteLabel: false,
-    exportableReports: false,
-  },
-  pro: {
-    tier: "pro",
-    maxSpaces: 5,
-    maxTestimonialsPerSpace: Infinity,
-    removeWatermark: true,
-    canCustomizeBranding: true,
-    canUseAllTriggers: true,
-    canAccessAnalytics: true,
-    canUseCustomRules: true,
-    multiSeat: false,
-    whiteLabel: false,
-    exportableReports: true,
-  },
-  agency: {
-    tier: "agency",
-    maxSpaces: Infinity,
-    maxTestimonialsPerSpace: Infinity,
-    removeWatermark: true,
-    canCustomizeBranding: true,
-    canUseAllTriggers: true,
-    canAccessAnalytics: true,
-    canUseCustomRules: true,
-    multiSeat: true,
-    whiteLabel: true,
-    exportableReports: true,
-  },
-  business: {
-    tier: "business",
-    maxSpaces: Infinity,
-    maxTestimonialsPerSpace: Infinity,
-    removeWatermark: true,
-    canCustomizeBranding: true,
-    canUseAllTriggers: true,
-    canAccessAnalytics: true,
-    canUseCustomRules: true,
-    multiSeat: true,
-    whiteLabel: true,
-    exportableReports: true,
-  },
-};
+export type { PlanLimits } from "./plan-limits";
 
 /**
  * Retrieves the user's current subscription and associated plan from the database.
@@ -119,12 +53,30 @@ export async function hasActiveSubscription(userId: string): Promise<boolean> {
 }
 
 /**
- * Returns feature gating limits for a given user.
- * Defaults to Free tier limits if no subscription exists or subscription is not active.
+ * Limits for users without an active subscription: the active free plan configured in
+ * the admin area (so admins can tune the free tier), else the built-in free preset.
+ */
+async function getFreeTierLimits(): Promise<PlanLimits> {
+  try {
+    const freePlan = await db.query.plans.findFirst({
+      where: and(eq(plans.price, 0), eq(plans.isActive, true)),
+      orderBy: asc(plans.sortOrder),
+    });
+    if (freePlan?.limits) return normalizeLimits(freePlan.limits, freePlan.name);
+  } catch {
+    // fall through to the preset
+  }
+  return PLAN_LIMIT_PRESETS.free;
+}
+
+/**
+ * Returns feature gating limits for a given user, read from their active plan's
+ * `limits` (edited in /admin). Changing a plan's limits takes effect immediately for
+ * everyone on it. Legacy plans without stored limits use name-based presets.
  */
 export async function getSubscriptionLimits(userId: string): Promise<PlanLimits> {
   if (!db.query?.subscriptions) {
-    return PLAN_LIMITS.free;
+    return PLAN_LIMIT_PRESETS.free;
   }
 
   const userSub = await db.query.subscriptions.findFirst({
@@ -132,7 +84,7 @@ export async function getSubscriptionLimits(userId: string): Promise<PlanLimits>
   });
 
   if (!userSub || (userSub.status !== "active" && userSub.status !== "trialing")) {
-    return PLAN_LIMITS.free;
+    return getFreeTierLimits();
   }
 
   const plan = await db.query.plans.findFirst({
@@ -140,21 +92,10 @@ export async function getSubscriptionLimits(userId: string): Promise<PlanLimits>
   });
 
   if (!plan) {
-    return PLAN_LIMITS.free;
+    return getFreeTierLimits();
   }
 
-  const normalizedName = plan.name.toLowerCase().trim();
-  if (normalizedName.includes("agency")) {
-    return PLAN_LIMITS.agency;
-  }
-  if (normalizedName.includes("business")) {
-    return PLAN_LIMITS.business;
-  }
-  if (normalizedName.includes("pro")) {
-    return PLAN_LIMITS.pro;
-  }
-
-  return PLAN_LIMITS.free;
+  return normalizeLimits(plan.limits, plan.name);
 }
 
 /**

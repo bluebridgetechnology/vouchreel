@@ -57,6 +57,7 @@ Standard error codes:
 * `403 FORBIDDEN`: Attempted access to a resource outside the API key's space.
 * `404 NOT_FOUND`: Resource does not exist.
 * `429 RATE_LIMITED`: Rate limit exceeded.
+* `403 PLAN_LIMIT`: The action would exceed a limit of the space owner's plan (for example the testimonials-per-space cap). `details` contains `current` and `limit` (`null` = unlimited). Applies to the dashboard, the v1 API and approving collection submissions.
 * `500 INTERNAL_ERROR`: Server-side processing error.
 
 ---
