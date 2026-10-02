@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { notify } from "@/lib/notify";
 
 export default function NewSpacePage() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export default function NewSpacePage() {
         throw new Error(data?.error?.message || "Failed to create space");
       }
 
+      notify.success("Space created");
       router.push(`/spaces/${data.space.id}/testimonials`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create space");
@@ -97,13 +99,13 @@ export default function NewSpacePage() {
             >
               Cancel
             </Link>
-            <button
+            <Button
               type="submit"
               disabled={loading || !name.trim()}
-              className={buttonVariants({ variant: "primary", size: "md" })}
+              loading={loading}
             >
               {loading ? "Creating..." : "Create Space"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

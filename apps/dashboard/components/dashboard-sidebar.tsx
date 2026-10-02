@@ -19,7 +19,7 @@ interface DashboardUser {
   name: string;
   email: string;
   image?: string | null;
-  role?: string | null;
+  isPlatformAdmin?: boolean | null;
 }
 
 interface DashboardSidebarProps {
@@ -27,8 +27,7 @@ interface DashboardSidebarProps {
 }
 
 function isAdminUser(user: DashboardUser) {
-  const role = (user.role || "").toLowerCase().trim();
-  return role === "owner" || role === "admin";
+  return user.isPlatformAdmin === true;
 }
 
 function isItemActive(pathname: string, href: string) {
@@ -105,9 +104,7 @@ function UserPanel({ user }: DashboardSidebarProps) {
           <p className="truncate text-sm font-medium">{user.name || "User"}</p>
           <p className="truncate text-xs text-text-muted">{user.email}</p>
         </div>
-        <Badge variant="brand" className="capitalize">
-          {user.role || "owner"}
-        </Badge>
+        {user.isPlatformAdmin && <Badge variant="brand">Admin</Badge>}
       </div>
       <div className="flex items-center justify-between gap-2">
         <ThemeToggle />

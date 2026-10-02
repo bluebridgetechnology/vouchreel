@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { SpaceListItem } from "@/lib/spaces/queries";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { ModalOverlay } from "@/components/ui/modal";
+import { notify } from "@/lib/notify";
 
 interface SpacesViewProps {
   initialSpaces: SpaceListItem[];
@@ -80,8 +81,9 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
         prev.map((s) => (s.id === space.id ? { ...s, name: space.name } : s))
       );
       closeRenameModal();
+      notify.success("Space renamed");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to rename space");
+      notify.fromError(err, "Failed to rename space");
     } finally {
       setRenameSaving(false);
     }
@@ -103,8 +105,9 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
 
       setSpaces((prev) => prev.filter((s) => s.id !== deletingSpace.id));
       setDeletingSpace(null);
+      notify.success("Space deleted");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete space");
+      notify.fromError(err, "Failed to delete space");
     } finally {
       setDeleteLoading(false);
     }
@@ -334,13 +337,13 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                 >
                   Cancel
                 </button>
-                <button
+                <Button
                   type="submit"
                   disabled={renameSaving || !renameValue.trim()}
-                  className={buttonVariants({ variant: "primary", size: "sm" })}
+                  size="sm" loading={renameSaving}
                 >
                   {renameSaving ? "Saving..." : "Save Name"}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -368,14 +371,14 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
               >
                 Cancel
               </button>
-              <button
+              <Button
                 type="button"
                 onClick={handleDelete}
                 disabled={deleteLoading}
-                className={buttonVariants({ variant: "danger", size: "sm" })}
+                variant="danger" size="sm" loading={deleteLoading}
               >
                 {deleteLoading ? "Deleting..." : "Delete Space"}
-              </button>
+              </Button>
             </div>
           </div>
         </ModalOverlay>

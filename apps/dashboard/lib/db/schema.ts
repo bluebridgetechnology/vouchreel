@@ -180,7 +180,9 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  /** Legacy, unused for authorization. Platform access is `isPlatformAdmin`. */
   role: text("role").default("owner"),
+  isPlatformAdmin: boolean("is_platform_admin").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -445,6 +447,8 @@ export const submissions = pgTable("submissions", {
   processingStatus: processingStatusEnum("processing_status")
     .default("none")
     .notNull(),
+  /** User-safe reason when processing_status is "failed". */
+  processingError: text("processing_error"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

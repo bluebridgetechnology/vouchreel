@@ -20,6 +20,18 @@ export const auth = betterAuth({
     },
   },
 
+  // Expose the platform-admin flag on the session user (server-controlled, never client input)
+  user: {
+    additionalFields: {
+      isPlatformAdmin: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+        input: false,
+      },
+    },
+  },
+
   // Session configuration
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days

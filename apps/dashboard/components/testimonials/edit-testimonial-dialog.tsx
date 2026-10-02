@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { MatchRules } from "@/lib/validations/testimonials";
 import { MatchRulesEditor } from "./match-rules-editor";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { ModalOverlay } from "@/components/ui/modal";
+import { notify } from "@/lib/notify";
 
 interface EditTestimonialDialogProps {
   spaceId: string;
@@ -96,6 +97,7 @@ export function EditTestimonialDialog({
       }
 
       onSuccess(data.testimonial);
+      notify.success("Testimonial updated");
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update testimonial");
@@ -283,13 +285,13 @@ export function EditTestimonialDialog({
             >
               Cancel
             </button>
-            <button
+            <Button
               type="submit"
               disabled={saving}
-              className={buttonVariants({ variant: "primary", size: "sm" })}
+              size="sm" loading={saving}
             >
               {saving ? "Saving..." : "Save Changes"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

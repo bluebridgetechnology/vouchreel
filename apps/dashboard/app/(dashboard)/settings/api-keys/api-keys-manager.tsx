@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { notify } from "@/lib/notify";
+import { useConfirm } from "@/components/ui/confirm";
+import { Spinner } from "@/components/ui/spinner";
 
 interface SpaceOption {
   id: string;
@@ -20,6 +23,7 @@ interface ApiKeyItem {
 }
 
 export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
+  const confirm = useConfirm();
   const [selectedSpaceId, setSelectedSpaceId] = useState<string>(
     spaces[0]?.id || ""
   );
@@ -85,7 +89,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
   };
 
   const handleDeleteKey = async (keyId: string) => {
-    if (!confirm("Are you sure you want to revoke this API key? Any applications using it will be immediately disconnected.")) {
+    if (!(await confirm({ title: "Revoke this API key?", description: "Any applications using it will be immediately disconnected.", confirmLabel: "Revoke key", tone: "danger" }))) {
       return;
     }
 
@@ -95,9 +99,10 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("Failed to revoke key");
+      notify.success("API key revoked");
       fetchKeys(selectedSpaceId);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error revoking key");
+      notify.fromError(err, "Error revoking key");
     }
   };
 
@@ -211,13 +216,13 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
               >
                 Cancel
               </button>
-              <button
+              <Button
                 type="submit"
                 disabled={loading}
-                className={buttonVariants({ variant: "primary", size: "sm" })}
+                size="sm" loading={loading}
               >
                 {loading ? "Generating..." : "Generate"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
@@ -239,7 +244,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
             {keys.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-text-muted">
-                  {loading ? "Loading API keys..." : "No API keys created for this space yet."}
+                  {loading ? <Spinner label="Loading API keys" className="mx-auto" /> : "No API keys created for this space yet."}
                 </td>
               </tr>
             ) : (

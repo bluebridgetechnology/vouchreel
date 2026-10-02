@@ -15,11 +15,14 @@ import { PageHeader } from "@/components/ui/layout";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { CardGridSkeleton, ListSkeleton, StatGridSkeleton, TableSkeleton } from "@/components/ui/page-skeleton";
 import { Stat } from "@/components/ui/stat";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/toaster";
+import { notify } from "@/lib/notify";
+import { useConfirm } from "@/components/ui/confirm";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
@@ -32,6 +35,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 }
 
 export function PrimitivesDemo() {
+  const confirm = useConfirm();
   return (
     <div className="space-y-14">
       <Group title="Buttons">
@@ -232,8 +236,17 @@ export function PrimitivesDemo() {
             <TooltipContent>Tooltips use the inverse surface</TooltipContent>
           </Tooltip>
 
-          <Button variant="soft" onClick={() => toast.success("Testimonial approved", { description: "It is now live on your widget." })}>
-            Show toast
+          <Button variant="soft" onClick={() => notify.success("Testimonial approved", { description: "It is now live on your widget." })}>
+            Success toast
+          </Button>
+          <Button variant="outline" onClick={() => notify.error("Could not save changes", { description: "Check your connection and try again." })}>
+            Error toast
+          </Button>
+          <Button variant="outline" onClick={() => notify.promise(new Promise((r) => setTimeout(r, 1500)), { loading: "Saving…", success: "Saved", error: "Failed" })}>
+            Promise toast
+          </Button>
+          <Button variant="outline-danger" onClick={async () => notify.info((await confirm({ title: "Delete this item?", description: "This cannot be undone.", confirmLabel: "Delete", tone: "danger" })) ? "Confirmed" : "Cancelled")}>
+            Confirm dialog
           </Button>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -248,6 +261,20 @@ export function PrimitivesDemo() {
             <Skeleton className="h-4 w-2/3" />
           </div>
         </div>
+      </Group>
+
+      <Group title="Loading states">
+        <div className="flex flex-wrap items-center gap-4">
+          <Spinner label="Loading" />
+          <Button loading>Saving</Button>
+          <Button variant="outline" loading>
+            Syncing
+          </Button>
+        </div>
+        <StatGridSkeleton />
+        <CardGridSkeleton count={3} />
+        <ListSkeleton rows={2} />
+        <TableSkeleton rows={3} />
       </Group>
 
       <Group title="Page header">

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
 import { DEFAULT_BRAND_HEX, userAccentStyle } from "@/lib/brand";
+import { FormSkeleton, SkeletonRegion } from "@/components/ui/page-skeleton";
 
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 const MAX_DURATION_SECONDS = 5 * 60;
@@ -151,7 +152,7 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
     }
   }
 
-  if (loading) return <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6 text-sm text-text-muted">Loading collection form…</main>;
+  if (loading) return <main className="mx-auto min-h-screen max-w-xl p-6 pt-16"><SkeletonRegion label="Loading collection form"><FormSkeleton fields={2} /></SkeletonRegion></main>;
   if (!form) return <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6 text-sm text-text-muted">{error || "Collection form not found."}</main>;
 
   const accent = form.branding.accentColor || DEFAULT_BRAND_HEX;

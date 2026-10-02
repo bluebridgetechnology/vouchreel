@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { notify } from "@/lib/notify";
+import { useConfirm } from "@/components/ui/confirm";
+import { Spinner } from "@/components/ui/spinner";
 
 interface SpaceOption {
   id: string;
@@ -40,6 +43,7 @@ const AVAILABLE_EVENTS = [
 ];
 
 export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
+  const confirm = useConfirm();
   const [selectedSpaceId, setSelectedSpaceId] = useState<string>(
     spaces[0]?.id || ""
   );
@@ -135,7 +139,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
   };
 
   const handleDeleteWebhook = async (webhookId: string) => {
-    if (!confirm("Are you sure you want to delete this webhook endpoint?")) {
+    if (!(await confirm({ title: "Delete this webhook endpoint?", description: "Deliveries to its URL will stop immediately.", confirmLabel: "Delete endpoint", tone: "danger" }))) {
       return;
     }
 
@@ -145,12 +149,13 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("Failed to delete webhook");
+      notify.success("Webhook deleted");
       fetchWebhooks(selectedSpaceId);
       if (inspectingWebhookId === webhookId) {
         setInspectingWebhookId(null);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error deleting webhook");
+      notify.fromError(err, "Error deleting webhook");
     }
   };
 
@@ -295,13 +300,13 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
               >
                 Cancel
               </button>
-              <button
+              <Button
                 type="submit"
                 disabled={loading || selectedEvents.length === 0}
-                className={buttonVariants({ variant: "primary", size: "sm" })}
+                size="sm" loading={loading}
               >
                 {loading ? "Adding..." : "Add Endpoint"}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
@@ -322,7 +327,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
             {webhooks.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-4 py-8 text-center text-text-muted">
-                  {loading ? "Loading webhooks..." : "No webhook endpoints configured for this space."}
+                  {loading ? <Spinner label="Loading webhooks" className="mx-auto" /> : "No webhook endpoints configured for this space."}
                 </td>
               </tr>
             ) : (

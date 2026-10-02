@@ -4,9 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { UpgradePromptModal } from "@/components/billing/upgrade-prompt-modal";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { ModalOverlay } from "@/components/ui/modal";
+import { notify } from "@/lib/notify";
 
 export interface TeamMember {
   id: string;
@@ -162,8 +163,9 @@ export function TeamManager({
       setMembers((prev) =>
         prev.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
       );
+      notify.success("Role updated");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error updating role");
+      notify.fromError(err, "Error updating role");
     } finally {
       setLoadingMemberId(null);
     }
@@ -184,8 +186,9 @@ export function TeamManager({
 
       setMembers((prev) => prev.filter((m) => m.id !== memberToRemove.id));
       setMemberToRemove(null);
+      notify.success("Team member removed");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error removing member");
+      notify.fromError(err, "Error removing member");
     } finally {
       setRemoving(false);
     }
@@ -243,7 +246,7 @@ export function TeamManager({
               type="button"
               onClick={() => {
                 navigator.clipboard.writeText(lastInviteUrl);
-                alert("Invite link copied to clipboard!");
+                notify.success("Invite link copied");
               }}
               className={buttonVariants({ variant: "primary", size: "sm" })}
             >
@@ -272,13 +275,13 @@ export function TeamManager({
             <option value="viewer">Viewer (Read-only access)</option>
           </select>
 
-          <button
+          <Button
             type="submit"
             disabled={inviting}
-            className={buttonVariants({ variant: "primary", size: "md" })}
+            loading={inviting}
           >
             {inviting ? "Sending…" : "Send Invite"}
-          </button>
+          </Button>
         </form>
       </section>
 
@@ -422,14 +425,14 @@ export function TeamManager({
               >
                 Cancel
               </button>
-              <button
+              <Button
                 type="button"
                 disabled={removing}
                 onClick={confirmRemoveMember}
-                className={buttonVariants({ variant: "danger", size: "md" })}
+                variant="danger" loading={removing}
               >
                 {removing ? "Removing…" : "Remove Member"}
-              </button>
+              </Button>
             </div>
           </div>
         </ModalOverlay>

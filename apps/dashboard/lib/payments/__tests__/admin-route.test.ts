@@ -34,6 +34,23 @@ describe("Admin Settings Route Handlers", () => {
     vi.clearAllMocks();
   });
 
+  describe("platform admin separation", () => {
+    it("rejects PUT from a regular account owner even with role=owner or admin", async () => {
+      for (const role of ["owner", "admin"]) {
+        (getSession as any).mockResolvedValue({
+          user: { id: "user-1", email: "customer@test.com", role },
+        });
+        const response = await PUT(
+          new Request("http://localhost/api/admin/settings", {
+            method: "PUT",
+            body: JSON.stringify({ payment_provider: "dodo" }),
+          })
+        );
+        expect(response.status).toBe(403);
+      }
+    });
+  });
+
   describe("GET /api/admin/settings", () => {
     it("returns 401 when not authenticated", async () => {
       (getSession as any).mockResolvedValue(null);
@@ -42,18 +59,18 @@ describe("Admin Settings Route Handlers", () => {
       expect(response.status).toBe(401);
     });
 
-    it("returns 403 when user is not an owner or admin", async () => {
+    it("returns 403 for a regular account owner (not a platform admin)", async () => {
       (getSession as any).mockResolvedValue({
-        user: { id: "user-1", email: "user@test.com", role: "member" },
+        user: { id: "user-1", email: "user@test.com", role: "owner", isPlatformAdmin: false },
       });
 
       const response = await GET();
       expect(response.status).toBe(403);
     });
 
-    it("returns payment provider for owner", async () => {
+    it("returns payment provider for a platform admin", async () => {
       (getSession as any).mockResolvedValue({
-        user: { id: "user-1", email: "owner@test.com", role: "owner" },
+        user: { id: "user-1", email: "owner@test.com", role: "owner", isPlatformAdmin: true },
       });
 
       const response = await GET();
@@ -93,7 +110,7 @@ describe("Admin Settings Route Handlers", () => {
 
     it("returns 400 for invalid payment provider name", async () => {
       (getSession as any).mockResolvedValue({
-        user: { id: "user-1", role: "owner" },
+        user: { id: "user-1", role: "owner", isPlatformAdmin: true },
       });
 
       const request = new Request("http://localhost/api/admin/settings", {
@@ -110,7 +127,7 @@ describe("Admin Settings Route Handlers", () => {
 
     it("successfully updates payment provider to dodo", async () => {
       (getSession as any).mockResolvedValue({
-        user: { id: "user-1", role: "owner" },
+        user: { id: "user-1", role: "owner", isPlatformAdmin: true },
       });
       (db.query.adminSettings.findFirst as any).mockResolvedValue(null);
 

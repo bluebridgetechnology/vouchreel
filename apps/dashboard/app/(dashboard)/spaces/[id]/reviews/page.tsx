@@ -2,10 +2,12 @@
 
 import { use, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { ModalOverlay } from "@/components/ui/modal";
+import { notify } from "@/lib/notify";
+import { useConfirm } from "@/components/ui/confirm";
 
 interface ReviewSource {
   id: string;
@@ -36,6 +38,7 @@ interface ReviewsPageProps {
 }
 
 export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
+  const confirm = useConfirm();
   const { id: spaceId } = use(params);
 
   const [loading, setLoading] = useState(true);
@@ -151,7 +154,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
 
       await loadData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Sync failed");
+      notify.fromError(err, "Sync failed");
     } finally {
       setSyncingSourceId(null);
     }
@@ -159,9 +162,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
 
   async function handleDisconnectSource(sourceId: string) {
     if (
-      !window.confirm(
-        "Are you sure you want to disconnect this source? All associated imported reviews will also be deleted."
-      )
+      !(await confirm({ title: "Disconnect this source?", description: "All reviews imported from it will also be deleted.", confirmLabel: "Disconnect", tone: "danger" }))
     ) {
       return;
     }
@@ -178,7 +179,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
       }
       await loadData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to disconnect source");
+      notify.fromError(err, "Failed to disconnect source");
     }
   }
 
@@ -206,12 +207,12 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
         throw new Error("Failed to update status");
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update review status");
+      notify.fromError(err, "Failed to update review status");
     }
   }
 
   async function handleDeleteReview(reviewId: string) {
-    if (!window.confirm("Permanently delete this review from your space?")) {
+    if (!(await confirm({ title: "Delete this review?", description: "It will be permanently removed from your space.", confirmLabel: "Delete review", tone: "danger" }))) {
       return;
     }
 
@@ -227,7 +228,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
         throw new Error("Failed to delete review");
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete review");
+      notify.fromError(err, "Failed to delete review");
     }
   }
 
@@ -569,13 +570,13 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                 >
                   Cancel
                 </button>
-                <button
+                <Button
                   type="submit"
                   disabled={connecting}
-                  className={buttonVariants({ variant: "primary", size: "sm" })}
+                  size="sm" loading={connecting}
                 >
                   {connecting ? "Connecting & Syncing..." : "Connect Source"}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

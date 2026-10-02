@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 
@@ -129,13 +129,13 @@ export function ConversionGoalsPanel({
             className={cn(inputClass, "flex-1 text-xs")}
             required
           />
-          <button
+          <Button
             type="submit"
             disabled={submitting}
-            className={buttonVariants({ variant: "primary", size: "sm" })}
+            size="sm" loading={submitting}
           >
             {submitting ? "Creating..." : "Create Goal"}
-          </button>
+          </Button>
         </div>
         {goalType === "url-match" && (
           <p className="text-2xs text-text-muted">

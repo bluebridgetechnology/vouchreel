@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { MatchRules } from "@/lib/validations/testimonials";
 import { MatchRulesEditor } from "./match-rules-editor";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
 import { ModalOverlay } from "@/components/ui/modal";
+import { notify } from "@/lib/notify";
 
 interface AddTestimonialDialogProps {
   spaceId: string;
@@ -128,6 +129,7 @@ export function AddTestimonialDialog({
       }
 
       onSuccess(data.testimonial);
+      notify.success("Testimonial added");
       onClose();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Failed to create testimonial");
@@ -377,13 +379,13 @@ export function AddTestimonialDialog({
             >
               Cancel
             </button>
-            <button
+            <Button
               type="submit"
               disabled={submitting || !videoUrl.trim()}
-              className={buttonVariants({ variant: "primary", size: "sm" })}
+              size="sm" loading={submitting}
             >
               {submitting ? "Saving..." : "Add Testimonial"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
