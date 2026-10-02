@@ -9,7 +9,7 @@ import {
 } from "@/lib/social/presets";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { notify } from "@/lib/notify";
@@ -328,13 +328,13 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
               )}
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={saving || loading}
-              className={buttonVariants({ variant: "primary", size: "sm" })}
+              size="sm" loading={saving}
             >
               {saving ? "Saving Changes..." : "Save Export Settings"}
-            </button>
+            </Button>
           </form>
         </div>
 

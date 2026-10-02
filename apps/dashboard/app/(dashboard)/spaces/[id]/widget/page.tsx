@@ -17,7 +17,7 @@ import { PageTargeting } from "@/components/widget/page-targeting";
 import { LivePreview } from "@/components/widget/live-preview";
 import { EmbedSnippet } from "@/components/widget/embed-snippet";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { toggleStyle } from "@/components/ui/toggle";
 import { notify } from "@/lib/notify";
 import { useConfirm } from "@/components/ui/confirm";
@@ -304,14 +304,14 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
               </p>
             </div>
 
-            <button
+            <Button
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className={buttonVariants({ variant: "primary", size: "sm" })}
+              size="sm" loading={saving}
             >
               {saving ? "Saving..." : "Save Changes"}
-            </button>
+            </Button>
           </div>
 
           {/* Section 5: Embed Snippet Generator */}

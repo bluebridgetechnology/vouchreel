@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { MatchRules } from "@/lib/validations/testimonials";
 import { MatchRulesEditor } from "./match-rules-editor";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { ModalOverlay } from "@/components/ui/modal";
@@ -285,13 +285,13 @@ export function EditTestimonialDialog({
             >
               Cancel
             </button>
-            <button
+            <Button
               type="submit"
               disabled={saving}
-              className={buttonVariants({ variant: "primary", size: "sm" })}
+              size="sm" loading={saving}
             >
               {saving ? "Saving..." : "Save Changes"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

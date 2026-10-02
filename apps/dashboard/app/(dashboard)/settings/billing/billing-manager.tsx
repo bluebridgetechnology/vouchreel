@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 interface BillingManagerProps {
   planName: string;
@@ -93,14 +93,14 @@ export function BillingManager({
 
           <div className="flex flex-wrap items-center gap-3">
             {hasProviderCustomer && (
-              <button
+              <Button
                 type="button"
                 disabled={loadingPortal}
                 onClick={handleOpenPortal}
-                className={buttonVariants({ variant: "outline", size: "md" })}
+                variant="outline" loading={loadingPortal}
               >
                 {loadingPortal ? "Opening portal..." : "Manage Subscription"}
-              </button>
+              </Button>
             )}
 
             <Link

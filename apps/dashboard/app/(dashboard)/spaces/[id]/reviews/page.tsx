@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { ModalOverlay } from "@/components/ui/modal";
@@ -570,13 +570,13 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                 >
                   Cancel
                 </button>
-                <button
+                <Button
                   type="submit"
                   disabled={connecting}
-                  className={buttonVariants({ variant: "primary", size: "sm" })}
+                  size="sm" loading={connecting}
                 >
                   {connecting ? "Connecting & Syncing..." : "Connect Source"}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

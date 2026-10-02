@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { SpaceAgencyMetrics, AgencyOverviewResult } from "@/lib/agency/queries";
 import { UpgradePromptModal } from "@/components/billing/upgrade-prompt-modal";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { ModalOverlay } from "@/components/ui/modal";
@@ -406,13 +406,13 @@ export function AgencyView({
                 >
                   Cancel
                 </button>
-                <button
+                <Button
                   type="submit"
                   disabled={creatingClient}
-                  className={buttonVariants({ variant: "primary", size: "md" })}
+                  loading={creatingClient}
                 >
                   {creatingClient ? "Creating…" : "Create Space"}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { notify } from "@/lib/notify";
 
@@ -127,14 +127,14 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
         </div>
 
         <div className="mt-6 flex justify-end">
-          <button
+          <Button
             type="button"
             disabled={saving}
             onClick={handleSave}
-            className={buttonVariants({ variant: "primary", size: "lg" })}
+            size="lg" loading={saving}
           >
             {saving ? "Saving changes..." : "Save Provider Configuration"}
-          </button>
+          </Button>
         </div>
       </div>
 

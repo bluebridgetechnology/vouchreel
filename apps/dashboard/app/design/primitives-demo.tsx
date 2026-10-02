@@ -15,6 +15,8 @@ import { PageHeader } from "@/components/ui/layout";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import { CardGridSkeleton, ListSkeleton, StatGridSkeleton, TableSkeleton } from "@/components/ui/page-skeleton";
 import { Stat } from "@/components/ui/stat";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -259,6 +261,20 @@ export function PrimitivesDemo() {
             <Skeleton className="h-4 w-2/3" />
           </div>
         </div>
+      </Group>
+
+      <Group title="Loading states">
+        <div className="flex flex-wrap items-center gap-4">
+          <Spinner label="Loading" />
+          <Button loading>Saving</Button>
+          <Button variant="outline" loading>
+            Syncing
+          </Button>
+        </div>
+        <StatGridSkeleton />
+        <CardGridSkeleton count={3} />
+        <ListSkeleton rows={2} />
+        <TableSkeleton rows={3} />
       </Group>
 
       <Group title="Page header">

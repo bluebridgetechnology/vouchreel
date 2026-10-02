@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { UpgradePromptModal } from "@/components/billing/upgrade-prompt-modal";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { ModalOverlay } from "@/components/ui/modal";
 import { notify } from "@/lib/notify";
@@ -275,13 +275,13 @@ export function TeamManager({
             <option value="viewer">Viewer (Read-only access)</option>
           </select>
 
-          <button
+          <Button
             type="submit"
             disabled={inviting}
-            className={buttonVariants({ variant: "primary", size: "md" })}
+            loading={inviting}
           >
             {inviting ? "Sending…" : "Send Invite"}
-          </button>
+          </Button>
         </form>
       </section>
 
@@ -425,14 +425,14 @@ export function TeamManager({
               >
                 Cancel
               </button>
-              <button
+              <Button
                 type="button"
                 disabled={removing}
                 onClick={confirmRemoveMember}
-                className={buttonVariants({ variant: "danger", size: "md" })}
+                variant="danger" loading={removing}
               >
                 {removing ? "Removing…" : "Remove Member"}
-              </button>
+              </Button>
             </div>
           </div>
         </ModalOverlay>

@@ -12,12 +12,13 @@ import {
 } from "@/lib/validations/widget-config";
 import type { ExperimentWithStats, VariantStats } from "@/lib/experiments/queries";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { ModalOverlay } from "@/components/ui/modal";
 import { useConfirm } from "@/components/ui/confirm";
 import { notify } from "@/lib/notify";
+import { ListSkeleton, SkeletonRegion } from "@/components/ui/page-skeleton";
 
 interface ExperimentsViewProps {
   spaceId: string;
@@ -600,9 +601,9 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
           </div>
 
           {loading ? (
-            <div className="py-16 text-center text-xs text-text-muted">
-              Loading experiments...
-            </div>
+            <SkeletonRegion label="Loading experiments">
+              <ListSkeleton rows={3} />
+            </SkeletonRegion>
           ) : filteredExperiments.length === 0 ? (
             <div className="rounded-card border border-dashed p-12 text-center space-y-3">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-brand-soft text-brand">
@@ -1060,14 +1061,14 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
               >
                 Save as Draft
               </button>
-              <button
+              <Button
                 type="button"
                 disabled={actionLoading}
                 onClick={() => handleCreate(true)}
-                className={buttonVariants({ variant: "primary", size: "sm" })}
+                size="sm" loading={actionLoading}
               >
                 {actionLoading ? "Creating..." : "Create & Start Now"}
-              </button>
+              </Button>
             </div>
           </div>
         </ModalOverlay>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { notify } from "@/lib/notify";
 
@@ -99,13 +99,13 @@ export default function NewSpacePage() {
             >
               Cancel
             </Link>
-            <button
+            <Button
               type="submit"
               disabled={loading || !name.trim()}
-              className={buttonVariants({ variant: "primary", size: "md" })}
+              loading={loading}
             >
               {loading ? "Creating..." : "Create Space"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

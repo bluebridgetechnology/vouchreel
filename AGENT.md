@@ -241,3 +241,6 @@ All dashboard, marketing and auth UI is built from the token system in `apps/das
 - User-chosen colours (widget theme, collect-form accent, social brand colour) are data: apply with `userAccentStyle()` and `bg-(--user-accent)`. Server defaults use `DEFAULT_BRAND_HEX` from `lib/brand.ts`.
 - Changing `--palette-coral-600` in `globals.css` also requires updating `DEFAULT_BRAND_HEX`, the widget's `--vr-primary` and the DB default (tests catch a mismatch). Contrast of every token pair is checked by `scripts/check-contrast.mjs`.
 - Headlines are Outfit; Playfair Italic is only for one or two emphasised words (`<Em>`) on marketing/auth screens.
+- Feedback: use `notify.success/error/fromError/promise` from `lib/notify.ts` (Sonner) for results of async actions, and `useConfirm()` for confirmations. `alert()`, `confirm()` and `window.confirm()` are banned by the lint guard. Keep inline messages only for field-level form validation.
+- Loading: every route that fetches has a `loading.tsx` built from `components/ui/page-skeleton` (shape of the content, not a spinner); client lists show `SkeletonRegion` + a skeleton, never plain "Loading…" text; async buttons use `<Button loading={...}>`; navigation shows the top progress bar (`NavigationProgress`).
+
