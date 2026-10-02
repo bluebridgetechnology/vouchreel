@@ -10,6 +10,7 @@ import {
 import { apiError, validationError } from "@/lib/api/errors";
 import { getOEmbedMetadata, detectPlatform, validateUrl } from "@/lib/oembed";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
+import { enforceTestimonialLimit } from "@/lib/payments/enforce";
 
 export const OPTIONS = apiV1Options();
 
@@ -115,6 +116,10 @@ export const POST = withApiKeyAuth(async (request, { apiKey }) => {
       if (!title) title = "Video Testimonial";
     }
   }
+
+  // Enforce the space owner's plan limit (API keys count against the owner)
+  const blocked = await enforceTestimonialLimit(apiKey.spaceId);
+  if (blocked) return blocked;
 
   try {
     // Next sort order

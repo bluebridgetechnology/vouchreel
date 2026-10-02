@@ -365,11 +365,37 @@ export const plans = pgTable("plans", {
   stripePriceId: text("stripe_price_id"),
   dodoProductId: text("dodo_product_id"),
   dodoPriceId: text("dodo_price_id"),
+  /** Short marketing blurb shown on the pricing card. */
+  description: text("description"),
+  /** Ribbon text, e.g. "Most popular". */
+  badge: text("badge"),
+  /** Entitlements for this plan. -1 means unlimited. Null falls back to name-based presets. */
+  limits: jsonb("limits").$type<Record<string, number | boolean | string>>(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  isCustom: boolean("is_custom").default(false).notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
 });
+
+/**
+ * Platform-admin audit trail (plan edits, role grants...). Append-only.
+ */
+export const adminAuditLog = pgTable(
+  "admin_audit_log",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    actorId: text("actor_id").references(() => user.id, { onDelete: "set null" }),
+    action: text("action").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id"),
+    summary: text("summary").notNull(),
+    changes: jsonb("changes").$type<Record<string, unknown>>().default({}).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("admin_audit_log_created_idx").on(table.createdAt)]
+);
 
 /**
  * User subscriptions — tracks which plan each user is on.

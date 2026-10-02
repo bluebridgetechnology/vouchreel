@@ -7,6 +7,7 @@ export type ApiErrorCode =
   | "NOT_FOUND"
   | "VALIDATION_ERROR"
   | "RATE_LIMITED"
+  | "PLAN_LIMIT"
   | "INTERNAL_ERROR";
 
 export interface ApiErrorBody {

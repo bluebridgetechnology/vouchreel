@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { collectionForms, spaces, submissions, testimonials } from "@/lib/db/schema";
 import { updateSubmissionStatusSchema } from "@/lib/validations/collection-forms";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
+import { enforceTestimonialLimit } from "@/lib/payments/enforce";
 
 interface RouteParams { params: Promise<{ id: string; formId: string; submissionId: string }> }
 export async function PATCH(request: Request, { params }: RouteParams) {
@@ -19,6 +20,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   try {
     const parsed = updateSubmissionStatusSchema.safeParse(await request.json());
     if (!parsed.success) return apiError(400, "VALIDATION_ERROR", "Validation failed", { details: parsed.error.flatten().fieldErrors });
+    // Approving creates a testimonial, so it counts against the owner's plan limit
+    if (parsed.data.status === "approved") {
+      const blocked = await enforceTestimonialLimit(id);
+      if (blocked) return blocked;
+    }
     const result = await db.transaction(async (tx) => {
       const [submission] = await tx.update(submissions).set({ status: parsed.data.status })
         .where(and(eq(submissions.id, submissionId), eq(submissions.formId, formId), eq(submissions.status, "pending"))).returning();

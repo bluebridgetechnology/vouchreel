@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { adminSettings } from "@/lib/db/schema";
 import { getActivePaymentProviderName } from "@/lib/payments";
 import { isPlatformAdmin } from "@/lib/auth/platform-admin";
+import { logAdminAction } from "@/lib/admin/audit";
 import {
   unauthorized,
   forbidden,
@@ -85,6 +86,15 @@ export async function PUT(request: Request) {
         value: payment_provider,
       });
     }
+
+    await logAdminAction({
+      actorId: session.user.id,
+      action: "settings.payment_provider",
+      entityType: "setting",
+      entityId: "payment_provider",
+      summary: `Switched active payment provider to ${payment_provider}`,
+      changes: { payment_provider: { from: existing?.value ?? null, to: payment_provider } },
+    });
 
     return NextResponse.json({
       success: true,

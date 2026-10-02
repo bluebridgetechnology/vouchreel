@@ -1,6 +1,20 @@
 import { eq, and } from "drizzle-orm";
 import { db } from "./index";
 import { plans } from "./schema";
+import { PLAN_LIMIT_PRESETS, serializeLimits, tierFromName } from "@/lib/payments/plan-limits";
+
+const PLAN_COPY: Record<string, { description: string; badge: string | null; sortOrder: number }> = {
+  free: { description: "Perfect for side projects and evaluating Vouchreel.", badge: null, sortOrder: 0 },
+  pro: { description: "Everything you need to collect and showcase high-converting videos.", badge: "Most popular", sortOrder: 10 },
+  agency: { description: "For agencies and teams managing multiple client brands with white-label proof.", badge: null, sortOrder: 20 },
+  business: { description: "For fast-growing companies and agencies demanding maximum power.", badge: null, sortOrder: 30 },
+};
+
+/** Marketing copy, ordering and entitlements for a default plan. Entitlements are only written when a plan has none, so admin edits survive re-seeding. */
+function defaultsFor(name: string) {
+  const tier = tierFromName(name);
+  return { ...PLAN_COPY[tier], limits: serializeLimits(PLAN_LIMIT_PRESETS[tier]) };
+}
 
 export const DEFAULT_PLANS = [
   {
@@ -126,6 +140,9 @@ export async function seedPlans() {
       const [updated] = await db
         .update(plans)
         .set({
+          ...(existing.limits ? {} : { limits: defaultsFor(plan.name).limits }),
+          description: existing.description ?? defaultsFor(plan.name).description,
+          badge: existing.badge ?? defaultsFor(plan.name).badge,
           price: plan.price,
           features: plan.features,
           stripeProductId: plan.stripeProductId,
@@ -139,7 +156,7 @@ export async function seedPlans() {
       results.push(updated);
     } else {
       console.log(`Creating plan ${plan.name} (${plan.interval})...`);
-      const [inserted] = await db.insert(plans).values(plan).returning();
+      const [inserted] = await db.insert(plans).values({ ...plan, ...defaultsFor(plan.name) }).returning();
       results.push(inserted);
     }
   }
