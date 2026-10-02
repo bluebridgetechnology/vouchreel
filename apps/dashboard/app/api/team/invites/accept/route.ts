@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { teamInvites, teamMembers } from "@/lib/db/schema";
 import { apiError, badRequest, notFound, unauthorized } from "@/lib/api/errors";
 import { acceptInviteSchema } from "@/lib/validations/team";
+import { createNotification } from "@/lib/notifications/service";
 
 /**
  * POST /api/team/invites/accept
@@ -85,6 +86,14 @@ export async function POST(request: Request) {
 
     // 4. Remove the consumed invite
     await db.delete(teamInvites).where(eq(teamInvites.id, invite.id));
+
+    void createNotification({
+      userId: invite.teamOwnerId,
+      type: "team.invite_accepted",
+      title: `${session.user.name || session.user.email} joined your team`,
+      body: `They now have ${invite.role} access.`,
+      href: "/settings/team",
+    });
 
     return NextResponse.json({
       success: true,

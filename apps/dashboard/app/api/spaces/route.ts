@@ -9,6 +9,7 @@ import { createSpaceSchema } from "@/lib/validations/spaces";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import { getAccessibleSpacesWithCounts } from "@/lib/auth/permissions";
 import { canCreateSpace } from "@/lib/payments/subscription";
+import { createNotification } from "@/lib/notifications/service";
 
 /**
  * GET /api/spaces
@@ -58,6 +59,14 @@ export async function POST(request: Request) {
     const currentCount = spaceCountResult?.value ?? 0;
     const allowed = await canCreateSpace(session.user.id, currentCount);
     if (!allowed) {
+      void createNotification({
+        userId: session.user.id,
+        type: "plan.limit_reached",
+        title: "You have reached your space limit",
+        body: "Upgrade your plan to create more spaces.",
+        href: "/pricing",
+        dedupeKey: "plan-limit:spaces",
+      });
       return forbidden(
         "Plan limit reached. Upgrade your plan to create more spaces."
       );

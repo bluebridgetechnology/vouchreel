@@ -1,6 +1,8 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../db";
+import { sendEmail } from "../email/transport";
+import { renderEmail } from "../email/templates";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -10,6 +12,17 @@ export const auth = betterAuth({
   // Email + password authentication
   emailAndPassword: {
     enabled: true,
+    resetPasswordTokenExpiresIn: 60 * 60, // 1 hour
+    sendResetPassword: async ({ user, url }) => {
+      const { html, text } = renderEmail({
+        title: "Reset your Vouchreel password",
+        body: "We received a request to reset your password. This link expires in 1 hour. If you did not ask for it, you can ignore this email.",
+        cta: { label: "Choose a new password", url },
+        footer: "For your security, never forward this email.",
+      });
+      // Not awaited by Better Auth's response path timing-wise: failures are logged, never thrown to the caller
+      await sendEmail({ to: user.email, subject: "Reset your Vouchreel password", text, html });
+    },
   },
 
   // OAuth providers

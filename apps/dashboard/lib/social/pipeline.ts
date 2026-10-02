@@ -26,6 +26,7 @@ import {
   type WatermarkPosition,
 } from "./presets";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
+import { notifySpaceOwner } from "@/lib/notifications/service";
 
 export interface FiltergraphOptions {
   framing: FramingMode;
@@ -375,6 +376,14 @@ export async function renderSocialExport(exportId: string): Promise<void> {
         completedAt: new Date(),
       })
       .where(eq(socialExports.id, exportId));
+
+    void notifySpaceOwner(exportRecord.spaceId, {
+      type: "social_export.completed",
+      title: `Your ${exportRecord.format} export is ready`,
+      body: testimonial.customerName ? `Rendered from ${testimonial.customerName}'s testimonial.` : undefined,
+      href: `/spaces/${exportRecord.spaceId}/social`,
+      metadata: { exportId },
+    });
   } catch (error) {
     const errorMsg = friendlyMediaError(error);
     console.error(`Social export rendering error for ${exportId}:`, error);
@@ -387,6 +396,14 @@ export async function renderSocialExport(exportId: string): Promise<void> {
         completedAt: new Date(),
       })
       .where(eq(socialExports.id, exportId));
+
+    void notifySpaceOwner(exportRecord.spaceId, {
+      type: "social_export.failed",
+      title: "A social export failed",
+      body: errorMsg,
+      href: `/spaces/${exportRecord.spaceId}/social`,
+      metadata: { exportId },
+    });
   } finally {
     await rm(tempDir, { recursive: true, force: true }).catch(() => {});
   }

@@ -11,6 +11,7 @@ import { Icon } from "@/components/ui/icon";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/components/marketing/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import type { IconName } from "@/lib/icons.generated";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +39,10 @@ function isItemActive(pathname: string, href: string) {
     return pathname === "/agency" || pathname.startsWith("/agency/");
   }
   if (href === "/settings") {
-    return pathname === "/settings" || (pathname.startsWith("/settings/") && !pathname.startsWith("/settings/billing"));
+    return (
+      pathname === "/settings" ||
+      (pathname.startsWith("/settings/") && !pathname.startsWith("/settings/billing"))
+    );
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -80,7 +84,7 @@ function NavLinks({ user, onNavigate }: DashboardSidebarProps & { onNavigate?: (
               "flex h-11 items-center gap-3 rounded-pill px-4 text-sm font-medium transition-colors",
               active
                 ? "bg-brand-soft text-brand-soft-foreground"
-                : "text-text-muted hover:bg-surface-sunken hover:text-text",
+                : "text-text-muted hover:bg-surface-sunken hover:text-text"
             )}
           >
             <Icon name={item.icon} />
@@ -120,8 +124,9 @@ function UserPanel({ user }: DashboardSidebarProps) {
 export function DashboardSidebar({ user }: DashboardSidebarProps) {
   return (
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r bg-surface lg:flex">
-      <div className="flex h-18 items-center px-6">
+      <div className="flex h-18 items-center justify-between gap-2 px-6">
         <Logo href="/dashboard" />
+        <NotificationBell />
       </div>
       <NavLinks user={user} />
       <UserPanel user={user} />
@@ -135,21 +140,24 @@ export function DashboardMobileHeader({ user }: DashboardSidebarProps) {
   return (
     <header className="sticky top-0 z-(--z-nav) flex h-14 items-center justify-between gap-3 border-b bg-surface/90 px-4 backdrop-blur-md lg:hidden">
       <Logo href="/dashboard" />
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="icon-sm" aria-label="Open menu">
-            <Icon name="hamburger-menu" size="sm" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent>
-          <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <div className="flex h-14 items-center px-5">
-            <Logo href="/dashboard" />
-          </div>
-          <NavLinks user={user} onNavigate={() => setOpen(false)} />
-          <UserPanel user={user} />
-        </SheetContent>
-      </Sheet>
+      <div className="flex items-center gap-2">
+        <NotificationBell />
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon-sm" aria-label="Open menu">
+              <Icon name="hamburger-menu" size="sm" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
+            <div className="flex h-14 items-center px-5">
+              <Logo href="/dashboard" />
+            </div>
+            <NavLinks user={user} onNavigate={() => setOpen(false)} />
+            <UserPanel user={user} />
+          </SheetContent>
+        </Sheet>
+      </div>
     </header>
   );
 }

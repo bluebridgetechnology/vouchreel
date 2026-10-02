@@ -1,7 +1,8 @@
 import { createHmac } from "crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { webhookDeliveries } from "@/lib/db/schema";
+import { webhookDeliveries, webhookEndpoints } from "@/lib/db/schema";
+import { notifySpaceOwner } from "@/lib/notifications/service";
 
 // Backoff schedule in seconds: attempt 1 -> 30s, attempt 2 -> 5m, attempt 3 -> 30m
 const RETRY_BACKOFF_SECONDS = [30, 300, 1800];
@@ -106,4 +107,22 @@ async function markDeliveryFailure(
       ...(isExhausted ? { completedAt: new Date() } : {}),
     })
     .where(eq(webhookDeliveries.id, deliveryId));
+
+  if (isExhausted) {
+    const [endpoint] = await db
+      .select({ id: webhookEndpoints.id, spaceId: webhookEndpoints.spaceId, url: webhookEndpoints.url })
+      .from(webhookDeliveries)
+      .innerJoin(webhookEndpoints, eq(webhookDeliveries.endpointId, webhookEndpoints.id))
+      .where(eq(webhookDeliveries.id, deliveryId));
+    if (endpoint) {
+      void notifySpaceOwner(endpoint.spaceId, {
+        type: "webhook.failing",
+        title: "A webhook endpoint is failing",
+        body: `Deliveries to ${endpoint.url} failed after ${delivery.maxAttempts} attempts.`,
+        href: "/settings/webhooks",
+        metadata: { endpointId: endpoint.id },
+        dedupeKey: `webhook-failing:${endpoint.id}`,
+      });
+    }
+  }
 }

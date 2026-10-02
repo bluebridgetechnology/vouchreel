@@ -9,6 +9,7 @@ import { getStorage } from "@/lib/storage";
 import { queueTranscode } from "@/lib/transcode";
 import { submissionMetaSchema } from "@/lib/validations/collection-forms";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
+import { notifySpaceOwner } from "@/lib/notifications/service";
 
 export const runtime = "nodejs";
 
@@ -102,6 +103,15 @@ export async function POST(request: Request, { params }: RouteParams) {
       .returning();
 
     if (hasVideo) queueTranscode(submission.id);
+
+    // Tell the space owner (non-blocking; never fails the submission)
+    void notifySpaceOwner(form.spaceId, {
+      type: "submission.received",
+      title: `New ${hasVideo ? "video" : "written"} testimonial from ${parsed.data.customerName}`,
+      body: hasVideo ? "Review it in your collection inbox. The video is being processed." : "Review it in your collection inbox.",
+      href: `/spaces/${form.spaceId}/collect`,
+      metadata: { submissionId: submission.id },
+    });
 
     // Dispatch webhook event (non-blocking)
     dispatchWebhookEvent({

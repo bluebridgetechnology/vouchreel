@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { attemptDelivery } from "../deliver";
+import { notifySpaceOwner } from "@/lib/notifications/service";
+
+vi.mock("@/lib/notifications/service", () => ({ notifySpaceOwner: vi.fn() }));
 
 const mockDbUpdate = vi.fn();
 const mockDbSelect = vi.fn();
@@ -107,6 +110,9 @@ describe("Webhook Delivery Executor", () => {
     mockDbSelect.mockReturnValue({
       from: () => ({
         where: () => Promise.resolve([{ attemptCount: 3, maxAttempts: 4 }]),
+        innerJoin: () => ({
+          where: () => Promise.resolve([{ id: "ep-1", spaceId: "space-1", url: "https://example.com/webhook" }]),
+        }),
       }),
     });
 
@@ -129,6 +135,11 @@ describe("Webhook Delivery Executor", () => {
         attemptCount: 4,
         nextRetryAt: null,
       })
+    );
+    // Exhausted retries notify the space owner once per endpoint
+    expect(notifySpaceOwner).toHaveBeenCalledWith(
+      "space-1",
+      expect.objectContaining({ type: "webhook.failing", dedupeKey: "webhook-failing:ep-1" })
     );
   });
 });

@@ -1,4 +1,6 @@
 import { nanoid } from "nanoid";
+import { sendEmail } from "./transport";
+import { renderEmail } from "./templates";
 
 export interface SendInviteEmailParams {
   toEmail: string;
@@ -59,17 +61,18 @@ This invitation link will expire in 7 days. If you did not expect this invitatio
 — The Vouchreel Team
 `.trim();
 
-  // In production, integrate external email transport (Resend, SES, SMTP).
-  // For dev / test environments, format and log to console.
-  console.log(`[Email Service] Sending Team Invite to ${params.toEmail}:`);
-  console.log(`From: ${sender}`);
-  console.log(`Subject: ${emailSubject}`);
-  console.log(`Link: ${inviteUrl}`);
+  const { html } = renderEmail({
+    title: emailSubject,
+    body: `${params.inviterName} (${params.inviterEmail}) invited you to join their team on Vouchreel as ${roleLabel}. This invitation expires in 7 days.`,
+    cta: { label: "Accept invitation", url: inviteUrl },
+    footer: "If you did not expect this invitation, you can safely ignore this email.",
+  });
+  const delivery = await sendEmail({ to: params.toEmail, subject: emailSubject, text: emailBody, html, from: sender });
 
   return {
     success: true,
     inviteUrl,
-    messageId: `msg_${nanoid(16)}`,
+    messageId: delivery.id ?? `msg_${nanoid(16)}`,
     previewOutput: emailBody,
   };
 }

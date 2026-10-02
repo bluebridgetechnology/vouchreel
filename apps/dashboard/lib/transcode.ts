@@ -4,9 +4,10 @@ import { tmpdir } from "os";
 import path from "path";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { submissions } from "@/lib/db/schema";
+import { collectionForms, submissions } from "@/lib/db/schema";
 import { getStorage } from "@/lib/storage";
 import { ensureFfmpeg, friendlyMediaError, runFfmpeg } from "@/lib/media/ffmpeg";
+import { notifySpaceOwner } from "@/lib/notifications/service";
 
 /**
  * Runs in-process in the self-hosted deployment after a video upload. A durable
@@ -80,10 +81,26 @@ export async function transcodeSubmission(submissionId: string) {
       .where(eq(submissions.id, submissionId));
   } catch (error) {
     console.error(`Failed to transcode submission ${submissionId}:`, error);
+    const reason = friendlyMediaError(error);
     await db
       .update(submissions)
-      .set({ processingStatus: "failed", processingError: friendlyMediaError(error) })
+      .set({ processingStatus: "failed", processingError: reason })
       .where(eq(submissions.id, submissionId));
+
+    const [form] = await db
+      .select({ spaceId: collectionForms.spaceId })
+      .from(collectionForms)
+      .where(eq(collectionForms.id, submission.formId));
+    if (form) {
+      void notifySpaceOwner(form.spaceId, {
+        type: "video.processing_failed",
+        title: `Video from ${submission.customerName} could not be processed`,
+        body: reason,
+        href: `/spaces/${form.spaceId}/collect`,
+        metadata: { submissionId },
+        dedupeKey: `video-failed:${submissionId}`,
+      });
+    }
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
