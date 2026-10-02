@@ -8,8 +8,10 @@ import { Em } from "@/components/ui/em";
 import { Field } from "@/components/ui/field";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
+import { useHydrated } from "@/lib/use-hydrated";
 
 export default function ForgotPasswordPage() {
+  const hydrated = useHydrated();
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -62,7 +64,7 @@ export default function ForgotPasswordPage() {
       </div>
 
       <Card padding="lg">
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form method="post" onSubmit={handleSubmit} className="space-y-5">
           <Field label="Email" htmlFor="email">
             <Input
               id="email"
@@ -75,7 +77,7 @@ export default function ForgotPasswordPage() {
             />
           </Field>
 
-          <Button type="submit" size="lg" className="w-full" loading={loading}>
+          <Button type="submit" size="lg" className="w-full" loading={loading} disabled={!hydrated}>
             {loading ? "Sending…" : "Send reset link"}
           </Button>
         </form>

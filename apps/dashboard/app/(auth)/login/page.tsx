@@ -9,8 +9,10 @@ import { Card } from "@/components/ui/card";
 import { Em } from "@/components/ui/em";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useHydrated } from "@/lib/use-hydrated";
 
 export default function LoginPage() {
+  const hydrated = useHydrated();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -58,7 +60,7 @@ export default function LoginPage() {
       </div>
 
       <Card padding="lg">
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form method="post" onSubmit={handleSubmit} className="space-y-5">
           {error && (
             <div role="alert" className="rounded-control bg-danger-soft px-3.5 py-2.5 text-sm text-danger-foreground">
               {error}
@@ -89,7 +91,7 @@ export default function LoginPage() {
             />
           </Field>
 
-          <Button type="submit" size="lg" className="w-full" loading={loading}>
+          <Button type="submit" size="lg" className="w-full" loading={loading} disabled={!hydrated}>
             {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>
