@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { notify } from "@/lib/notify";
 
 interface AdminPanelProps {
   initialProvider: "stripe" | "dodo";
@@ -12,7 +13,6 @@ interface AdminPanelProps {
 export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
   const [provider, setProvider] = useState<"stripe" | "dodo">(initialProvider);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [copiedStripe, setCopiedStripe] = useState(false);
   const [copiedDodo, setCopiedDodo] = useState(false);
 
@@ -21,7 +21,6 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
 
   async function handleSave() {
     setSaving(true);
-    setMessage(null);
 
     try {
       const res = await fetch("/api/admin/settings", {
@@ -36,17 +35,11 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
         throw new Error(data?.error?.message || "Failed to update settings");
       }
 
-      setMessage({
-        text: `Active payment provider updated to ${
+      notify.success(`Active payment provider updated to ${
           provider === "dodo" ? "Dodo Payments" : "Stripe"
-        }. New checkouts will immediately use this provider.`,
-        type: "success",
-      });
+        }. New checkouts will immediately use this provider.`);
     } catch (err) {
-      setMessage({
-        text: err instanceof Error ? err.message : "Error saving settings",
-        type: "error",
-      });
+      notify.error(err instanceof Error ? err.message : "Error saving settings");
     } finally {
       setSaving(false);
     }
@@ -65,18 +58,6 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
 
   return (
     <div className="space-y-8 max-w-3xl">
-      {message && (
-        <div
-          role="status"
-          className={`rounded-card border p-4 text-sm ${
-            message.type === "success"
-              ? "border-success/30 bg-success-soft text-success-foreground"
-              : "border-danger/20 bg-danger-soft text-danger-foreground"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {/* Payment Provider Selection */}
       <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">

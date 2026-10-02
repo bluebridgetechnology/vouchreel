@@ -22,6 +22,7 @@ const ICONS = [
   "close-circle-outline",
   "star-outline",
   "videocamera-record-outline",
+  "danger-circle-outline",
   "alt-arrow-down-outline",
   "alt-arrow-up-outline",
   "alt-arrow-right-outline",

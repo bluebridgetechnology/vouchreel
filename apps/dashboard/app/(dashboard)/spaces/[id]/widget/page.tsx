@@ -19,12 +19,15 @@ import { EmbedSnippet } from "@/components/widget/embed-snippet";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { toggleStyle } from "@/components/ui/toggle";
+import { notify } from "@/lib/notify";
+import { useConfirm } from "@/components/ui/confirm";
 
 interface WidgetPageProps {
   params: Promise<{ id: string }>;
 }
 
 export default function SpaceWidgetPage({ params }: WidgetPageProps) {
+  const confirm = useConfirm();
   const { id: spaceId } = use(params);
 
   // Widget config state
@@ -35,8 +38,6 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
 
   // Active section tab for mobile/clean navigation
@@ -110,17 +111,15 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
     setIsDirty(true);
   }
 
-  function handleResetDefaults() {
-    if (window.confirm("Reset all widget customizations to the default settings?")) {
-      setConfig(DEFAULT_WIDGET_CONFIG);
-      setIsDirty(true);
-    }
+  async function handleResetDefaults() {
+    if (!(await confirm({ title: "Reset widget customisations?", description: "All appearance, trigger and targeting settings return to their defaults. Nothing is saved until you click Save.", confirmLabel: "Reset to defaults", tone: "default" }))) return;
+    setConfig(DEFAULT_WIDGET_CONFIG);
+    setIsDirty(true);
+    notify.info("Widget reset to defaults. Save to apply.");
   }
 
   async function handleSave() {
     setSaving(true);
-    setSaveError(null);
-    setSaveSuccess(false);
 
     try {
       const res = await fetch(`/api/spaces/${spaceId}/widget-config`, {
@@ -135,10 +134,9 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
       }
 
       setIsDirty(false);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3500);
+      notify.success("Widget saved", { description: "Visitors will see the updated widget instantly." });
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Failed to save widget settings");
+      notify.fromError(err, "Failed to save widget settings");
     } finally {
       setSaving(false);
     }
@@ -226,42 +224,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
         </div>
       </div>
 
-      {/* Save Success / Error Banners */}
-      {saveSuccess && (
-        <div className="flex items-center justify-between rounded-card border border-success/30 bg-success-soft p-3.5 text-xs text-success-foreground">
-          <div className="flex items-center gap-2">
-            <svg className="h-4 w-4 shrink-0 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <span>Widget configuration saved successfully! Your live visitors will see the updated widget instantly.</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSaveSuccess(false)}
-            className={buttonVariants({ variant: "link-success", size: "bare" })}
-          >
-            ✕
-          </button>
-        </div>
-      )}
 
-      {saveError && (
-        <div className="flex items-center justify-between rounded-card border border-danger/30 bg-danger-soft p-3.5 text-xs text-danger-foreground">
-          <div className="flex items-center gap-2">
-            <svg className="h-4 w-4 shrink-0 text-danger-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{saveError}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSaveError(null)}
-            className={buttonVariants({ variant: "link-danger", size: "bare" })}
-          >
-            ✕
-          </button>
-        </div>
-      )}
 
       {/* Navigation tabs for mobile / easy jumping */}
       <div className="flex border-b border-border sm:hidden">

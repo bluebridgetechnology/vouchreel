@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { ModalOverlay } from "@/components/ui/modal";
+import { notify } from "@/lib/notify";
 
 interface SpacesViewProps {
   initialSpaces: SpaceListItem[];
@@ -80,8 +81,9 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
         prev.map((s) => (s.id === space.id ? { ...s, name: space.name } : s))
       );
       closeRenameModal();
+      notify.success("Space renamed");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to rename space");
+      notify.fromError(err, "Failed to rename space");
     } finally {
       setRenameSaving(false);
     }
@@ -103,8 +105,9 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
 
       setSpaces((prev) => prev.filter((s) => s.id !== deletingSpace.id));
       setDeletingSpace(null);
+      notify.success("Space deleted");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete space");
+      notify.fromError(err, "Failed to delete space");
     } finally {
       setDeleteLoading(false);
     }

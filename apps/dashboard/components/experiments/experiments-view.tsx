@@ -16,19 +16,21 @@ import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { ModalOverlay } from "@/components/ui/modal";
+import { useConfirm } from "@/components/ui/confirm";
+import { notify } from "@/lib/notify";
 
 interface ExperimentsViewProps {
   spaceId: string;
 }
 
 export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
+  const confirm = useConfirm();
   const [experiments, setExperiments] = useState<ExperimentWithStats[]>([]);
   const [selectedExp, setSelectedExp] = useState<ExperimentWithStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "running" | "draft" | "completed">("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Create modal state
   const [formData, setFormData] = useState<{
@@ -68,7 +70,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
       }
     } catch (err) {
       console.error(err);
-      setFeedback({ type: "error", text: "Could not load experiments" });
+      notify.error("Could not load experiments");
     } finally {
       setLoading(false);
     }
@@ -76,12 +78,11 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
   async function handleCreate(startImmediately = false) {
     if (!formData.name.trim()) {
-      setFeedback({ type: "error", text: "Please provide an experiment name" });
+      notify.error("Please provide an experiment name");
       return;
     }
 
     setActionLoading(true);
-    setFeedback(null);
     try {
       const payload: CreateExperimentInput = {
         name: formData.name.trim(),
@@ -122,18 +123,12 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
         });
       }
 
-      setFeedback({
-        type: "success",
-        text: `Experiment created successfully${startImmediately ? " and started!" : " as draft."}`,
-      });
+      notify.success(`Experiment created successfully${startImmediately ? " and started!" : " as draft."}`);
       setIsCreateOpen(false);
       resetForm();
       await loadExperiments();
     } catch (err) {
-      setFeedback({
-        type: "error",
-        text: err instanceof Error ? err.message : "Error creating experiment",
-      });
+      notify.error(err instanceof Error ? err.message : "Error creating experiment");
     } finally {
       setActionLoading(false);
     }
@@ -141,7 +136,6 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
   async function handleStatusChange(expId: string, status: "draft" | "running" | "completed") {
     setActionLoading(true);
-    setFeedback(null);
     try {
       const res = await fetch(`/api/spaces/${spaceId}/experiments/${expId}`, {
         method: "PATCH",
@@ -149,35 +143,28 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error("Failed to update status");
-      setFeedback({ type: "success", text: `Experiment status updated to ${status}` });
+      notify.success(`Experiment status updated to ${status}`);
       await loadExperiments();
     } catch (err) {
-      setFeedback({
-        type: "error",
-        text: err instanceof Error ? err.message : "Error updating status",
-      });
+      notify.error(err instanceof Error ? err.message : "Error updating status");
     } finally {
       setActionLoading(false);
     }
   }
 
   async function handleDelete(expId: string) {
-    if (!confirm("Are you sure you want to delete this experiment?")) return;
+    if (!(await confirm({ title: "Delete this experiment?", description: "Its results and variants will be removed.", confirmLabel: "Delete experiment", tone: "danger" }))) return;
     setActionLoading(true);
-    setFeedback(null);
     try {
       const res = await fetch(`/api/spaces/${spaceId}/experiments/${expId}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete experiment");
-      setFeedback({ type: "success", text: "Experiment deleted" });
+      notify.success("Experiment deleted");
       if (selectedExp?.id === expId) setSelectedExp(null);
       await loadExperiments();
     } catch (err) {
-      setFeedback({
-        type: "error",
-        text: err instanceof Error ? err.message : "Error deleting experiment",
-      });
+      notify.error(err instanceof Error ? err.message : "Error deleting experiment");
     } finally {
       setActionLoading(false);
     }
@@ -185,15 +172,12 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
 
   async function handleApplyWinner(expId: string, variantIndex: number, variantName: string) {
     if (
-      !confirm(
-        `Apply "${variantName}" as the winning variant? This will update your live widget settings and mark this experiment as completed.`
-      )
+      !(await confirm({ title: `Apply "${variantName}" as the winner?`, description: "This updates your live widget settings and marks the experiment as completed.", confirmLabel: "Apply winner", tone: "default" }))
     ) {
       return;
     }
 
     setActionLoading(true);
-    setFeedback(null);
     try {
       const res = await fetch(`/api/spaces/${spaceId}/experiments/${expId}/apply-winner`, {
         method: "POST",
@@ -206,16 +190,10 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
         throw new Error(errJson?.error?.message || "Failed to apply winner");
       }
 
-      setFeedback({
-        type: "success",
-        text: `Applied "${variantName}" to your widget! Experiment marked as completed.`,
-      });
+      notify.success(`Applied "${variantName}" to your widget! Experiment marked as completed.`);
       await loadExperiments();
     } catch (err) {
-      setFeedback({
-        type: "error",
-        text: err instanceof Error ? err.message : "Error applying winner",
-      });
+      notify.error(err instanceof Error ? err.message : "Error applying winner");
     } finally {
       setActionLoading(false);
     }
@@ -296,25 +274,6 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
         </button>
       </div>
 
-      {/* Alert banner */}
-      {feedback && (
-        <div
-          role="status"
-          className={`flex items-center justify-between rounded-card border p-4 text-xs font-medium ${
-            feedback.type === "success"
-              ? "border-success/30 bg-success-soft text-success-foreground"
-              : "border-danger/20 bg-danger-soft text-danger-foreground"
-          }`}
-        >
-          <span>{feedback.text}</span>
-          <button
-            onClick={() => setFeedback(null)}
-            className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-xs")}
-          >
-            ✕
-          </button>
-        </div>
-      )}
 
       {/* Detail View of Selected Experiment */}
       {selectedExp ? (

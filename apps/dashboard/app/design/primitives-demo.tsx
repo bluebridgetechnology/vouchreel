@@ -19,7 +19,8 @@ import { Stat } from "@/components/ui/stat";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/toaster";
+import { notify } from "@/lib/notify";
+import { useConfirm } from "@/components/ui/confirm";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
@@ -32,6 +33,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 }
 
 export function PrimitivesDemo() {
+  const confirm = useConfirm();
   return (
     <div className="space-y-14">
       <Group title="Buttons">
@@ -232,8 +234,17 @@ export function PrimitivesDemo() {
             <TooltipContent>Tooltips use the inverse surface</TooltipContent>
           </Tooltip>
 
-          <Button variant="soft" onClick={() => toast.success("Testimonial approved", { description: "It is now live on your widget." })}>
-            Show toast
+          <Button variant="soft" onClick={() => notify.success("Testimonial approved", { description: "It is now live on your widget." })}>
+            Success toast
+          </Button>
+          <Button variant="outline" onClick={() => notify.error("Could not save changes", { description: "Check your connection and try again." })}>
+            Error toast
+          </Button>
+          <Button variant="outline" onClick={() => notify.promise(new Promise((r) => setTimeout(r, 1500)), { loading: "Saving…", success: "Saved", error: "Failed" })}>
+            Promise toast
+          </Button>
+          <Button variant="outline-danger" onClick={async () => notify.info((await confirm({ title: "Delete this item?", description: "This cannot be undone.", confirmLabel: "Delete", tone: "danger" })) ? "Confirmed" : "Cancelled")}>
+            Confirm dialog
           </Button>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">

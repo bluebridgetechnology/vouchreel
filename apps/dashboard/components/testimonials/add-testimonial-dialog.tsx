@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
 import { ModalOverlay } from "@/components/ui/modal";
+import { notify } from "@/lib/notify";
 
 interface AddTestimonialDialogProps {
   spaceId: string;
@@ -128,6 +129,7 @@ export function AddTestimonialDialog({
       }
 
       onSuccess(data.testimonial);
+      notify.success("Testimonial added");
       onClose();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Failed to create testimonial");

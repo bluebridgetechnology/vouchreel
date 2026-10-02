@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
+import { notify } from "@/lib/notify";
 
 interface SocialPageProps {
   params: Promise<{ id: string }>;
@@ -58,7 +59,6 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
   const [canCustomizeBranding, setCanCustomizeBranding] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   const [exports, setExports] = useState<SpaceExportItem[]>([]);
   const [loadingExports, setLoadingExports] = useState(false);
@@ -113,7 +113,6 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    setMessage(null);
 
     try {
       const res = await fetch(`/api/spaces/${spaceId}/social-export-settings`, {
@@ -133,12 +132,9 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
         throw new Error(data?.error?.message || "Failed to save settings");
       }
 
-      setMessage({ text: "Social export branding saved successfully!", type: "success" });
+      notify.success("Social export branding saved successfully!");
     } catch (err) {
-      setMessage({
-        text: err instanceof Error ? err.message : "Error saving settings",
-        type: "error",
-      });
+      notify.error(err instanceof Error ? err.message : "Error saving settings");
     } finally {
       setSaving(false);
     }
@@ -156,18 +152,6 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
         </p>
       </div>
 
-      {message && (
-        <div
-          role="status"
-          className={`rounded-card border p-4 text-xs font-medium ${
-            message.type === "success"
-              ? "border-success/30 bg-success-soft text-success-foreground"
-              : "border-danger/20 bg-danger-soft text-danger-foreground"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Settings Form */}

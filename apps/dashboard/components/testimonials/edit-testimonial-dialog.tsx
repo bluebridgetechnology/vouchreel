@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { ModalOverlay } from "@/components/ui/modal";
+import { notify } from "@/lib/notify";
 
 interface EditTestimonialDialogProps {
   spaceId: string;
@@ -96,6 +97,7 @@ export function EditTestimonialDialog({
       }
 
       onSuccess(data.testimonial);
+      notify.success("Testimonial updated");
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update testimonial");

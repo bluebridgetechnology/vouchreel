@@ -28,6 +28,7 @@ import { TranslationsModal } from "@/components/testimonials/translations-modal"
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { ModalOverlay } from "@/components/ui/modal";
+import { notify } from "@/lib/notify";
 
 interface TestimonialsPageProps {
   params: Promise<{ id: string }>;
@@ -188,8 +189,9 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
       setTestimonials((prev) =>
         prev.map((t) => (t.id === item.id ? { ...t, isActive: newStatus } : t))
       );
+      notify.success(newStatus ? "Testimonial enabled" : "Testimonial disabled");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update status");
+      notify.fromError(err, "Failed to update status");
     }
   }
 
@@ -213,8 +215,9 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
         prev.filter((t) => t.id !== deletingTestimonial.id)
       );
       closeDeleteDialog();
+      notify.success("Testimonial deleted");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete testimonial");
+      notify.fromError(err, "Failed to delete testimonial");
     } finally {
       setDeleteLoading(false);
     }

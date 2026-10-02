@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { notify } from "@/lib/notify";
+import { useConfirm } from "@/components/ui/confirm";
 
 interface SpaceOption {
   id: string;
@@ -40,6 +42,7 @@ const AVAILABLE_EVENTS = [
 ];
 
 export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
+  const confirm = useConfirm();
   const [selectedSpaceId, setSelectedSpaceId] = useState<string>(
     spaces[0]?.id || ""
   );
@@ -135,7 +138,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
   };
 
   const handleDeleteWebhook = async (webhookId: string) => {
-    if (!confirm("Are you sure you want to delete this webhook endpoint?")) {
+    if (!(await confirm({ title: "Delete this webhook endpoint?", description: "Deliveries to its URL will stop immediately.", confirmLabel: "Delete endpoint", tone: "danger" }))) {
       return;
     }
 
@@ -145,12 +148,13 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("Failed to delete webhook");
+      notify.success("Webhook deleted");
       fetchWebhooks(selectedSpaceId);
       if (inspectingWebhookId === webhookId) {
         setInspectingWebhookId(null);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error deleting webhook");
+      notify.fromError(err, "Error deleting webhook");
     }
   };
 

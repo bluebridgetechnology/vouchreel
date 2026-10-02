@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { notify } from "@/lib/notify";
+import { useConfirm } from "@/components/ui/confirm";
 
 interface SpaceOption {
   id: string;
@@ -20,6 +22,7 @@ interface ApiKeyItem {
 }
 
 export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
+  const confirm = useConfirm();
   const [selectedSpaceId, setSelectedSpaceId] = useState<string>(
     spaces[0]?.id || ""
   );
@@ -85,7 +88,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
   };
 
   const handleDeleteKey = async (keyId: string) => {
-    if (!confirm("Are you sure you want to revoke this API key? Any applications using it will be immediately disconnected.")) {
+    if (!(await confirm({ title: "Revoke this API key?", description: "Any applications using it will be immediately disconnected.", confirmLabel: "Revoke key", tone: "danger" }))) {
       return;
     }
 
@@ -95,9 +98,10 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("Failed to revoke key");
+      notify.success("API key revoked");
       fetchKeys(selectedSpaceId);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error revoking key");
+      notify.fromError(err, "Error revoking key");
     }
   };
 

@@ -9,6 +9,7 @@
 //   weight    font-semibold / bold / extrabold / black (Outfit max weight is 500)
 //   radius    legacy radius classes (rounded, rounded-md/lg/xl/2xl/full/sm/xs)
 //   legacy    shadcn alias names (bg-card, text-foreground, text-muted-foreground, bg-primary ...)
+//   feedback  alert(), confirm(), window.confirm(): use notify.* (lib/notify.ts) and useConfirm()
 //   control   hand-rolled <button>/<input>/<select>/<textarea> (use buttonVariants, toggleStyle,
 //             Switch, inputClass / textareaClass or the components in components/ui)
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -77,7 +78,7 @@ function tagEnd(src, start) {
   return -1;
 }
 
-const totals = { ...Object.fromEntries(Object.keys(rules).map((k) => [k, 0])), control: 0 };
+const totals = { ...Object.fromEntries(Object.keys(rules).map((k) => [k, 0])), control: 0, feedback: 0 };
 const byFile = new Map();
 const lines = [];
 
@@ -99,6 +100,17 @@ for (const base of ["app", "components"]) {
           if (LIST) lines.push(`${rel}:${lineNo} [control] <${m[1]}> without a primitive`);
         }
       }
+    }
+    if (!isApi && file.endsWith(".tsx")) {
+      source.split("\n").forEach((line, i) => {
+        const code = line.trim();
+        if (code.startsWith("//") || code.startsWith("*")) return;
+        if (/(?<![\w.])(?:window\.)?(?:alert|confirm)\(/.test(line) && !/await confirm\(/.test(line)) {
+          totals.feedback++;
+          byFile.set(rel, (byFile.get(rel) ?? 0) + 1);
+          if (LIST) lines.push(`${rel}:${i + 1} [feedback] ${code.slice(0, 140)}`);
+        }
+      });
     }
     source
       .split("\n")
