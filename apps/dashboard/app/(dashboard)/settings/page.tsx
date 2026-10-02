@@ -39,6 +39,12 @@ export default async function SettingsPage() {
         >
           Webhooks
         </Link>
+        <Link
+          href="/settings/notifications"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}
+        >
+          Notifications
+        </Link>
       </div>
 
       <div>
@@ -78,7 +84,20 @@ export default async function SettingsPage() {
           </div>
         </div>
 
-        {/* Developer Integrations Card */}
+        {/* Notifications Card */}
+        <div className="rounded-card border bg-surface p-4 sm:p-6 space-y-3 md:col-span-2">
+          <h2 className="text-base font-medium">Notifications</h2>
+          <p className="text-sm text-text-muted">
+            Choose which events appear in your inbox and which are emailed to you.
+          </p>
+          <div className="pt-2">
+            <Link href="/settings/notifications" className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Notification settings
+            </Link>
+          </div>
+        </div>
+
+                {/* Developer Integrations Card */}
         <div className="rounded-card border bg-surface p-4 sm:p-6 space-y-3 md:col-span-2">
           <h2 className="text-base font-medium">Developer & API</h2>
           <p className="text-sm text-text-muted">

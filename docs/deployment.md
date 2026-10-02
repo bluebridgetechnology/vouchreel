@@ -156,6 +156,7 @@ In *Project → Settings → Environment Variables*, add every variable from `.e
 - `NEXT_PUBLIC_APP_URL` — same public origin.
 - `NEXT_PUBLIC_WIDGET_URL` — leave empty to serve the widget from the app, or point at your CDN.
 - Payment/storage provider keys as needed.
+- `RESEND_API_KEY` and `EMAIL_FROM` for password-reset, invite and notification emails. Without a key emails are only logged to the server console, so password reset will not reach users.
 
 `NEXT_PUBLIC_*` changes require a redeploy (they are inlined at build time).
 

@@ -19,11 +19,11 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      // Call the BetterAuth forget-password endpoint directly
-      await fetch("/api/auth/forget-password", {
+      // Better Auth endpoint; it returns the same response whether or not the email exists
+      await fetch("/api/auth/request-password-reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, redirectTo: "/login" }),
+        body: JSON.stringify({ email, redirectTo: "/reset-password" }),
       });
       // Always show success to prevent email enumeration
       setSubmitted(true);

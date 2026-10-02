@@ -995,3 +995,48 @@ export const whiteLabelSettingsRelations = relations(whiteLabelSettings, ({ one 
 
 
 
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+/**
+ * In-app notification inbox. One row per user per event. `dedupeKey` lets noisy
+ * events (plan limit, failing webhooks) collapse into a single unread entry.
+ */
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    title: text("title").notNull(),
+    body: text("body"),
+    href: text("href"),
+    dedupeKey: text("dedupe_key"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}).notNull(),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("notifications_user_created_idx").on(table.userId, table.createdAt),
+    index("notifications_user_unread_idx").on(table.userId, table.readAt),
+    index("notifications_dedupe_idx").on(table.userId, table.dedupeKey),
+  ]
+);
+
+/** Per-user channel overrides. Missing rows fall back to the catalog defaults. */
+export const notificationPreferences = pgTable(
+  "notification_preferences",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    inApp: boolean("in_app").default(true).notNull(),
+    email: boolean("email").default(false).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex("notification_preferences_user_type_idx").on(table.userId, table.type)]
+);
