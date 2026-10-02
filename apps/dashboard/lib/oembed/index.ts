@@ -1,3 +1,4 @@
+import { safeFetch } from "@/lib/security/ssrf";
 export type VideoPlatform = "youtube" | "vimeo" | "mp4";
 
 export interface NormalizedOEmbedResponse {
@@ -248,7 +249,7 @@ async function fetchMp4Metadata(
 
   // Attempt HEAD request to check availability
   try {
-    const res = await fetch(url, { method: "HEAD" });
+    const res = await safeFetch(url, { method: "HEAD", signal: AbortSignal.timeout(8_000) });
     if (res.status === 404) {
       throw new OEmbedError("MP4 video not found", 404);
     }

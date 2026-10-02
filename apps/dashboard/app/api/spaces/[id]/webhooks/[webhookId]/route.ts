@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, webhookEndpoints } from "@/lib/db/schema";
 import { updateWebhookEndpointSchema } from "@/lib/validations/webhooks";
+import { UnsafeUrlError, assertPublicUrl } from "@/lib/security/ssrf";
 
 interface RouteParams {
   params: Promise<{ id: string; webhookId: string }>;
@@ -88,6 +89,15 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const validated = updateWebhookEndpointSchema.safeParse(body);
     if (!validated.success) {
       return validationError("Validation failed", validated.error.flatten().fieldErrors);
+    }
+
+    if (validated.data.url) {
+      try {
+        await assertPublicUrl(validated.data.url);
+      } catch (err) {
+        if (err instanceof UnsafeUrlError) return validationError("Validation failed", { url: [err.message] });
+        throw err;
+      }
     }
 
     const [updated] = await db

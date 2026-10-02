@@ -12,6 +12,7 @@ import {
   internalError,
 } from "@/lib/api/errors";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
+import { getClientIp } from "@/lib/security/client-ip";
 
 // navigator.sendBeacon sends cross-origin requests with credentials mode "include",
 // for which browsers reject `Access-Control-Allow-Origin: *`. Reflect the request
@@ -98,22 +99,21 @@ export async function POST(request: Request) {
 
   const { events: eventList } = parsed.data;
 
-  // Derive rate limit identifier (sessionId or IP fallback)
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    request.headers.get("x-real-ip") ||
-    "127.0.0.1";
+  const ip = getClientIp(request.headers);
 
   // Check rate limit per session (or IP if no session provided)
   const sessionIds = new Set(
     eventList.map((e) => e.sessionId).filter(Boolean) as string[]
   );
-  const identifiers = sessionIds.size > 0 ? Array.from(sessionIds) : [ip];
+  // Limit per client-supplied session AND per IP: sessionIds are free to invent, so a
+  // session-only limit can be bypassed by rotating them.
+  const identifiers = [...Array.from(sessionIds).map((id) => `events_${id}`), `events_ip_${ip}`];
 
   for (const id of identifiers) {
-    const limit = rateLimit(`events_${id}`, {
+    const isIpBucket = id.startsWith("events_ip_");
+    const limit = await rateLimit(id, {
       windowMs: 10 * 60 * 1000, // 10 minutes
-      max: 100, // max 100 events per session per 10 minutes
+      max: isIpBucket ? 1000 : 100, // per session: 100 events; per IP: 1000 events
     });
 
     if (!limit.success) {

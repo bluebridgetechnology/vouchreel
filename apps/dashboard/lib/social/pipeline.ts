@@ -27,6 +27,7 @@ import {
 } from "./presets";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 import { notifySpaceOwner } from "@/lib/notifications/service";
+import { safeFetch } from "@/lib/security/ssrf";
 
 export interface FiltergraphOptions {
   framing: FramingMode;
@@ -306,7 +307,7 @@ export async function renderSocialExport(exportId: string): Promise<void> {
     await ensureFfmpeg();
 
     // Download source video
-    const videoResponse = await fetch(rawVideoUrl);
+    const videoResponse = await safeFetch(rawVideoUrl, { signal: AbortSignal.timeout(120_000) });
     if (!videoResponse.ok) {
       throw new Error(`Failed to download source video (${videoResponse.status})`);
     }
@@ -316,7 +317,7 @@ export async function renderSocialExport(exportId: string): Promise<void> {
     // Download logo if configured
     if (settings?.logoUrl && settings.logoUrl.startsWith("http")) {
       try {
-        const logoRes = await fetch(settings.logoUrl);
+        const logoRes = await safeFetch(settings.logoUrl, { signal: AbortSignal.timeout(15_000) });
         if (logoRes.ok) {
           logoPath = path.join(tempDir, "logo.png");
           await writeFile(logoPath, Buffer.from(await logoRes.arrayBuffer()));

@@ -32,7 +32,7 @@ const bin = () => process.env.FFMPEG_PATH || "ffmpeg";
 
 function capture(args: string[], timeoutMs = 8_000): Promise<{ code: number | null; out: string }> {
   return new Promise((resolve, reject) => {
-    const proc = spawn(bin(), args, { stdio: ["ignore", "pipe", "pipe"] });
+    const proc = spawn(/*turbopackIgnore: true*/ bin(), args, { stdio: ["ignore", "pipe", "pipe"] });
     let out = "";
     const timer = setTimeout(() => proc.kill("SIGKILL"), timeoutMs);
     proc.stdout.on("data", (d) => (out += d));
@@ -85,7 +85,7 @@ export interface RunFfmpegOptions {
 export function runFfmpeg(args: string[], options: RunFfmpegOptions = {}): Promise<void> {
   const timeoutMs = options.timeoutMs ?? 5 * 60_000;
   return new Promise<void>((resolve, reject) => {
-    const proc = spawn(bin(), ["-hide_banner", "-nostdin", "-y", ...args], { stdio: ["ignore", "ignore", "pipe"] });
+    const proc = spawn(/*turbopackIgnore: true*/ bin(), ["-hide_banner", "-nostdin", "-y", ...args], { stdio: ["ignore", "ignore", "pipe"] });
     let stderr = "";
     let timedOut = false;
     const timer = setTimeout(() => {
@@ -124,8 +124,8 @@ const FONT_CANDIDATES = [
 /** Font file for drawtext: FFMPEG_FONT_FILE, else the first known system font. */
 export function resolveFontFile(): string | undefined {
   const fromEnv = process.env.FFMPEG_FONT_FILE;
-  if (fromEnv && existsSync(fromEnv)) return fromEnv;
-  return FONT_CANDIDATES.find((p) => existsSync(p));
+  if (fromEnv && existsSync(/*turbopackIgnore: true*/ fromEnv)) return fromEnv;
+  return FONT_CANDIDATES.find((p) => existsSync(/*turbopackIgnore: true*/ p));
 }
 
 /** Escapes a path for use inside a drawtext `fontfile='...'` option. */

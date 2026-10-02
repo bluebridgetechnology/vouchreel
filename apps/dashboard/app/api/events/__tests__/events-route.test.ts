@@ -20,7 +20,7 @@ describe("Analytics Events API Route", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (rateLimit as any).mockReturnValue({
+    (rateLimit as any).mockResolvedValue({
       success: true,
       remaining: 90,
       reset: Date.now() + 600000,
@@ -73,7 +73,7 @@ describe("Analytics Events API Route", () => {
   });
 
   it("returns 429 when rate limit is exceeded", async () => {
-    (rateLimit as any).mockReturnValue({
+    (rateLimit as any).mockResolvedValue({
       success: false,
       remaining: 0,
       reset: Date.now() + 300000,

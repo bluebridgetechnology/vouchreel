@@ -10,6 +10,8 @@ import { queueTranscode } from "@/lib/transcode";
 import { submissionMetaSchema } from "@/lib/validations/collection-forms";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 import { notifySpaceOwner } from "@/lib/notifications/service";
+import { getClientIp } from "@/lib/security/client-ip";
+import { matchesDeclaredType } from "@/lib/security/video-sniff";
 
 export const runtime = "nodejs";
 
@@ -27,16 +29,19 @@ interface RouteParams {
 
 export async function POST(request: Request, { params }: RouteParams) {
   const { slug } = await params;
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    request.headers.get("x-real-ip") ||
-    "127.0.0.1";
-  const limit = rateLimit(`collect_${ip}_${slug}`, { windowMs: 60 * 60 * 1000, max: 10 });
+  const ip = getClientIp(request.headers);
+  const limit = await rateLimit(`collect_${ip}_${slug}`, { windowMs: 60 * 60 * 1000, max: 10 });
   if (!limit.success) {
     return apiError(429, "RATE_LIMITED", "Too many submissions. Please try again later.", {
       details: { reset: limit.reset },
       headers: { "Retry-After": Math.ceil((limit.reset - Date.now()) / 1000).toString() },
     });
+  }
+
+  // Refuse oversized bodies before they are buffered into memory (multipart overhead allowance: 1 MB)
+  const declaredLength = Number(request.headers.get("content-length") ?? 0);
+  if (declaredLength > MAX_VIDEO_BYTES + 1024 * 1024) {
+    return apiError(413, "BAD_REQUEST", "The upload is too large. Videos must be 100 MB or smaller.");
   }
 
   let data: FormData;
@@ -67,6 +72,14 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   if (hasVideo && (!VIDEO_EXTENSIONS[file.type] || file.size > MAX_VIDEO_BYTES)) {
     return badRequest("Video must be MP4, WebM, MOV, or AVI and no larger than 100 MB");
+  }
+
+  // The declared Content-Type is client-controlled: check the actual container bytes
+  if (hasVideo) {
+    const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    if (!matchesDeclaredType(file.type, head)) {
+      return badRequest("That file does not look like a valid MP4, WebM, MOV, or AVI video");
+    }
   }
 
   try {

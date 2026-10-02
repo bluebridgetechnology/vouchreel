@@ -17,6 +17,15 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+// Real guard logic, but DNS is stubbed so the tests stay offline
+vi.mock("@/lib/security/ssrf", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/security/ssrf")>();
+  return {
+    ...actual,
+    assertPublicUrl: (raw: string) => actual.assertPublicUrl(raw, { resolve: async () => ["93.184.216.34"] }),
+  };
+});
+
 describe("Dashboard API Keys and Webhooks Endpoints", () => {
   const fakeSession = {
     user: { id: "user-owner" },
@@ -148,6 +157,28 @@ describe("Dashboard API Keys and Webhooks Endpoints", () => {
       const body = await res.json();
       expect(body.webhook.url).toBe("https://zapier.com/hooks/catch/123");
       expect(body.webhook.secret.startsWith("whsec_")).toBe(true);
+    });
+
+    it("rejects webhook targets that point at internal addresses (SSRF)", async () => {
+      for (const target of ["https://169.254.169.254/latest/meta-data", "https://127.0.0.1:8080/x", "https://localhost/hook", "https://10.0.0.5/hook"]) {
+        vi.spyOn(sessionModule, "getSession").mockResolvedValueOnce(fakeSession as any);
+        mockDbSelect.mockReturnValueOnce({
+          from: () => ({ where: () => Promise.resolve([{ id: "space-1", ownerId: "user-owner" }]) }),
+        });
+
+        const res = await createWebhook(
+          new Request("https://app.vouchreel.com", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: target, events: ["testimonial.created"] }),
+          }),
+          { params: Promise.resolve({ id: "space-1" }) }
+        );
+
+        expect(res.status).toBe(400);
+        expect((await res.json()).error.details.url[0]).toMatch(/internal|private/i);
+      }
+      expect(mockDbInsert).not.toHaveBeenCalled();
     });
   });
 });

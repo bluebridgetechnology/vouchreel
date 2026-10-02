@@ -22,7 +22,7 @@ describe("oEmbed Route Handler", () => {
   });
 
   it("returns 429 when rate limit is exceeded", async () => {
-    vi.spyOn(rateLimitModule, "rateLimit").mockReturnValue({
+    vi.spyOn(rateLimitModule, "rateLimit").mockResolvedValue({
       success: false,
       remaining: 0,
       reset: Date.now() + 30000,
@@ -37,7 +37,7 @@ describe("oEmbed Route Handler", () => {
   });
 
   it("returns normalized metadata when oEmbed succeeds", async () => {
-    vi.spyOn(rateLimitModule, "rateLimit").mockReturnValue({
+    vi.spyOn(rateLimitModule, "rateLimit").mockResolvedValue({
       success: true,
       remaining: 29,
       reset: Date.now() + 60000,
@@ -62,7 +62,7 @@ describe("oEmbed Route Handler", () => {
   });
 
   it("returns 404 when video is not found or private", async () => {
-    vi.spyOn(rateLimitModule, "rateLimit").mockReturnValue({
+    vi.spyOn(rateLimitModule, "rateLimit").mockResolvedValue({
       success: true,
       remaining: 29,
       reset: Date.now() + 60000,

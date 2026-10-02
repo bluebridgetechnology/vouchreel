@@ -178,6 +178,23 @@ Run this once before the first deploy of each release that contains new migratio
 
 ---
 
+## Security and operations checklist
+
+| Setting | Why it matters |
+| --- | --- |
+| `CRON_SECRET` | **Required in production.** `/api/cron/process-webhooks` and `/api/cron/sync-reviews` refuse to run (503) without it. Vercel Cron sends it automatically (`vercel.json` schedules both jobs); the VPS compose file runs a `scheduler` service that calls them every 5 minutes / hourly. Generate with `openssl rand -hex 32`. |
+| `TRUSTED_PROXY_HOPS` | Number of reverse proxies in front of the app (Vercel or one nginx/Caddy = `1`, Cloudflare + nginx = `2`, none = `0`). The client IP for rate limiting is taken that many entries from the **end** of `X-Forwarded-For`, because the start of that header is client-controlled. |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Shared rate-limit counters. Without them limits are per process: fine for a single Docker container, **not** effective on Vercel or with several replicas. |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Password reset, invites and notification emails. |
+| Egress filtering | Webhook and video-source fetches reject private/loopback/link-local addresses (including via DNS and redirects). DNS rebinding between the check and the connection is a residual risk; block private ranges at the network edge as well. |
+| `ALLOW_PRIVATE_WEBHOOK_TARGETS=true` | Development only: lets webhooks point at `localhost`. Ignored in production. |
+
+Responses carry `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS (production) and `frame-ancestors 'none'`, except `/collect/*`, which is intentionally embeddable. Uploaded videos are accepted only if the file bytes are a real MP4/MOV/WebM/AVI container, not just if the browser says so.
+
+CI (`.github/workflows/ci.yml`) runs lint (with the design-token, feedback and contrast guards), all tests including the real-FFmpeg ones, the widget size budget and a production build on every pull request.
+
+---
+
 ## Widget CDN deployment
 
 The widget script must be reachable from every site that embeds it. Two supported options:
