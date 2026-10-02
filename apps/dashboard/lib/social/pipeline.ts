@@ -2,7 +2,9 @@ import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
 import { randomUUID } from "crypto";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { enqueueJob } from "@/lib/jobs/queue";
+import { JOB_TYPES } from "@/lib/jobs/handlers";
 import { db } from "@/lib/db";
 import {
   socialExports,
@@ -234,21 +236,14 @@ export async function renderSocialExport(exportId: string): Promise<void> {
     .from(socialExports)
     .where(eq(socialExports.id, exportId));
 
-  if (!exportRecord || exportRecord.status !== "pending") return;
+  // The job queue guarantees one runner per export. "processing" here means a previous
+  // worker died mid-render and the job was reclaimed, so it is safe to start over.
+  if (!exportRecord || (exportRecord.status !== "pending" && exportRecord.status !== "processing")) return;
 
-  // Claim the export job
-  const claimed = await db
+  await db
     .update(socialExports)
     .set({ status: "processing" })
-    .where(
-      and(
-        eq(socialExports.id, exportId),
-        eq(socialExports.status, "pending")
-      )
-    )
-    .returning({ id: socialExports.id });
-
-  if (!claimed.length) return;
+    .where(eq(socialExports.id, exportId));
 
   const [testimonial] = await db
     .select()
@@ -411,8 +406,8 @@ export async function renderSocialExport(exportId: string): Promise<void> {
 }
 
 /**
- * Queue social export in background
+ * Queue a social export on the durable job queue; a worker renders it.
  */
-export function queueSocialExport(exportId: string): void {
-  void renderSocialExport(exportId);
+export async function queueSocialExport(exportId: string): Promise<void> {
+  await enqueueJob(JOB_TYPES.socialExport, { exportId });
 }

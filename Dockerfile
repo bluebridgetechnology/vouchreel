@@ -23,6 +23,7 @@ ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_WIDGET_URL=$NEXT_PUBLIC_WIDGET_URL
 RUN npm run widget:build --workspace=@vouchreel/widget
 RUN npm run build --workspace=@vouchreel/dashboard
+RUN npm run worker:build --workspace=@vouchreel/dashboard
 
 # ---- migrator: one-shot drizzle-kit migrations (used by docker-compose.production.yml) ----
 FROM builder AS migrator
@@ -49,3 +50,11 @@ WORKDIR /app/apps/dashboard
 USER nextjs
 EXPOSE 3000
 CMD ["node", "server.js"]
+
+# ---- worker: background job processor (renders videos; needs ffmpeg + full node_modules) ----
+FROM builder AS worker
+RUN apk add --no-cache ffmpeg fontconfig font-noto  && ffmpeg -hide_banner -filters | grep -q drawtext
+ENV NODE_ENV=production
+WORKDIR /repo/apps/dashboard
+USER node
+CMD ["node", "dist/worker.mjs"]
