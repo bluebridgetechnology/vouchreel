@@ -445,6 +445,8 @@ export const collectionForms = pgTable("collection_forms", {
     .default({})
     .notNull(),
   isActive: boolean("is_active").default(true).notNull(),
+  /** Which submission types the public form offers (lib/collect/modes.ts). */
+  collectModes: text("collect_modes").$type<"both" | "video" | "text">().default("both").notNull(),
   slug: text("slug").notNull().unique(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

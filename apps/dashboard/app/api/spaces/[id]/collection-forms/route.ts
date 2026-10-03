@@ -26,7 +26,7 @@ export async function GET(_: Request, { params }: RouteParams) {
     const collectionForms = await db.select({
       id: collectionFormsTable.id, spaceId: collectionFormsTable.spaceId, title: collectionFormsTable.title,
       promptText: collectionFormsTable.promptText, incentiveType: collectionFormsTable.incentiveType,
-      incentiveValue: collectionFormsTable.incentiveValue, branding: collectionFormsTable.branding,
+      incentiveValue: collectionFormsTable.incentiveValue, branding: collectionFormsTable.branding, collectModes: collectionFormsTable.collectModes,
       isActive: collectionFormsTable.isActive, slug: collectionFormsTable.slug, createdAt: collectionFormsTable.createdAt,
       pendingSubmissionCount: count(submissions.id),
     }).from(collectionFormsTable).leftJoin(submissions, and(eq(submissions.formId, collectionFormsTable.id), eq(submissions.status, "pending")))

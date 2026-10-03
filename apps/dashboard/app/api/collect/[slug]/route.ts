@@ -23,6 +23,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
         incentiveType: collectionForms.incentiveType,
         incentiveValue: collectionForms.incentiveValue,
         branding: collectionForms.branding,
+        collectModes: collectionForms.collectModes,
         spaceId: collectionForms.spaceId,
       })
       .from(collectionForms)
@@ -53,6 +54,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
         promptText: form.promptText,
         incentiveType: form.incentiveType,
         incentiveValue: form.incentiveValue,
+        collectModes: form.collectModes,
         branding: {
           accentColor: form.branding?.accentColor,
           logoUrl: effectiveLogo,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchesDeclaredType, sniffVideoKind } from "../video-sniff";
+import { baseMimeType, matchesDeclaredType, sniffVideoKind } from "../video-sniff";
 
 const bytes = (...parts: (string | number[])[]) =>
   Uint8Array.from(parts.flatMap((p) => (typeof p === "string" ? [...p].map((c) => c.charCodeAt(0)) : p)));
@@ -43,5 +43,20 @@ describe("matchesDeclaredType", () => {
 
   it("rejects undeclared MIME types", () => {
     expect(matchesDeclaredType("application/octet-stream", mp4)).toBe(false);
+  });
+
+  it("accepts browser recordings whose MIME type carries codec parameters", () => {
+    expect(matchesDeclaredType("video/webm;codecs=vp8,opus", webm)).toBe(true);
+    expect(matchesDeclaredType("video/mp4;codecs=avc1.42E01E,mp4a.40.2", mp4)).toBe(true);
+    expect(matchesDeclaredType("VIDEO/WEBM; codecs=vp9", webm)).toBe(true);
+  });
+
+  it("still checks the bytes when parameters are present", () => {
+    expect(matchesDeclaredType("video/webm;codecs=vp8,opus", exe)).toBe(false);
+  });
+
+  it("baseMimeType strips parameters and normalizes case", () => {
+    expect(baseMimeType("Video/WebM; codecs=vp9,opus")).toBe("video/webm");
+    expect(baseMimeType("video/mp4")).toBe("video/mp4");
   });
 });

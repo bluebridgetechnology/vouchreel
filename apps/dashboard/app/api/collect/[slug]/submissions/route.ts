@@ -12,7 +12,8 @@ import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 import { notifySpaceOwner } from "@/lib/notifications/service";
 import { getClientIp } from "@/lib/security/client-ip";
 import { AI_VIDEO_CONSENT_VERSION } from "@/lib/ai-video/consent";
-import { matchesDeclaredType } from "@/lib/security/video-sniff";
+import { allowsText, allowsVideo } from "@/lib/collect/modes";
+import { baseMimeType, matchesDeclaredType } from "@/lib/security/video-sniff";
 
 export const runtime = "nodejs";
 
@@ -72,33 +73,39 @@ export async function POST(request: Request, { params }: RouteParams) {
     return badRequest("Submit exactly one video or text testimonial");
   }
 
-  if (hasVideo && (!VIDEO_EXTENSIONS[file.type] || file.size > MAX_VIDEO_BYTES)) {
+  const declaredType = hasVideo ? baseMimeType(file.type) : "";
+  if (hasVideo && (!VIDEO_EXTENSIONS[declaredType] || file.size > MAX_VIDEO_BYTES)) {
     return badRequest("Video must be MP4, WebM, MOV, or AVI and no larger than 100 MB");
   }
 
   // The declared Content-Type is client-controlled: check the actual container bytes
   if (hasVideo) {
     const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
-    if (!matchesDeclaredType(file.type, head)) {
+    if (!matchesDeclaredType(declaredType, head)) {
       return badRequest("That file does not look like a valid MP4, WebM, MOV, or AVI video");
     }
   }
 
   try {
     const [form] = await db
-      .select({ id: collectionForms.id, spaceId: collectionForms.spaceId })
+      .select({ id: collectionForms.id, spaceId: collectionForms.spaceId, collectModes: collectionForms.collectModes })
       .from(collectionForms)
       .where(and(eq(collectionForms.slug, slug), eq(collectionForms.isActive, true)));
     if (!form) return notFound("Collection form not found");
 
+    // The public page hides the other option, but a hand-made request must not bypass the owner's choice
+    if (hasVideo ? !allowsVideo(form.collectModes) : !allowsText(form.collectModes)) {
+      return badRequest(hasVideo ? "This form only accepts written testimonials" : "This form only accepts video testimonials");
+    }
+
     let videoUrl: string | null = null;
     if (hasVideo) {
       const storage = getStorage();
-      const extension = VIDEO_EXTENSIONS[file.type];
+      const extension = VIDEO_EXTENSIONS[declaredType];
       videoUrl = await storage.upload(
         Buffer.from(await file.arrayBuffer()),
         `submissions/${form.id}/${randomUUID()}.${extension}`,
-        { contentType: file.type, public: true }
+        { contentType: declaredType, public: true }
       );
     }
 

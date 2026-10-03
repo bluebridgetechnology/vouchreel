@@ -127,6 +127,13 @@
       "when": 1790974489512,
       "tag": "0017_ai_video_consent_version",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791054039473,
+      "tag": "0018_collect_modes",
+      "breakpoints": true
     }
   ]
 }

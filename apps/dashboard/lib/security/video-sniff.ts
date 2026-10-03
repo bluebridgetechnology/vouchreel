@@ -26,9 +26,17 @@ export function sniffVideoKind(head: Uint8Array): VideoKind | null {
   return null;
 }
 
+/**
+ * Strips parameters from a MIME type: browsers label recordings like
+ * "video/webm;codecs=vp8,opus", which must match the plain "video/webm" entry.
+ */
+export function baseMimeType(declared: string): string {
+  return declared.split(";")[0].trim().toLowerCase();
+}
+
 /** True when the declared MIME type is allowed and the bytes are a matching container. */
 export function matchesDeclaredType(declared: string, head: Uint8Array): boolean {
-  const allowed = DECLARED_TYPES[declared];
+  const allowed = DECLARED_TYPES[baseMimeType(declared)];
   const kind = sniffVideoKind(head);
   return Boolean(allowed && kind && allowed.includes(kind));
 }
