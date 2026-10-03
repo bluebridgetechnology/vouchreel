@@ -1066,3 +1066,26 @@ export const notificationPreferences = pgTable(
   },
   (table) => [uniqueIndex("notification_preferences_user_type_idx").on(table.userId, table.type)]
 );
+
+/**
+ * Durable background jobs. A worker claims rows with FOR UPDATE SKIP LOCKED, so jobs survive
+ * restarts and run one at a time; stale locks are reclaimed (see lib/jobs/queue.ts).
+ */
+export const jobs = pgTable(
+  "jobs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    type: text("type").notNull(),
+    payload: jsonb("payload").$type<Record<string, unknown>>().default({}).notNull(),
+    status: text("status").$type<"queued" | "running" | "done" | "failed">().default("queued").notNull(),
+    attempts: integer("attempts").default(0).notNull(),
+    maxAttempts: integer("max_attempts").default(3).notNull(),
+    runAt: timestamp("run_at", { withTimezone: true }).defaultNow().notNull(),
+    lockedAt: timestamp("locked_at", { withTimezone: true }),
+    lockedBy: text("locked_by"),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+  },
+  (table) => [index("jobs_status_run_at_idx").on(table.status, table.runAt)]
+);

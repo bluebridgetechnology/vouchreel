@@ -1,0 +1,97 @@
+import { randomUUID } from "crypto";
+import { claimJob, completeJob, failJob, reclaimStaleJobs, type Job } from "./queue";
+import { getJobHandler, registerBuiltInHandlers } from "./handlers";
+
+export interface RunOptions {
+  workerId?: string;
+  /** Max jobs processed in parallel. */
+  concurrency?: number;
+}
+
+/** Runs one claimed job to completion, recording success or failure. */
+export async function processJob(job: Job): Promise<"done" | "retry" | "failed"> {
+  const handler = getJobHandler(job.type);
+  if (!handler) {
+    // An unknown type will never succeed, so do not burn retries on it.
+    await failJob({ ...job, attempts: job.maxAttempts }, new Error(`No handler for job type "${job.type}"`));
+    return "failed";
+  }
+  try {
+    await handler(job.payload);
+    await completeJob(job.id);
+    return "done";
+  } catch (error) {
+    console.error(`[worker] job ${job.id} (${job.type}) failed:`, error);
+    return failJob(job, error);
+  }
+}
+
+/**
+ * Claims and processes jobs until none are runnable, honouring `concurrency`.
+ * Used by both the long-running worker loop and the cron drain endpoint.
+ */
+export async function drainQueue(options: RunOptions & { maxJobs?: number } = {}): Promise<number> {
+  await registerBuiltInHandlers();
+  const workerId = options.workerId ?? `drain-${randomUUID()}`;
+  const concurrency = Math.max(1, options.concurrency ?? 1);
+  const maxJobs = options.maxJobs ?? Infinity;
+  let claimed = 0;
+  let exhausted = false;
+
+  async function lane() {
+    while (!exhausted && claimed < maxJobs) {
+      claimed++; // reserve a slot before awaiting so lanes cannot overshoot maxJobs
+      const job = await claimJob(workerId);
+      if (!job) {
+        claimed--;
+        exhausted = true;
+        return;
+      }
+      await processJob(job);
+    }
+  }
+
+  await Promise.all(Array.from({ length: concurrency }, lane));
+  return claimed;
+}
+
+/** Long-running worker: polls until the signal aborts, finishing in-flight jobs first. */
+export async function runWorker(signal: AbortSignal, options: RunOptions = {}): Promise<void> {
+  const workerId = options.workerId ?? `worker-${randomUUID()}`;
+  const concurrency = Math.max(1, options.concurrency ?? Number(process.env.WORKER_CONCURRENCY ?? 2));
+  const pollMs = Number(process.env.WORKER_POLL_MS ?? 2000);
+  let lastReclaim = 0;
+
+  console.log(`[worker] ${workerId} started (concurrency ${concurrency})`);
+  while (!signal.aborted) {
+    if (Date.now() - lastReclaim > 60_000) {
+      lastReclaim = Date.now();
+      try {
+        const n = await reclaimStaleJobs();
+        if (n) console.warn(`[worker] reclaimed ${n} stale job(s)`);
+      } catch (error) {
+        console.error("[worker] reclaim failed:", error);
+      }
+    }
+    let processed = 0;
+    try {
+      processed = await drainQueue({ workerId, concurrency });
+    } catch (error) {
+      console.error("[worker] poll failed:", error);
+    }
+    if (processed === 0) {
+      await new Promise<void>((resolve) => {
+        const t = setTimeout(resolve, pollMs);
+        signal.addEventListener(
+          "abort",
+          () => {
+            clearTimeout(t);
+            resolve();
+          },
+          { once: true }
+        );
+      });
+    }
+  }
+  console.log(`[worker] ${workerId} stopped`);
+}

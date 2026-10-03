@@ -128,8 +128,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       })
       .returning();
 
-    // Trigger asynchronous rendering
-    queueSocialExport(createdExport.id);
+    // Hand rendering to the durable job queue
+    await queueSocialExport(createdExport.id);
 
     return NextResponse.json({ export: createdExport }, { status: 201 });
   } catch (error) {

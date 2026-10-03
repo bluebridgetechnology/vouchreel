@@ -50,6 +50,26 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # Durable background jobs (social exports, later AI video). Same image build, own process,
+  # so a deploy or crash of the web app never loses a render: jobs live in Postgres.
+  worker:
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    env_file: !reset
+      - .env.production
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-vouchreel}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vouchreel}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-2}
+    stop_grace_period: 120s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
   # Triggers the scheduled jobs (webhook retries every 5 minutes, review sync hourly).
   # Vercel does this with vercel.json crons; on a VPS something has to call the endpoints.
   scheduler:
