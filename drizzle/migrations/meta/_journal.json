@@ -113,6 +113,20 @@
       "when": 1790969238197,
       "tag": "0015_durable_jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790971340658,
+      "tag": "0016_ai_video_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790974489512,
+      "tag": "0017_ai_video_consent_version",
+      "breakpoints": true
     }
   ]
 }

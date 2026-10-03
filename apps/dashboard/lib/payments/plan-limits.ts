@@ -14,6 +14,8 @@ export interface PlanLimits {
   tier: PlanTier;
   maxSpaces: number;
   maxTestimonialsPerSpace: number;
+  /** AI video generations per month. 0 disables the feature. */
+  aiVideoCredits: number;
   removeWatermark: boolean;
   canCustomizeBranding: boolean;
   canUseAllTriggers: boolean;
@@ -29,7 +31,7 @@ export type StoredPlanLimits = {
   [K in keyof PlanLimits]?: PlanLimits[K];
 };
 
-export const NUMERIC_LIMIT_KEYS = ["maxSpaces", "maxTestimonialsPerSpace"] as const;
+export const NUMERIC_LIMIT_KEYS = ["maxSpaces", "maxTestimonialsPerSpace", "aiVideoCredits"] as const;
 
 export const BOOLEAN_LIMIT_KEYS = [
   "removeWatermark",
@@ -63,12 +65,13 @@ const growth = {
 };
 
 export const PLAN_LIMIT_PRESETS: Record<Exclude<PlanTier, "custom">, PlanLimits> = {
-  free: { tier: "free", maxSpaces: 1, maxTestimonialsPerSpace: 3, ...none },
-  pro: { tier: "pro", maxSpaces: 5, maxTestimonialsPerSpace: Infinity, ...none, ...growth },
+  free: { tier: "free", maxSpaces: 1, maxTestimonialsPerSpace: 3, aiVideoCredits: 0, ...none },
+  pro: { tier: "pro", maxSpaces: 5, maxTestimonialsPerSpace: Infinity, aiVideoCredits: 10, ...none, ...growth },
   agency: {
     tier: "agency",
     maxSpaces: Infinity,
     maxTestimonialsPerSpace: Infinity,
+    aiVideoCredits: 50,
     ...none,
     ...growth,
     multiSeat: true,
@@ -78,6 +81,7 @@ export const PLAN_LIMIT_PRESETS: Record<Exclude<PlanTier, "custom">, PlanLimits>
     tier: "business",
     maxSpaces: Infinity,
     maxTestimonialsPerSpace: Infinity,
+    aiVideoCredits: 100,
     ...none,
     ...growth,
     multiSeat: true,

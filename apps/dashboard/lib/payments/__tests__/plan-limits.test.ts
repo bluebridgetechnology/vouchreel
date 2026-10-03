@@ -36,6 +36,14 @@ describe("plan limits", () => {
     expect(normalizeLimits(stored, "Agency")).toEqual(PLAN_LIMIT_PRESETS.agency);
   });
 
+  it("AI video credits default per tier, so legacy plans without the key keep a sane value", () => {
+    expect(PLAN_LIMIT_PRESETS.free.aiVideoCredits).toBe(0);
+    expect(normalizeLimits({ maxSpaces: 5 }, "Pro").aiVideoCredits).toBe(PLAN_LIMIT_PRESETS.pro.aiVideoCredits);
+    expect(normalizeLimits({ aiVideoCredits: -1 }, "Custom").aiVideoCredits).toBe(Infinity);
+    expect(normalizeLimits({ aiVideoCredits: 7 }, "Free").aiVideoCredits).toBe(7);
+    expect(serializeLimits({ ...PLAN_LIMIT_PRESETS.pro, aiVideoCredits: Infinity }).aiVideoCredits).toBe(-1);
+  });
+
   it("formats limits for messages", () => {
     expect(formatLimit(3)).toBe("3");
     expect(formatLimit(Infinity)).toBe("Unlimited");

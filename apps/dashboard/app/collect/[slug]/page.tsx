@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
 import { DEFAULT_BRAND_HEX, userAccentStyle } from "@/lib/brand";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AI_VIDEO_CONSENT_TEXT } from "@/lib/ai-video/consent";
 import { FormSkeleton, SkeletonRegion } from "@/components/ui/page-skeleton";
 
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
@@ -29,6 +31,7 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [text, setText] = useState("");
+  const [aiConsent, setAiConsent] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
@@ -123,6 +126,7 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
       payload.set("durationSeconds", String(recordingSeconds || 0));
     } else {
       payload.set("text", text.trim());
+      if (aiConsent) payload.set("aiVideoConsent", "true");
     }
 
     try {
@@ -184,6 +188,7 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
               <div className="flex flex-wrap gap-3"><button type="button" onClick={recording ? stopRecording : startRecording} className={cn(buttonVariants({ size: "md" }), "bg-(--user-accent) text-(--user-accent-fg) hover:bg-(--user-accent) hover:opacity-90")}>{recording ? `Stop recording (${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")})` : "Record with camera"}</button><label className={cn(buttonVariants({ variant: "outline", size: "md" }), "cursor-pointer")}>Upload video<input className="sr-only" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-msvideo" onChange={(event) => event.target.files?.[0] && setPreview(event.target.files[0])} /></label></div>
             </>}
           </div> : <textarea value={text} onChange={(event) => setText(event.target.value)} maxLength={5000} rows={7} placeholder="Write your testimonial…" className={cn(textareaClass, "focus-visible:border-(--user-accent) focus-visible:shadow-none focus-visible:ring-2 focus-visible:ring-(--user-accent)")} />}
+          {mode === "text" && <label className="flex items-start gap-3 text-sm text-text-muted"><Checkbox checked={aiConsent} onCheckedChange={(value) => setAiConsent(value === true)} className="mt-0.5" /><span><span className="font-medium text-text">Optional:</span> {AI_VIDEO_CONSENT_TEXT}</span></label>}
           <div className="grid gap-4 sm:grid-cols-2"><label className="space-y-1 text-sm font-medium">Your name<input required value={name} onChange={(event) => setName(event.target.value)} maxLength={100} className={cn(inputClass, "w-full text-sm")} /></label><label className="space-y-1 text-sm font-medium">Email address<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={200} className={cn(inputClass, "w-full text-sm")} /></label></div>
           {progress !== null && <div className="h-2 overflow-hidden rounded-pill bg-surface-sunken"><div className="h-full bg-(--user-accent) transition-all" style={{ width: `${progress}%` }} /></div>}
           <button disabled={submitting} className={cn(buttonVariants({ size: "lg" }), "w-full bg-(--user-accent) text-(--user-accent-fg) hover:bg-(--user-accent) hover:opacity-90")}>{submitting ? (progress !== null ? `Uploading ${progress}%…` : "Submitting…") : "Submit testimonial"}</button>

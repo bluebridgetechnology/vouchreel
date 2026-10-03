@@ -475,6 +475,10 @@ export const submissions = pgTable("submissions", {
     .notNull(),
   /** User-safe reason when processing_status is "failed". */
   processingError: text("processing_error"),
+  /** When the customer ticked the "may be turned into an AI-narrated video" box; null = no consent. */
+  aiVideoConsentAt: timestamp("ai_video_consent_at", { withTimezone: true }),
+  /** Version of the consent wording shown (lib/ai-video/consent.ts). */
+  aiVideoConsentVersion: text("ai_video_consent_version"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -1088,4 +1092,80 @@ export const jobs = pgTable(
     completedAt: timestamp("completed_at", { withTimezone: true }),
   },
   (table) => [index("jobs_status_run_at_idx").on(table.status, table.runAt)]
+);
+
+/**
+ * Proof that the person who wrote a testimonial agreed to AI-narrated video being made from it.
+ * Required before any generated_videos row can exist (FTC rule on AI-generated reviews).
+ */
+export const testimonialConsents = pgTable(
+  "testimonial_consents",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    testimonialId: uuid("testimonial_id")
+      .notNull()
+      .references(() => testimonials.id, { onDelete: "cascade" }),
+    spaceId: uuid("space_id")
+      .notNull()
+      .references(() => spaces.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<"ai_video">().default("ai_video").notNull(),
+    /** collect_form = ticked by the customer; email_reconsent = confirmed via emailed link. */
+    source: text("source").$type<"collect_form" | "email_reconsent">().notNull(),
+    /** Version of the consent wording shown, so the exact text can be reconstructed later. */
+    textVersion: text("text_version").notNull(),
+    submissionId: uuid("submission_id").references(() => submissions.id, { onDelete: "set null" }),
+    grantedAt: timestamp("granted_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("testimonial_consents_testimonial_idx").on(table.testimonialId, table.kind)]
+);
+
+/**
+ * AI-narrated motion-graphic videos made from a written testimonial. No synthetic likeness or
+ * cloned voice of the customer; the widget labels these as AI-generated.
+ */
+export const generatedVideos = pgTable(
+  "generated_videos",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    spaceId: uuid("space_id")
+      .notNull()
+      .references(() => spaces.id, { onDelete: "cascade" }),
+    testimonialId: uuid("testimonial_id")
+      .notNull()
+      .references(() => testimonials.id, { onDelete: "cascade" }),
+    /** Restrict: consent evidence must outlive any video made under it. */
+    consentId: uuid("consent_id")
+      .notNull()
+      .references(() => testimonialConsents.id, { onDelete: "restrict" }),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    /** draft = awaiting trim approval; queued/rendering = job in flight. */
+    status: text("status")
+      .$type<"draft" | "queued" | "rendering" | "done" | "failed">()
+      .default("draft")
+      .notNull(),
+    template: text("template").notNull(),
+    voice: text("voice").notNull(),
+    aspect: text("aspect").$type<"9:16" | "16:9">().default("9:16").notNull(),
+    /** Language of the narration; non-original languages use testimonial_translations. */
+    language: text("language").default("en").notNull(),
+    scriptOriginal: text("script_original").notNull(),
+    /** Length-trimmed version shown to the owner as a diff; null until proposed. */
+    scriptTrimmed: text("script_trimmed"),
+    trimApprovedAt: timestamp("trim_approved_at", { withTimezone: true }),
+    jobId: uuid("job_id").references(() => jobs.id, { onDelete: "set null" }),
+    creditsUsed: integer("credits_used").default(1).notNull(),
+    /** Provider cost in cents, for margin tracking. */
+    costCents: integer("cost_cents"),
+    outputUrl: text("output_url"),
+    durationSeconds: integer("duration_seconds"),
+    error: text("error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("generated_videos_testimonial_idx").on(table.testimonialId, table.createdAt),
+    index("generated_videos_space_created_idx").on(table.spaceId, table.createdAt),
+  ]
 );

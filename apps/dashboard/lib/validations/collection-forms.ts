@@ -67,6 +67,8 @@ export const submissionMetaSchema = z.object({
   customerEmail: z.email("A valid email is required").max(200),
   text: z.string().trim().min(1, "Testimonial text is required").max(5000).optional(),
   durationSeconds: z.number().int().min(0).max(600).optional().nullable(),
+  /** Only meaningful for written testimonials; the route ignores it for video. */
+  aiVideoConsent: z.boolean().optional(),
 });
 
 export type CreateCollectionFormInput = z.infer<
