@@ -7,6 +7,8 @@ export const planLimitsSchema = z.object({
   tier: z.enum(["free", "pro", "agency", "business", "custom"]).default("custom"),
   maxSpaces: limitNumber,
   maxTestimonialsPerSpace: limitNumber,
+  /** Optional so existing clients that do not send it keep working; the stored default applies. */
+  aiVideoCredits: limitNumber.optional(),
   removeWatermark: z.boolean(),
   canCustomizeBranding: z.boolean(),
   canUseAllTriggers: z.boolean(),

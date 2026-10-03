@@ -3,12 +3,13 @@ import { POST } from "../route";
 import { rateLimit, resetRateLimits } from "@/lib/rate-limit";
 
 const upload = vi.fn(async () => "https://cdn.test/video.mp4");
+let collectModes: "both" | "video" | "text" = "both";
 const insertValues = vi.fn();
 
 vi.mock("@/lib/db", () => ({
   db: {
     select: () => ({
-      from: () => ({ where: () => Promise.resolve([{ id: "form-1", spaceId: "space-1" }]) }),
+      from: () => ({ where: () => Promise.resolve([{ id: "form-1", spaceId: "space-1", collectModes }]) }),
     }),
     insert: () => ({
       values: (v: unknown) => {
@@ -43,6 +44,7 @@ describe("POST /api/collect/[slug]/submissions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetRateLimits();
+    collectModes = "both";
   });
 
   it("accepts a real MP4 and stores it", async () => {
@@ -73,6 +75,55 @@ describe("POST /api/collect/[slug]/submissions", () => {
     const res = await POST(request(form({ ...base, text: "Loved it" })), ctx);
     expect(res.status).toBe(201);
     expect(upload).not.toHaveBeenCalled();
+  });
+
+  it("records AI video consent with the wording version for a written testimonial", async () => {
+    const res = await POST(request(form({ ...base, text: "Loved it", aiVideoConsent: "true" })), ctx);
+    expect(res.status).toBe(201);
+    expect(insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ aiVideoConsentAt: expect.any(Date), aiVideoConsentVersion: "2026-10-v1" })
+    );
+  });
+
+  it("records no consent unless the box was ticked", async () => {
+    await POST(request(form({ ...base, text: "Loved it" })), ctx);
+    expect(insertValues.mock.calls[0][0]).not.toHaveProperty("aiVideoConsentAt");
+  });
+
+  it("never records AI video consent on a video submission", async () => {
+    const video = new File([mp4Head, new Uint8Array(64)], "clip.mp4", { type: "video/mp4" });
+    await POST(request(form({ ...base, video, aiVideoConsent: "true" })), ctx);
+    expect(insertValues.mock.calls[0][0]).not.toHaveProperty("aiVideoConsentAt");
+  });
+
+  it("accepts a browser recording whose MIME type carries codec parameters", async () => {
+    const webm = Uint8Array.from([0x1a, 0x45, 0xdf, 0xa3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    const video = new File([webm, new Uint8Array(64)], "testimonial.webm", { type: "video/webm;codecs=vp8,opus" });
+    const res = await POST(request(form({ ...base, video })), ctx);
+    expect(res.status).toBe(201);
+    expect(upload).toHaveBeenCalledWith(expect.anything(), expect.stringMatching(/\.webm$/), expect.objectContaining({ contentType: "video/webm" }));
+  });
+
+  it("rejects a written testimonial on a video-only form", async () => {
+    collectModes = "video";
+    const res = await POST(request(form({ ...base, text: "Loved it" })), ctx);
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.message).toMatch(/only accepts video/i);
+    expect(insertValues).not.toHaveBeenCalled();
+  });
+
+  it("rejects a video on a written-only form before storing it", async () => {
+    collectModes = "text";
+    const video = new File([mp4Head, new Uint8Array(64)], "clip.mp4", { type: "video/mp4" });
+    const res = await POST(request(form({ ...base, video })), ctx);
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.message).toMatch(/only accepts written/i);
+    expect(upload).not.toHaveBeenCalled();
+  });
+
+  it("still accepts the allowed type on single-option forms", async () => {
+    collectModes = "text";
+    expect((await POST(request(form({ ...base, text: "Loved it" })), ctx)).status).toBe(201);
   });
 
   it("rate limits per client IP taken from the trusted end of x-forwarded-for", async () => {

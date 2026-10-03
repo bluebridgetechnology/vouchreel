@@ -1,0 +1,1 @@
+ALTER TABLE "collection_forms" ADD COLUMN "collect_modes" text DEFAULT 'both' NOT NULL;

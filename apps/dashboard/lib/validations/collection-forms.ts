@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { COLLECT_MODES } from "@/lib/collect/modes";
 
 export const collectionFormBrandingSchema = z.object({
   accentColor: z
@@ -35,6 +36,7 @@ export const createCollectionFormSchema = z
     incentiveType: z.enum(["none", "discount", "custom"]).default("none"),
     incentiveValue: z.string().trim().max(500).optional().nullable(),
     branding: collectionFormBrandingSchema.optional(),
+    collectModes: z.enum(COLLECT_MODES).default("both"),
     isActive: z.boolean().optional(),
   })
   .refine(incentiveRefinement, {
@@ -49,6 +51,7 @@ export const updateCollectionFormSchema = z
     incentiveType: z.enum(["none", "discount", "custom"]).optional(),
     incentiveValue: z.string().trim().max(500).optional().nullable(),
     branding: collectionFormBrandingSchema.optional(),
+    collectModes: z.enum(COLLECT_MODES).optional(),
     isActive: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
@@ -67,6 +70,8 @@ export const submissionMetaSchema = z.object({
   customerEmail: z.email("A valid email is required").max(200),
   text: z.string().trim().min(1, "Testimonial text is required").max(5000).optional(),
   durationSeconds: z.number().int().min(0).max(600).optional().nullable(),
+  /** Only meaningful for written testimonials; the route ignores it for video. */
+  aiVideoConsent: z.boolean().optional(),
 });
 
 export type CreateCollectionFormInput = z.infer<

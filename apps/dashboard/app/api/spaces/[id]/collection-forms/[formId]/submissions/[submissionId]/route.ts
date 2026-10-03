@@ -3,7 +3,7 @@ import { and, eq, max } from "drizzle-orm";
 import { apiError } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { collectionForms, spaces, submissions, testimonials } from "@/lib/db/schema";
+import { collectionForms, spaces, submissions, testimonialConsents, testimonials } from "@/lib/db/schema";
 import { updateSubmissionStatusSchema } from "@/lib/validations/collection-forms";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 import { enforceTestimonialLimit } from "@/lib/payments/enforce";
@@ -39,6 +39,13 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         tags: [], matchRules: { mode: "all", urlPatterns: [], tags: [] }, sortOrder: (order?.maxOrder ?? -1) + 1,
         isActive: true, clipStatus: "none",
       }).returning();
+      // Carry the customer's AI-video consent over to the testimonial, with the wording version they saw
+      if (submission.type === "text" && submission.aiVideoConsentAt && submission.aiVideoConsentVersion) {
+        await tx.insert(testimonialConsents).values({
+          testimonialId: testimonial.id, spaceId: id, kind: "ai_video", source: "collect_form",
+          textVersion: submission.aiVideoConsentVersion, submissionId: submission.id, grantedAt: submission.aiVideoConsentAt,
+        });
+      }
       return { submission, testimonial };
     });
     if (!result) return apiError(400, "BAD_REQUEST", "Submission has already been reviewed or was not found");
