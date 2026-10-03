@@ -20,6 +20,16 @@ export const NOTIFICATION_CATALOG = {
     description: "A social export could not be rendered.",
     defaults: { inApp: true, email: false },
   },
+  "ai_video.completed": {
+    label: "AI video ready",
+    description: "An AI-narrated video finished rendering.",
+    defaults: { inApp: true, email: false },
+  },
+  "ai_video.failed": {
+    label: "AI video failed",
+    description: "An AI-narrated video could not be created. The credit is not used.",
+    defaults: { inApp: true, email: false },
+  },
   "webhook.failing": {
     label: "Webhook deliveries failing",
     description: "A webhook endpoint exhausted its retries.",
