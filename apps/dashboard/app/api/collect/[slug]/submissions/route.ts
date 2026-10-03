@@ -11,6 +11,7 @@ import { submissionMetaSchema } from "@/lib/validations/collection-forms";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 import { notifySpaceOwner } from "@/lib/notifications/service";
 import { getClientIp } from "@/lib/security/client-ip";
+import { AI_VIDEO_CONSENT_VERSION } from "@/lib/ai-video/consent";
 import { matchesDeclaredType } from "@/lib/security/video-sniff";
 
 export const runtime = "nodejs";
@@ -58,6 +59,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     durationSeconds: data.get("durationSeconds")
       ? Number(data.get("durationSeconds"))
       : undefined,
+    aiVideoConsent: data.get("aiVideoConsent") === "true",
   });
   if (!parsed.success) {
     return validationError("Validation failed", parsed.error.flatten().fieldErrors);
@@ -112,6 +114,10 @@ export async function POST(request: Request, { params }: RouteParams) {
         status: "pending",
         durationSeconds: parsed.data.durationSeconds || null,
         processingStatus: hasVideo ? "pending" : "none",
+        // AI video is only offered for written testimonials; consent is never inferred
+        ...(!hasVideo && parsed.data.aiVideoConsent
+          ? { aiVideoConsentAt: new Date(), aiVideoConsentVersion: AI_VIDEO_CONSENT_VERSION }
+          : {}),
       })
       .returning();
 

@@ -75,6 +75,25 @@ describe("POST /api/collect/[slug]/submissions", () => {
     expect(upload).not.toHaveBeenCalled();
   });
 
+  it("records AI video consent with the wording version for a written testimonial", async () => {
+    const res = await POST(request(form({ ...base, text: "Loved it", aiVideoConsent: "true" })), ctx);
+    expect(res.status).toBe(201);
+    expect(insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ aiVideoConsentAt: expect.any(Date), aiVideoConsentVersion: "2026-10-v1" })
+    );
+  });
+
+  it("records no consent unless the box was ticked", async () => {
+    await POST(request(form({ ...base, text: "Loved it" })), ctx);
+    expect(insertValues.mock.calls[0][0]).not.toHaveProperty("aiVideoConsentAt");
+  });
+
+  it("never records AI video consent on a video submission", async () => {
+    const video = new File([mp4Head, new Uint8Array(64)], "clip.mp4", { type: "video/mp4" });
+    await POST(request(form({ ...base, video, aiVideoConsent: "true" })), ctx);
+    expect(insertValues.mock.calls[0][0]).not.toHaveProperty("aiVideoConsentAt");
+  });
+
   it("rate limits per client IP taken from the trusted end of x-forwarded-for", async () => {
     // Forging the first hop must not create a fresh bucket each time
     for (let i = 0; i < 10; i++) {
