@@ -18,12 +18,16 @@ export function backoffMs(attempts: number): number {
   return Math.min(30_000 * 4 ** Math.max(0, attempts - 1), 30 * 60 * 1000);
 }
 
+/** Anything with insert(): the shared db or a transaction, so a job can commit atomically with its trigger. */
+export type JobExecutor = Pick<typeof db, "insert">;
+
 export async function enqueueJob(
   type: string,
   payload: Record<string, unknown>,
-  options: EnqueueOptions = {}
+  options: EnqueueOptions = {},
+  executor: JobExecutor = db
 ): Promise<Job> {
-  const [job] = await db
+  const [job] = await executor
     .insert(jobs)
     .values({
       type,

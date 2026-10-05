@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { claimJob, completeJob, failJob, reclaimStaleJobs, type Job } from "./queue";
-import { getJobHandler, registerBuiltInHandlers } from "./handlers";
+import { getJobFailureHandler, getJobHandler, registerBuiltInHandlers } from "./handlers";
 
 export interface RunOptions {
   workerId?: string;
@@ -22,7 +22,15 @@ export async function processJob(job: Job): Promise<"done" | "retry" | "failed">
     return "done";
   } catch (error) {
     console.error(`[worker] job ${job.id} (${job.type}) failed:`, error);
-    return failJob(job, error);
+    const outcome = await failJob(job, error);
+    if (outcome === "failed") {
+      try {
+        await getJobFailureHandler(job.type)?.(job.payload, error);
+      } catch (settleError) {
+        console.error(`[worker] failure handler for job ${job.id} threw:`, settleError);
+      }
+    }
+    return outcome;
   }
 }
 
