@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { reviewSources, reviewVideos, reviews, socialExportSettings, spaces } from "@/lib/db/schema";
 import { AiVideoError } from "@/lib/ai-video/errors";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
+import { getBrandKit } from "@/lib/brand-kit/service";
 import { enqueueJob } from "@/lib/jobs/queue";
 import { JOB_TYPES } from "@/lib/jobs/handlers";
 import { getSubscriptionLimits } from "@/lib/payments/subscription";
@@ -162,6 +163,10 @@ export async function createReviewVideo(input: CreateReviewVideoInput) {
   if (!space) throw new AiVideoError(404, "NOT_FOUND", "Space not found");
 
   let brand = input.brandColor;
+  if (!brand) {
+    // The space's brand kit wins, then the social export colour, then the product default
+    brand = (await getBrandKit(input.spaceId))?.primaryColor;
+  }
   if (!brand) {
     const [settings] = await db.select({ brandColor: socialExportSettings.brandColor }).from(socialExportSettings).where(eq(socialExportSettings.spaceId, input.spaceId));
     brand = settings?.brandColor ?? DEFAULT_BRAND_HEX;

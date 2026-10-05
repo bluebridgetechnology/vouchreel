@@ -9,12 +9,18 @@ import {
 import { createVideoPlayer, VideoPlayerController } from "./player";
 import { AnalyticsTracker } from "./analytics";
 import { markDismissed } from "./triggers";
+import { fontFamilyFor, readableInheritedColor } from "./typography";
 
 export interface WidgetThemeConfig {
   primaryColor?: string;
   accentColor?: string;
   mode?: "light" | "dark" | string;
   borderRadius?: number;
+  /** "inherit" uses the host page's font; "custom" uses `fontFamily` (a font the site already loads). */
+  fontMode?: "default" | "inherit" | "custom" | string;
+  fontFamily?: string;
+  /** Use the host page's text colour when it stays readable on the widget background. */
+  inheritTextColor?: boolean;
   [key: string]: unknown;
 }
 
@@ -202,6 +208,7 @@ export class VouchreelWidget {
       document.body.appendChild(this.hostElement);
     }
     this.isMounted = true;
+    this.applyTypography();
 
     // Track impression
     if (this.analytics) {
@@ -226,6 +233,31 @@ export class VouchreelWidget {
       }
     };
     document.addEventListener("keydown", this.keydownListener);
+  }
+
+  /**
+   * Font and text colour from the host page. Runs after the host is in the document, because both
+   * come from the page's computed styles. The shadow root resets inheritance (`all: initial`), so
+   * this is opt-in per widget and never loads fonts itself.
+   */
+  private applyTypography(): void {
+    const theme = this.config.theme;
+    if (!theme || !this.hostElement || !this.rootWrapper) return;
+
+    const font = fontFamilyFor(theme.fontMode, theme.fontFamily);
+    if (font) this.hostElement.style.fontFamily = font;
+
+    if (theme.inheritTextColor === true) {
+      const pageElement = this.hostElement.parentElement;
+      const color = readableInheritedColor(
+        pageElement ? getComputedStyle(pageElement).color : "",
+        getComputedStyle(this.rootWrapper).getPropertyValue("--vr-bg")
+      );
+      if (color) {
+        this.rootWrapper.style.setProperty("--vr-text", color);
+        this.rootWrapper.style.setProperty("--vr-text-muted", `color-mix(in srgb, ${color} 65%, var(--vr-bg))`);
+      }
+    }
   }
 
   private announce(message: string): void {
