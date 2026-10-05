@@ -5,6 +5,7 @@ import { isPlatformAdmin } from "@/lib/auth/platform-admin";
 import { getActivePaymentProviderName } from "@/lib/payments";
 import { getFfmpegStatus } from "@/lib/media/ffmpeg";
 import { listAdminPlans } from "@/lib/admin/plans";
+import { getJobOverview, listAdminVideos } from "@/lib/admin/jobs";
 import { listAdminUsers, listAuditLog } from "@/lib/admin/queries";
 import { timeAgo } from "@/lib/time-ago";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AdminPanel } from "./admin-panel";
+import { JobsManager } from "./jobs-manager";
 import { PlansManager } from "./plans-manager";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +25,7 @@ const TABS = [
   { id: "plans", label: "Plans & pricing" },
   { id: "payments", label: "Payments" },
   { id: "users", label: "Users" },
+  { id: "videos", label: "Video & jobs" },
   { id: "audit", label: "Audit log" },
   { id: "system", label: "System" },
 ] as const;
@@ -72,6 +75,7 @@ export default async function AdminPage({
       {tab === "plans" && <PlansTab />}
       {tab === "payments" && <PaymentsTab />}
       {tab === "users" && <UsersTab q={q} />}
+      {tab === "videos" && <VideosTab />}
       {tab === "audit" && <AuditTab />}
       {tab === "system" && <SystemTab />}
     </div>
@@ -149,6 +153,11 @@ async function UsersTab({ q }: { q?: string }) {
   );
 }
 
+async function VideosTab() {
+  const [overview, videos] = await Promise.all([getJobOverview(), listAdminVideos()]);
+  return <JobsManager overview={overview} videos={videos} />;
+}
+
 async function AuditTab() {
   const entries = await listAuditLog();
   return (
@@ -174,7 +183,7 @@ async function AuditTab() {
         {entries.length === 0 && (
           <TableRow>
             <TableCell colSpan={3} className="py-10 text-center text-text-muted">
-              Nothing recorded yet. Plan edits and payment-provider changes appear here.
+              Nothing recorded yet. Plan edits, payment-provider changes and job retries or cancellations appear here.
             </TableCell>
           </TableRow>
         )}
