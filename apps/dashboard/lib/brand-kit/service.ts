@@ -29,6 +29,8 @@ export async function suggestedBrandValues(spaceId: string): Promise<BrandKitVal
     fontMode: "inherit",
     fontFamily: null,
     inheritTextColor: false,
+    videoStyle: null,
+    videoSecondaryColor: null,
   };
 }
 
@@ -40,6 +42,8 @@ export function toValues(kit: BrandKitRow): BrandKitValues {
     fontMode: kit.fontMode,
     fontFamily: kit.fontFamily,
     inheritTextColor: kit.inheritTextColor,
+    videoStyle: kit.videoStyle,
+    videoSecondaryColor: kit.videoSecondaryColor,
   };
 }
 
@@ -52,6 +56,9 @@ export function valuesToStore(input: BrandKitInput): BrandKitValues {
     fontMode: input.fontMode,
     fontFamily: input.fontMode === "custom" ? (input.fontFamily ?? null) : null,
     inheritTextColor: input.inheritTextColor,
+    videoStyle: input.videoStyle ?? null,
+    // A second colour only applies to the colour styles; light and dark ignore it, so do not keep a stale one
+    videoSecondaryColor: input.videoStyle === "light" || input.videoStyle === "dark" ? null : (input.videoSecondaryColor ?? null),
   };
 }
 

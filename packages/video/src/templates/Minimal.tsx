@@ -1,23 +1,26 @@
 import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
-import { Orb, Stars, WordReveal, clamped, fitFontSize, useFadeIn, useLayout, useOutro } from "../components/primitives";
+import { Backdrop } from "../components/Backdrop";
 import { SourceMark } from "../components/SourceMark";
-import { FONT_SANS, FONT_SERIF, darken, rgba } from "../lib/theme";
+import { Stars, WordReveal, clamped, fitFontSize, useFadeIn, useLayout, useOutro } from "../components/primitives";
+import { FONT_SANS, FONT_SERIF } from "../lib/theme";
+import { tint } from "../lib/palette";
+import { usePalette } from "../lib/usePalette";
 import type { ReviewVideoProps } from "../types";
 
-const PAPER = "#faf6ef";
-const INK = "#1f1a14";
-const MUTED = "#6b6257";
-
-/** Clean light layout with an elegant serif quote. */
-export const Minimal: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
-  const review = reviews[0];
+/** Clean layout with an elegant serif quote. Light by default; works on any background style. */
+export const Minimal: React.FC<ReviewVideoProps> = (props) => {
+  const review = props.reviews[0];
+  const palette = usePalette(props, "light");
   const { u, portrait } = useLayout();
   const { durationInFrames, fps } = useVideoConfig();
   const frame = useCurrentFrame();
 
-  // Stars use a darker shade so they stay visible on the light background
-  const accent = darken(brand, 0.12);
+  const onLight = palette.style === "light";
+  // On paper the stars and the rule use the brand colour (adjusted to be visible); elsewhere the text colour
+  const ruleColor = onLight ? palette.accent : palette.text;
+  const starColor = onLight ? palette.accent : palette.star;
+
   const wordsPerSecond = 4.2;
   const revealStart = 0.9;
   const revealEnd = revealStart + review.text.split(/\s+/).length / wordsPerSecond;
@@ -28,30 +31,29 @@ export const Minimal: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
   const fontSize = fitFontSize(review.text, portrait) * 0.92 * u;
 
   return (
-    <AbsoluteFill style={{ background: PAPER, fontFamily: FONT_SANS, opacity: outro }}>
-      <Orb size={1100 * u} color={rgba(brand, 0.08)} top={-420 * u} right={-380 * u} drift={0.03} />
-      <Orb size={520 * u} color={rgba(brand, 0.06)} bottom={-160 * u} left={-140 * u} phase={1.5} drift={0.03} />
+    <AbsoluteFill style={{ fontFamily: FONT_SANS, opacity: outro }}>
+      <Backdrop palette={palette} secondary={props.theme?.secondary} />
 
       <AbsoluteFill style={{ justifyContent: "center", padding: (portrait ? 110 : 190) * u }}>
         <div style={{ maxWidth: (portrait ? 860 : 1380) * u }}>
           <div style={{ display: "flex", alignItems: "center", gap: 24 * u, opacity: head }}>
-            <Stars rating={review.rating} size={44 * u} color={accent} emptyColor="rgba(31,26,20,0.14)" startSeconds={0.2} />
-            <SourceMark source={review.source} u={u} onDark={false} textColor={MUTED} />
+            <Stars rating={review.rating} size={44 * u} color={starColor} emptyColor={tint(palette, 0.16)} startSeconds={0.2} />
+            <SourceMark source={review.source} u={u} onDark={!onLight} textColor={palette.textMuted} />
           </div>
 
-          <div style={{ height: 3 * u, width: 150 * u * ruleWidth, background: accent, margin: `${38 * u}px 0 ${44 * u}px` }} />
+          <div style={{ height: 3 * u, width: 150 * u * ruleWidth, background: ruleColor, margin: `${38 * u}px 0 ${44 * u}px` }} />
 
           <WordReveal
             text={review.text}
             startSeconds={revealStart}
             wordsPerSecond={wordsPerSecond}
             gap={fontSize * 0.24}
-            style={{ color: INK, fontSize, lineHeight: 1.32, fontFamily: FONT_SERIF, fontStyle: "italic", fontWeight: 500, letterSpacing: -0.3 }}
+            style={{ color: palette.text, fontSize, lineHeight: 1.32, fontFamily: FONT_SERIF, fontStyle: "italic", fontWeight: 500, letterSpacing: -0.3 }}
           />
 
           <div style={{ marginTop: 58 * u, opacity: authorIn, transform: `translateY(${(1 - authorIn) * 24 * u}px)` }}>
-            <div style={{ color: INK, fontSize: 42 * u, fontWeight: 500 }}>{review.author}</div>
-            {review.date && <div style={{ color: MUTED, fontSize: 30 * u, marginTop: 6 * u }}>{review.date}</div>}
+            <div style={{ color: palette.text, fontSize: 42 * u, fontWeight: 500 }}>{review.author}</div>
+            {review.date && <div style={{ color: palette.textMuted, fontSize: 30 * u, marginTop: 6 * u }}>{review.date}</div>}
           </div>
         </div>
       </AbsoluteFill>

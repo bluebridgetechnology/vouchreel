@@ -1,16 +1,20 @@
 import React from "react";
 import { AbsoluteFill, Sequence, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
-import { Avatar, Orb, Stars, WordReveal, clamped, fitFontSize, useFadeIn, useLayout, useOutro, useSpringIn } from "../components/primitives";
+import { Backdrop } from "../components/Backdrop";
 import { SourceMark } from "../components/SourceMark";
+import { Avatar, Stars, WordReveal, clamped, fitFontSize, useFadeIn, useLayout, useOutro, useSpringIn } from "../components/primitives";
 import { RATING_INTRO_SECONDS } from "../registry";
-import { FONT_SANS, brandForWhiteText, darken } from "../lib/theme";
+import { FONT_SANS, rgba } from "../lib/theme";
+import { tint, type Palette } from "../lib/palette";
+import { usePalette } from "../lib/usePalette";
 import type { ReviewVideoProps } from "../types";
 
+/** The review card is always white, so its text colours are fixed; the background around it follows the style. */
 const INK = "#1c1917";
 const MUTED = "#78716c";
 
 /** Scene 1: the provider-reported overall rating and review count, counting up. */
-const RatingScene: React.FC<{ aggregate: NonNullable<ReviewVideoProps["aggregate"]> }> = ({ aggregate }) => {
+const RatingScene: React.FC<{ aggregate: NonNullable<ReviewVideoProps["aggregate"]>; palette: Palette }> = ({ aggregate, palette }) => {
   const { u, fps } = useLayout();
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
@@ -25,15 +29,13 @@ const RatingScene: React.FC<{ aggregate: NonNullable<ReviewVideoProps["aggregate
   return (
     <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", opacity: exit, transform: `translateY(${(1 - exit) * -60 * u}px)` }}>
       <div style={{ textAlign: "center", transform: `scale(${0.85 + 0.15 * pop})`, opacity: pop }}>
-        <div style={{ color: "#ffffff", fontSize: 330 * u, lineHeight: 1, fontWeight: 600, letterSpacing: -8 * u }}>{rating.toFixed(1)}</div>
+        <div style={{ color: palette.text, fontSize: 330 * u, lineHeight: 1, fontWeight: 600, letterSpacing: -8 * u }}>{rating.toFixed(1)}</div>
         <div style={{ display: "flex", justifyContent: "center", margin: `${34 * u}px 0 ${40 * u}px` }}>
-          <Stars rating={aggregate.rating} size={92 * u} startSeconds={0.4} />
+          <Stars rating={aggregate.rating} size={92 * u} color={palette.star} emptyColor={tint(palette, 0.25)} startSeconds={0.4} />
         </div>
-        <div style={{ color: "#ffffff", fontSize: 58 * u, fontWeight: 500 }}>
-          from {total.toLocaleString("en-US")} reviews
-        </div>
+        <div style={{ color: palette.text, fontSize: 58 * u, fontWeight: 500 }}>from {total.toLocaleString("en-US")} reviews</div>
         <div style={{ display: "flex", justifyContent: "center", marginTop: 26 * u }}>
-          <SourceMark source={aggregate.source} u={u} onDark size={1.25} />
+          <SourceMark source={aggregate.source} u={u} onDark={palette.style !== "light"} textColor={palette.text} size={1.25} />
         </div>
       </div>
     </AbsoluteFill>
@@ -41,7 +43,7 @@ const RatingScene: React.FC<{ aggregate: NonNullable<ReviewVideoProps["aggregate
 };
 
 /** Scene 2: one standout review on a white card. */
-const ReviewScene: React.FC<{ review: ReviewVideoProps["reviews"][number]; base: string }> = ({ review, base }) => {
+const ReviewScene: React.FC<{ review: ReviewVideoProps["reviews"][number]; palette: Palette }> = ({ review, palette }) => {
   const { u, portrait } = useLayout();
   const { durationInFrames } = useVideoConfig();
   const slide = useSpringIn(0, { damping: 17, stiffness: 90 });
@@ -69,7 +71,7 @@ const ReviewScene: React.FC<{ review: ReviewVideoProps["reviews"][number]; base:
           <Stars rating={review.rating} size={50 * u} emptyColor="rgba(0,0,0,0.12)" startSeconds={0.3} />
           <SourceMark source={review.source} u={u * 0.9} onDark={false} />
         </div>
-        <div style={{ fontSize: 170 * u, lineHeight: 0.55, height: 84 * u, color: `${base}55`, fontWeight: 600 }}>“</div>
+        <div style={{ fontSize: 170 * u, lineHeight: 0.55, height: 84 * u, color: rgba(palette.accent, 0.33), fontWeight: 600 }}>“</div>
         <WordReveal
           text={review.text}
           startSeconds={0.8}
@@ -78,7 +80,7 @@ const ReviewScene: React.FC<{ review: ReviewVideoProps["reviews"][number]; base:
           style={{ color: INK, fontSize, lineHeight: 1.32, fontWeight: 500, letterSpacing: -0.3 }}
         />
         <div style={{ display: "flex", alignItems: "center", gap: 24 * u, marginTop: 46 * u, opacity: authorIn, transform: `translateY(${(1 - authorIn) * 24 * u}px)` }}>
-          <Avatar name={review.author} size={82 * u} background={base} color="#ffffff" />
+          <Avatar name={review.author} size={82 * u} background={palette.accent} color="#ffffff" />
           <div>
             <div style={{ color: INK, fontSize: 40 * u, fontWeight: 600 }}>{review.author}</div>
             {review.date && <div style={{ color: MUTED, fontSize: 28 * u, marginTop: 4 * u }}>{review.date}</div>}
@@ -90,27 +92,25 @@ const ReviewScene: React.FC<{ review: ReviewVideoProps["reviews"][number]; base:
 };
 
 /** Opens on the overall rating, then shows one standout review. Needs the source's totals. */
-export const RatingSpotlight: React.FC<ReviewVideoProps> = ({ reviews, brand, aggregate }) => {
-  const { u, fps } = useLayout();
+export const RatingSpotlight: React.FC<ReviewVideoProps> = (props) => {
+  const { reviews, aggregate } = props;
+  const palette = usePalette(props, "gradient");
+  const { fps } = useLayout();
   const { durationInFrames } = useVideoConfig();
-  const frame = useCurrentFrame();
 
-  const base = brandForWhiteText(brand);
-  const angle = 150 + interpolate(frame, [0, durationInFrames], [0, 30]);
   const introFrames = Math.round(RATING_INTRO_SECONDS * fps);
   const overlap = Math.round(0.4 * fps);
 
   return (
-    <AbsoluteFill style={{ background: `linear-gradient(${angle}deg, ${base} 0%, ${darken(base, 0.58)} 100%)`, fontFamily: FONT_SANS }}>
-      <Orb size={1000 * u} color="rgba(255,255,255,0.07)" top={-380 * u} left={-300 * u} />
-      <Orb size={760 * u} color="rgba(0,0,0,0.15)" bottom={-260 * u} right={-220 * u} phase={2} />
+    <AbsoluteFill style={{ fontFamily: FONT_SANS }}>
+      <Backdrop palette={palette} secondary={props.theme?.secondary} />
       {aggregate && (
         <Sequence from={0} durationInFrames={introFrames}>
-          <RatingScene aggregate={aggregate} />
+          <RatingScene aggregate={aggregate} palette={palette} />
         </Sequence>
       )}
       <Sequence from={introFrames - overlap} durationInFrames={Math.max(1, durationInFrames - (introFrames - overlap))}>
-        <ReviewScene review={reviews[0]} base={base} />
+        <ReviewScene review={reviews[0]} palette={palette} />
       </Sequence>
     </AbsoluteFill>
   );

@@ -57,7 +57,7 @@ run("brand kit (postgres)", () => {
   });
 
   const input = (over: Record<string, unknown> = {}) =>
-    ({ primaryColor: "#112233", accentColor: null, borderRadius: null, fontMode: "inherit", fontFamily: null, inheritTextColor: false, ...over }) as Parameters<typeof kitService.saveBrandKit>[1];
+    ({ primaryColor: "#112233", accentColor: null, borderRadius: null, fontMode: "inherit", fontFamily: null, inheritTextColor: false, videoStyle: null, videoSecondaryColor: null, ...over }) as Parameters<typeof kitService.saveBrandKit>[1];
 
   it("has no kit until one is saved, and suggests what the widget uses today", async () => {
     expect(await kitService.getBrandKit(ids.space)).toBeNull();
@@ -109,6 +109,41 @@ run("brand kit (postgres)", () => {
 
     const explicit = await reviewVideos.createReviewVideo({ spaceId: ids.space, userId: ids.user, template: "spotlight", aspect: "9:16", reviewIds: [ids.review], rightsConfirmed: true, brandColor: "#abcdef" });
     expect((explicit.props as { brand: string }).brand).toBe("#abcdef");
+  });
+
+  describe("review video background style", () => {
+    const create = (over: Record<string, unknown> = {}) =>
+      reviewVideos.createReviewVideo({ spaceId: ids.space, userId: ids.user, template: "spotlight", aspect: "9:16", reviewIds: [ids.review], rightsConfirmed: true, ...over });
+    const themeOf = (video: { props: unknown }) => (video.props as { theme?: { style?: string; secondary?: string } }).theme;
+
+    it("without a kit or a choice, no theme is stored and each template uses its own default", async () => {
+      expect(themeOf(await create())).toBeUndefined();
+    });
+
+    it("the brand kit's style and second colour are the default for new videos", async () => {
+      await kitService.saveBrandKit(ids.space, input({ videoStyle: "aurora", videoSecondaryColor: "#1d4ed8" }));
+      expect(themeOf(await create())).toEqual({ style: "aurora", secondary: "#1d4ed8" });
+    });
+
+    it("a choice made for one video overrides the kit, without changing the kit", async () => {
+      await kitService.saveBrandKit(ids.space, input({ videoStyle: "aurora", videoSecondaryColor: "#1d4ed8" }));
+
+      const override = await create({ style: "dark", secondaryColor: null });
+      expect(themeOf(override)).toEqual({ style: "dark" }); // explicit null removes the kit's second colour
+
+      const kit = await kitService.getBrandKit(ids.space);
+      expect(kit).toMatchObject({ videoStyle: "aurora", videoSecondaryColor: "#1d4ed8" });
+    });
+
+    it("overriding only the style keeps the kit's second colour", async () => {
+      await kitService.saveBrandKit(ids.space, input({ videoStyle: "gradient", videoSecondaryColor: "#1d4ed8" }));
+      expect(themeOf(await create({ style: "solid" }))).toEqual({ style: "solid", secondary: "#1d4ed8" });
+    });
+
+    it("a kit with no video style leaves the template default alone", async () => {
+      await kitService.saveBrandKit(ids.space, input({ videoStyle: null }));
+      expect(themeOf(await create())).toBeUndefined();
+    });
   });
 
   it("is removed with its space", async () => {

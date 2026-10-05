@@ -1,23 +1,28 @@
 import React from "react";
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { Avatar, Orb, Stars, WordReveal, clamped, useFadeIn, useLayout, useOutro } from "../components/primitives";
+import { Backdrop } from "../components/Backdrop";
 import { SourceMark } from "../components/SourceMark";
+import { Avatar, Stars, WordReveal, clamped, useFadeIn, useLayout, useOutro } from "../components/primitives";
 import { STACK_HEADER_SECONDS, stackItemSeconds } from "../registry";
-import { FONT_SANS, brandForWhiteText, darken, mix } from "../lib/theme";
+import { FONT_SANS, mix } from "../lib/theme";
+import { tint } from "../lib/palette";
+import { usePalette } from "../lib/usePalette";
 import type { ReviewVideoProps } from "../types";
 
+/** The cards are always white, so their text colours are fixed; the background around them follows the style. */
 const INK = "#1c1917";
 const MUTED = "#78716c";
 
 const textSize = (n: number) => (n <= 100 ? 56 : n <= 170 ? 48 : 41);
 
 /** 3 to 5 short reviews, each card landing on top of the last like a wall of love. */
-export const ReviewStack: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
+export const ReviewStack: React.FC<ReviewVideoProps> = (props) => {
+  const { reviews } = props;
+  const palette = usePalette(props, "gradient");
   const { u, portrait, fps } = useLayout();
   const { durationInFrames } = useVideoConfig();
   const frame = useCurrentFrame();
 
-  const base = brandForWhiteText(brand);
   const outro = useOutro(durationInFrames, 0.6);
   const header = useFadeIn(0.1, 0.7);
 
@@ -33,15 +38,8 @@ export const ReviewStack: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
   const active = starts.reduce((acc, s, i) => (s <= nowSeconds ? i : acc), -1);
 
   return (
-    <AbsoluteFill
-      style={{
-        background: `linear-gradient(160deg, ${darken(base, 0.1)} 0%, ${darken(base, 0.62)} 100%)`,
-        fontFamily: FONT_SANS,
-        opacity: outro,
-      }}
-    >
-      <Orb size={900 * u} color="rgba(255,255,255,0.06)" top={-300 * u} left={-200 * u} />
-      <Orb size={800 * u} color="rgba(0,0,0,0.16)" bottom={-300 * u} right={-240 * u} phase={2} />
+    <AbsoluteFill style={{ fontFamily: FONT_SANS, opacity: outro }}>
+      <Backdrop palette={palette} secondary={props.theme?.secondary} />
 
       <div
         style={{
@@ -49,7 +47,7 @@ export const ReviewStack: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
           top: (portrait ? 150 : 70) * u,
           width: "100%",
           textAlign: "center",
-          color: "#ffffff",
+          color: palette.text,
           fontSize: (portrait ? 64 : 54) * u,
           fontWeight: 600,
           letterSpacing: -0.5,
@@ -82,31 +80,31 @@ export const ReviewStack: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
                   // Older cards stay opaque (so no text shows through) but tint toward the background
                   opacity: enter * interpolate(shift, [0, 2.2, 3], [1, 1, 0], clamped),
                   zIndex: i,
-                  background: shift > 0 ? mix("#ffffff", base, Math.min(shift, 2.2) * 0.2) : "#ffffff",
+                  background: shift > 0 ? mix("#ffffff", palette.accent, Math.min(shift, 2.2) * 0.2) : "#ffffff",
                   borderRadius: 44 * u,
                   padding: (portrait ? 62 : 56) * u,
                   boxShadow: `0 ${30 * u}px ${80 * u}px rgba(0,0,0,0.35)`,
                 }}
               >
                 <div style={{ opacity: interpolate(shift, [0, 0.45], [1, 0], clamped) }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 30 * u }}>
-                  <Stars rating={review.rating} size={42 * u} emptyColor="rgba(0,0,0,0.12)" startSeconds={starts[i] + 0.2} />
-                  <SourceMark source={review.source} u={u * 0.85} onDark={false} />
-                </div>
-                <WordReveal
-                  text={review.text}
-                  startSeconds={starts[i] + 0.8}
-                  wordsPerSecond={4.8}
-                  gap={size * 0.25}
-                  style={{ color: INK, fontSize: size, lineHeight: 1.3, fontWeight: 500, letterSpacing: -0.3 }}
-                />
-                <div style={{ display: "flex", alignItems: "center", gap: 22 * u, marginTop: 34 * u }}>
-                  <Avatar name={review.author} size={70 * u} background={base} color="#ffffff" />
-                  <div>
-                    <div style={{ color: INK, fontSize: 36 * u, fontWeight: 600 }}>{review.author}</div>
-                    {review.date && <div style={{ color: MUTED, fontSize: 26 * u, marginTop: 2 * u }}>{review.date}</div>}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 30 * u }}>
+                    <Stars rating={review.rating} size={42 * u} emptyColor="rgba(0,0,0,0.12)" startSeconds={starts[i] + 0.2} />
+                    <SourceMark source={review.source} u={u * 0.85} onDark={false} />
                   </div>
-                </div>
+                  <WordReveal
+                    text={review.text}
+                    startSeconds={starts[i] + 0.8}
+                    wordsPerSecond={4.8}
+                    gap={size * 0.25}
+                    style={{ color: INK, fontSize: size, lineHeight: 1.3, fontWeight: 500, letterSpacing: -0.3 }}
+                  />
+                  <div style={{ display: "flex", alignItems: "center", gap: 22 * u, marginTop: 34 * u }}>
+                    <Avatar name={review.author} size={70 * u} background={palette.accent} color="#ffffff" />
+                    <div>
+                      <div style={{ color: INK, fontSize: 36 * u, fontWeight: 600 }}>{review.author}</div>
+                      {review.date && <div style={{ color: MUTED, fontSize: 26 * u, marginTop: 2 * u }}>{review.date}</div>}
+                    </div>
+                  </div>
                 </div>
               </div>
             );
@@ -123,7 +121,7 @@ export const ReviewStack: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
               width: (i === active ? 46 : 16) * u,
               height: 16 * u,
               borderRadius: 999,
-              background: i <= active ? "#ffffff" : "rgba(255,255,255,0.3)",
+              background: i <= active ? palette.text : tint(palette, 0.3),
               opacity: i === active ? 1 : 0.6,
             }}
           />

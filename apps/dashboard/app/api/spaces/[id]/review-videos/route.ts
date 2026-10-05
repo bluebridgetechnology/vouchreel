@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/lib/api/errors";
 import { aiVideoErrorResponse, requireSpaceOwner } from "@/lib/ai-video/access";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
+import { getBrandKit } from "@/lib/brand-kit/service";
 import {
   createReviewVideo,
   getReviewVideoCredits,
@@ -22,10 +23,11 @@ export async function GET(_request: Request, { params }: RouteParams) {
   if ("response" in access) return access.response;
 
   try {
-    const [videos, options, credits] = await Promise.all([
+    const [videos, options, credits, kit] = await Promise.all([
       listReviewVideos(spaceId),
       listReviewOptions(spaceId),
       getReviewVideoCredits(access.ownerId),
+      getBrandKit(spaceId),
     ]);
     return NextResponse.json({
       videos,
@@ -44,7 +46,10 @@ export async function GET(_request: Request, { params }: RouteParams) {
         used: credits.used,
         remaining: Number.isFinite(credits.remaining) ? credits.remaining : null,
       },
-      defaultBrand: DEFAULT_BRAND_HEX,
+      defaultBrand: kit?.primaryColor ?? DEFAULT_BRAND_HEX,
+      /** The brand kit's video defaults, so the dialog can show what "use my brand style" means. */
+      brandStyle: kit?.videoStyle ?? null,
+      brandSecondary: kit?.videoSecondaryColor ?? null,
     });
   } catch (error) {
     return aiVideoErrorResponse(error, "Failed to load review videos");

@@ -13,9 +13,11 @@ import {
   reviewFits,
   validateProps,
   type Aspect,
+  type BackgroundStyle,
   type ReviewVideoProps,
   type VideoAggregate,
   type VideoReview,
+  type VideoTheme,
 } from "@vouchreel/video";
 
 /**
@@ -121,6 +123,10 @@ export interface CreateReviewVideoInput {
   /** In display order. */
   reviewIds: string[];
   brandColor?: string;
+  /** Background style for this video. Omit to use the brand kit's default (then the template's own). */
+  style?: BackgroundStyle;
+  /** Second colour for this video. Omit to use the brand kit's; null for none. */
+  secondaryColor?: string | null;
   /** The owner confirmed they may use these reviews in marketing. */
   rightsConfirmed: boolean;
 }
@@ -129,7 +135,8 @@ export interface CreateReviewVideoInput {
 export function buildProps(
   rows: { authorName: string; rating: number; text: string | null; reviewDate: Date | null; provider: "google" | "trustpilot" }[],
   brand: string,
-  aggregate?: VideoAggregate
+  aggregate?: VideoAggregate,
+  theme?: VideoTheme
 ): ReviewVideoProps {
   const items: VideoReview[] = rows.map((r) => ({
     author: r.authorName.trim(),
@@ -138,7 +145,7 @@ export function buildProps(
     date: formatReviewMonth(r.reviewDate),
     source: r.provider,
   }));
-  return { reviews: items, brand, ...(aggregate ? { aggregate } : {}) };
+  return { reviews: items, brand, ...(aggregate ? { aggregate } : {}), ...(theme && (theme.style || theme.secondary) ? { theme } : {}) };
 }
 
 export async function createReviewVideo(input: CreateReviewVideoInput) {
@@ -162,11 +169,9 @@ export async function createReviewVideo(input: CreateReviewVideoInput) {
   const [space] = await db.select({ ownerId: spaces.ownerId }).from(spaces).where(eq(spaces.id, input.spaceId));
   if (!space) throw new AiVideoError(404, "NOT_FOUND", "Space not found");
 
-  let brand = input.brandColor;
-  if (!brand) {
-    // The space's brand kit wins, then the social export colour, then the product default
-    brand = (await getBrandKit(input.spaceId))?.primaryColor;
-  }
+  const kit = await getBrandKit(input.spaceId);
+  // Brand colour: this video's choice, then the brand kit, then the social export colour, then the product default
+  let brand = input.brandColor ?? kit?.primaryColor;
   if (!brand) {
     const [settings] = await db.select({ brandColor: socialExportSettings.brandColor }).from(socialExportSettings).where(eq(socialExportSettings.spaceId, input.spaceId));
     brand = settings?.brandColor ?? DEFAULT_BRAND_HEX;
@@ -186,7 +191,10 @@ export async function createReviewVideo(input: CreateReviewVideoInput) {
     }
   }
 
-  const props = buildProps(ordered, brand, aggregate);
+  // Background: this video's choice, then the brand kit's default; otherwise each template uses its own default
+  const style = input.style ?? kit?.videoStyle ?? undefined;
+  const secondary = input.secondaryColor === undefined ? (kit?.videoSecondaryColor ?? undefined) : (input.secondaryColor ?? undefined);
+  const props = buildProps(ordered, brand, aggregate, { ...(style ? { style } : {}), ...(secondary ? { secondary } : {}) });
   const problems = validateProps(template.id, props);
   if (problems.length) throw new AiVideoError(422, "VALIDATION_ERROR", problems.join(" "), { problems });
 

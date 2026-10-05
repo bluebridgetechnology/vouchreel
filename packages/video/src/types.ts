@@ -20,11 +20,27 @@ export interface VideoAggregate {
   total: number;
 }
 
+/**
+ * Background styles. A style only decides how the background looks; every colour in it is derived
+ * from the brand colour, so any colour works with any style.
+ */
+export type BackgroundStyle = "gradient" | "solid" | "aurora" | "dots" | "light" | "dark";
+
+export const BACKGROUND_STYLES: BackgroundStyle[] = ["gradient", "solid", "aurora", "dots", "light", "dark"];
+
+export interface VideoTheme {
+  /** Background style. When omitted the template uses its own default. */
+  style?: BackgroundStyle;
+  /** Optional second colour: the far end of the gradient (colour styles only). */
+  secondary?: string;
+}
+
 export interface ReviewVideoProps {
   reviews: VideoReview[];
   /** Hex colour like #cf3d0b. */
   brand: string;
   aggregate?: VideoAggregate;
+  theme?: VideoTheme;
 }
 
 export const SOURCE_LABELS: Record<ReviewSource, string> = {

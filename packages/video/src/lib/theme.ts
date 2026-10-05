@@ -60,3 +60,58 @@ export function brandForWhiteText(brand: string): string {
 export const GOLD = "#ffc83d";
 export const FONT_SANS = "'Outfit', 'Noto Sans', 'Segoe UI', Arial, sans-serif";
 export const FONT_SERIF = "'Playfair Display', 'Noto Serif', Georgia, serif";
+
+export interface Hsl {
+  h: number;
+  s: number;
+  l: number;
+}
+
+export function rgbToHsl({ r, g, b }: Rgb): Hsl {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d === 0) return { h: 0, s: 0, l };
+  const s = d / (1 - Math.abs(2 * l - 1));
+  let h: number;
+  if (max === rn) h = ((gn - bn) / d) % 6;
+  else if (max === gn) h = (bn - rn) / d + 2;
+  else h = (rn - gn) / d + 4;
+  return { h: (h * 60 + 360) % 360, s, l };
+}
+
+export function hslToHex({ h, s, l }: Hsl): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return rgbToHex({ r: (r + m) * 255, g: (g + m) * 255, b: (b + m) * 255 });
+}
+
+/**
+ * Rotates the hue by `degrees` while keeping the colour's brightness (WCAG luminance), so a text
+ * colour that is readable on the original stays readable on the shifted one. Different hues of equal
+ * HSL lightness differ a lot in brightness, so lightness is searched until the luminance matches.
+ */
+export function shiftHue(hex: string, degrees: number): string {
+  const hsl = rgbToHsl(hexToRgb(hex));
+  // Greys have no hue to rotate
+  if (hsl.s < 0.05) return hex;
+  const h = (hsl.h + degrees + 360) % 360;
+  const target = luminance(hex);
+  let lo = 0;
+  let hi = 1;
+  let best = hslToHex({ h, s: hsl.s, l: hsl.l });
+  for (let i = 0; i < 24; i++) {
+    const l = (lo + hi) / 2;
+    const candidate = hslToHex({ h, s: hsl.s, l });
+    best = candidate;
+    if (luminance(candidate) < target) lo = l;
+    else hi = l;
+  }
+  return best;
+}
