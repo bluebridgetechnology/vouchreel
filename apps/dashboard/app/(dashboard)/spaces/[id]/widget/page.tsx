@@ -12,6 +12,7 @@ import {
 import { TemplatePicker } from "@/components/widget/template-picker";
 import { PositionPicker } from "@/components/widget/position-picker";
 import { ThemeEditor } from "@/components/widget/theme-editor";
+import { applyBrandKitToTheme, type BrandKitValues } from "@/lib/brand-kit/theme";
 import { TriggerConfig } from "@/components/widget/trigger-config";
 import { PageTargeting } from "@/components/widget/page-targeting";
 import { LivePreview } from "@/components/widget/live-preview";
@@ -39,6 +40,8 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  // Set once the owner has saved a brand kit; it then decides colours, radius and fonts
+  const [brandKit, setBrandKit] = useState<BrandKitValues | null>(null);
 
   // Active section tab for mobile/clean navigation
   const [activeTab, setActiveTab] = useState<"appearance" | "triggers" | "targeting" | "embed">("appearance");
@@ -47,6 +50,11 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
     try {
       setLoading(true);
       setError(null);
+
+      fetch(`/api/spaces/${spaceId}/brand-kit`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => setBrandKit(d?.saved ? d.values : null))
+        .catch(() => undefined);
 
       const res = await fetch(`/api/spaces/${spaceId}/widget-config`);
       if (!res.ok) {
@@ -270,6 +278,8 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
             <ThemeEditor
               value={config.theme}
               onChange={handleThemeChange}
+              brandManaged={Boolean(brandKit)}
+              brandHref={`/spaces/${spaceId}/brand`}
             />
           </div>
 
@@ -330,7 +340,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
             <LivePreview
               template={config.template}
               position={config.position}
-              theme={config.theme}
+              theme={applyBrandKitToTheme(config.theme, brandKit)}
               triggerType={config.triggerType}
               triggerValue={config.triggerValue}
               autoplayPreview={config.autoplayPreview}

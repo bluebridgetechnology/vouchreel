@@ -10,6 +10,9 @@ import { toggleStyle } from "@/components/ui/toggle";
 interface ThemeEditorProps {
   value: WidgetTheme;
   onChange: (theme: WidgetTheme) => void;
+  /** The space has a brand kit: colours, radius and fonts are set there, only the mode stays here. */
+  brandManaged?: boolean;
+  brandHref?: string;
 }
 
 const RADIUS_PRESETS = [
@@ -20,7 +23,7 @@ const RADIUS_PRESETS = [
   { label: "Pill (24px)", value: 24 },
 ];
 
-export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
+export function ThemeEditor({ value, onChange, brandManaged = false, brandHref }: ThemeEditorProps) {
   function handlePrimaryChange(hex: string) {
     onChange({
       ...value,
@@ -58,9 +61,20 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
         </p>
       </div>
 
+      {brandManaged && (
+        <div role="note" className="rounded-card border bg-brand-soft/40 p-3 text-xs text-text-muted">
+          <span className="font-medium text-text">Colours, corner radius and fonts come from your Brand settings.</span>{" "}
+          {brandHref ? (
+            <a href={brandHref} className="font-medium text-brand underline-offset-4 hover:underline">
+              Edit brand settings
+            </a>
+          ) : null}
+        </div>
+      )}
+
       <div className="space-y-5 rounded-card border bg-surface p-4 sm:p-5">
         {/* Colors Row */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className={cn("grid grid-cols-1 gap-6 sm:grid-cols-2", brandManaged && "hidden")}>
           {/* Primary Color */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -158,7 +172,7 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
           </div>
         </div>
 
-        <div className="h-px bg-border" />
+        <div className={cn("h-px bg-border", brandManaged && "hidden")} />
 
         {/* Mode & Radius Row */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -196,7 +210,7 @@ export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
           </div>
 
           {/* Border Radius Slider */}
-          <div className="space-y-2">
+          <div className={cn("space-y-2", brandManaged && "hidden")}>
             <div className="flex items-center justify-between">
               <label
                 htmlFor="widget-border-radius"

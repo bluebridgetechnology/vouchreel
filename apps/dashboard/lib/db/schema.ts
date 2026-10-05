@@ -1211,3 +1211,26 @@ export const reviewVideos = pgTable(
   },
   (table) => [index("review_videos_space_created_idx").on(table.spaceId, table.createdAt)]
 );
+
+/**
+ * Brand kit: one per space. When it exists it is the source for the widget's colours, radius and
+ * typography (and the default colour of review videos), so they are set in one place.
+ */
+export const brandKits = pgTable("brand_kits", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  spaceId: uuid("space_id")
+    .notNull()
+    .unique()
+    .references(() => spaces.id, { onDelete: "cascade" }),
+  primaryColor: text("primary_color").default("#cf3d0b").notNull(),
+  /** Text/icon colour on top of the primary colour. Null = the widget's default. */
+  accentColor: text("accent_color"),
+  borderRadius: integer("border_radius"),
+  /** default = the widget's own font; inherit = the host site's font; custom = a named font the site loads. */
+  fontMode: text("font_mode").$type<"default" | "inherit" | "custom">().default("inherit").notNull(),
+  fontFamily: text("font_family"),
+  /** Use the host site's text colour when it stays readable on the widget background. */
+  inheritTextColor: boolean("inherit_text_color").default(false).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});

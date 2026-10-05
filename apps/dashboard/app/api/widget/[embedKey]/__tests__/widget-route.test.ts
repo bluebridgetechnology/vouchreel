@@ -8,9 +8,21 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+// The brand kit has its own lookup; mocking it keeps the numbered db.select sequence below stable
+const brandKit = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }));
+vi.mock("@/lib/brand-kit/service", async () => {
+  const theme = await import("@/lib/brand-kit/theme");
+  return {
+    applyBrandKitToTheme: theme.applyBrandKitToTheme,
+    getBrandKit: vi.fn(async () => brandKit.current),
+    toValues: (kit: Record<string, unknown>) => kit,
+  };
+});
+
 describe("Widget Data Public API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    brandKit.current = null;
   });
 
   it("handles OPTIONS preflight with CORS headers", async () => {
@@ -310,5 +322,74 @@ describe("Widget Data Public API Route", () => {
     expect(json.testimonials[0].translations).toHaveLength(1);
     expect(json.testimonials[0].translations[0].language).toBe("es");
     expect(json.testimonials[0].translations[0].quote).toBe("Cita traducida");
+  });
+
+  describe("brand kit", () => {
+    const space = { id: "space-uuid-1", name: "Acme", embedKey: "emb_valid_123" };
+    const config = {
+      id: "cfg-1",
+      spaceId: "space-uuid-1",
+      position: "bottom-right",
+      theme: { primaryColor: "#3b82f6", accentColor: "#ffffff", mode: "dark", borderRadius: 8 },
+      triggerType: "delay",
+      triggerValue: { seconds: 3 },
+      pagesIncluded: [],
+      pagesExcluded: [],
+      autoplayPreview: false,
+    };
+
+    function mockQueries() {
+      const chain = (val: unknown[]) => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockImplementation(() =>
+            Object.assign(Promise.resolve(val), {
+              orderBy: vi.fn().mockImplementation(() => Object.assign(Promise.resolve(val), { limit: vi.fn().mockResolvedValue(val) })),
+              limit: vi.fn().mockResolvedValue(val),
+            })
+          ),
+        }),
+      });
+      let n = 0;
+      (db.select as any).mockImplementation(() => {
+        n++;
+        if (n === 1) return chain([space]);
+        if (n === 2) return chain([config]);
+        return chain([]);
+      });
+    }
+
+    const request = () =>
+      getWidgetData(new Request("http://localhost/api/widget/emb_valid_123"), { params: Promise.resolve({ embedKey: "emb_valid_123" }) });
+
+    it("leaves the theme exactly as before when the space has no brand kit", async () => {
+      mockQueries();
+      const json = await (await request()).json();
+      expect(json.config.theme).toEqual(config.theme);
+      expect(json.config.theme).not.toHaveProperty("fontMode");
+    });
+
+    it("applies the kit's colours, radius and typography, keeping the widget's own light/dark mode", async () => {
+      brandKit.current = { primaryColor: "#112233", accentColor: null, borderRadius: 4, fontMode: "custom", fontFamily: "Poppins", inheritTextColor: true };
+      mockQueries();
+      const json = await (await request()).json();
+      expect(json.config.theme).toMatchObject({
+        primaryColor: "#112233",
+        accentColor: "#ffffff", // the kit has no accent, so the widget's stays
+        mode: "dark", // mode is widget-specific
+        borderRadius: 4,
+        fontMode: "custom",
+        fontFamily: "Poppins",
+        inheritTextColor: true,
+      });
+    });
+
+    it("does not send a font name unless the mode is custom", async () => {
+      brandKit.current = { primaryColor: "#112233", accentColor: null, borderRadius: null, fontMode: "inherit", fontFamily: "Poppins", inheritTextColor: false };
+      mockQueries();
+      const json = await (await request()).json();
+      expect(json.config.theme.fontMode).toBe("inherit");
+      expect(json.config.theme).not.toHaveProperty("fontFamily");
+      expect(json.config.theme.borderRadius).toBe(8); // kit radius unset, widget's stays
+    });
   });
 });
