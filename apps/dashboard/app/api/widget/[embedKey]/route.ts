@@ -5,6 +5,7 @@ import { spaces, testimonials, widgetConfigs, conversionGoals, reviews, experime
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import { badRequest, notFound, internalError } from "@/lib/api/errors";
 import { canAccess } from "@/lib/auth/feature-gate";
+import { applyBrandKitToTheme, getBrandKit, toValues } from "@/lib/brand-kit/service";
 
 interface RouteParams {
   params: Promise<{ embedKey: string }>;
@@ -60,12 +61,16 @@ export async function GET(request: Request, { params }: RouteParams) {
       .from(widgetConfigs)
       .where(eq(widgetConfigs.spaceId, space.id));
 
-    const theme =
+    const baseTheme =
       configRecord?.theme &&
       typeof configRecord.theme === "object" &&
       Object.keys(configRecord.theme).length > 0
         ? { ...DEFAULT_WIDGET_CONFIG.theme, ...configRecord.theme }
         : DEFAULT_WIDGET_CONFIG.theme;
+
+    // The brand kit, when the owner has saved one, decides colours, radius and typography
+    const kit = await getBrandKit(space.id);
+    const theme = applyBrandKitToTheme(baseTheme, kit ? toValues(kit) : null);
 
     const triggerValue =
       configRecord?.triggerValue &&

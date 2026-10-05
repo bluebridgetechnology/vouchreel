@@ -36,6 +36,7 @@ export function SpaceNavTabs({
     { label: "Reviews", segment: "reviews" },
     { label: "Collect", segment: "collect", badge: pendingCount },
     { label: "Social", segment: "social" },
+    { label: "Brand", segment: "brand" },
     { label: "Widget", segment: "widget" },
     { label: "Experiments", segment: "experiments" },
     { label: "Analytics", segment: "analytics" },
