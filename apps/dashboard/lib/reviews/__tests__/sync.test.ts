@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { syncReviewSource, MIN_SYNC_INTERVAL_MS } from "../sync";
 import { db } from "@/lib/db";
 import { fetchGoogleReviews } from "../google";
-import { fetchTrustpilotReviews } from "../trustpilot";
+import { fetchTrustpilotReviews, fetchTrustpilotStats } from "../trustpilot";
 
 vi.mock("@/lib/db", () => ({
   db: {
@@ -22,6 +22,7 @@ vi.mock("../google", () => ({
 
 vi.mock("../trustpilot", () => ({
   fetchTrustpilotReviews: vi.fn(),
+  fetchTrustpilotStats: vi.fn(),
 }));
 
 describe("syncReviewSource Engine", () => {
@@ -207,6 +208,60 @@ describe("syncReviewSource Engine", () => {
       businessUnitId: "tp-unit-123",
       apiKey: "tp-key",
       perPage: 50,
+    });
+  });
+
+  describe("provider rating totals", () => {
+    function setup(provider: "google" | "trustpilot") {
+      const source = {
+        id: "src-x",
+        spaceId: "space-1",
+        provider,
+        providerBusinessId: "biz-1",
+        isActive: true,
+        lastSyncAt: null,
+        credentials: { apiKey: "k" },
+      };
+      let n = 0;
+      (db.select as any).mockImplementation(() => ({
+        from: vi.fn().mockReturnValue({ where: vi.fn().mockImplementation(async () => (++n === 1 ? [source] : [])) }),
+      }));
+      (db.insert as any).mockReturnValue({ values: vi.fn().mockResolvedValue({}) });
+      const set = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue({}) });
+      (db.update as any).mockReturnValue({ set });
+      return set;
+    }
+
+    it("stores the Google place rating and total on the source", async () => {
+      const set = setup("google");
+      (fetchGoogleReviews as any).mockResolvedValue({ rating: 4.8, totalReviews: 213, reviews: [] });
+      await syncReviewSource("src-x");
+      expect(set).toHaveBeenCalledWith(expect.objectContaining({ ratingAverage: 4.8, ratingTotal: 213 }));
+    });
+
+    it("stores Trustpilot stats when the extra call returns them", async () => {
+      const set = setup("trustpilot");
+      (fetchTrustpilotReviews as any).mockResolvedValue({ reviews: [] });
+      (fetchTrustpilotStats as any).mockResolvedValue({ rating: 4.6, total: 1200 });
+      await syncReviewSource("src-x");
+      expect(set).toHaveBeenCalledWith(expect.objectContaining({ ratingAverage: 4.6, ratingTotal: 1200 }));
+    });
+
+    it("never fails the sync, or overwrites stored stats, when stats are unavailable", async () => {
+      const set = setup("trustpilot");
+      (fetchTrustpilotReviews as any).mockResolvedValue({ reviews: [] });
+      (fetchTrustpilotStats as any).mockRejectedValue(new Error("boom"));
+      await expect(syncReviewSource("src-x")).resolves.toMatchObject({ provider: "trustpilot" });
+      const lastSetArg = set.mock.calls.at(-1)![0];
+      expect(lastSetArg).not.toHaveProperty("ratingAverage");
+      expect(lastSetArg).not.toHaveProperty("ratingTotal");
+    });
+
+    it("ignores a Google response without a usable total", async () => {
+      const set = setup("google");
+      (fetchGoogleReviews as any).mockResolvedValue({ rating: 4.8, totalReviews: 0, reviews: [] });
+      await syncReviewSource("src-x");
+      expect(set.mock.calls.at(-1)![0]).not.toHaveProperty("ratingAverage");
     });
   });
 });

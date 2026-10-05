@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authorizeCron } from "@/lib/security/cron-auth";
 import { reclaimStaleJobs } from "@/lib/jobs/queue";
+import { JOB_TYPES } from "@/lib/jobs/handlers";
 import { drainQueue } from "@/lib/jobs/worker";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,8 @@ export async function GET(request: Request) {
 
   try {
     const reclaimed = await reclaimStaleJobs();
-    const processed = await drainQueue({ maxJobs: 5 });
+    // This host has no Chromium, so it must not pick up video renders
+    const processed = await drainQueue({ maxJobs: 5, except: [JOB_TYPES.reviewVideo] });
     return NextResponse.json({ success: true, reclaimed, processed });
   } catch (error) {
     console.error("Cron failed to process jobs:", error);

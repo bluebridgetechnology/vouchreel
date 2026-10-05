@@ -9,6 +9,7 @@ export const planLimitsSchema = z.object({
   maxTestimonialsPerSpace: limitNumber,
   /** Optional so existing clients that do not send it keep working; the stored default applies. */
   aiVideoCredits: limitNumber.optional(),
+  reviewVideoCredits: limitNumber.optional(),
   removeWatermark: z.boolean(),
   canCustomizeBranding: z.boolean(),
   canUseAllTriggers: z.boolean(),

@@ -1,5 +1,6 @@
 /** Entry point for the standalone worker process (bundled by scripts/build-worker.mjs). */
 import { getFfmpegStatus } from "@/lib/media/ffmpeg";
+import { JOB_TYPES } from "./handlers";
 import { runWorker } from "./worker";
 
 const controller = new AbortController();
@@ -13,5 +14,6 @@ for (const sig of ["SIGINT", "SIGTERM"] as const) {
 const ffmpeg = await getFfmpegStatus(true);
 if (!ffmpeg.available) console.warn("[worker] FFmpeg not found: media jobs will fail.");
 
-await runWorker(controller.signal);
+// Video jobs need Chromium, which this worker does not have; the video worker takes those
+await runWorker(controller.signal, { except: [JOB_TYPES.reviewVideo] });
 process.exit(0);

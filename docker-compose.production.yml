@@ -70,6 +70,29 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # Renders styled review videos with Remotion + Chromium. Separate from `worker` because it needs a
+  # Debian image with a browser; each render uses about 1-2 GB of memory, so it runs one at a time.
+  video-worker:
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: video-worker
+    env_file: !reset
+      - .env.production
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-vouchreel}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vouchreel}
+      WORKER_CONCURRENCY: ${VIDEO_WORKER_CONCURRENCY:-1}
+      VIDEO_RENDER_CONCURRENCY: ${VIDEO_RENDER_CONCURRENCY:-2}
+    shm_size: 1gb
+    mem_limit: 3g
+    stop_grace_period: 180s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
   # Triggers the scheduled jobs (webhook retries every 5 minutes, review sync hourly).
   # Vercel does this with vercel.json crons; on a VPS something has to call the endpoints.
   scheduler:

@@ -1,8 +1,8 @@
 import { randomUUID } from "crypto";
-import { claimJob, completeJob, failJob, reclaimStaleJobs, type Job } from "./queue";
+import { claimJob, completeJob, failJob, reclaimStaleJobs, type ClaimFilter, type Job } from "./queue";
 import { getJobFailureHandler, getJobHandler, registerBuiltInHandlers } from "./handlers";
 
-export interface RunOptions {
+export interface RunOptions extends ClaimFilter {
   workerId?: string;
   /** Max jobs processed in parallel. */
   concurrency?: number;
@@ -49,7 +49,7 @@ export async function drainQueue(options: RunOptions & { maxJobs?: number } = {}
   async function lane() {
     while (!exhausted && claimed < maxJobs) {
       claimed++; // reserve a slot before awaiting so lanes cannot overshoot maxJobs
-      const job = await claimJob(workerId);
+      const job = await claimJob(workerId, { only: options.only, except: options.except });
       if (!job) {
         claimed--;
         exhausted = true;
@@ -83,7 +83,7 @@ export async function runWorker(signal: AbortSignal, options: RunOptions = {}): 
     }
     let processed = 0;
     try {
-      processed = await drainQueue({ workerId, concurrency });
+      processed = await drainQueue({ workerId, concurrency, only: options.only, except: options.except });
     } catch (error) {
       console.error("[worker] poll failed:", error);
     }

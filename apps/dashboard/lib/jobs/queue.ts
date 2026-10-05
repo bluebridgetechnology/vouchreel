@@ -43,7 +43,17 @@ export async function enqueueJob(
  * Atomically claims the oldest runnable job. Concurrent workers never receive the same row
  * because of FOR UPDATE SKIP LOCKED. Increments `attempts` on claim.
  */
-export async function claimJob(workerId: string): Promise<Job | null> {
+export interface ClaimFilter {
+  /** Claim only these job types (e.g. the video worker, which has Chromium). */
+  only?: string[];
+  /** Never claim these types (e.g. the regular worker, which cannot render video). */
+  except?: string[];
+}
+
+export async function claimJob(workerId: string, filter: ClaimFilter = {}): Promise<Job | null> {
+  const list = (types: string[]) => sql.join(types.map((t) => sql`${t}`), sql`, `);
+  const only = filter.only?.length ? sql`AND type IN (${list(filter.only)})` : sql``;
+  const except = filter.except?.length ? sql`AND type NOT IN (${list(filter.except)})` : sql``;
   const result = await db.execute(sql`
     UPDATE jobs SET
       status = 'running',
@@ -52,7 +62,7 @@ export async function claimJob(workerId: string): Promise<Job | null> {
       attempts = attempts + 1
     WHERE id = (
       SELECT id FROM jobs
-      WHERE status = 'queued' AND run_at <= now()
+      WHERE status = 'queued' AND run_at <= now() ${only} ${except}
       ORDER BY run_at
       FOR UPDATE SKIP LOCKED
       LIMIT 1

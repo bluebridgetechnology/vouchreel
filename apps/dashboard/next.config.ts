@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
   // Produces .next/standalone for the Docker runner stage (see Dockerfile).
   output: 'standalone',
 
+  // Workspace package shipped as TypeScript source; only its Remotion-free registry is imported here
+  transpilePackages: ['@vouchreel/video'],
+
   async headers() {
     return [
       { source: '/:path*', headers: commonHeaders },

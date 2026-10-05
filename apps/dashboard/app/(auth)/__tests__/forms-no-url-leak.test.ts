@@ -35,12 +35,13 @@ describe.each(forms)("%s form (server-rendered, pre-hydration)", (_label, load, 
     const html = await render(load as never, name, props);
     expect(html).toMatch(/<form[^>]*method="post"/);
     expect(html).not.toMatch(/<form[^>]*method="get"/i);
-  });
+    // The first test per form pays for importing the page module, which can pass 5s on a loaded machine
+  }, 30_000);
 
   it("renders the submit button disabled until hydration", async () => {
     const html = await render(load as never, name, props);
     const submit = html.match(/<button[^>]*type="submit"[^>]*>/)?.[0] ?? "";
     // the attribute, not the "disabled:" Tailwind variants that appear in the class list
     expect(submit).toMatch(/\sdisabled(=""|\s|>)/);
-  });
+  }, 30_000);
 });

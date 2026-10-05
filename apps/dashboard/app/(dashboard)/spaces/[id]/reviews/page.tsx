@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { ReviewVideoModal } from "@/components/review-video/review-video-modal";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
@@ -42,6 +43,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
   const { id: spaceId } = use(params);
 
   const [loading, setLoading] = useState(true);
+  const [videoOpen, setVideoOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sources, setSources] = useState<ReviewSource[]>([]);
   const [reviewsList, setReviewsList] = useState<ReviewItem[]>([]);
@@ -260,7 +262,12 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
             reviews and showcase them alongside video testimonials.
           </p>
         </div>
+        <button type="button" onClick={() => setVideoOpen(true)} className={buttonVariants({ variant: "primary", size: "md" })}>
+          Create review video
+        </button>
       </div>
+
+      {videoOpen && <ReviewVideoModal spaceId={spaceId} onClose={() => setVideoOpen(false)} />}
 
       {syncMessage && (
         <div className="rounded-card border border-success/30 bg-success-soft p-3.5 text-sm text-success-foreground flex items-center justify-between">

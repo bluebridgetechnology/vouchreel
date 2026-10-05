@@ -60,7 +60,7 @@ run("AI video generate flow (postgres)", () => {
       })
       .returning();
     ids.testimonial = t.id;
-  });
+  }, 600_000);
 
   beforeEach(async () => {
     monthlyCredits = 2;

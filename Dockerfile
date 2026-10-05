@@ -7,6 +7,7 @@ WORKDIR /repo
 COPY package.json package-lock.json ./
 COPY apps/dashboard/package.json apps/dashboard/
 COPY packages/widget/package.json packages/widget/
+COPY packages/video/package.json packages/video/
 RUN npm ci
 
 # ---- builder: compile the embed widget + the dashboard ----
@@ -58,3 +59,30 @@ ENV NODE_ENV=production
 WORKDIR /repo/apps/dashboard
 USER node
 CMD ["node", "dist/worker.mjs"]
+
+# ---- video-worker: renders Remotion review videos (needs Chromium, so Debian rather than Alpine) ----
+# Built separately from the Alpine stages: native packages (Remotion's compositor) differ per libc.
+# Unverified in CI: build it once on your host and render a test video before relying on it.
+FROM node:24-bookworm-slim AS video-worker
+ENV NODE_ENV=production     NEXT_TELEMETRY_DISABLED=1     DEBIAN_FRONTEND=noninteractive
+# Chromium runtime libraries (see https://www.remotion.dev/docs/miscellaneous/linux-dependencies) + fonts
+# that cover non-Latin reviews (the bundled Outfit/Playfair fonts are Latin only)
+RUN apt-get update && apt-get install -y --no-install-recommends       libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libasound2 libxrandr2 libxkbcommon0       libxfixes3 libxcomposite1 libxdamage1 libgbm1 libcups2 libpango-1.0-0 libcairo2       fonts-noto-core fonts-noto-cjk fonts-noto-color-emoji ca-certificates     && rm -rf /var/lib/apt/lists/*
+WORKDIR /repo
+COPY package.json package-lock.json ./
+COPY apps/dashboard/package.json apps/dashboard/
+COPY packages/widget/package.json packages/widget/
+COPY packages/video/package.json packages/video/
+# Full install: the worker bundle and the Remotion bundle are built below (tsx/esbuild are dev dependencies)
+RUN NODE_ENV=development npm ci
+COPY apps/dashboard apps/dashboard
+COPY packages/video packages/video
+# Worker entry point (the Next.js app is not needed here)
+RUN npm run worker:build --workspace=@vouchreel/dashboard
+# Pre-build the compositions so the worker never runs webpack at start-up, and bake Chromium into the image
+RUN npm run bundle --workspace=@vouchreel/video -- /repo/video-bundle  && cd /repo/packages/video && npx remotion browser ensure
+ENV VIDEO_BUNDLE_DIR=/repo/video-bundle     VIDEO_ENTRY_POINT=/repo/packages/video/src/entry.tsx     VIDEO_RENDER_CONCURRENCY=2     WORKER_CONCURRENCY=1
+RUN chown -R node:node /repo
+USER node
+WORKDIR /repo/apps/dashboard
+CMD ["node", "dist/video-worker.mjs"]

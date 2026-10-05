@@ -162,3 +162,32 @@ export async function fetchTrustpilotReviews({
     reviews: normalized,
   };
 }
+
+export interface ProviderStats {
+  rating: number;
+  total: number;
+}
+
+/**
+ * Overall TrustScore and review count for a business, as Trustpilot reports them. Returns null
+ * when the response does not contain both numbers, so callers can skip the stats instead of failing.
+ */
+export async function fetchTrustpilotStats({
+  businessUnitId,
+  apiKey,
+}: {
+  businessUnitId: string;
+  apiKey?: string;
+}): Promise<ProviderStats | null> {
+  const key = apiKey || process.env.TRUSTPILOT_API_KEY;
+  if (!key || !businessUnitId) return null;
+  const response = await fetch(`https://api.trustpilot.com/v1/business-units/${encodeURIComponent(businessUnitId)}`, {
+    headers: { apikey: key, Accept: "application/json" },
+  });
+  if (!response.ok) return null;
+  const data = (await response.json()) as { score?: { trustScore?: number }; numberOfReviews?: { total?: number } };
+  const rating = data.score?.trustScore;
+  const total = data.numberOfReviews?.total;
+  if (typeof rating !== "number" || typeof total !== "number" || total < 1) return null;
+  return { rating, total };
+}

@@ -30,6 +30,16 @@ export const NOTIFICATION_CATALOG = {
     description: "An AI-narrated video could not be created. The credit is not used.",
     defaults: { inApp: true, email: false },
   },
+  "review_video.completed": {
+    label: "Review video ready",
+    description: "A styled video made from your reviews finished rendering.",
+    defaults: { inApp: true, email: false },
+  },
+  "review_video.failed": {
+    label: "Review video failed",
+    description: "A review video could not be created. The credit is not used.",
+    defaults: { inApp: true, email: false },
+  },
   "webhook.failing": {
     label: "Webhook deliveries failing",
     description: "A webhook endpoint exhausted its retries.",
