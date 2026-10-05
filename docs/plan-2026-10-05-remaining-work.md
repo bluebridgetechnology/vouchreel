@@ -70,6 +70,12 @@ Phases are ordered by risk first, then admin visibility, then polish. Each phase
 7. **Tests:** route tests for each new admin endpoint (403 for non-admin, validation, audit entry written); DB-backed query tests; add one Playwright smoke test for `/admin` access and tab rendering.
 
 ### Phase 4: Product follow-ups (decide priority with the user)
+0. **Long-review trim for review videos.** Today a Google or Trustpilot review over a template's limit (240 to 400 characters, see `registry.ts`) cannot be used at all, and a review is never shortened. Add an opt-in, delete-only trim modelled on `lib/ai-video/trim.ts`:
+   - Propose a trim in whole sentences, in order (reuse `proposeTrim` / `validateTrim`, adapted from words to the template's character limit); show original and trimmed side by side and require the owner to approve; the owner may edit but only by deleting text.
+   - Mark trimmed text visibly in the video (for example an ellipsis where text was removed) and store the original text and the approved trim with the `review_videos` row, so the exact content shown is on record (migration needed).
+   - Keep the default behaviour unchanged: untouched reviews stay verbatim, and the picker keeps saying "too long" unless the owner chooses "shorten".
+   - Check the Google and Trustpilot terms on modifying review text before building this (not yet read; see Phase 1 notes); the trim must never reword, reorder or add.
+   - Tests: trim validation (ordered subset, limit), API rejects non-subset edits, and a render of a trimmed review.
 1. Collect form uses the brand kit.
 2. Customizable video fonts (currently Outfit / Playfair Display only), with font licensing check.
 3. Remotion licence: revisit before commercial scale; `acknowledgeRemotionLicense` stays unset until then.
