@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_SCRIPT_WORDS,
+  addedWords,
   comparableWords,
   countWords,
   diffRemovedWords,
@@ -103,6 +104,38 @@ describe("diffRemovedWords", () => {
 
   it("marks nothing removed when the text is unchanged", () => {
     expect(diffRemovedWords("Great product!", "Great product!").every((d) => !d.removed)).toBe(true);
+  });
+});
+
+describe("changed words", () => {
+  const original = "We tried three other tools and none of them stuck. Honestly the best purchase we made.";
+
+  it("names the words that are not in the customer's text", () => {
+    expect(addedWords(original, "We tried five other tools")).toEqual(["five"]);
+    const result = validateTrim(original, "We tried five other tools and none of them stuck");
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.reason).toMatch(/Not in the customer's text: five\./);
+  });
+
+  it("only flags the changed word in the diff, not everything after it", () => {
+    const diff = diffRemovedWords(original, "We tried five other tools and none of them stuck.");
+    const removed = diff.filter((d) => d.removed).map((d) => d.text);
+    // "three" was replaced (so it counts as removed from the original); the rest that was kept is not flagged
+    expect(removed).toContain("three");
+    expect(removed).not.toContain("other");
+    expect(removed).not.toContain("stuck.");
+  });
+
+  it("flags nothing for an identical text and everything for an unrelated one", () => {
+    expect(diffRemovedWords("a b c", "a b c").some((d) => d.removed)).toBe(false);
+    expect(diffRemovedWords("a b c", "x y z").every((d) => d.removed)).toBe(true);
+  });
+
+  it("handles a long original efficiently", () => {
+    const long = Array.from({ length: 800 }, (_, i) => `w${i}`).join(" ");
+    const started = Date.now();
+    diffRemovedWords(long, "w5 w300 w799");
+    expect(Date.now() - started).toBeLessThan(500);
   });
 });
 

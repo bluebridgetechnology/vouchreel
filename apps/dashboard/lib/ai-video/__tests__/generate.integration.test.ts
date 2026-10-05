@@ -32,11 +32,13 @@ run("AI video generate flow (postgres)", () => {
   let render: typeof import("../render");
   let credits: typeof import("../credits");
   let pool: { end: () => Promise<void> } | undefined;
+  let releaseLock: (() => Promise<void>) | undefined;
   const ids = { user: `ai-test-${Date.now()}`, space: "", testimonial: "", consent: "" };
 
   beforeAll(async () => {
     process.env.DATABASE_URL = url;
     process.env.AI_VIDEO_TTS_PROVIDER = "mock";
+    releaseLock = await (await import("@/lib/test/db-lock")).acquireTestDbLock(url!);
     ({ db } = await import("@/lib/db"));
     s = await import("@/lib/db/schema");
     gen = await import("../generate");
@@ -79,6 +81,7 @@ run("AI video generate flow (postgres)", () => {
     await db.delete(s.jobs);
     await db.delete(s.user).where((await import("drizzle-orm")).eq(s.user.id, ids.user)); // cascades space + testimonial
     await pool?.end();
+    await releaseLock?.();
   });
 
   const draft = (over: Partial<Parameters<typeof gen.createDraft>[0]> = {}) =>
@@ -159,6 +162,27 @@ run("AI video generate flow (postgres)", () => {
 
     await db.update(s.generatedVideos).set({ status: "failed" }).where((await import("drizzle-orm")).eq(s.generatedVideos.id, first.id));
     await expect(gen.approveDraft({ videoId: second.id, spaceId: ids.space })).resolves.toMatchObject({ status: "queued" });
+  });
+
+  it("deleting a finished video keeps its credit used, but removes drafts and failed ones", async () => {
+    const eq = (await import("drizzle-orm")).eq;
+    const done = (await draft()).video;
+    await gen.approveDraft({ videoId: done.id, spaceId: ids.space });
+    await db.update(s.generatedVideos).set({ status: "done", outputUrl: "https://cdn.test/x.mp4" }).where(eq(s.generatedVideos.id, done.id));
+    expect(await gen.removeVideo(done.id, ids.space)).toBe("archived");
+    const [row] = await db.select().from(s.generatedVideos).where(eq(s.generatedVideos.id, done.id));
+    expect(row.deletedAt).toBeTruthy();
+    expect(row.outputUrl).toBeNull();
+    expect((await credits.getAiVideoCredits(ids.user)).used).toBe(1);
+    await expect(gen.removeVideo(done.id, ids.space)).rejects.toMatchObject({ status: 404 });
+
+    const unused = (await draft()).video;
+    expect(await gen.removeVideo(unused.id, ids.space)).toBe("removed");
+    expect(await db.select().from(s.generatedVideos).where(eq(s.generatedVideos.id, unused.id))).toHaveLength(0);
+
+    const inFlight = (await draft()).video;
+    await gen.approveDraft({ videoId: inFlight.id, spaceId: ids.space });
+    await expect(gen.removeVideo(inFlight.id, ids.space)).rejects.toMatchObject({ status: 400 });
   });
 
   it("only counts approvals from this calendar month", async () => {

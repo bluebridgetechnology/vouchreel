@@ -44,7 +44,9 @@ export function validateTrim(original: string, trimmed: string): TrimCheck {
     return { ok: false, reason: `The script can be at most ${MAX_SCRIPT_WORDS} words (it has ${words}).` };
   }
   if (!isOrderedSubset(original, trimmed)) {
-    return { ok: false, reason: "The script can only remove words from the customer's text, not add or change them." };
+    const added = addedWords(original, trimmed);
+    const which = added.length ? ` Not in the customer's text: ${added.slice(0, 5).join(", ")}.` : "";
+    return { ok: false, reason: `The script can only remove words from the customer's text, not add, change or reorder them.${which}` };
   }
   return { ok: true };
 }
@@ -87,20 +89,55 @@ export interface DiffToken {
   removed: boolean;
 }
 
+/**
+ * Longest-common-subsequence alignment of two word lists. Returns, for each side, whether the
+ * word is part of the shared sequence. A valid trim is entirely shared; an invalid edit shows
+ * exactly which words were changed rather than flagging everything after the first mistake.
+ */
+function align(a: string[], b: string[]): { inA: boolean[]; inB: boolean[] } {
+  const n = a.length;
+  const m = b.length;
+  const table = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      table[i][j] = a[i] === b[j] ? table[i + 1][j + 1] + 1 : Math.max(table[i + 1][j], table[i][j + 1]);
+    }
+  }
+  const inA = new Array<boolean>(n).fill(false);
+  const inB = new Array<boolean>(m).fill(false);
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (a[i] === b[j]) {
+      inA[i++] = inB[j++] = true;
+    } else if (table[i + 1][j] >= table[i][j + 1]) {
+      i++;
+    } else {
+      j++;
+    }
+  }
+  return { inA, inB };
+}
+
+/** Words in `script` that are not in the customer's text (comparable form), for error messages. */
+export function addedWords(original: string, script: string): string[] {
+  const b = comparableWords(script);
+  const { inB } = align(comparableWords(original), b);
+  return b.filter((_, i) => !inB[i]);
+}
+
 /** Marks which original words the trim removed, for showing the owner a diff before approval. */
 export function diffRemovedWords(original: string, trimmed: string): DiffToken[] {
-  const kept = comparableWords(trimmed);
+  const { inA } = align(comparableWords(original), comparableWords(trimmed));
   let k = 0;
   return original
     .trim()
     .split(/\s+/)
     .filter(Boolean)
     .map((raw) => {
-      const [word] = comparableWords(raw);
-      if (word !== undefined && k < kept.length && word === kept[k]) {
-        k++;
-        return { text: raw, removed: false };
-      }
-      return { text: raw, removed: true };
+      const count = comparableWords(raw).length;
+      const kept = count === 0 || inA.slice(k, k + count).every(Boolean);
+      k += count;
+      return { text: raw, removed: !kept };
     });
 }

@@ -172,8 +172,29 @@ export async function approveDraft(input: ApproveInput) {
   });
 }
 
+/**
+ * Owner deletes a video. A finished video is archived rather than removed, otherwise deleting
+ * it would hand the credit back. Drafts and failed videos used no credit and are removed.
+ */
+export async function removeVideo(videoId: string, spaceId: string): Promise<"removed" | "archived"> {
+  const [video] = await db
+    .select({ status: generatedVideos.status, deletedAt: generatedVideos.deletedAt })
+    .from(generatedVideos)
+    .where(and(eq(generatedVideos.id, videoId), eq(generatedVideos.spaceId, spaceId)));
+  if (!video || video.deletedAt) throw new AiVideoError(404, "NOT_FOUND", "Video not found");
+  if (video.status === "queued" || video.status === "rendering") {
+    throw new AiVideoError(400, "BAD_REQUEST", "This video is being created. Wait for it to finish.");
+  }
+  if (video.status === "done") {
+    await db.update(generatedVideos).set({ deletedAt: new Date(), outputUrl: null }).where(eq(generatedVideos.id, videoId));
+    return "archived";
+  }
+  await db.delete(generatedVideos).where(eq(generatedVideos.id, videoId));
+  return "removed";
+}
+
 export const AI_VIDEO_OPTIONS = {
-  templates: AI_VIDEO_TEMPLATES.map(({ id, label }) => ({ id, label })),
+  templates: AI_VIDEO_TEMPLATES.map(({ id, label, background, text }) => ({ id, label, background, text })),
   voices: VOICES.map(({ id, label }) => ({ id, label })),
   aspects: ["9:16", "16:9"] as AiVideoAspect[],
 };

@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
 import { apiError } from "@/lib/api/errors";
 import { aiVideoErrorResponse, requireSpaceOwner } from "@/lib/ai-video/access";
-import { approveDraft } from "@/lib/ai-video/generate";
-import { db } from "@/lib/db";
-import { generatedVideos } from "@/lib/db/schema";
+import { approveDraft, removeVideo } from "@/lib/ai-video/generate";
 import { reviewAiVideoSchema } from "@/lib/validations/ai-video";
 
 interface RouteParams {
@@ -30,21 +27,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 }
 
-/** Removes a video that is not currently rendering. Credits already spent are not refunded. */
+/** Deletes a video. A finished one is archived so its credit stays used; see removeVideo. */
 export async function DELETE(_request: Request, { params }: RouteParams) {
   const { id: spaceId, videoId } = await params;
   const access = await requireSpaceOwner(spaceId);
   if ("response" in access) return access.response;
 
-  const [video] = await db
-    .select({ status: generatedVideos.status })
-    .from(generatedVideos)
-    .where(and(eq(generatedVideos.id, videoId), eq(generatedVideos.spaceId, spaceId)));
-  if (!video) return apiError(404, "NOT_FOUND", "Video not found");
-  if (video.status === "queued" || video.status === "rendering") {
-    return apiError(400, "BAD_REQUEST", "This video is being created. Wait for it to finish.");
+  try {
+    await removeVideo(videoId, spaceId);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return aiVideoErrorResponse(error, "Failed to delete the AI video");
   }
-
-  await db.delete(generatedVideos).where(eq(generatedVideos.id, videoId));
-  return NextResponse.json({ success: true });
 }
