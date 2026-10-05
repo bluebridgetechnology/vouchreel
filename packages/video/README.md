@@ -20,7 +20,13 @@ Each template renders in `9:16` and `16:9`. Video length comes from the text (se
 - **Reviews are verbatim.** Templates never shorten, reword or reorder review text. A review that
   does not fit a template is rejected (`validateProps`), not trimmed. Long text only gets a smaller font.
 - **Attribution stays on screen:** author name, rating, source name, and the month when known.
-- **No provider logos.** Sources are shown as a text badge (Google / Trustpilot brand rules).
+- **Source logos are used as supplied.** `src/assets/google-icon.svg` and `src/assets/trustpilot-logo.svg` are
+  the company's official files; they are never recoloured, redrawn or stretched (`source-mark.test.ts`
+  checks their hashes and proportions). Over a coloured or dark background they sit on a white chip so they
+  keep their own colours; on white or light surfaces they are shown directly. The Google icon is shown with
+  the text "Google Reviews" (change `SOURCE_LABELS` in `src/types.ts` if the required attribution wording
+  differs); the Trustpilot logo already contains its name. Whether these files and this usage satisfy each
+  provider's current brand and data-use guidelines is the company's responsibility to confirm.
 - **Rating totals are the provider's**, stored at sync time, never computed from a subset.
 - Fonts (Outfit, Playfair Display) are bundled, so renders are identical everywhere. Non-Latin text
   falls back to system fonts (the Docker image installs Noto).

@@ -1,8 +1,9 @@
 import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { Orb, Stars, WordReveal, clamped, fitFontSize, useFadeIn, useLayout, useOutro } from "../components/primitives";
+import { SourceMark } from "../components/SourceMark";
 import { FONT_SANS, FONT_SERIF, darken, rgba } from "../lib/theme";
-import { SOURCE_LABELS, type ReviewVideoProps } from "../types";
+import type { ReviewVideoProps } from "../types";
 
 const PAPER = "#faf6ef";
 const INK = "#1f1a14";
@@ -35,9 +36,7 @@ export const Minimal: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
         <div style={{ maxWidth: (portrait ? 860 : 1380) * u }}>
           <div style={{ display: "flex", alignItems: "center", gap: 24 * u, opacity: head }}>
             <Stars rating={review.rating} size={44 * u} color={accent} emptyColor="rgba(31,26,20,0.14)" startSeconds={0.2} />
-            <span style={{ color: MUTED, fontSize: 28 * u, letterSpacing: 5 * u, textTransform: "uppercase", fontWeight: 500 }}>
-              {SOURCE_LABELS[review.source]}
-            </span>
+            <SourceMark source={review.source} u={u} onDark={false} textColor={MUTED} />
           </div>
 
           <div style={{ height: 3 * u, width: 150 * u * ruleWidth, background: accent, margin: `${38 * u}px 0 ${44 * u}px` }} />

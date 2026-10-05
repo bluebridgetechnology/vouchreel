@@ -1,6 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
-import { Avatar, SourceBadge, Stars, WordReveal, fitFontSize, useFadeIn, useLayout, useOutro, useSpringIn } from "../components/primitives";
+import { Avatar, Stars, WordReveal, fitFontSize, useFadeIn, useLayout, useOutro, useSpringIn } from "../components/primitives";
+import { SourceMark } from "../components/SourceMark";
 import { FONT_SANS, lighten, rgba } from "../lib/theme";
 import type { ReviewVideoProps } from "../types";
 
@@ -66,7 +67,7 @@ export const DarkCard: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
           />
 
           <div style={{ marginTop: 50 * u, opacity: footerIn }}>
-            <SourceBadge source={review.source} u={u} background="rgba(255,255,255,0.08)" color="#c9cfdb" />
+            <SourceMark source={review.source} u={u} onDark />
           </div>
         </div>
       </AbsoluteFill>

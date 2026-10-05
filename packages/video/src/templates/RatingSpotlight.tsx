@@ -1,13 +1,13 @@
 import React from "react";
 import { AbsoluteFill, Sequence, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
-import { Avatar, Orb, SourceBadge, Stars, WordReveal, clamped, fitFontSize, useFadeIn, useLayout, useOutro, useSpringIn } from "../components/primitives";
+import { Avatar, Orb, Stars, WordReveal, clamped, fitFontSize, useFadeIn, useLayout, useOutro, useSpringIn } from "../components/primitives";
+import { SourceMark } from "../components/SourceMark";
 import { RATING_INTRO_SECONDS } from "../registry";
 import { FONT_SANS, brandForWhiteText, darken } from "../lib/theme";
 import type { ReviewVideoProps } from "../types";
 
 const INK = "#1c1917";
 const MUTED = "#78716c";
-const SOURCE_NAMES = { google: "Google", trustpilot: "Trustpilot" } as const;
 
 /** Scene 1: the provider-reported overall rating and review count, counting up. */
 const RatingScene: React.FC<{ aggregate: NonNullable<ReviewVideoProps["aggregate"]> }> = ({ aggregate }) => {
@@ -32,7 +32,9 @@ const RatingScene: React.FC<{ aggregate: NonNullable<ReviewVideoProps["aggregate
         <div style={{ color: "#ffffff", fontSize: 58 * u, fontWeight: 500 }}>
           from {total.toLocaleString("en-US")} reviews
         </div>
-        <div style={{ color: "rgba(255,255,255,0.78)", fontSize: 40 * u, marginTop: 14 * u }}>on {SOURCE_NAMES[aggregate.source]}</div>
+        <div style={{ display: "flex", justifyContent: "center", marginTop: 26 * u }}>
+          <SourceMark source={aggregate.source} u={u} onDark size={1.25} />
+        </div>
       </div>
     </AbsoluteFill>
   );
@@ -65,7 +67,7 @@ const ReviewScene: React.FC<{ review: ReviewVideoProps["reviews"][number]; base:
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36 * u }}>
           <Stars rating={review.rating} size={50 * u} emptyColor="rgba(0,0,0,0.12)" startSeconds={0.3} />
-          <SourceBadge source={review.source} u={u * 0.9} background={`${base}18`} color={base} />
+          <SourceMark source={review.source} u={u * 0.9} onDark={false} />
         </div>
         <div style={{ fontSize: 170 * u, lineHeight: 0.55, height: 84 * u, color: `${base}55`, fontWeight: 600 }}>“</div>
         <WordReveal

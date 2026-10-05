@@ -1,0 +1,2 @@
+# Third-party logos are used exactly as supplied: never convert their line endings
+packages/video/src/assets/*.svg -text

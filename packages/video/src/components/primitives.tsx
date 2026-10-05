@@ -1,6 +1,5 @@
 import React from "react";
 import { Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { SOURCE_LABELS, type ReviewSource } from "../types";
 import { GOLD } from "../lib/theme";
 
 export interface Layout {
@@ -94,36 +93,6 @@ export function Stars({
           </div>
         );
       })}
-    </div>
-  );
-}
-
-/** Text-only source label. Provider logos are deliberately not used (brand rules). */
-export function SourceBadge({
-  source,
-  u,
-  background,
-  color,
-}: {
-  source: ReviewSource;
-  u: number;
-  background: string;
-  color: string;
-}) {
-  return (
-    <div
-      style={{
-        background,
-        color,
-        fontSize: 30 * u,
-        fontWeight: 600,
-        padding: `${11 * u}px ${26 * u}px`,
-        borderRadius: 999,
-        letterSpacing: 0.3,
-        whiteSpace: "nowrap",
-      }}
-    >
-      {SOURCE_LABELS[source]}
     </div>
   );
 }

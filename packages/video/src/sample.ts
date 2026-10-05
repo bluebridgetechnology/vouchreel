@@ -16,7 +16,7 @@ const SAMPLES = [
     author: "Daniel Reyes",
     rating: 5,
     date: "February 2026",
-    source: "google" as const,
+    source: "trustpilot" as const,
     text: "Our conversion rate went up within a week. The team is lovely to work with.",
   },
   {
@@ -30,7 +30,7 @@ const SAMPLES = [
     author: "Tom Becker",
     rating: 5,
     date: "December 2025",
-    source: "google" as const,
+    source: "trustpilot" as const,
     text: "Fast, friendly and exactly what we needed. Five stars.",
   },
 ];
