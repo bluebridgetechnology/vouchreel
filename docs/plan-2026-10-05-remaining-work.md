@@ -46,6 +46,11 @@ Phases are ordered by risk first, then admin visibility, then polish. Each phase
 2. Update `packages/video/README.md` (palette, 6 styles, `theme` prop, `/player` export).
 3. Optional: swap CSS-approximated style swatches for rendered thumbnails.
 
+**Phase 2 status (2026-10-05)**
+- Item 1 thumbnails: DONE. All five `apps/dashboard/public/video-previews/*.jpg` regenerated at 360x640 from the palette-based templates (9:16, template default styles, sample text), using frames where the text has finished revealing (rating-spotlight shows its rating intro). Checked visually in a contact sheet; Minimal is now tinted, as expected. Not checked in the running dashboard picker.
+- Item 2 README: DONE. `packages/video/README.md` now covers the palette rules, the six styles and per-template defaults, the `theme` prop, the `/player` export, preview flags, thumbnail regeneration steps, and both test commands.
+- Item 3 style swatches: NOT DONE (optional). The picker swatches in `apps/dashboard/components/brand/video-style-picker.tsx` are still CSS approximations; the live preview is exact.
+
 ### Phase 3: Admin area (new)
 1. **Video & jobs tab** (read first, then actions):
    - Queue summary by status and type, failed jobs with `lastError`, oldest queued age.
