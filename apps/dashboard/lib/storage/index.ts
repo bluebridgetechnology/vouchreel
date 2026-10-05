@@ -1,10 +1,11 @@
 import type { StorageAdapter } from "./types";
 import { S3Adapter } from "./s3";
 import { BunnyAdapter } from "./bunny";
+import { LocalAdapter } from "./local";
 
 export type { StorageAdapter, UploadOptions } from "./types";
 
-type StorageProviderType = "s3" | "r2" | "bunny";
+type StorageProviderType = "s3" | "r2" | "bunny" | "local";
 
 /**
  * Factory function that returns the correct storage adapter based on
@@ -13,6 +14,7 @@ type StorageProviderType = "s3" | "r2" | "bunny";
  * - `s3`: AWS S3
  * - `r2`: Cloudflare R2 (uses S3-compatible adapter with custom endpoint)
  * - `bunny`: Bunny.net Storage
+ * - `local`: files under public/local-uploads (development only)
  *
  * Throws a clear error if the env var is missing or invalid.
  */
@@ -24,7 +26,7 @@ export function createStorageAdapter(): StorageAdapter {
   if (!provider) {
     throw new Error(
       "STORAGE_PROVIDER environment variable is required. " +
-      'Valid values: "s3", "r2", "bunny".'
+      'Valid values: "s3", "r2", "bunny", "local" (development only).'
     );
   }
 
@@ -37,10 +39,13 @@ export function createStorageAdapter(): StorageAdapter {
     case "bunny":
       return new BunnyAdapter();
 
+    case "local":
+      return new LocalAdapter();
+
     default:
       throw new Error(
         `Invalid STORAGE_PROVIDER: "${provider}". ` +
-        'Valid values: "s3", "r2", "bunny".'
+        'Valid values: "s3", "r2", "bunny", "local" (development only).'
       );
   }
 }

@@ -22,6 +22,8 @@ export function getJobFailureHandler(type: string): JobHandlerOptions["onFailed"
 export const JOB_TYPES = {
   socialExport: "social_export",
   aiVideo: "ai_video",
+  /** Rendered by the video worker only (needs Chromium); see lib/jobs/main-video.ts. */
+  reviewVideo: "review_video",
 } as const;
 
 let registered = false;

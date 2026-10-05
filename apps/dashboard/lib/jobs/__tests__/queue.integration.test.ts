@@ -22,7 +22,7 @@ run("job queue (postgres)", () => {
     ({ db } = await import("@/lib/db"));
     ({ jobs } = await import("@/lib/db/schema"));
     pool = (globalThis as unknown as { pool?: { end: () => Promise<void> } }).pool;
-  });
+  }, 600_000);
 
   beforeEach(async () => {
     await db.delete(jobs);
@@ -44,6 +44,18 @@ run("job queue (postgres)", () => {
     expect(claimed).toHaveLength(20);
     expect(new Set(claimed.map((j) => j!.id)).size).toBe(20);
     expect(claimed.every((j) => j!.attempts === 1 && j!.status === "running")).toBe(true);
+  });
+
+  it("claims only the requested job types, and never the excluded ones", async () => {
+    await queue.enqueueJob("render", { n: 1 });
+    await queue.enqueueJob("render", { n: 2 });
+    await queue.enqueueJob("other", { n: 3 });
+
+    expect(await queue.claimJob("w", { except: ["render"] })).toMatchObject({ type: "other" });
+    expect(await queue.claimJob("w", { except: ["render"] })).toBeNull();
+    expect(await queue.claimJob("w", { only: ["other"] })).toBeNull();
+    expect(await queue.claimJob("w", { only: ["render"] })).toMatchObject({ type: "render" });
+    expect(await queue.claimJob("w")).toMatchObject({ type: "render" });
   });
 
   it("does not claim jobs scheduled in the future", async () => {

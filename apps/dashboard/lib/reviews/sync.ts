@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { reviewSources, reviews } from "@/lib/db/schema";
 import { decryptCredentials } from "./crypto";
 import { fetchGoogleReviews, NormalizedReview } from "./google";
-import { fetchTrustpilotReviews } from "./trustpilot";
+import { fetchTrustpilotReviews, fetchTrustpilotStats } from "./trustpilot";
 
 export interface SyncResult {
   sourceId: string;
@@ -50,17 +50,28 @@ export async function syncReviewSource(
 
   const credentials = decryptCredentials(source.credentials);
   let fetchedReviews: NormalizedReview[] = [];
+  /** Provider-reported overall rating and count; stays null when the provider does not give it. */
+  let stats: { rating: number; total: number } | null = null;
 
   if (source.provider === "google") {
     const apiKey = credentials.apiKey as string | undefined;
     const placeId = source.providerBusinessId;
     const res = await fetchGoogleReviews({ placeId, apiKey });
     fetchedReviews = res.reviews;
+    if (typeof res.rating === "number" && typeof res.totalReviews === "number" && res.totalReviews > 0) {
+      stats = { rating: res.rating, total: res.totalReviews };
+    }
   } else if (source.provider === "trustpilot") {
     const apiKey = credentials.apiKey as string | undefined;
     const businessUnitId = source.providerBusinessId;
     const res = await fetchTrustpilotReviews({ businessUnitId, apiKey, perPage: 50 });
     fetchedReviews = res.reviews;
+    // Optional extra call; a failure here must never fail the review sync itself
+    try {
+      stats = (await fetchTrustpilotStats({ businessUnitId, apiKey })) ?? null;
+    } catch {
+      stats = null;
+    }
   } else {
     throw new Error(`Unsupported provider: ${source.provider}`);
   }
@@ -107,7 +118,10 @@ export async function syncReviewSource(
   const now = new Date();
   await db
     .update(reviewSources)
-    .set({ lastSyncAt: now })
+    .set({
+      lastSyncAt: now,
+      ...(stats ? { ratingAverage: stats.rating, ratingTotal: stats.total } : {}),
+    })
     .where(eq(reviewSources.id, source.id));
 
   return {

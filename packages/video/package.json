@@ -1,0 +1,36 @@
+{
+  "name": "@vouchreel/video",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Remotion review-video templates and render service",
+  "exports": {
+    ".": "./src/registry.ts",
+    "./render": "./src/render.ts",
+    "./entry": "./src/entry.tsx"
+  },
+  "scripts": {
+    "studio": "remotion studio src/entry.tsx",
+    "preview": "tsx scripts/preview.ts",
+    "bundle": "tsx scripts/bundle.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/outfit": "5.2.8",
+    "@fontsource/playfair-display": "5.2.8",
+    "@remotion/bundler": "4.0.532",
+    "@remotion/cli": "4.0.532",
+    "@remotion/fonts": "4.0.532",
+    "@remotion/renderer": "4.0.532",
+    "react": "*",
+    "react-dom": "*",
+    "remotion": "4.0.532"
+  },
+  "devDependencies": {
+    "@types/react": "*",
+    "tsx": "*",
+    "typescript": "*",
+    "vitest": "*"
+  }
+}

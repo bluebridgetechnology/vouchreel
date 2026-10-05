@@ -33,3 +33,7 @@ pnpm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Dev-only local storage (STORAGE_PROVIDER=local)
+apps/dashboard/public/local-uploads/
+packages/video/out/

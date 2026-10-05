@@ -6,6 +6,7 @@ import {
   timestamp,
   boolean,
   integer,
+  real,
   jsonb,
   pgEnum,
   index,
@@ -504,6 +505,9 @@ export const reviewSources = pgTable("review_sources", {
     .default({})
     .notNull(),
   lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
+  /** Overall rating and review count as reported by the provider (not computed from our copy). */
+  ratingAverage: real("rating_average"),
+  ratingTotal: integer("rating_total"),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
@@ -1172,4 +1176,38 @@ export const generatedVideos = pgTable(
     index("generated_videos_testimonial_idx").on(table.testimonialId, table.createdAt),
     index("generated_videos_space_created_idx").on(table.spaceId, table.createdAt),
   ]
+);
+
+/**
+ * Styled videos made from imported reviews (Remotion templates). `props` is the exact, verbatim
+ * snapshot that was rendered, so a video can always be traced to the reviews it shows.
+ */
+export const reviewVideos = pgTable(
+  "review_videos",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    spaceId: uuid("space_id")
+      .notNull()
+      .references(() => spaces.id, { onDelete: "cascade" }),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    template: text("template").notNull(),
+    aspect: text("aspect").$type<"9:16" | "16:9">().default("9:16").notNull(),
+    status: text("status").$type<"queued" | "rendering" | "done" | "failed">().default("queued").notNull(),
+    /** ReviewVideoProps as rendered: verbatim review text, authors, ratings, brand colour, aggregate. */
+    props: jsonb("props").$type<Record<string, unknown>>().notNull(),
+    reviewIds: jsonb("review_ids").$type<string[]>().default([]).notNull(),
+    /** The owner confirmed they may use these reviews in marketing. Required to create a video. */
+    rightsConfirmedAt: timestamp("rights_confirmed_at", { withTimezone: true }).notNull(),
+    creditsUsed: integer("credits_used").default(1).notNull(),
+    jobId: uuid("job_id").references(() => jobs.id, { onDelete: "set null" }),
+    outputUrl: text("output_url"),
+    durationSeconds: integer("duration_seconds"),
+    renderMs: integer("render_ms"),
+    error: text("error"),
+    /** Owner deleted a finished video; the row stays so its credit is still counted. */
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+  },
+  (table) => [index("review_videos_space_created_idx").on(table.spaceId, table.createdAt)]
 );
