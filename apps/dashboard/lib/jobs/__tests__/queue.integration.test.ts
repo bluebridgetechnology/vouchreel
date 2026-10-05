@@ -13,9 +13,11 @@ run("job queue (postgres)", () => {
   let db: typeof import("@/lib/db").db;
   let jobs: typeof import("@/lib/db/schema").jobs;
   let pool: { end: () => Promise<void> } | undefined;
+  let releaseLock: (() => Promise<void>) | undefined;
 
   beforeAll(async () => {
     process.env.DATABASE_URL = url;
+    releaseLock = await (await import("@/lib/test/db-lock")).acquireTestDbLock(url!);
     queue = await import("../queue");
     ({ db } = await import("@/lib/db"));
     ({ jobs } = await import("@/lib/db/schema"));
@@ -29,6 +31,7 @@ run("job queue (postgres)", () => {
   afterAll(async () => {
     await db.delete(jobs);
     await pool?.end();
+    await releaseLock?.();
   });
 
   it("claims each job exactly once across concurrent workers", async () => {

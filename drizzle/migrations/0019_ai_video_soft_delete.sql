@@ -1,0 +1,1 @@
+ALTER TABLE "generated_videos" ADD COLUMN "deleted_at" timestamp with time zone;

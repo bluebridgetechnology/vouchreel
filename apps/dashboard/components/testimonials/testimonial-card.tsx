@@ -4,6 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 
 export interface TestimonialItem {
   id: string;
@@ -31,6 +32,7 @@ interface TestimonialCardProps {
   onToggleActive: (t: TestimonialItem) => void;
   onExportSocial?: (t: TestimonialItem) => void;
   onManageTranslations?: (t: TestimonialItem) => void;
+  onGenerateVideo?: (t: TestimonialItem) => void;
 }
 
 export function TestimonialCard({
@@ -40,6 +42,7 @@ export function TestimonialCard({
   onToggleActive,
   onExportSocial,
   onManageTranslations,
+  onGenerateVideo,
 }: TestimonialCardProps) {
   const {
     attributes,
@@ -225,6 +228,17 @@ export function TestimonialCard({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
                 Export for social
+              </button>
+            )}
+            {testimonial.platform === "text" && testimonial.quote && onGenerateVideo && (
+              <button
+                type="button"
+                onClick={() => onGenerateVideo(testimonial)}
+                className={buttonVariants({ variant: "ghost-brand", size: "sm" })}
+                title="Turn this written testimonial into a narrated video"
+              >
+                <Icon name="magic-stick-3" size="sm" />
+                AI video
               </button>
             )}
             {onManageTranslations && (

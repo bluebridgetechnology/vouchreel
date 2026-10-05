@@ -24,6 +24,7 @@ import {
 import { AddTestimonialDialog } from "@/components/testimonials/add-testimonial-dialog";
 import { EditTestimonialDialog } from "@/components/testimonials/edit-testimonial-dialog";
 import { SocialExportModal } from "@/components/social/social-export-modal";
+import { AiVideoModal } from "@/components/ai-video/ai-video-modal";
 import { TranslationsModal } from "@/components/testimonials/translations-modal";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -46,6 +47,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
   const [editingTestimonial, setEditingTestimonial] = useState<TestimonialItem | null>(null);
   const [deletingTestimonial, setDeletingTestimonial] = useState<TestimonialItem | null>(null);
   const [exportingTestimonial, setExportingTestimonial] = useState<TestimonialItem | null>(null);
+  const [aiVideoTestimonial, setAiVideoTestimonial] = useState<TestimonialItem | null>(null);
   const [translatingTestimonial, setTranslatingTestimonial] = useState<TestimonialItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
@@ -314,6 +316,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
                   onDelete={openDeleteDialog}
                   onToggleActive={handleToggleActive}
                   onExportSocial={(t) => setExportingTestimonial(t)}
+                  onGenerateVideo={(t) => setAiVideoTestimonial(t)}
                   onManageTranslations={(t) => setTranslatingTestimonial(t)}
                 />
               ))}
@@ -354,6 +357,15 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
           testimonial={exportingTestimonial}
           isOpen={true}
           onClose={() => setExportingTestimonial(null)}
+        />
+      )}
+
+      {/* AI video from a written testimonial */}
+      {aiVideoTestimonial && (
+        <AiVideoModal
+          spaceId={spaceId}
+          testimonial={aiVideoTestimonial}
+          onClose={() => setAiVideoTestimonial(null)}
         />
       )}
 

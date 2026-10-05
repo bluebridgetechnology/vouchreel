@@ -1163,6 +1163,8 @@ export const generatedVideos = pgTable(
     outputUrl: text("output_url"),
     durationSeconds: integer("duration_seconds"),
     error: text("error"),
+    /** Owner deleted a finished video. The row stays so the credit it used is still counted. */
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
   },

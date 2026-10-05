@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { apiError } from "@/lib/api/errors";
 import { aiVideoErrorResponse, requireSpaceOwner } from "@/lib/ai-video/access";
 import { getAiVideoCredits } from "@/lib/ai-video/credits";
 import { AI_VIDEO_OPTIONS, createDraft, findActiveConsent } from "@/lib/ai-video/generate";
+import { isTtsConfigured } from "@/lib/ai-video/tts";
 import { diffRemovedWords } from "@/lib/ai-video/trim";
 import { db } from "@/lib/db";
 import { generatedVideos } from "@/lib/db/schema";
@@ -21,17 +22,22 @@ export async function GET(_request: Request, { params }: RouteParams) {
 
   try {
     const [videos, consent, credits] = await Promise.all([
-      db.select().from(generatedVideos).where(eq(generatedVideos.testimonialId, tid)).orderBy(desc(generatedVideos.createdAt)),
+      db
+        .select()
+        .from(generatedVideos)
+        .where(and(eq(generatedVideos.testimonialId, tid), eq(generatedVideos.spaceId, spaceId), isNull(generatedVideos.deletedAt)))
+        .orderBy(desc(generatedVideos.createdAt)),
       findActiveConsent(tid),
       getAiVideoCredits(access.ownerId),
     ]);
-    const owned = videos.filter((v) => v.spaceId === spaceId);
     return NextResponse.json({
-      videos: owned.map((v) => ({
+      videos: videos.map((v) => ({
         ...v,
         diff: v.scriptTrimmed ? diffRemovedWords(v.scriptOriginal, v.scriptTrimmed) : null,
       })),
       consent: Boolean(consent),
+      /** False when no narration provider is configured, so the UI can say so instead of failing on click. */
+      narrationAvailable: isTtsConfigured(),
       credits: { ...credits, limit: Number.isFinite(credits.limit) ? credits.limit : null },
       options: AI_VIDEO_OPTIONS,
     });
