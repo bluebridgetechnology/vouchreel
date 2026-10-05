@@ -1,20 +1,19 @@
 import React from "react";
-import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
-import { Avatar, Orb, Stars, WordReveal, fitFontSize, useLayout, useOutro, useSpringIn } from "../components/primitives";
+import { AbsoluteFill, useVideoConfig } from "remotion";
+import { Backdrop } from "../components/Backdrop";
 import { SourceMark } from "../components/SourceMark";
-import { FONT_SANS, brandForWhiteText, darken, lighten } from "../lib/theme";
+import { Avatar, Stars, WordReveal, fitFontSize, useLayout, useOutro, useSpringIn } from "../components/primitives";
+import { FONT_SANS } from "../lib/theme";
+import { tint } from "../lib/palette";
+import { usePalette } from "../lib/usePalette";
 import type { ReviewVideoProps } from "../types";
 
-/** Bold brand gradient, stars pop in, the review types out word by word. */
-export const Spotlight: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
-  const review = reviews[0];
+/** The review types out word by word over a bold background; stars pop in. */
+export const Spotlight: React.FC<ReviewVideoProps> = (props) => {
+  const review = props.reviews[0];
+  const palette = usePalette(props, "gradient");
   const { u, portrait } = useLayout();
   const { durationInFrames } = useVideoConfig();
-  const frame = useCurrentFrame();
-
-  const base = brandForWhiteText(brand);
-  const angle = 135 + interpolate(frame, [0, durationInFrames], [0, 40]);
-  const background = `linear-gradient(${angle}deg, ${base} 0%, ${darken(base, 0.55)} 100%)`;
 
   const cardIn = useSpringIn(0, { damping: 18, stiffness: 90 });
   const wordsPerSecond = 4.6;
@@ -24,9 +23,8 @@ export const Spotlight: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
   const fontSize = fitFontSize(review.text, portrait) * u;
 
   return (
-    <AbsoluteFill style={{ background, fontFamily: FONT_SANS, opacity: outro }}>
-      <Orb size={900 * u} color="rgba(255,255,255,0.07)" top={-280 * u} right={-260 * u} />
-      <Orb size={700 * u} color="rgba(0,0,0,0.14)" bottom={-240 * u} left={-220 * u} phase={2} />
+    <AbsoluteFill style={{ fontFamily: FONT_SANS, opacity: outro }}>
+      <Backdrop palette={palette} secondary={props.theme?.secondary} />
 
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: (portrait ? 90 : 160) * u }}>
         <div
@@ -38,18 +36,18 @@ export const Spotlight: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 22 * u, marginBottom: 44 * u }}>
-            <SourceMark source={review.source} u={u} onDark />
-            <Stars rating={review.rating} size={54 * u} />
+            <SourceMark source={review.source} u={u} onDark={palette.style !== "light"} textColor={palette.text} />
+            <Stars rating={review.rating} size={54 * u} color={palette.star} emptyColor={tint(palette, 0.25)} />
           </div>
 
-          <div style={{ fontSize: 200 * u, lineHeight: 0.6, height: 100 * u, color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>“</div>
+          <div style={{ fontSize: 200 * u, lineHeight: 0.6, height: 100 * u, color: tint(palette, 0.35), fontWeight: 600 }}>“</div>
 
           <WordReveal
             text={review.text}
             startSeconds={1.2}
             wordsPerSecond={wordsPerSecond}
             gap={fontSize * 0.26}
-            style={{ color: "#ffffff", fontSize, lineHeight: 1.28, fontWeight: 600, letterSpacing: -0.5 }}
+            style={{ color: palette.text, fontSize, lineHeight: 1.28, fontWeight: 600, letterSpacing: -0.5 }}
           />
 
           <div
@@ -62,10 +60,10 @@ export const Spotlight: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
               transform: `translateY(${(1 - authorIn) * 40 * u}px)`,
             }}
           >
-            <Avatar name={review.author} size={92 * u} background="rgba(255,255,255,0.94)" color={base} />
+            <Avatar name={review.author} size={92 * u} background={palette.badgeBg} color={palette.badgeText} />
             <div>
-              <div style={{ color: "#ffffff", fontSize: 42 * u, fontWeight: 600 }}>{review.author}</div>
-              {review.date && <div style={{ color: lighten(base, 0.7), fontSize: 30 * u, marginTop: 4 * u }}>{review.date}</div>}
+              <div style={{ color: palette.text, fontSize: 42 * u, fontWeight: 600 }}>{review.author}</div>
+              {review.date && <div style={{ color: palette.textMuted, fontSize: 30 * u, marginTop: 4 * u }}>{review.date}</div>}
             </div>
           </div>
         </div>

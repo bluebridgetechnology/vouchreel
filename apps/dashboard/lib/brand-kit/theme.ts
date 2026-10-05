@@ -3,6 +3,9 @@
  * widget preview) and server code can share them.
  */
 
+/** Background styles for review videos (see packages/video). */
+export type VideoStyleValue = "gradient" | "solid" | "aurora" | "dots" | "light" | "dark";
+
 /** The editable fields of a kit, as the UI and API use them. */
 export interface BrandKitValues {
   primaryColor: string;
@@ -11,6 +14,10 @@ export interface BrandKitValues {
   fontMode: "default" | "inherit" | "custom";
   fontFamily: string | null;
   inheritTextColor: boolean;
+  /** Default background style for review videos; null = each template's own default. */
+  videoStyle: VideoStyleValue | null;
+  /** Optional second colour for review video backgrounds. */
+  videoSecondaryColor: string | null;
 }
 
 /**

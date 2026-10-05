@@ -1,6 +1,9 @@
-import { ASPECTS, FPS, type Aspect, type ReviewVideoProps, type VideoReview } from "./types";
+import { ASPECTS, BACKGROUND_STYLES, FPS, type Aspect, type BackgroundStyle, type ReviewVideoProps, type VideoReview } from "./types";
 
 export * from "./types";
+export { derivePalette, auroraBlobs, tint, type Palette, type PaletteOptions } from "./lib/palette";
+export { swatchFor, type Swatch } from "./lib/swatch";
+export { SAMPLE_PROPS } from "./sample";
 
 /**
  * Template catalogue. This file is imported by the dashboard (including the browser), so it
@@ -14,6 +17,8 @@ export interface TemplateInfo {
   description: string;
   /** How many reviews the template shows. */
   reviews: { min: number; max: number };
+  /** The background style used when the customer has not chosen one. */
+  defaultStyle: BackgroundStyle;
   /** Needs provider-reported totals (rating and count) to show. */
   requiresAggregate: boolean;
   /** Longest single review (characters) that still reads comfortably. Reviews are never trimmed. */
@@ -38,6 +43,7 @@ export const RATING_INTRO_SECONDS = 3.4;
 export const TEMPLATES: TemplateInfo[] = [
   {
     id: "spotlight",
+    defaultStyle: "gradient",
     label: "Spotlight",
     description: "Bold brand gradient. Stars pop in, the review types out word by word.",
     reviews: { min: 1, max: 1 },
@@ -47,6 +53,7 @@ export const TEMPLATES: TemplateInfo[] = [
   },
   {
     id: "minimal",
+    defaultStyle: "light",
     label: "Minimal",
     description: "Clean light layout with an elegant serif quote. Suits premium brands.",
     reviews: { min: 1, max: 1 },
@@ -56,6 +63,7 @@ export const TEMPLATES: TemplateInfo[] = [
   },
   {
     id: "dark-card",
+    defaultStyle: "dark",
     label: "Dark card",
     description: "Dark theme with a glowing accent and a floating review card.",
     reviews: { min: 1, max: 1 },
@@ -65,6 +73,7 @@ export const TEMPLATES: TemplateInfo[] = [
   },
   {
     id: "stack",
+    defaultStyle: "gradient",
     label: "Review stack",
     description: "3 to 5 short reviews appearing one after another, like a wall of love.",
     reviews: { min: 3, max: 5 },
@@ -75,6 +84,7 @@ export const TEMPLATES: TemplateInfo[] = [
   },
   {
     id: "rating-spotlight",
+    defaultStyle: "gradient",
     label: "Rating spotlight",
     description: "Opens on the overall rating and review count, then one standout review.",
     reviews: { min: 1, max: 1 },
@@ -85,6 +95,29 @@ export const TEMPLATES: TemplateInfo[] = [
 ];
 
 export const getTemplate = (id: string) => TEMPLATES.find((t) => t.id === id);
+
+export interface StyleInfo {
+  id: BackgroundStyle;
+  label: string;
+  description: string;
+}
+
+/** Background styles every template supports. Colours always come from the brand colour. */
+export const STYLES: StyleInfo[] = [
+  { id: "gradient", label: "Gradient", description: "Your colour deepening into a richer shade." },
+  { id: "solid", label: "Solid", description: "One flat brand colour with soft shapes." },
+  { id: "aurora", label: "Aurora", description: "Soft blurred glows of your colour drifting around." },
+  { id: "dots", label: "Dots", description: "A subtle dot pattern over your colour." },
+  { id: "light", label: "Light", description: "Clean paper tinted with your colour." },
+  { id: "dark", label: "Dark", description: "Near-black with a glow of your colour." },
+];
+
+export const isBackgroundStyle = (value: unknown): value is BackgroundStyle => BACKGROUND_STYLES.includes(value as BackgroundStyle);
+
+/** The style a video will actually use: the customer's choice, else the template's default. */
+export function effectiveStyle(templateId: string, theme?: ReviewVideoProps["theme"]): BackgroundStyle {
+  return theme?.style ?? getTemplate(templateId)?.defaultStyle ?? "gradient";
+}
 
 export const durationInFrames = (templateId: string, props: ReviewVideoProps): number => {
   const template = getTemplate(templateId);
@@ -110,9 +143,11 @@ export function validateProps(templateId: string, props: ReviewVideoProps): stri
   if (!template) return [`Unknown template "${templateId}".`];
 
   const problems: string[] = [];
-  const { reviews, brand, aggregate } = props;
+  const { reviews, brand, aggregate, theme } = props;
 
   if (!HEX.test(brand)) problems.push("Brand colour must be a hex colour like #cf3d0b.");
+  if (theme?.style !== undefined && !isBackgroundStyle(theme.style)) problems.push(`Unknown background style "${String(theme.style)}".`);
+  if (theme?.secondary !== undefined && !HEX.test(theme.secondary)) problems.push("The second colour must be a hex colour like #1d4ed8.");
   if (!Array.isArray(reviews) || reviews.length < template.reviews.min || reviews.length > template.reviews.max) {
     const range = template.reviews.min === template.reviews.max ? `${template.reviews.min}` : `${template.reviews.min} to ${template.reviews.max}`;
     problems.push(`${template.label} needs ${range} review${template.reviews.max === 1 ? "" : "s"}.`);

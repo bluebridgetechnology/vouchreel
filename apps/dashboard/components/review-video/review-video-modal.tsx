@@ -10,6 +10,10 @@ import { Icon } from "@/components/ui/icon";
 import { inputClass } from "@/components/ui/input";
 import { ModalOverlay } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
+import { VideoStylePicker } from "@/components/brand/video-style-picker";
+import { VideoPreview } from "@/components/review-video/video-preview";
+import { previewProps } from "@/lib/review-video/preview";
+import { STYLES, type BackgroundStyle } from "@vouchreel/video";
 import { toggleStyle } from "@/components/ui/toggle";
 import { summarizeCredits, type CreditsView } from "@/lib/ai-video/ui-state";
 import {
@@ -38,6 +42,9 @@ interface Loaded {
   templates: TemplateView[];
   credits: CreditsView;
   defaultBrand: string;
+  /** The brand kit's video defaults, shown as the meaning of "brand default". */
+  brandStyle: BackgroundStyle | null;
+  brandSecondary: string | null;
 }
 
 const SOURCE_NAMES = { google: "Google", trustpilot: "Trustpilot" } as const;
@@ -60,6 +67,9 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
   const [aspect, setAspect] = useState<"9:16" | "16:9">("9:16");
   const [selected, setSelected] = useState<string[]>([]);
   const [brand, setBrand] = useState(DEFAULT_BRAND_HEX);
+  // null = the brand kit's default style; secondary: undefined = the brand default, null = none, string = this colour
+  const [style, setStyle] = useState<BackgroundStyle | null>(null);
+  const [secondary, setSecondary] = useState<string | null | undefined>(undefined);
   const [rights, setRights] = useState(false);
   const [creating, setCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -105,6 +115,13 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
   );
   const check = template ? checkSelection(template, selected, rights) : null;
   const seconds = data && template ? estimateSeconds(template, picked, data.stats) : null;
+  const livePreview = useMemo(
+    () =>
+      data && template
+        ? previewProps({ template, picked, stats: data.stats, brand, style, brandStyle: data.brandStyle, secondary, brandSecondary: data.brandSecondary })
+        : null,
+    [data, template, picked, brand, style, secondary],
+  );
   const blocked = data && template ? templateBlockedReason(template, data.stats, data.reviews) : null;
 
   function chooseTemplate(next: TemplateView) {
@@ -122,7 +139,15 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ template: template.id, aspect, reviewIds: selected, brandColor: brand, rightsConfirmed: rights }),
+        body: JSON.stringify({
+          template: template.id,
+          aspect,
+          reviewIds: selected,
+          brandColor: brand,
+          ...(style ? { style } : {}),
+          ...(secondary !== undefined ? { secondaryColor: secondary } : {}),
+          rightsConfirmed: rights,
+        }),
       });
       if (!res.ok) throw new Error(await readError(res, "Could not create the video."));
       const { video } = (await res.json()) as { video: ReviewVideoView };
@@ -168,7 +193,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
 
   return (
     <ModalOverlay label="Review videos" onClose={onClose}>
-      <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-card border bg-surface shadow-float">
+      <div className="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-card border bg-surface shadow-float">
         <div className="flex items-start justify-between border-b px-6 py-4">
           <div>
             <div className="flex items-center gap-2">
@@ -226,7 +251,8 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                   </p>
                 </div>
               ) : (
-                <>
+                <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_250px]">
+                  <div className="min-w-0 space-y-6">
                   {actionError && (
                     <p role="alert" className="rounded-card bg-danger-soft p-3.5 text-xs text-danger-foreground">
                       {actionError}
@@ -291,9 +317,63 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                         <input id="rv-brand" type="color" value={brand} onChange={(e) => setBrand(e.target.value)} className="size-10 shrink-0 cursor-pointer rounded-control border bg-surface p-1" aria-label="Brand colour" />
                         <input value={brand} onChange={(e) => setBrand(e.target.value)} maxLength={7} aria-label="Brand colour hex" className={cn(inputClass, "w-28 font-mono text-xs")} />
                       </div>
-                      <p className="text-xs text-text-muted">Very light colours are darkened automatically so the text stays readable.</p>
+                      <p className="text-xs text-text-muted">The text colour adjusts automatically, so it stays easy to read on any colour.</p>
                     </div>
                   </div>
+
+                  <fieldset className="space-y-3">
+                    <legend className="text-xs font-medium text-text">Background</legend>
+                    <VideoStylePicker
+                      label="Background style"
+                      brand={brand}
+                      secondary={secondary === undefined ? data.brandSecondary : secondary}
+                      value={style}
+                      onChange={setStyle}
+                      defaultOption={{
+                        title: data.brandStyle ? `Brand default: ${STYLES.find((s) => s.id === data.brandStyle)?.label ?? data.brandStyle}` : "Template's own look",
+                        hint: data.brandStyle ? "Set on your Brand page" : "Each template keeps its signature look",
+                      }}
+                    />
+                    {(style ?? data.brandStyle) !== "light" && (style ?? data.brandStyle) !== "dark" && (
+                      <div className="space-y-1.5">
+                        <span id="rv-second-label" className="text-xs font-medium text-text">
+                          Second colour
+                        </span>
+                        <div role="radiogroup" aria-labelledby="rv-second-label" className="flex flex-wrap items-center gap-2">
+                          {(
+                            [
+                              ["default", "Brand default"],
+                              ["none", "None"],
+                              ["custom", "Pick a colour"],
+                            ] as const
+                          ).map(([mode, label]) => {
+                            const active = mode === "default" ? secondary === undefined : mode === "none" ? secondary === null : typeof secondary === "string";
+                            return (
+                              <button
+                                key={mode}
+                                type="button"
+                                role="radio"
+                                aria-checked={active}
+                                onClick={() => setSecondary(mode === "default" ? undefined : mode === "none" ? null : (data.brandSecondary ?? brand))}
+                                className={cn("rounded-control border px-3 py-1.5 text-xs font-medium", toggleStyle("choice", active))}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                          {typeof secondary === "string" && (
+                            <input
+                              type="color"
+                              value={/^#[0-9a-fA-F]{6}$/.test(secondary) ? secondary : brand}
+                              onChange={(e) => setSecondary(e.target.value)}
+                              className="size-9 cursor-pointer rounded-control border bg-surface p-1"
+                              aria-label="Second colour"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </fieldset>
 
                   <fieldset className="space-y-2">
                     <legend className="text-xs font-medium text-text">
@@ -365,7 +445,19 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                     </Button>
                   </div>
                   {credits.blocked && <p className="text-xs text-danger-foreground">{credits.text}</p>}
-                </>
+                  </div>
+
+                  {/* Live preview: the real template, in the colours and style chosen, updating as you choose */}
+                  {livePreview && (
+                    <aside className="md:sticky md:top-0 md:self-start" aria-label="Live preview">
+                      <p className="mb-2 text-xs font-medium text-text">Live preview</p>
+                      <VideoPreview templateId={template.id} aspect={aspect} props={livePreview.props} />
+                      <p className="mt-2 text-xs text-text-muted">
+                        {livePreview.usingSample ? "Showing sample text. Pick a review to see yours." : "Showing your selected review."} Press play to see it animate.
+                      </p>
+                    </aside>
+                  )}
+                </div>
               )}
             </>
           )}

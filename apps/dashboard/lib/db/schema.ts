@@ -1231,6 +1231,10 @@ export const brandKits = pgTable("brand_kits", {
   fontFamily: text("font_family"),
   /** Use the host site's text colour when it stays readable on the widget background. */
   inheritTextColor: boolean("inherit_text_color").default(false).notNull(),
+  /** Default background style for review videos. Null = each template's own default. */
+  videoStyle: text("video_style").$type<"gradient" | "solid" | "aurora" | "dots" | "light" | "dark">(),
+  /** Optional second colour for review video backgrounds. */
+  videoSecondaryColor: text("video_secondary_color"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

@@ -13,6 +13,8 @@ const kit = (over: Partial<BrandKitValues> = {}): BrandKitValues => ({
   fontMode: "inherit",
   fontFamily: null,
   inheritTextColor: false,
+  videoStyle: null,
+  videoSecondaryColor: null,
   ...over,
 });
 
@@ -126,5 +128,33 @@ describe("valuesToStore", () => {
   it("stores unset optional fields as null", () => {
     const stored = valuesToStore(brandKitSchema.parse({ primaryColor: "#cf3d0b", fontMode: "default", inheritTextColor: false }));
     expect(stored).toMatchObject({ accentColor: null, borderRadius: null, fontFamily: null });
+  });
+});
+
+describe("video style defaults", () => {
+  const base = { primaryColor: "#cf3d0b", fontMode: "inherit", inheritTextColor: false };
+
+  it("accepts every background style, or none (each template then uses its own default)", () => {
+    for (const videoStyle of ["gradient", "solid", "aurora", "dots", "light", "dark", null]) {
+      expect(brandKitSchema.safeParse({ ...base, videoStyle }).success, String(videoStyle)).toBe(true);
+    }
+    expect(brandKitSchema.safeParse({ ...base }).success).toBe(true);
+  });
+
+  it("rejects unknown styles and bad second colours; normalises a valid one", () => {
+    expect(brandKitSchema.safeParse({ ...base, videoStyle: "neon" }).success).toBe(false);
+    expect(brandKitSchema.safeParse({ ...base, videoSecondaryColor: "blue" }).success).toBe(false);
+    expect(brandKitSchema.parse({ ...base, videoSecondaryColor: "#ABC" }).videoSecondaryColor).toBe("#aabbcc");
+  });
+
+  it("stores the style, and drops a second colour that the light and dark styles ignore", () => {
+    const aurora = valuesToStore(brandKitSchema.parse({ ...base, videoStyle: "aurora", videoSecondaryColor: "#1d4ed8" }));
+    expect(aurora).toMatchObject({ videoStyle: "aurora", videoSecondaryColor: "#1d4ed8" });
+    const light = valuesToStore(brandKitSchema.parse({ ...base, videoStyle: "light", videoSecondaryColor: "#1d4ed8" }));
+    expect(light).toMatchObject({ videoStyle: "light", videoSecondaryColor: null });
+  });
+
+  it("no style stored means null (template default), not a made-up value", () => {
+    expect(valuesToStore(brandKitSchema.parse(base))).toMatchObject({ videoStyle: null, videoSecondaryColor: null });
   });
 });

@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/registry.ts",
     "./render": "./src/render.ts",
-    "./entry": "./src/entry.tsx"
+    "./entry": "./src/entry.tsx",
+    "./player": "./src/player.tsx"
   },
   "scripts": {
     "studio": "remotion studio src/entry.tsx",
@@ -22,6 +23,7 @@
     "@remotion/bundler": "4.0.532",
     "@remotion/cli": "4.0.532",
     "@remotion/fonts": "4.0.532",
+    "@remotion/player": "4.0.532",
     "@remotion/renderer": "4.0.532",
     "react": "*",
     "react-dom": "*",

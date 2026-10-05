@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { TEMPLATES, compositionId, durationInFrames, getTemplate, reviewFits, validateProps, type ReviewVideoProps } from "../registry";
+import { STYLES, TEMPLATES, compositionId, durationInFrames, effectiveStyle, getTemplate, isBackgroundStyle, reviewFits, validateProps, type ReviewVideoProps } from "../registry";
+import { BACKGROUND_STYLES } from "../types";
 import { SAMPLE_PROPS } from "../sample";
 import { TEMPLATE_COMPONENTS } from "../templates";
 
@@ -101,5 +102,36 @@ describe("reviewFits", () => {
     const text = "x".repeat(300);
     expect(reviewFits(getTemplate("spotlight")!, { text })).toBe(true);
     expect(reviewFits(getTemplate("stack")!, { text })).toBe(false);
+  });
+});
+
+describe("background styles", () => {
+  it("the catalogue lists every style exactly once", () => {
+    expect(STYLES.map((x) => x.id).sort()).toEqual([...BACKGROUND_STYLES].sort());
+  });
+
+  it("each template has a default style, and the customer's choice overrides it", () => {
+    expect(effectiveStyle("spotlight")).toBe("gradient");
+    expect(effectiveStyle("minimal")).toBe("light");
+    expect(effectiveStyle("dark-card")).toBe("dark");
+    expect(effectiveStyle("minimal", { style: "aurora" })).toBe("aurora");
+    expect(effectiveStyle("minimal", {})).toBe("light");
+    for (const t of TEMPLATES) expect(isBackgroundStyle(t.defaultStyle), t.id).toBe(true);
+  });
+
+  it("accepts every style on every template", () => {
+    for (const template of TEMPLATES) {
+      for (const style of BACKGROUND_STYLES) {
+        const sample = SAMPLE_PROPS[template.id];
+        expect(validateProps(template.id, { ...sample, theme: { style } }), `${template.id} ${style}`).toEqual([]);
+      }
+    }
+  });
+
+  it("rejects an unknown style and a bad second colour", () => {
+    const sample = SAMPLE_PROPS.spotlight;
+    expect(validateProps("spotlight", { ...sample, theme: { style: "neon" as never } })[0]).toMatch(/Unknown background style/);
+    expect(validateProps("spotlight", { ...sample, theme: { secondary: "blue" } })[0]).toMatch(/second colour/);
+    expect(validateProps("spotlight", { ...sample, theme: { secondary: "#1d4ed8" } })).toEqual([]);
   });
 });

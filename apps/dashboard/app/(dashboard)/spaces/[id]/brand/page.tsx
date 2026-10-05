@@ -6,6 +6,9 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { toggleStyle } from "@/components/ui/toggle";
+import { VideoStylePicker } from "@/components/brand/video-style-picker";
+import { VideoPreview } from "@/components/review-video/video-preview";
+import { SAMPLE_PROPS, TEMPLATES } from "@vouchreel/video";
 import { FormSkeleton, SkeletonRegion } from "@/components/ui/page-skeleton";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 import { DEFAULT_ACCENT_HEX, MIN_BUTTON_CONTRAST, contrastBetween, type BrandKitValues } from "@/lib/brand-kit/theme";
@@ -45,6 +48,7 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
   const [initial, setInitial] = useState<BrandKitValues | null>(null);
   const [draft, setDraft] = useState<BrandKitValues | null>(null);
   const [saving, setSaving] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState("spotlight");
 
   useEffect(() => {
     fetch(url)
@@ -81,9 +85,11 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
   const primaryValid = HEX.test(draft.primaryColor);
   const accentValid = !draft.accentColor || HEX.test(draft.accentColor);
   const fontValid = draft.fontMode !== "custom" || FONT_NAME.test(draft.fontFamily ?? "");
+  const secondaryValid = !draft.videoSecondaryColor || HEX.test(draft.videoSecondaryColor);
+  const secondaryIgnored = draft.videoStyle === "light" || draft.videoStyle === "dark";
   const buttonContrast = primaryValid && accentValid ? contrastBetween(draft.primaryColor, accent) : null;
   const lowContrast = buttonContrast !== null && buttonContrast < MIN_BUTTON_CONTRAST;
-  const canSave = dirty && primaryValid && accentValid && fontValid && !saving;
+  const canSave = dirty && primaryValid && accentValid && fontValid && secondaryValid && !saving;
 
   async function save() {
     if (!draft) return;
@@ -278,6 +284,60 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
             </div>
           </section>
 
+          {/* Review videos */}
+          <section className="space-y-4 rounded-card border bg-surface p-5" aria-labelledby="brand-video">
+            <div>
+              <h3 id="brand-video" className="text-sm font-medium text-text">
+                Review videos
+              </h3>
+              <p className="text-xs text-text-muted">
+                Your primary colour is the video background colour. Pick the look; you can change it for any single video. Text colour is chosen automatically so it is always easy
+                to read, even on light colours.
+              </p>
+            </div>
+
+            <VideoStylePicker
+              label="Video background style"
+              brand={draft.primaryColor}
+              secondary={draft.videoSecondaryColor}
+              value={draft.videoStyle}
+              onChange={(style) => set("videoStyle", style)}
+              defaultOption={{ title: "Each template's own", hint: "Every template keeps its signature look" }}
+            />
+
+            <div className="space-y-2 border-t pt-4">
+              <label htmlFor="brand-video-second" className="text-xs font-medium text-text">
+                Second colour (optional)
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="brand-video-second"
+                  type="color"
+                  value={draft.videoSecondaryColor && secondaryValid ? draft.videoSecondaryColor : primaryValid ? draft.primaryColor : DEFAULT_BRAND_HEX}
+                  onChange={(e) => set("videoSecondaryColor", e.target.value)}
+                  disabled={secondaryIgnored}
+                  className="size-10 shrink-0 cursor-pointer rounded-control border bg-surface p-1 disabled:opacity-50"
+                  aria-label="Second colour"
+                />
+                <input
+                  value={draft.videoSecondaryColor ?? ""}
+                  placeholder="None"
+                  onChange={(e) => set("videoSecondaryColor", e.target.value.trim() === "" ? null : e.target.value)}
+                  disabled={secondaryIgnored}
+                  maxLength={7}
+                  aria-label="Second colour hex"
+                  aria-invalid={!secondaryValid}
+                  className={cn(inputClass, "w-28 font-mono text-xs", !secondaryValid && "border-danger")}
+                />
+              </div>
+              <p className="text-xs text-text-muted">
+                {secondaryIgnored
+                  ? "Light and Dark backgrounds are built from your primary colour only."
+                  : "The far end of the gradient and one of the aurora glows. Leave empty to use a deeper shade of your primary colour."}
+              </p>
+            </div>
+          </section>
+
           <div className="flex items-center gap-3">
             <Button type="button" onClick={save} loading={saving} disabled={!canSave}>
               Save brand settings
@@ -324,6 +384,43 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
               </p>
             </div>
 
+            <div className="rounded-card border bg-surface-sunken/50 p-5">
+              <p className="mb-3 text-xs font-medium text-text">Video preview</p>
+              <div role="radiogroup" aria-label="Preview template" className="mb-3 flex flex-wrap gap-1.5">
+                {TEMPLATES.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={previewTemplate === t.id}
+                    onClick={() => setPreviewTemplate(t.id)}
+                    className={cn("rounded-control border px-2.5 py-1 text-2xs font-medium", toggleStyle("choice", previewTemplate === t.id))}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              <div className="mx-auto max-w-[210px]">
+                <VideoPreview
+                  templateId={previewTemplate}
+                  aspect="9:16"
+                  props={{
+                    ...SAMPLE_PROPS[previewTemplate],
+                    brand: primaryValid ? draft.primaryColor : DEFAULT_BRAND_HEX,
+                    ...(draft.videoStyle || (draft.videoSecondaryColor && secondaryValid)
+                      ? {
+                          theme: {
+                            ...(draft.videoStyle ? { style: draft.videoStyle } : {}),
+                            ...(draft.videoSecondaryColor && secondaryValid ? { secondary: draft.videoSecondaryColor } : {}),
+                          },
+                        }
+                      : {}),
+                  }}
+                />
+              </div>
+              <p className="mt-3 text-xs text-text-muted">The real template with sample text, in your colour and style. Press play to see it animate.</p>
+            </div>
+
             <div className="rounded-card border bg-surface p-5 text-xs text-text-muted">
               <p className="mb-2 text-xs font-medium text-text">Where this applies</p>
               <ul className="space-y-1.5">
@@ -331,7 +428,7 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
                   <span className="font-medium text-text">Widget:</span> colours, corner radius, fonts and text colour.
                 </li>
                 <li>
-                  <span className="font-medium text-text">Review videos:</span> the primary colour is the starting brand colour.
+                  <span className="font-medium text-text">Review videos:</span> the primary colour and the style you pick above are the default for every new video.
                 </li>
                 <li>
                   <span className="font-medium text-text">Light or dark mode</span> stays in the Widget tab.

@@ -10,6 +10,12 @@ import { SOURCE_LABELS, type ReviewSource } from "../types";
  * coloured or dark background they sit on a white chip, so they keep their own colours.
  */
 
+/**
+ * Bundlers differ on what `import x from "./a.svg"` returns: Remotion's webpack gives the URL as a
+ * string, while Next.js (the dashboard preview) gives an object with a `src`.
+ */
+const assetUrl = (asset: unknown): string => (typeof asset === "string" ? asset : (asset as { src: string }).src);
+
 /** Intrinsic proportions of the two SVG files (viewBox width / height). */
 export const GOOGLE_ASPECT = 268.1522 / 273.8827;
 export const TRUSTPILOT_ASPECT = 1132.8 / 278.2;
@@ -48,9 +54,9 @@ export function SourceMark({
   const height = 38 * u * size;
   const logo =
     source === "google" ? (
-      <Img src={googleIcon} alt="Google" style={{ height, width: height * GOOGLE_ASPECT, display: "block" }} />
+      <Img src={assetUrl(googleIcon)} alt="Google" style={{ height, width: height * GOOGLE_ASPECT, display: "block" }} />
     ) : (
-      <Img src={trustpilotLogo} alt="Trustpilot" style={{ height: height * 1.25, width: height * 1.25 * TRUSTPILOT_ASPECT, display: "block" }} />
+      <Img src={assetUrl(trustpilotLogo)} alt="Trustpilot" style={{ height: height * 1.25, width: height * 1.25 * TRUSTPILOT_ASPECT, display: "block" }} />
     );
 
   return (
