@@ -15,6 +15,7 @@
     "preview": "tsx scripts/preview.ts",
     "bundle": "tsx scripts/bundle.ts",
     "test": "vitest run",
+    "test:render": "VIDEO_RENDER_TESTS=1 vitest run render.integration",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
