@@ -1,6 +1,7 @@
 import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
-import { Avatar, Orb, SourceBadge, Stars, WordReveal, fitFontSize, useLayout, useOutro, useSpringIn } from "../components/primitives";
+import { Avatar, Orb, Stars, WordReveal, fitFontSize, useLayout, useOutro, useSpringIn } from "../components/primitives";
+import { SourceMark } from "../components/SourceMark";
 import { FONT_SANS, brandForWhiteText, darken, lighten } from "../lib/theme";
 import type { ReviewVideoProps } from "../types";
 
@@ -37,7 +38,7 @@ export const Spotlight: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 22 * u, marginBottom: 44 * u }}>
-            <SourceBadge source={review.source} u={u} background="rgba(255,255,255,0.18)" color="#ffffff" />
+            <SourceMark source={review.source} u={u} onDark />
             <Stars rating={review.rating} size={54 * u} />
           </div>
 

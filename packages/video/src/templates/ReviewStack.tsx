@@ -1,6 +1,7 @@
 import React from "react";
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { Avatar, Orb, SourceBadge, Stars, WordReveal, clamped, useFadeIn, useLayout, useOutro } from "../components/primitives";
+import { Avatar, Orb, Stars, WordReveal, clamped, useFadeIn, useLayout, useOutro } from "../components/primitives";
+import { SourceMark } from "../components/SourceMark";
 import { STACK_HEADER_SECONDS, stackItemSeconds } from "../registry";
 import { FONT_SANS, brandForWhiteText, darken, mix } from "../lib/theme";
 import type { ReviewVideoProps } from "../types";
@@ -90,7 +91,7 @@ export const ReviewStack: React.FC<ReviewVideoProps> = ({ reviews, brand }) => {
                 <div style={{ opacity: interpolate(shift, [0, 0.45], [1, 0], clamped) }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 30 * u }}>
                   <Stars rating={review.rating} size={42 * u} emptyColor="rgba(0,0,0,0.12)" startSeconds={starts[i] + 0.2} />
-                  <SourceBadge source={review.source} u={u * 0.85} background={`${base}18`} color={base} />
+                  <SourceMark source={review.source} u={u * 0.85} onDark={false} />
                 </div>
                 <WordReveal
                   text={review.text}
