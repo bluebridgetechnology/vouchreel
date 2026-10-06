@@ -4,6 +4,7 @@ import { generatedVideos, reviewVideos, spaces, testimonialConsents, testimonial
 import { AI_VIDEO_CONSENT_VERSION } from "@/lib/ai-video/consent";
 import { notifySpaceOwner } from "@/lib/notifications/service";
 import { getStorage } from "@/lib/storage";
+import { storageKeyFromUrl } from "@/lib/storage/video-files";
 import { likeLiteral } from "@/lib/admin/queries";
 
 /**
@@ -19,8 +20,6 @@ export type ModerationFilter = "all" | "live" | "removed" | "attention";
 export const MODERATION_PAGE_SIZE = 25;
 export const REASON_MIN = 5;
 export const REASON_MAX = 500;
-
-const KEY_PREFIX: Record<ModerationKind, string> = { ai: "ai-videos/", review: "review-videos/" };
 
 export interface ModerationItem {
   kind: ModerationKind;
@@ -59,21 +58,6 @@ export interface ModerationQuery {
 }
 
 const shorten = (text: string, max = 280) => (text.length > max ? `${text.slice(0, max).trimEnd()}…` : text);
-
-/** The storage key inside a public file URL, or null when the URL does not look like ours. */
-export function storageKeyFromUrl(url: string, kind: ModerationKind): string | null {
-  let pathname: string;
-  try {
-    pathname = decodeURIComponent(new URL(url).pathname);
-  } catch {
-    return null;
-  }
-  const i = pathname.indexOf(KEY_PREFIX[kind]);
-  if (i === -1) return null;
-  const key = pathname.slice(i);
-  if (key.split("/").some((part) => part === ".." || part === "." || part === "")) return null;
-  return key;
-}
 
 /** Text of the reviews a review video shows, from the exact props that were rendered. */
 function reviewContent(props: Record<string, unknown>): { content: string; attribution: string | null } {

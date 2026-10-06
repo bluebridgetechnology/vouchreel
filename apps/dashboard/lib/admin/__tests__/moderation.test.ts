@@ -4,7 +4,7 @@ vi.mock("@/lib/db", () => ({ db: {} }));
 vi.mock("@/lib/storage", () => ({ getStorage: vi.fn() }));
 vi.mock("@/lib/notifications/service", () => ({ notifySpaceOwner: vi.fn() }));
 
-import { storageKeyFromUrl } from "../moderation";
+import { storageKeyFromUrl } from "@/lib/storage/video-files";
 
 describe("storageKeyFromUrl", () => {
   it("finds the key in S3, CDN and local-upload URLs", () => {

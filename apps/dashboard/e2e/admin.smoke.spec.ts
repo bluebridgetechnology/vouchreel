@@ -202,7 +202,7 @@ test.describe("platform admin", () => {
     await expect(page.getByText(/Took down review video \(spotlight\)/)).toBeVisible();
   });
 
-  test("moderation: the owner sees that a video was removed, and why", async ({ playwright, baseURL }) => {
+  test("moderation: the owner sees why a video was removed, and deleting a video deletes its file", async ({ playwright, baseURL }) => {
     const base = baseURL!;
     const api = await playwright.request.newContext({ baseURL: base });
     const signIn = await api.post("/api/auth/sign-in/email", { headers: { origin: base }, data: { email: USERS.customer.email, password: PASSWORD } });
@@ -219,6 +219,32 @@ test.describe("platform admin", () => {
     expect(data.videos).toHaveLength(1);
     expect(data.videos[0]).toMatchObject({ status: "done", outputUrl: null, moderationReason: REASON_TEXT });
     expect(data.videos[0].moderatedAt).toBeTruthy();
+
+    // When the owner deletes a finished video the stored file goes too, not only the link in the database.
+    // Storage failing must change nothing, so the owner can try again.
+    const ada = list.find((t) => t.customerName === "Ada Lovelace")!;
+    const before = (await (await api.get(`/api/spaces/${space.id}/testimonials/${ada.id}/ai-video`)).json()).videos[0];
+    expect(before).toMatchObject({ status: "done" });
+    expect(before.outputUrl).toContain("/ai-videos/");
+    const deletedKeys = async () => (await (await api.get(`${STORAGE_ORIGIN}/__deleted`)).json()) as string[];
+    const filesBefore = (await deletedKeys()).length;
+
+    await api.post(`${STORAGE_ORIGIN}/__fail?on=1`);
+    const failed = await api.delete(`/api/spaces/${space.id}/ai-videos/${before.id}`, { headers: { origin: base } });
+    expect(failed.status()).toBe(502);
+    expect((await failed.json()).error.message).toContain("Nothing was changed");
+    const stillThere = (await (await api.get(`/api/spaces/${space.id}/testimonials/${ada.id}/ai-video`)).json()).videos;
+    expect(stillThere).toHaveLength(1);
+    expect(stillThere[0].outputUrl).toBe(before.outputUrl);
+    expect(await deletedKeys()).toHaveLength(filesBefore);
+
+    await api.post(`${STORAGE_ORIGIN}/__fail?on=0`);
+    const ok = await api.delete(`/api/spaces/${space.id}/ai-videos/${before.id}`, { headers: { origin: base } });
+    expect(ok.status()).toBe(200);
+    const keys = await deletedKeys();
+    expect(keys).toHaveLength(filesBefore + 1);
+    expect(keys.at(-1)).toBe(`ai-videos/${space.id}/${ada.id}/${before.id}.mp4`);
+    expect((await (await api.get(`/api/spaces/${space.id}/testimonials/${ada.id}/ai-video`)).json()).videos).toHaveLength(0);
     await api.dispose();
   });
 

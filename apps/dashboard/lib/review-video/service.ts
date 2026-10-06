@@ -1,6 +1,7 @@
 import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { reviewSources, reviewVideos, reviews, socialExportSettings, spaces } from "@/lib/db/schema";
+import { deleteVideoFile } from "@/lib/storage/video-files";
 import { AiVideoError } from "@/lib/ai-video/errors";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 import { getBrandKit } from "@/lib/brand-kit/service";
@@ -241,10 +242,10 @@ export async function listReviewVideos(spaceId: string) {
     .limit(100);
 }
 
-/** Finished videos are archived (their credit stays used); queued or failed ones are handled accordingly. */
+/** Finished videos are archived (their credit stays used) and their stored file is deleted; queued or failed ones are handled accordingly. */
 export async function removeReviewVideo(videoId: string, spaceId: string): Promise<"removed" | "archived"> {
   const [video] = await db
-    .select({ status: reviewVideos.status, deletedAt: reviewVideos.deletedAt })
+    .select({ status: reviewVideos.status, deletedAt: reviewVideos.deletedAt, outputUrl: reviewVideos.outputUrl })
     .from(reviewVideos)
     .where(and(eq(reviewVideos.id, videoId), eq(reviewVideos.spaceId, spaceId)));
   if (!video || video.deletedAt) throw new AiVideoError(404, "NOT_FOUND", "Video not found");
@@ -252,6 +253,13 @@ export async function removeReviewVideo(videoId: string, spaceId: string): Promi
     throw new AiVideoError(400, "BAD_REQUEST", "This video is being created. Wait for it to finish.");
   }
   if (video.status === "done") {
+    // The file is public, so deleting the video must delete it too. If storage fails nothing changes and the owner can retry.
+    try {
+      await deleteVideoFile(video.outputUrl, "review");
+    } catch (error) {
+      console.error(`[review-video] could not delete the file of video ${videoId}:`, error);
+      throw new AiVideoError(502, "INTERNAL_ERROR", "We could not delete the video file just now. Nothing was changed; please try again.");
+    }
     await db.update(reviewVideos).set({ deletedAt: new Date(), outputUrl: null }).where(eq(reviewVideos.id, videoId));
     return "archived";
   }
