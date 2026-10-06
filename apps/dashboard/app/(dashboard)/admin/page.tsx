@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AdminPanel } from "./admin-panel";
 import { JobsManager } from "./jobs-manager";
+import { UsersManager } from "./users-manager";
 import { PlansManager } from "./plans-manager";
 
 export const dynamic = "force-dynamic";
@@ -35,14 +36,14 @@ type TabId = (typeof TABS)[number]["id"];
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string; page?: string }>;
 }) {
   const session = await requireSession();
   if (!isPlatformAdmin(session.user)) {
     redirect("/dashboard");
   }
 
-  const { tab: rawTab, q } = await searchParams;
+  const { tab: rawTab, q, page: rawPage } = await searchParams;
   const tab: TabId = TABS.some((t) => t.id === rawTab) ? (rawTab as TabId) : "plans";
 
   return (
@@ -74,7 +75,7 @@ export default async function AdminPage({
 
       {tab === "plans" && <PlansTab />}
       {tab === "payments" && <PaymentsTab />}
-      {tab === "users" && <UsersTab q={q} />}
+      {tab === "users" && <UsersTab q={q} page={Number(rawPage) || 1} currentUserId={session.user.id} />}
       {tab === "videos" && <VideosTab />}
       {tab === "audit" && <AuditTab />}
       {tab === "system" && <SystemTab />}
@@ -93,8 +94,8 @@ async function PaymentsTab() {
   return <AdminPanel initialProvider={activeProvider} appUrl={appUrl} />;
 }
 
-async function UsersTab({ q }: { q?: string }) {
-  const users = await listAdminUsers(q);
+async function UsersTab({ q, page, currentUserId }: { q?: string; page: number; currentUserId: string }) {
+  const [result, plans] = await Promise.all([listAdminUsers(q, page), listAdminPlans()]);
   return (
     <div className="space-y-4">
       <form action="/admin" className="flex max-w-md gap-2">
@@ -104,51 +105,15 @@ async function UsersTab({ q }: { q?: string }) {
           Search
         </Button>
       </form>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>User</TableHead>
-            <TableHead>Plan</TableHead>
-            <TableHead>Spaces</TableHead>
-            <TableHead>Joined</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((u) => (
-            <TableRow key={u.id}>
-              <TableCell>
-                <div className="flex items-center gap-2 font-medium">
-                  {u.name}
-                  {u.isPlatformAdmin && <Badge variant="brand">Admin</Badge>}
-                </div>
-                <div className="text-xs text-text-muted">{u.email}</div>
-              </TableCell>
-              <TableCell>
-                {u.planName ? (
-                  <span className="flex items-center gap-2">
-                    {u.planName}
-                    {u.subscriptionStatus && u.subscriptionStatus !== "active" && (
-                      <Badge variant="warning">{u.subscriptionStatus}</Badge>
-                    )}
-                  </span>
-                ) : (
-                  <span className="text-text-muted">Free</span>
-                )}
-              </TableCell>
-              <TableCell className="tabular-nums">{u.spaceCount}</TableCell>
-              <TableCell className="text-text-muted">{timeAgo(u.createdAt)}</TableCell>
-            </TableRow>
-          ))}
-          {users.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={4} className="py-10 text-center text-text-muted">
-                No users match.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-      <p className="text-xs text-text-subtle">Showing the 100 most recent matches. Grant platform admin with npm run admin:grant.</p>
+      <UsersManager
+        users={result.rows}
+        plans={plans.map((p) => ({ id: p.id, name: p.name, price: p.price, interval: p.interval, isActive: p.isActive }))}
+        currentUserId={currentUserId}
+        q={q}
+        page={result.page}
+        pageSize={result.pageSize}
+        total={result.total}
+      />
     </div>
   );
 }
