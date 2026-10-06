@@ -1,13 +1,15 @@
 import { mkdirSync } from "node:fs";
 import pg from "pg";
 import { chromium, type FullConfig } from "@playwright/test";
-import { ADMIN_STATE, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, USERS } from "./seed";
+import { startFakeS3 } from "./fake-s3";
+import { ADMIN_STATE, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, STORAGE_BUCKET, STORAGE_ORIGIN, STORAGE_PORT, USERS } from "./seed";
 
 /**
  * Runs after the web server is up. Recreates the rows the tests rely on (users, a plan, jobs,
  * audit entries) and saves the admin's signed-in browser state.
  */
 export default async function globalSetup(config: FullConfig) {
+  const fakeS3 = await startFakeS3(STORAGE_PORT, STORAGE_BUCKET);
   const dbUrl = process.env.E2E_DATABASE_URL;
   if (!dbUrl) throw new Error("Set E2E_DATABASE_URL to a throwaway Postgres (see playwright.config.ts).");
   const dbName = new URL(dbUrl).pathname.replace(/^\//, "");
@@ -17,9 +19,12 @@ export default async function globalSetup(config: FullConfig) {
   const pool = new pg.Pool({ connectionString: dbUrl });
   try {
     // Start from a clean slate for everything this suite owns
+    // generated_videos keeps its consent (restrict), so remove the videos before the users that own them
+    await pool.query(`DELETE FROM generated_videos WHERE space_id IN (SELECT id FROM spaces WHERE embed_key = 'e2e-moderation')`);
     await pool.query(`DELETE FROM "user" WHERE email LIKE 'e2e-%@example.test'`);
     await pool.query(`DELETE FROM plans WHERE name = $1`, [PLAN_NAME]);
-    await pool.query(`DELETE FROM jobs WHERE type IN ($1, $2)`, [FAILED_JOB_TYPE, QUEUED_JOB_TYPE]);
+    // The whole queue: the worker alerts depend on what is waiting, so leftovers from earlier runs would change them
+    await pool.query(`DELETE FROM jobs`);
     await pool.query(`DELETE FROM worker_heartbeats WHERE worker_id LIKE 'e2e-%'`);
     await pool.query(`DELETE FROM admin_audit_log WHERE summary ILIKE '%e2e%'`); // seeded rows and entries from earlier runs
 
@@ -62,6 +67,43 @@ export default async function globalSetup(config: FullConfig) {
        FROM generate_series(1, $1::int) g`,
       [AUDIT_SEED_COUNT]
     );
+
+    // Videos to moderate, owned by the customer: a healthy AI video, one whose consent was withdrawn, and a review video
+    const fileUrl = (key: string) => `${STORAGE_ORIGIN}/${STORAGE_BUCKET}/${key}`;
+    const { rows: [owner] } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [USERS.customer.email]);
+    const { rows: [space] } = await pool.query(`INSERT INTO spaces (name, owner_id, embed_key) VALUES ('E2E Moderation Space', $1, 'e2e-moderation') RETURNING id`, [owner.id]);
+    const { rows: [t1] } = await pool.query(
+      `INSERT INTO testimonials (space_id, platform, quote, customer_name, customer_company) VALUES ($1, 'text', 'Great product.', 'Ada Lovelace', 'Analytical Co') RETURNING id`,
+      [space.id]
+    );
+    const { rows: [t2] } = await pool.query(
+      `INSERT INTO testimonials (space_id, platform, quote, customer_name) VALUES ($1, 'text', 'Fine product.', 'Grace Hopper') RETURNING id`,
+      [space.id]
+    );
+    const consent = async (t: string, revoked: boolean) =>
+      (await pool.query(
+        `INSERT INTO testimonial_consents (testimonial_id, space_id, source, text_version, granted_at, revoked_at)
+         VALUES ($1, $2, 'collect_form', '2026-10-v1', now() - interval '3 days', ${revoked ? "now() - interval '1 day'" : "NULL"}) RETURNING id`,
+        [t, space.id]
+      )).rows[0].id as string;
+    const c1 = await consent(t1.id, false);
+    const c2 = await consent(t2.id, true);
+    const ai = async (t: string, c: string, script: string, minutesAgo: number) => {
+      const { rows: [row] } = await pool.query(
+        `INSERT INTO generated_videos (space_id, testimonial_id, consent_id, status, template, voice, script_original, trim_approved_at, created_at)
+         VALUES ($1, $2, $3, 'done', 'bold', 'v', $4, now(), now() - ($5 || ' minutes')::interval) RETURNING id`,
+        [space.id, t, c, script, String(minutesAgo)]
+      );
+      await pool.query(`UPDATE generated_videos SET output_url = $1 WHERE id = $2`, [fileUrl(`ai-videos/${space.id}/${t}/${row.id}.mp4`), row.id]);
+    };
+    await ai(t1.id, c1, "E2E healthy narration script.", 10);
+    await ai(t2.id, c2, "E2E withdrawn narration script.", 20);
+    const { rows: [rv] } = await pool.query(
+      `INSERT INTO review_videos (space_id, template, status, props, rights_confirmed_at, created_at)
+       VALUES ($1, 'spotlight', 'done', $2, now(), now() - interval '30 minutes') RETURNING id`,
+      [space.id, JSON.stringify({ reviews: [{ author: "Maya Okafor", text: "E2E review video text." }] })]
+    );
+    await pool.query(`UPDATE review_videos SET output_url = $1 WHERE id = $2`, [fileUrl(`review-videos/${space.id}/${rv.id}.mp4`), rv.id]);
   } finally {
     await pool.end();
   }
@@ -77,4 +119,6 @@ export default async function globalSetup(config: FullConfig) {
   if (!res.ok()) throw new Error(`Admin sign-in failed: ${res.status()}`);
   await context.storageState({ path: ADMIN_STATE });
   await browser.close();
+  // Keep the fake storage up for the tests; stop it when they finish
+  return () => new Promise<void>((resolve) => fakeS3.close(() => resolve()));
 }

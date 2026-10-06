@@ -429,6 +429,18 @@ export function AiVideoModal({ spaceId, testimonial, onClose }: Props) {
                 </section>
               )}
 
+              {/* ---------- Taken down by our team ---------- */}
+              {active?.status === "done" && !active.outputUrl && active.moderatedAt && (
+                <Notice icon="danger-triangle" title="This video was removed by our team">
+                  {active.moderationReason ?? "It broke our rules."} The file is gone and cannot be restored. Your credit is not refunded.
+                  <span className="mt-3 flex gap-2">
+                    <Button type="button" variant="ghost-danger" size="sm" onClick={() => void remove(active)}>
+                      Delete
+                    </Button>
+                  </span>
+                </Notice>
+              )}
+
               {/* ---------- Failed ---------- */}
               {active?.status === "failed" && (
                 <Notice icon="danger-triangle" title="This video could not be created">
@@ -474,7 +486,7 @@ export function AiVideoModal({ spaceId, testimonial, onClose }: Props) {
                             </span>
                             <span className="block text-text-muted">{new Date(v.createdAt).toLocaleString()}</span>
                           </span>
-                          <Badge variant={STATUS_BADGE[v.status]}>{STATUS_LABELS[v.status]}</Badge>
+                          {v.moderatedAt ? <Badge variant="neutral">Removed</Badge> : <Badge variant={STATUS_BADGE[v.status]}>{STATUS_LABELS[v.status]}</Badge>}
                         </button>
                       </li>
                     ))}

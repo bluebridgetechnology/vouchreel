@@ -138,7 +138,7 @@ function utcDay(text: string | undefined, addDays = 0): Date | null {
 }
 
 /** Escapes LIKE wildcards so "100%" or "a_b" is searched literally. */
-function likeLiteral(text: string): string {
+export function likeLiteral(text: string): string {
   return text.replace(/[\\%_]/g, (c) => `\\${c}`);
 }
 

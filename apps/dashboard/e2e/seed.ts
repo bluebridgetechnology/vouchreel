@@ -13,3 +13,8 @@ export const FAILED_JOB_TYPE = "e2e_failed_probe";
 export const QUEUED_JOB_TYPE = "e2e_queued_probe";
 export const AUDIT_SEED_COUNT = 60;
 export const ADMIN_STATE = "e2e/.auth/admin.json";
+
+export const STORAGE_PORT = Number(process.env.E2E_STORAGE_PORT ?? 3199);
+export const STORAGE_BUCKET = "e2e-bucket";
+export const STORAGE_ORIGIN = `http://127.0.0.1:${STORAGE_PORT}`;
+export const REASON_TEXT = "Customer asked us to remove it";

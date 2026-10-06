@@ -477,7 +477,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                           </span>
                           <span className="block text-text-muted">{new Date(video.createdAt).toLocaleString()}</span>
                         </div>
-                        <Badge variant={STATUS_BADGE[video.status]}>{STATUS_LABELS[video.status]}</Badge>
+                        {video.moderatedAt ? <Badge variant="neutral">Removed</Badge> : <Badge variant={STATUS_BADGE[video.status]}>{STATUS_LABELS[video.status]}</Badge>}
                       </div>
 
                       {isInFlight(video.status) && (
@@ -508,6 +508,18 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                               Delete
                             </Button>
                           </div>
+                        </div>
+                      )}
+
+                      {video.status === "done" && !video.outputUrl && video.moderatedAt && (
+                        <div className="mt-3 space-y-2 text-xs">
+                          <p className="font-medium text-text">This video was removed by our team</p>
+                          <p className="text-text-muted">
+                            {video.moderationReason ?? "It broke our rules."} The file is gone and cannot be restored. Your credit is not refunded.
+                          </p>
+                          <Button type="button" variant="ghost-danger" size="sm" onClick={() => void remove(video)}>
+                            Delete
+                          </Button>
                         </div>
                       )}
 

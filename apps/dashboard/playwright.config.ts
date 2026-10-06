@@ -13,6 +13,7 @@ import { defineConfig } from "@playwright/test";
  * unless the database name contains "e2e" or "test".
  */
 const PORT = Number(process.env.E2E_PORT ?? 3101);
+const STORAGE_PORT = Number(process.env.E2E_STORAGE_PORT ?? 3199);
 const baseURL = `http://localhost:${PORT}`;
 
 export default defineConfig({
@@ -37,6 +38,12 @@ export default defineConfig({
       BETTER_AUTH_SECRET: "e2e-secret-e2e-secret-e2e-secret-123456",
       BETTER_AUTH_URL: baseURL,
       NEXT_PUBLIC_APP_URL: baseURL,
+      // Takedowns delete files through the real S3 client; e2e/fake-s3.ts answers it
+      STORAGE_PROVIDER: "r2",
+      STORAGE_ENDPOINT: `http://127.0.0.1:${STORAGE_PORT}`,
+      STORAGE_BUCKET: "e2e-bucket",
+      STORAGE_KEY: "e2e",
+      STORAGE_SECRET: "e2e",
     },
   },
 });

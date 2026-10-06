@@ -1169,6 +1169,11 @@ export const generatedVideos = pgTable(
     error: text("error"),
     /** Owner deleted a finished video. The row stays so the credit it used is still counted. */
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    /** A platform admin took this video down: its file is deleted and its URL cleared. Irreversible. */
+    moderatedAt: timestamp("moderated_at", { withTimezone: true }),
+    moderatedBy: text("moderated_by").references(() => user.id, { onDelete: "set null" }),
+    /** Shown to the owner. */
+    moderationReason: text("moderation_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
   },
@@ -1206,6 +1211,11 @@ export const reviewVideos = pgTable(
     error: text("error"),
     /** Owner deleted a finished video; the row stays so its credit is still counted. */
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    /** A platform admin took this video down: its file is deleted and its URL cleared. Irreversible. */
+    moderatedAt: timestamp("moderated_at", { withTimezone: true }),
+    moderatedBy: text("moderated_by").references(() => user.id, { onDelete: "set null" }),
+    /** Shown to the owner. */
+    moderationReason: text("moderation_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
   },

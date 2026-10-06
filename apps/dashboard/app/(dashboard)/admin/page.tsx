@@ -6,6 +6,7 @@ import { getActivePaymentProviderName } from "@/lib/payments";
 import { getFfmpegStatus } from "@/lib/media/ffmpeg";
 import { listAdminPlans } from "@/lib/admin/plans";
 import { getJobOverview, listAdminVideos } from "@/lib/admin/jobs";
+import { listModerationItems, MODERATION_PAGE_SIZE, type ModerationFilter, type ModerationKind } from "@/lib/admin/moderation";
 import { capabilityProblem, getWorkerHealth, type KindHealth, type Severity } from "@/lib/admin/workers";
 import { formatLimit, formatUsd, getUsageReport, limitState, parseMonth, shiftMonth, type LimitState } from "@/lib/admin/usage";
 import { listAdminUsers, listAuditEntityTypes, listAuditLog, type AuditFilter } from "@/lib/admin/queries";
@@ -18,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AdminPanel } from "./admin-panel";
 import { AuditTypeSelect } from "./audit-type-select";
+import { FormSelect } from "./form-select";
+import { ModerationManager } from "./moderation-manager";
 import { JobsManager } from "./jobs-manager";
 import { UsersManager } from "./users-manager";
 import { PlansManager } from "./plans-manager";
@@ -31,6 +34,7 @@ const TABS = [
   { id: "users", label: "Users" },
   { id: "videos", label: "Video & jobs" },
   { id: "usage", label: "Usage" },
+  { id: "moderation", label: "Moderation" },
   { id: "audit", label: "Audit log" },
   { id: "system", label: "System" },
 ] as const;
@@ -40,14 +44,14 @@ type TabId = (typeof TABS)[number]["id"];
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string; page?: string; type?: string; from?: string; to?: string; month?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string; page?: string; type?: string; from?: string; to?: string; month?: string; kind?: string; filter?: string }>;
 }) {
   const session = await requireSession();
   if (!isPlatformAdmin(session.user)) {
     redirect("/dashboard");
   }
 
-  const { tab: rawTab, q, page: rawPage, type, from, to, month } = await searchParams;
+  const { tab: rawTab, q, page: rawPage, type, from, to, month, kind, filter: rawFilter } = await searchParams;
   const tab: TabId = TABS.some((t) => t.id === rawTab) ? (rawTab as TabId) : "plans";
 
   return (
@@ -82,6 +86,7 @@ export default async function AdminPage({
       {tab === "users" && <UsersTab q={q} page={Number(rawPage) || 1} currentUserId={session.user.id} />}
       {tab === "videos" && <VideosTab />}
       {tab === "usage" && <UsageTab month={month} page={Number(rawPage) || 1} />}
+      {tab === "moderation" && <ModerationTab kind={kind} filter={rawFilter} q={q} page={Number(rawPage) || 1} />}
       {tab === "audit" && <AuditTab filter={{ q, entityType: type && type !== "all" ? type : undefined, from, to }} page={Number(rawPage) || 1} />}
       {tab === "system" && <SystemTab />}
     </div>
@@ -132,6 +137,82 @@ async function VideosTab() {
         <WorkerAlert key={k.kind} health={k} />
       ))}
       <JobsManager overview={overview} videos={videos} />
+    </div>
+  );
+}
+
+const MOD_KINDS = [
+  { value: "all", label: "All videos" },
+  { value: "ai", label: "AI videos" },
+  { value: "review", label: "Review videos" },
+];
+const MOD_FILTERS = [
+  { value: "all", label: "Any state" },
+  { value: "live", label: "Live" },
+  { value: "attention", label: "Consent withdrawn" },
+  { value: "removed", label: "Taken down" },
+];
+
+async function ModerationTab({ kind: rawKind, filter: rawFilter, q, page }: { kind?: string; filter?: string; q?: string; page: number }) {
+  const kind = MOD_KINDS.some((k) => k.value === rawKind) ? (rawKind as ModerationKind | "all") : "all";
+  const filter = MOD_FILTERS.some((f) => f.value === rawFilter) ? (rawFilter as ModerationFilter) : "all";
+  const result = await listModerationItems({ kind, filter, q }, page);
+  const pages = Math.max(1, Math.ceil(result.total / MODERATION_PAGE_SIZE));
+  const href = (p: number) => {
+    const params = new URLSearchParams({ tab: "moderation", page: String(p), kind, filter });
+    if (q) params.set("q", q);
+    return `/admin?${params.toString()}`;
+  };
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-text-muted">
+        Finished videos across all accounts. Taking one down deletes its file for good and tells the owner why. Every AI video has the
+        label &ldquo;AI-generated from a written review&rdquo; drawn into the video when it is made; that cannot be checked per file here.
+      </p>
+      <form action="/admin" className="flex flex-wrap items-end gap-3">
+        <input type="hidden" name="tab" value="moderation" />
+        <label className="flex flex-col gap-1 text-xs text-text-muted">
+          Search
+          <Input name="q" defaultValue={q} placeholder="Owner email or space name" className="w-64" />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-text-muted">
+          Kind
+          <FormSelect name="kind" label="Kind" options={MOD_KINDS} value={kind} />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-text-muted">
+          State
+          <FormSelect name="filter" label="State" options={MOD_FILTERS} value={filter} />
+        </label>
+        <Button type="submit" variant="outline">
+          Filter
+        </Button>
+        {(q || kind !== "all" || filter !== "all") && (
+          <Link href="/admin?tab=moderation" className="pb-2 text-sm text-text-muted underline">
+            Clear
+          </Link>
+        )}
+      </form>
+
+      <ModerationManager items={result.items} />
+
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-text-subtle">
+        <span>{result.total === 0 ? "0 videos" : `${(result.page - 1) * result.pageSize + 1} to ${Math.min(result.page * result.pageSize, result.total)} of ${result.total} videos`}</span>
+        <nav aria-label="Moderation pages" className="flex items-center gap-2">
+          {result.page > 1 && (
+            <Link href={href(result.page - 1)} className="rounded-control border px-3 py-1.5 text-text hover:bg-surface-sunken">
+              Previous
+            </Link>
+          )}
+          <span>
+            Page {result.page} of {pages}
+          </span>
+          {result.page < pages && (
+            <Link href={href(result.page + 1)} className="rounded-control border px-3 py-1.5 text-text hover:bg-surface-sunken">
+              Next
+            </Link>
+          )}
+        </nav>
+      </div>
     </div>
   );
 }

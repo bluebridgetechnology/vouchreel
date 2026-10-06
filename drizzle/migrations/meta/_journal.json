@@ -169,6 +169,13 @@
       "when": 1791285641758,
       "tag": "0023_worker_heartbeats",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791286460860,
+      "tag": "0024_video_moderation",
+      "breakpoints": true
     }
   ]
 }
