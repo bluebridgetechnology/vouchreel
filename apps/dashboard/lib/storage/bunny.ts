@@ -1,4 +1,4 @@
-import type { StorageAdapter, UploadOptions } from "./types";
+import type { StorageAdapter, StoredFile, UploadOptions } from "./types";
 
 /**
  * Bunny.net Storage adapter.
@@ -84,6 +84,27 @@ export class BunnyAdapter implements StorageAdapter {
       const body = await response.text();
       throw new Error(`Bunny delete failed (${response.status}): ${body}`);
     }
+  }
+
+  /**
+   * Lists a folder through Bunny's storage API (GET {zone}/{folder}/ returns a JSON array) and walks
+   * into sub-folders. Not run against a real storage zone yet.
+   */
+  async *list(prefix: string): AsyncIterable<StoredFile> {
+    const walk = async function* (self: BunnyAdapter, folder: string): AsyncIterable<StoredFile> {
+      const response = await fetch(`${self.baseUrl}/${folder}`, { headers: { AccessKey: self.apiKey, Accept: "application/json" } });
+      if (response.status === 404) return;
+      if (!response.ok) throw new Error(`Bunny list failed (${response.status}): ${await response.text()}`);
+      const items = (await response.json()) as { ObjectName: string; IsDirectory: boolean; Length: number; LastChanged: string }[];
+      for (const item of items) {
+        const key = `${folder}${item.ObjectName}`;
+        if (item.IsDirectory) yield* walk(self, `${key}/`);
+        else if (key.startsWith(prefix)) yield { key, size: item.Length, lastModified: new Date(`${item.LastChanged}Z`) };
+      }
+    };
+    // Start from the deepest whole folder in the prefix, then filter by the rest
+    const folder = prefix.includes("/") ? prefix.slice(0, prefix.lastIndexOf("/") + 1) : "";
+    yield* walk(this, folder);
   }
 
   async getSignedUrl(key: string, _expiresIn = 3600): Promise<string> {

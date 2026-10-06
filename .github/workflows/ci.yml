@@ -98,11 +98,14 @@ jobs:
         run: |
           psql -h localhost -U postgres -c "CREATE DATABASE vouchreel_test"
           psql -h localhost -U postgres -c "CREATE DATABASE vouchreel_e2e"
-          npm run db:migrate
-          DATABASE_URL="$E2E_DATABASE_URL" npm run db:migrate
+          # Straight through the workspace: turbo only passes the variables its config lists, and not these ones
+          npm run db:migrate -w @vouchreel/dashboard
+          DATABASE_URL="$E2E_DATABASE_URL" npm run db:migrate -w @vouchreel/dashboard
 
       - name: Unit and integration tests against Postgres
-        run: npm test
+        run: |
+          npm test -w @vouchreel/dashboard
+          npm test -w @vouchreel/video
 
       - name: Real-render test (Remotion + Chromium)
         run: npm run test:render -w @vouchreel/video
@@ -154,7 +157,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run db:migrate
+      - run: npm run db:migrate -w @vouchreel/dashboard
 
       - name: Build the video-worker image
         run: docker build --target video-worker -t vouchreel-video-worker .

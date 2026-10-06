@@ -90,14 +90,13 @@ const urlsOf = (rows: Record<string, string | null>[]) => rows.flatMap((r) => Ob
 
 export async function collectTestimonialUrls(executor: Pick<typeof db, "select">, testimonialIds: string[]): Promise<(string | null)[]> {
   if (testimonialIds.length === 0) return [];
-  const [t, exports, ai] = await Promise.all([
-    executor
-      .select({ a: testimonials.videoUrl, b: testimonials.thumbnailUrl, c: testimonials.clipUrl })
-      .from(testimonials)
-      .where(inArray(testimonials.id, testimonialIds)),
-    executor.select({ a: socialExports.outputUrl }).from(socialExports).where(inArray(socialExports.testimonialId, testimonialIds)),
-    executor.select({ a: generatedVideos.outputUrl }).from(generatedVideos).where(inArray(generatedVideos.testimonialId, testimonialIds)),
-  ]);
+  // One after another: these run on a transaction's single connection
+  const t = await executor
+    .select({ a: testimonials.videoUrl, b: testimonials.thumbnailUrl, c: testimonials.clipUrl })
+    .from(testimonials)
+    .where(inArray(testimonials.id, testimonialIds));
+  const exports = await executor.select({ a: socialExports.outputUrl }).from(socialExports).where(inArray(socialExports.testimonialId, testimonialIds));
+  const ai = await executor.select({ a: generatedVideos.outputUrl }).from(generatedVideos).where(inArray(generatedVideos.testimonialId, testimonialIds));
   return [...urlsOf(t), ...urlsOf(exports), ...urlsOf(ai)];
 }
 
@@ -112,19 +111,13 @@ export async function collectFormUrls(executor: Pick<typeof db, "select">, formI
 
 /** Every file a space owns: its testimonials' (and their exports and AI videos), its review videos, and its forms' submissions. */
 export async function collectSpaceUrls(executor: Pick<typeof db, "select">, spaceId: string): Promise<(string | null)[]> {
-  const [testimonialRows, formRows, review] = await Promise.all([
-    executor.select({ id: testimonials.id }).from(testimonials).where(eq(testimonials.spaceId, spaceId)),
-    executor.select({ id: collectionForms.id }).from(collectionForms).where(eq(collectionForms.spaceId, spaceId)),
-    executor.select({ a: reviewVideos.outputUrl }).from(reviewVideos).where(eq(reviewVideos.spaceId, spaceId)),
-  ]);
-  const [fromTestimonials, fromForms] = await Promise.all([
-    collectTestimonialUrls(executor, testimonialRows.map((r) => r.id)),
-    collectFormUrls(executor, formRows.map((r) => r.id)),
-  ]);
+  const testimonialRows = await executor.select({ id: testimonials.id }).from(testimonials).where(eq(testimonials.spaceId, spaceId));
+  const formRows = await executor.select({ id: collectionForms.id }).from(collectionForms).where(eq(collectionForms.spaceId, spaceId));
+  const review = await executor.select({ a: reviewVideos.outputUrl }).from(reviewVideos).where(eq(reviewVideos.spaceId, spaceId));
+  const fromTestimonials = await collectTestimonialUrls(executor, testimonialRows.map((r) => r.id));
+  const fromForms = await collectFormUrls(executor, formRows.map((r) => r.id));
   // Exports and AI videos hang off the space as well as the testimonial; cover any not reached above
-  const [exports, ai] = await Promise.all([
-    executor.select({ a: socialExports.outputUrl }).from(socialExports).where(eq(socialExports.spaceId, spaceId)),
-    executor.select({ a: generatedVideos.outputUrl }).from(generatedVideos).where(eq(generatedVideos.spaceId, spaceId)),
-  ]);
+  const exports = await executor.select({ a: socialExports.outputUrl }).from(socialExports).where(eq(socialExports.spaceId, spaceId));
+  const ai = await executor.select({ a: generatedVideos.outputUrl }).from(generatedVideos).where(eq(generatedVideos.spaceId, spaceId));
   return [...fromTestimonials, ...fromForms, ...urlsOf(review), ...urlsOf(exports), ...urlsOf(ai)];
 }

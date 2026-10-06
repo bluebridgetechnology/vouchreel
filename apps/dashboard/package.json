@@ -22,7 +22,8 @@
     "db:seed:demo": "node scripts/seed-demo-user.mjs",
     "icons:build": "node scripts/build-icons.mjs",
     "build:e2e": "NEXT_PUBLIC_APP_URL=http://localhost:3101 next build",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "storage:prune": "tsx --env-file-if-exists=.env scripts/prune-orphans.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1131.0",

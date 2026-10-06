@@ -13,6 +13,13 @@ export interface UploadOptions {
   metadata?: Record<string, string>;
 }
 
+/** A stored file as listed by the provider. */
+export interface StoredFile {
+  key: string;
+  size: number;
+  lastModified: Date;
+}
+
 export interface StorageAdapter {
   /**
    * Upload a file to storage.
@@ -20,8 +27,11 @@ export interface StorageAdapter {
    */
   upload(file: Buffer, key: string, options?: UploadOptions): Promise<string>;
 
-  /** Delete a file from storage */
+  /** Delete a file from storage. Deleting a file that does not exist is not an error. */
   delete(key: string): Promise<void>;
+
+  /** Every file whose key starts with `prefix`, however many there are. Used to find files nothing refers to any more. */
+  list(prefix: string): AsyncIterable<StoredFile>;
 
   /**
    * Generate a signed/temporary URL for accessing a file.
