@@ -175,6 +175,25 @@ export function AiVideoModal({ spaceId, testimonial, onClose }: Props) {
     await load();
   }
 
+  async function withdrawConsentForCustomer() {
+    const ok = await confirm({
+      title: "Record that the customer withdrew consent?",
+      description:
+        "Every AI video made from this testimonial is removed and none can be made again without a new agreement. This cannot be undone.",
+      confirmLabel: "Withdraw consent",
+      tone: "danger",
+    });
+    if (!ok) return;
+    const res = await fetch(`${listUrl}/consent`, { method: "DELETE" });
+    if (!res.ok) {
+      notify.error(await readError(res, "Could not record the withdrawal."));
+      return;
+    }
+    setActiveId(null);
+    notify.success("Consent withdrawn. Their videos were removed.");
+    await load();
+  }
+
   async function copyLink(url: string) {
     try {
       await navigator.clipboard.writeText(url);
@@ -492,6 +511,16 @@ export function AiVideoModal({ spaceId, testimonial, onClose }: Props) {
                     ))}
                   </ul>
                 </section>
+              )}
+
+              {data.consent && (
+                <p className="border-t pt-4 text-xs text-text-muted">
+                  The customer agreed to AI video. Their confirmation email has a link to withdraw. If they told you directly instead,{" "}
+                  <button type="button" onClick={() => void withdrawConsentForCustomer()} className={buttonVariants({ variant: "link", size: "bare" })}>
+                    record that they withdrew consent
+                  </button>
+                  .
+                </p>
               )}
             </>
           )}

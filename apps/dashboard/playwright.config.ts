@@ -1,4 +1,5 @@
 import { defineConfig } from "@playwright/test";
+import { E2E_AUTH_SECRET } from "./e2e/seed";
 
 /**
  * End-to-end smoke tests (npm run test:e2e). They drive a production build against a THROWAWAY
@@ -35,7 +36,7 @@ export default defineConfig({
     timeout: 60_000,
     env: {
       DATABASE_URL: process.env.E2E_DATABASE_URL ?? "",
-      BETTER_AUTH_SECRET: "e2e-secret-e2e-secret-e2e-secret-123456",
+      BETTER_AUTH_SECRET: E2E_AUTH_SECRET,
       BETTER_AUTH_URL: baseURL,
       NEXT_PUBLIC_APP_URL: baseURL,
       // Takedowns delete files through the real S3 client; e2e/fake-s3.ts answers it

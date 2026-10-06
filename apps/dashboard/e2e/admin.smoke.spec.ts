@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ADMIN_STATE, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, REASON_TEXT, STORAGE_ORIGIN, USERS } from "./seed";
+import { readFileSync } from "node:fs";
+import { ADMIN_STATE, CONSENT_FILE, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, REASON_TEXT, STORAGE_ORIGIN, USERS } from "./seed";
 
 /** Smoke tests for the platform-admin area (/admin). Tests run in order and share seeded rows. */
 test.describe.configure({ mode: "serial" });
@@ -246,6 +247,104 @@ test.describe("platform admin", () => {
     expect(keys.at(-1)).toBe(`ai-videos/${space.id}/${ada.id}/${before.id}.mp4`);
     expect((await (await api.get(`/api/spaces/${space.id}/testimonials/${ada.id}/ai-video`)).json()).videos).toHaveLength(0);
     await api.dispose();
+  });
+
+  test("consent: a customer withdraws from the link in their email, and the owner can record a withdrawal", async ({ browser, playwright, baseURL }) => {
+    const { token, forged } = JSON.parse(readFileSync(CONSENT_FILE, "utf8")) as { token: string; forged: string };
+    const deleted = async (page: { request: { get: (u: string) => Promise<{ json: () => Promise<unknown> }> } }) => (await (await page.request.get(`${STORAGE_ORIGIN}/__deleted`)).json()) as string[];
+
+    // The customer has no account: a fresh browser, no sign-in
+    const customer = await browser.newPage({ storageState: { cookies: [], origins: [] } });
+    await customer.goto(`/consent/withdraw?token=${forged}`);
+    await expect(customer.locator("main").getByRole("alert")).toContainText("This link is not valid");
+    await expect(customer.getByRole("button", { name: "Withdraw my agreement" })).toHaveCount(0);
+
+    await customer.goto(`/consent/withdraw?token=${token}`);
+    await expect(customer.getByRole("heading", { name: "Withdraw your agreement to an AI video" })).toBeVisible();
+    await expect(customer.getByText("E2E Moderation Space")).toBeVisible();
+    await expect(customer.getByText("Katherine Johnson")).toBeVisible();
+    const filesBefore = (await deleted(customer)).length;
+    await customer.getByRole("button", { name: "Withdraw my agreement" }).click();
+    await expect(customer.getByRole("status")).toContainText("Your agreement is withdrawn");
+    expect(await deleted(customer)).toHaveLength(filesBefore + 1); // the video file really went
+
+    // Opening the link again shows it is done instead of offering the button
+    await customer.reload();
+    await expect(customer.getByText(/You withdrew your agreement on/)).toBeVisible();
+    await expect(customer.getByRole("button", { name: "Withdraw my agreement" })).toHaveCount(0);
+    await customer.close();
+
+    // The owner sees it: the video is marked removed with the customer's reason, and no new one can be made
+    const api = await playwright.request.newContext({ baseURL: baseURL! });
+    expect((await api.post("/api/auth/sign-in/email", { headers: { origin: baseURL! }, data: { email: USERS.customer.email, password: PASSWORD } })).ok()).toBe(true);
+    const spaces = await (await api.get("/api/spaces")).json();
+    const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
+    const list = await (await api.get(`/api/spaces/${space.id}/testimonials`)).json();
+    const testimonials: { id: string; customerName: string | null }[] = list.testimonials ?? list;
+    const aiPanel = async (name: string) => (await (await api.get(`/api/spaces/${space.id}/testimonials/${testimonials.find((t) => t.customerName === name)!.id}/ai-video`)).json());
+    const katherine = await aiPanel("Katherine Johnson");
+    expect(katherine.consent).toBe(false);
+    expect(katherine.videos[0]).toMatchObject({ status: "done", outputUrl: null, moderationReason: "The customer withdrew their consent to AI video." });
+
+    // For the other customer the owner records the withdrawal (they told the owner directly)
+    const dorothyId = testimonials.find((t) => t.customerName === "Dorothy Vaughan")!.id;
+    expect((await aiPanel("Dorothy Vaughan")).consent).toBe(true);
+    const recorded = await api.delete(`/api/spaces/${space.id}/testimonials/${dorothyId}/ai-video/consent`, { headers: { origin: baseURL! } });
+    expect(recorded.status()).toBe(200);
+    expect(await recorded.json()).toMatchObject({ status: "withdrawn", removedVideos: 1 });
+    const dorothy = await aiPanel("Dorothy Vaughan");
+    expect(dorothy.consent).toBe(false);
+    expect(dorothy.videos[0].outputUrl).toBeNull();
+    // Recording it twice is refused: there is nothing left to withdraw
+    expect((await api.delete(`/api/spaces/${space.id}/testimonials/${dorothyId}/ai-video/consent`, { headers: { origin: baseURL! } })).status()).toBe(400);
+    await api.dispose();
+  });
+
+  test("owner panels in the browser: a removed video says so and why, and the owner can record a withdrawal", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    expect((await context.request.post("/api/auth/sign-in/email", { headers: { origin: baseURL! }, data: { email: USERS.customer.email, password: PASSWORD } })).ok()).toBe(true);
+    const page = await context.newPage();
+    const spaces = await (await context.request.get("/api/spaces")).json();
+    const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
+    const card = (name: string) =>
+      page.locator("div").filter({ hasText: name }).filter({ has: page.getByRole("button", { name: "AI video" }) }).last();
+
+    await page.goto(`/spaces/${space.id}/testimonials`);
+
+    // A video an admin took down: the list says Removed and the panel gives the reason instead of an empty player
+    await card("Grace Hopper").getByRole("button", { name: "AI video" }).click();
+    const panel = page.getByRole("dialog", { name: "AI video" });
+    await expect(panel.getByText("Removed", { exact: true })).toBeVisible();
+    await panel.getByRole("button", { name: /Removed/ }).click();
+    await expect(panel.getByText("This video was removed by our team")).toBeVisible();
+    await expect(panel.getByText(new RegExp(REASON_TEXT))).toBeVisible();
+    await panel.getByRole("button", { name: "Close" }).click();
+
+    // A video removed because the customer withdrew: the owner sees the customer's reason
+    await card("Katherine Johnson").getByRole("button", { name: "AI video" }).click();
+    await panel.getByRole("button", { name: /Removed/ }).click();
+    await expect(panel.getByText(/The customer withdrew their consent to AI video/)).toBeVisible();
+    await panel.getByRole("button", { name: "Close" }).click();
+
+    // Consent still active (the video was deleted by the owner earlier): the owner can record that the customer withdrew
+    await card("Ada Lovelace").getByRole("button", { name: "AI video" }).click();
+    await expect(panel.getByText(/The customer agreed to AI video/)).toBeVisible();
+    await panel.getByRole("button", { name: "record that they withdrew consent" }).click();
+    await expect(page.getByRole("dialog").getByText("Record that the customer withdrew consent?")).toBeVisible();
+    await page.getByRole("button", { name: "Withdraw consent" }).click();
+    await expect(page.getByText("Consent withdrawn. Their videos were removed.")).toBeVisible();
+    await expect(panel.getByText("This customer hasn't agreed to AI video")).toBeVisible();
+    await expect(panel.getByText(/The customer agreed to AI video/)).toHaveCount(0);
+    await panel.getByRole("button", { name: "Close" }).click();
+
+    // Review videos: the video an admin took down shows the same notice
+    await page.goto(`/spaces/${space.id}/reviews`);
+    await page.getByRole("button", { name: "Create review video" }).click();
+    await page.getByRole("button", { name: /Your videos/ }).click();
+    await expect(page.getByText("Removed", { exact: true })).toBeVisible();
+    await expect(page.getByText("This video was removed by our team")).toBeVisible();
+    await expect(page.getByText(/The reviewer asked us to remove it/)).toBeVisible();
+    await context.close();
   });
 
   test("audit log: the actions above are recorded, and filters and paging work", async ({ page }) => {

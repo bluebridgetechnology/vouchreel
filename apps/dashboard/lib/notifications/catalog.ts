@@ -45,6 +45,11 @@ export const NOTIFICATION_CATALOG = {
     description: "A video you made was taken down by a platform administrator. The message says why.",
     defaults: { inApp: true, email: true },
   },
+  "consent.withdrawn": {
+    label: "AI video consent withdrawn",
+    description: "A customer withdrew their agreement to AI video. Videos made under it were removed and no new one can be made.",
+    defaults: { inApp: true, email: true },
+  },
   "webhook.failing": {
     label: "Webhook deliveries failing",
     description: "A webhook endpoint exhausted its retries.",

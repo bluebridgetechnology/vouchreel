@@ -14,24 +14,25 @@ repo: network access, an account, real data), **Feature** (a separate piece of w
 | ID | Gap | Class | State |
 | --- | --- | --- | --- |
 | F1 | Owner deleting a finished AI or review video left the public file in storage | Fix | Closed (2026-10-06, commit 85c9625) |
-| F2 | Files of videos deleted before F1 are still in storage and cannot be found from the database | Fix | Open |
-| F3 | Deleting a social export leaves its file | Fix | Open |
-| F4 | Deleting a testimonial leaves its video, thumbnail and clip files, and its social exports' and generated videos' files | Fix | Open |
-| F5 | Deleting a space leaves every file of that space | Fix | Open |
-| F6 | Deleting a collection form or a submission leaves the raw upload and the transcoded files | Fix | Open |
-| F7 | A video upload is replaced by its transcoded copy; the raw upload file is never deleted | Fix | Open |
-| F8 | Real S3-protocol storage was only exercised against a hand-written fake | Fix | Open |
+| F2 | Files of videos deleted before F1 are still in storage and cannot be found from the database | Fix | Closed. `lib/storage/orphans.ts` and `npm run storage:prune` (report by default, `--delete` to remove, 24 h grace) compare the bucket listing with every URL in the database. Proved against a real S3-protocol server (moto) in `s3.integration.test.ts`. Not yet run against your production bucket: run it once with no flags and read the report first. |
+| F3 | Deleting a social export leaves its file | Fix | Closed. There was no way to delete a social export at all. Added `DELETE /api/spaces/:id/social-exports/:exportId` and a Delete button; refused while it is still being made. `export-delete.integration.test.ts`. |
+| F4 | Deleting a testimonial leaves its video, thumbnail and clip files, and its social exports' and generated videos' files | Fix | Closed for hard deletes (the public API's testimonial delete queues the testimonial's, its exports' and its AI videos' files). The dashboard's own delete is a soft delete: see D1. |
+| F5 | Deleting a space leaves every file of that space | Fix | Closed. `deleteSpace` queues every file in the same transaction that deletes the rows. `cleanup.integration.test.ts`, and the space route test. |
+| F6 | Deleting a collection form or a submission leaves the raw upload and the transcoded files | Fix | Closed. `deleteCollectionForm` does the same for a form's submissions' files. |
+| F7 | A video upload is replaced by its transcoded copy; the raw upload file is never deleted | Fix | Closed. After a transcode the raw upload is queued for deletion. Proved with a real FFmpeg transcode in `transcode.integration.test.ts`. |
+| F8 | Real S3-protocol storage was only exercised against a hand-written fake | Fix | Closed. `s3.integration.test.ts` runs the real adapter against moto: upload, public URL, delete then 404, delete of a missing file, listing past 1,000 files, and the orphan finder. CI starts moto too. |
+| D1 | The dashboard's "delete testimonial" only hides it (a soft delete by design): its video and thumbnail stay in storage, publicly reachable, and so do its social exports and AI videos | Decision | Open |
 | F9 | Bunny storage delete and list were never run | External | Open (needs a Bunny account) |
 
 ## B. Consent and moderation
 
 | ID | Gap | Class | State |
 | --- | --- | --- | --- |
-| C1 | No customer-facing way to withdraw consent for an AI video, so "consent withdrawn" can only be set in the database | Fix | Open |
+| C1 | No customer-facing way to withdraw consent for an AI video, so "consent withdrawn" can only be set in the database | Fix | Closed. The customer gets an email on approval with a signed link to `/consent/withdraw`; confirming removes their videos (files deleted at once, with a queued job as a safety net), stops unfinished ones, tells the owner, and blocks new videos. The owner can also record a withdrawal from the AI video panel. Unit, integration, route and browser tests. |
 | C2 | Review videos have no per-video consent, only the owner's "rights confirmed" date | Decision | Open |
 | C3 | The widget does not serve generated videos, so a takedown only affects the owner's own links | Feature | Open |
-| C4 | Takedown notification email path not run end to end | Fix | Open |
-| C5 | Owner panels' "removed by our team" notice only checked through the API | Fix | Open |
+| C4 | Takedown notification email path not run end to end | Fix | Closed. `video-notifications.integration.test.ts` runs the real notification service: inbox row, email to the owner with the reason, and the owner's email opt-out being respected. |
+| C5 | Owner panels' "removed by our team" notice only checked through the API | Fix | Closed. A browser test signs in as the owner and checks both panels (AI video and review video) show the removed notice and reason, and uses the record-withdrawal button. |
 
 ## C. Access and billing
 
@@ -54,14 +55,14 @@ repo: network access, an account, real data), **Feature** (a separate piece of w
 | A6 | Plans & pricing and Payments tabs are only checked for rendering, never edited in a browser | Fix | Open |
 | A7 | Only Chromium is tested | CI | Open |
 | A8 | No indexes for the Usage and Moderation queries (scans the month's rows); audit text search scans the table | Fix | Open |
-| A9 | Admin tests and the e2e suite are not in CI | CI | Open |
+| A9 | Admin tests and the e2e suite are not in CI | CI | Closed. CI now runs the unit tests, the integration tests against Postgres and an S3-compatible server, the real render test, the browser suite and the Docker image (green in run 37464367356). |
 | A10 | Nice-to-haves noted along the way: CSV export of audit log and usage, per-space usage, chart over time, filter audit by admin, link an audit entry to what it changed | Decision | Open |
 
 ## E. Workers
 
 | ID | Gap | Class | State |
 | --- | --- | --- | --- |
-| W1 | Never ran the real `video-worker` Docker image (apt and Chromium download are blocked from this sandbox) | CI | Open |
+| W1 | Never ran the real `video-worker` Docker image (apt and Chromium download are blocked from this sandbox) | CI | Closed by CI. GitHub Actions run 37464367356 (commit 90e3409): the real `video-worker` image built, rendered a frame, and as a worker reported a working Chromium and a clean stop. Also found and fixed two CI bugs. |
 | W2 | Video worker id is `video-worker-<pid>`: in containers every restart reuses one row, and replicas collide | Fix | Open |
 | W3 | The 24-hour listing and 7-day pruning of heartbeats were never run against time | Fix | Open |
 | W4 | No alert outside the admin area when a worker goes quiet | Decision | Open |

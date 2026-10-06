@@ -18,3 +18,6 @@ export const STORAGE_PORT = Number(process.env.E2E_STORAGE_PORT ?? 3199);
 export const STORAGE_BUCKET = "e2e-bucket";
 export const STORAGE_ORIGIN = `http://127.0.0.1:${STORAGE_PORT}`;
 export const REASON_TEXT = "Customer asked us to remove it";
+/** Signs consent-withdrawal links and the session cookies: shared by the web server's env and the seed. */
+export const E2E_AUTH_SECRET = "e2e-secret-e2e-secret-e2e-secret-123456";
+export const CONSENT_FILE = "e2e/.auth/consent.json";

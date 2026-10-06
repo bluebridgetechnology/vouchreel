@@ -1,8 +1,9 @@
-import { mkdirSync } from "node:fs";
+import { createHmac } from "node:crypto";
+import { mkdirSync, writeFileSync } from "node:fs";
 import pg from "pg";
 import { chromium, type FullConfig } from "@playwright/test";
 import { startFakeS3 } from "./fake-s3";
-import { ADMIN_STATE, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, STORAGE_BUCKET, STORAGE_ORIGIN, STORAGE_PORT, USERS } from "./seed";
+import { ADMIN_STATE, AUDIT_SEED_COUNT, CONSENT_FILE, E2E_AUTH_SECRET, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, STORAGE_BUCKET, STORAGE_ORIGIN, STORAGE_PORT, USERS } from "./seed";
 
 /**
  * Runs after the web server is up. Recreates the rows the tests rely on (users, a plan, jobs,
@@ -96,6 +97,16 @@ export default async function globalSetup(config: FullConfig) {
       );
       await pool.query(`UPDATE generated_videos SET output_url = $1 WHERE id = $2`, [fileUrl(`ai-videos/${space.id}/${t}/${row.id}.mp4`), row.id]);
     };
+    // Two customers who can still withdraw: one will use the link from their email, for the other the owner records it
+    const { rows: [t3] } = await pool.query(`INSERT INTO testimonials (space_id, platform, quote, customer_name) VALUES ($1, 'text', 'Wonderful.', 'Katherine Johnson') RETURNING id`, [space.id]);
+    const { rows: [t4] } = await pool.query(`INSERT INTO testimonials (space_id, platform, quote, customer_name) VALUES ($1, 'text', 'Splendid.', 'Dorothy Vaughan') RETURNING id`, [space.id]);
+    const c3 = await consent(t3.id, false);
+    const c4 = await consent(t4.id, false);
+    await ai(t3.id, c3, "E2E public withdrawal script.", 40);
+    await ai(t4.id, c4, "E2E owner withdrawal script.", 50);
+    const token = `${c3}.${createHmac("sha256", E2E_AUTH_SECRET).update(`ai-video-consent:${c3}`).digest("hex")}`;
+    mkdirSync("e2e/.auth", { recursive: true });
+    writeFileSync(CONSENT_FILE, JSON.stringify({ token, forged: `${c3}.${"0".repeat(64)}`, spaceId: space.id }));
     await ai(t1.id, c1, "E2E healthy narration script.", 10);
     await ai(t2.id, c2, "E2E withdrawn narration script.", 20);
     const { rows: [rv] } = await pool.query(
