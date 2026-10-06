@@ -18,6 +18,19 @@ async function signIn(context: { post: (url: string, options: { headers: Record<
   throw new Error(`Sign-in as ${email} kept being rate limited`);
 }
 
+/** Navigates, and tries again when the app's own redirect or refresh interrupts the navigation (seen in Firefox and WebKit). */
+async function open(page: Page, url: string) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await page.goto(url);
+      return;
+    } catch (error) {
+      if (attempt >= 3 || !/interrupted by another navigation|NS_BINDING_ABORTED|frame was detached/i.test(String(error))) throw error;
+      await page.waitForLoadState("load").catch(() => {});
+    }
+  }
+}
+
 const TABS = ["Plans & pricing", "Payments", "Users", "Video & jobs", "Usage", "Moderation", "Audit log", "System"] as const;
 
 const tab = (page: Page, name: string) => page.getByRole("navigation", { name: "Admin sections" }).getByRole("link", { name });
@@ -25,14 +38,14 @@ const row = (page: Page, text: string | RegExp) => page.getByRole("row").filter(
 
 test.describe("access control", () => {
   test("an anonymous visitor is sent to the login page", async ({ page }) => {
-    await page.goto("/admin");
+    await open(page, "/admin");
     await expect(page).toHaveURL(/\/login/);
   });
 
   test("a signed-in customer cannot open the admin area", async ({ page }) => {
     // Better Auth rate-limits sign-ins (a few per 10 seconds per address), so when the form comes back to /login, wait and try again
     for (let attempt = 1; attempt <= 5; attempt++) {
-      await page.goto("/login");
+      await open(page, "/login");
       await page.getByLabel("Email").fill(USERS.member.email);
       await page.getByLabel("Password").fill(PASSWORD);
       await page.getByRole("button", { name: "Sign in" }).click();
@@ -42,7 +55,7 @@ test.describe("access control", () => {
     }
     await expect(page).toHaveURL(/\/(dashboard|onboarding)/);
 
-    await page.goto("/admin");
+    await open(page, "/admin");
     await expect(page).toHaveURL(/\/(dashboard|onboarding)/);
     await expect(page.getByRole("heading", { name: "Admin", exact: true })).toHaveCount(0);
   });
@@ -52,7 +65,7 @@ test.describe("platform admin", () => {
   test.use({ storageState: ADMIN_STATE });
 
   test("every tab opens", async ({ page }) => {
-    await page.goto("/admin");
+    await open(page, "/admin");
     await expect(page.getByRole("heading", { name: "Admin", exact: true })).toBeVisible();
     for (const name of TABS) {
       await tab(page, name).click();
@@ -75,7 +88,7 @@ test.describe("platform admin", () => {
   });
 
   test("system: workers show their heartbeat status", async ({ page }) => {
-    await page.goto("/admin?tab=system");
+    await open(page, "/admin?tab=system");
     const video = row(page, "4242");
     await expect(video).toContainText("Video worker");
     await expect(video).toContainText("Online");
@@ -89,7 +102,7 @@ test.describe("platform admin", () => {
   });
 
   test("video & jobs: retry a failed job and cancel queued jobs", async ({ page }) => {
-    await page.goto("/admin?tab=videos");
+    await open(page, "/admin?tab=videos");
     await expect(page.getByText("Failed jobs")).toBeVisible();
     // Jobs are waiting and no job worker is alive: the page says so at the top
     await expect(page.getByRole("alert").filter({ hasText: "No job worker is running" })).toBeVisible();
@@ -116,7 +129,7 @@ test.describe("platform admin", () => {
   });
 
   test("users: grant a plan, promote another admin, and the guard rails hold", async ({ page }) => {
-    await page.goto(`/admin?tab=users&q=${encodeURIComponent("e2e-")}`);
+    await open(page, `/admin?tab=users&q=${encodeURIComponent("e2e-")}`);
 
     // Grant a plan by hand
     await row(page, USERS.customer.email).getByRole("button", { name: "Manage" }).click();
@@ -162,7 +175,7 @@ test.describe("platform admin", () => {
     expect(revoke.status()).toBe(200);
     expect((await context.request.get("/api/admin/jobs")).status()).toBe(403);
     const page = await context.newPage();
-    await page.goto("/admin");
+    await open(page, "/admin");
     await expect(page).not.toHaveURL(/\/admin/);
 
     // Giving it back works at once too
@@ -173,7 +186,7 @@ test.describe("platform admin", () => {
 
   test("phone width: the Take down button is on screen", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 800 });
-    await page.goto("/admin?tab=moderation");
+    await open(page, "/admin?tab=moderation");
     const takeDown = page.getByRole("button", { name: "Take down" }).first();
     await expect(takeDown).toBeVisible();
     const tdBox = (await takeDown.boundingBox())!;
@@ -182,7 +195,7 @@ test.describe("platform admin", () => {
 
   test("moderation: find a video whose consent was withdrawn and take it down, with a retry after storage fails", async ({ page, playwright }) => {
     const deleted = async () => (await (await page.request.get(`${STORAGE_ORIGIN}/__deleted`)).json()) as string[];
-    await page.goto("/admin?tab=moderation&q=E2E%20Moderation");
+    await open(page, "/admin?tab=moderation&q=E2E%20Moderation");
 
     // Everything the owner has is listed with what it says and the permission behind it
     const healthy = row(page, "E2E healthy narration script.");
@@ -230,7 +243,7 @@ test.describe("platform admin", () => {
     expect((await deleted())[0]).toMatch(/^ai-videos\/.+\.mp4$/);
 
     // It now shows as taken down, with who and why, and no button
-    await page.goto("/admin?tab=moderation&filter=removed&q=E2E%20Moderation");
+    await open(page, "/admin?tab=moderation&filter=removed&q=E2E%20Moderation");
     const gone = row(page, "E2E withdrawn narration script.");
     await expect(gone).toContainText("Taken down");
     await expect(gone).toContainText(REASON_TEXT);
@@ -239,7 +252,7 @@ test.describe("platform admin", () => {
     await expect(gone.getByRole("link", { name: "Open file" })).toHaveCount(0);
 
     // A review video goes the same way
-    await page.goto("/admin?tab=moderation&kind=review&q=E2E%20Moderation");
+    await open(page, "/admin?tab=moderation&kind=review&q=E2E%20Moderation");
     await row(page, "E2E review video text.").getByRole("button", { name: "Take down" }).click();
     await page.getByRole("dialog").getByLabel("Reason").fill("The reviewer asked us to remove it");
     await page.getByRole("dialog").getByRole("button", { name: "Take down" }).click();
@@ -249,9 +262,9 @@ test.describe("platform admin", () => {
     expect((await deleted())[1]).toMatch(/^review-videos\/.+\.mp4$/);
 
     // The healthy video is untouched, and the action is in the audit log
-    await page.goto("/admin?tab=moderation&filter=live&q=E2E%20Moderation");
+    await open(page, "/admin?tab=moderation&filter=live&q=E2E%20Moderation");
     await expect(row(page, "E2E healthy narration script.")).toContainText("Live");
-    await page.goto("/admin?tab=audit&type=video");
+    await open(page, "/admin?tab=audit&type=video");
     await expect(page.getByText(/Took down AI video \(bold\)/)).toBeVisible();
     await expect(page.getByText(/Took down review video \(spotlight\)/)).toBeVisible();
   });
@@ -361,7 +374,7 @@ test.describe("platform admin", () => {
     const card = (name: string) =>
       page.locator("div").filter({ hasText: name }).filter({ has: page.getByRole("button", { name: "AI video" }) }).last();
 
-    await page.goto(`/spaces/${space.id}/testimonials`);
+    await open(page, `/spaces/${space.id}/testimonials`);
 
     // A video an admin took down: the list says Removed and the panel gives the reason instead of an empty player
     await card("Grace Hopper").getByRole("button", { name: "AI video" }).click();
@@ -390,7 +403,7 @@ test.describe("platform admin", () => {
     await panel.getByRole("button", { name: "Close" }).click();
 
     // Review videos: the video an admin took down shows the same notice
-    await page.goto(`/spaces/${space.id}/reviews`);
+    await open(page, `/spaces/${space.id}/reviews`);
     await page.getByRole("button", { name: "Create review video" }).click();
     await page.getByRole("button", { name: /Your videos/ }).click();
     await expect(page.getByText("Removed", { exact: true })).toBeVisible();
@@ -400,23 +413,23 @@ test.describe("platform admin", () => {
   });
 
   test("audit log: the actions above are recorded, and filters and paging work", async ({ page }) => {
-    await page.goto("/admin?tab=audit&type=user");
+    await open(page, "/admin?tab=audit&type=user");
     await expect(page.getByText(`Changed plan for ${USERS.customer.email}`)).toBeVisible();
     await expect(page.getByText(`Granted admin for ${USERS.promote.email}`).first()).toBeVisible();
     await expect(page.getByText(`Revoked admin for ${USERS.promote.email}`)).toBeVisible();
 
-    await page.goto("/admin?tab=audit&type=job");
+    await open(page, "/admin?tab=audit&type=job");
     await expect(page.getByText(/Retried e2e_failed_probe job/)).toBeVisible();
     await expect(page.getByText(/Cancelled e2e_queued_probe job/)).toBeVisible();
 
     // Details expand to the recorded before and after values
-    await page.goto("/admin?tab=audit&type=user");
+    await open(page, "/admin?tab=audit&type=user");
     await page.getByText("Details").first().click();
     await expect(page.locator("pre").first()).toContainText('"from"');
     await expect(page.locator("pre").first()).toContainText('"to"');
 
     // The type menu and the Filter button work together
-    await page.goto("/admin?tab=audit");
+    await open(page, "/admin?tab=audit");
     await page.getByRole("combobox", { name: "Type" }).click();
     await page.getByRole("option", { name: "job", exact: true }).click();
     await page.getByRole("button", { name: "Filter" }).click();
@@ -425,7 +438,7 @@ test.describe("platform admin", () => {
     await expect(page.getByText(/Granted admin for/)).toHaveCount(0);
 
     // The search form filters, and Clear resets it
-    await page.goto("/admin?tab=audit");
+    await open(page, "/admin?tab=audit");
     await page.getByPlaceholder("Summary, action or admin email").fill("no-such-entry-xyz");
     await page.getByRole("button", { name: "Filter" }).click();
     await expect(page.getByText("No entries match these filters.")).toBeVisible();
@@ -433,7 +446,7 @@ test.describe("platform admin", () => {
     await expect(page.getByText("No entries match these filters.")).toHaveCount(0);
 
     // Paging: seeded entries overflow the first page of 50
-    await page.goto("/admin?tab=audit&q=E2E%20seeded%20entry");
+    await open(page, "/admin?tab=audit&q=E2E%20seeded%20entry");
     await expect(page.getByText(`1 to 50 of ${AUDIT_SEED_COUNT} entries`)).toBeVisible();
     await page.getByRole("link", { name: "Older" }).click();
     await expect(page.getByText(`51 to ${AUDIT_SEED_COUNT} of ${AUDIT_SEED_COUNT} entries`)).toBeVisible();
@@ -441,7 +454,7 @@ test.describe("platform admin", () => {
   });
 
   test("plans & payments: edit a plan's limits, create and archive a plan, switch the payment provider", async ({ page }) => {
-    await page.goto("/admin?tab=plans");
+    await open(page, "/admin?tab=plans");
     const dialog = page.getByRole("dialog");
 
     // Edit: the badge and the spaces limit change, and survive a reload
@@ -496,7 +509,7 @@ test.describe("platform admin", () => {
   test("accessibility: no axe violations on any tab", async ({ page }) => {
     const problems: string[] = [];
     for (const name of ["plans", "payments", "users", "videos", "usage", "moderation", "audit", "system"]) {
-      await page.goto(`/admin?tab=${name}`);
+      await open(page, `/admin?tab=${name}`);
       await expect(page.getByRole("heading", { name: "Admin", exact: true })).toBeVisible();
       const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
       for (const v of violations) problems.push(`${name}: ${v.id} (${v.impact}) ${v.nodes.length} node(s): ${v.nodes[0].target.join(" ")}`);
@@ -506,7 +519,7 @@ test.describe("platform admin", () => {
 
   test("phone width: job actions are on screen and emails stay on one line", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 800 });
-    await page.goto("/admin?tab=videos");
+    await open(page, "/admin?tab=videos");
     const buttons = page.getByRole("button", { name: /^(Retry|Cancel)$/ });
     await expect(buttons.first()).toBeVisible();
     for (const b of await buttons.all()) {
@@ -514,11 +527,11 @@ test.describe("platform admin", () => {
       expect(box.x + box.width, "an action button runs past the right edge").toBeLessThanOrEqual(390);
     }
     // The Manage button on the Users tab must be reachable too
-    await page.goto("/admin?tab=users");
+    await open(page, "/admin?tab=users");
     const manage = (await page.getByRole("button", { name: "Manage" }).first().boundingBox())!;
     expect(manage.x + manage.width, "Manage runs past the right edge").toBeLessThanOrEqual(390);
     for (const tabName of ["users", "moderation", "videos"]) {
-      await page.goto(`/admin?tab=${tabName}`);
+      await open(page, `/admin?tab=${tabName}`);
       for (const el of await page.getByText(/@example\.test$/).all()) {
         if (!(await el.isVisible()) || (await el.evaluate((n) => n.children.length)) > 0) continue;
         const oneLine = await el.evaluate((n) => {
@@ -534,7 +547,7 @@ test.describe("platform admin", () => {
   test("phone width: no tab scrolls the page sideways", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 800 });
     for (const name of ["plans", "payments", "users", "videos", "usage", "moderation", "audit", "system"]) {
-      await page.goto(`/admin?tab=${name}`);
+      await open(page, `/admin?tab=${name}`);
       await expect(page.getByRole("heading", { name: "Admin", exact: true })).toBeVisible();
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow, `tab ${name} overflows the viewport by ${overflow}px`).toBeLessThanOrEqual(1);
