@@ -45,17 +45,20 @@ export function ModerationManager({ items }: { items: ModerationItem[] }) {
   }
 
   const trimmed = reason.trim();
+  const stateBadge = (v: ModerationItem) =>
+    v.removed ? <Badge variant="neutral">Taken down</Badge> : v.needsAttention ? <Badge variant="danger">Consent withdrawn</Badge> : <Badge variant="success">Live</Badge>;
+
   return (
     <>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Video</TableHead>
-            <TableHead>Owner</TableHead>
-            <TableHead>Says</TableHead>
-            <TableHead>Permission</TableHead>
-            <TableHead>State</TableHead>
-            <TableHead className="text-right">Action</TableHead>
+            <TableHead className="hidden md:table-cell">Owner</TableHead>
+            <TableHead className="hidden md:table-cell">Says</TableHead>
+            <TableHead className="hidden md:table-cell">Permission</TableHead>
+            <TableHead className="hidden md:table-cell">State</TableHead>
+            <TableHead className="hidden text-right md:table-cell">Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -71,16 +74,27 @@ export function ModerationManager({ items }: { items: ModerationItem[] }) {
                     Open file
                   </a>
                 )}
+                {/* On a phone the other columns are folded in here, so the Take down button is always on screen */}
+                <div className="mt-2 space-y-1 md:hidden">
+                  <div className="max-w-[12rem] truncate text-xs" title={v.ownerEmail ?? undefined}>{v.ownerEmail ?? "Deleted user"}</div>
+                  <div className="line-clamp-3 text-xs text-text-muted">{v.content}</div>
+                  <div>{stateBadge(v)}</div>
+                  {!v.removed && v.outputUrl && (
+                    <Button size="sm" variant={v.needsAttention ? "danger" : "outline"} onClick={() => setTarget(v)}>
+                      Take down
+                    </Button>
+                  )}
+                </div>
               </TableCell>
-              <TableCell>
-                <div>{v.ownerEmail ?? "Deleted user"}</div>
+              <TableCell className="hidden md:table-cell">
+                <div className="max-w-[16rem] truncate" title={v.ownerEmail ?? undefined}>{v.ownerEmail ?? "Deleted user"}</div>
                 <div className="text-xs text-text-muted">{v.spaceName}</div>
               </TableCell>
-              <TableCell className="max-w-xs">
+              <TableCell className="hidden max-w-xs md:table-cell">
                 <div className="line-clamp-4 text-xs">{v.content}</div>
                 {v.attribution && <div className="mt-1 text-xs text-text-muted">- {v.attribution}</div>}
               </TableCell>
-              <TableCell className="text-xs">
+              <TableCell className="hidden text-xs md:table-cell">
                 {v.consent && (
                   <div className="space-y-1">
                     <div>
@@ -92,7 +106,7 @@ export function ModerationManager({ items }: { items: ModerationItem[] }) {
                 )}
                 {v.rightsConfirmedAt && <div>Owner confirmed rights {date(v.rightsConfirmedAt)}</div>}
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden md:table-cell">
                 {v.removed ? (
                   <div className="space-y-1 text-xs">
                     <Badge variant="neutral">Taken down</Badge>
@@ -108,7 +122,7 @@ export function ModerationManager({ items }: { items: ModerationItem[] }) {
                   <Badge variant="success">Live</Badge>
                 )}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="hidden text-right md:table-cell">
                 {!v.removed && v.outputUrl && (
                   <Button size="sm" variant={v.needsAttention ? "danger" : "outline"} onClick={() => setTarget(v)}>
                     Take down

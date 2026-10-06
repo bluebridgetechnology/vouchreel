@@ -110,10 +110,10 @@ export function JobsManager({ overview, videos }: { overview: JobOverview; video
             <TableHeader>
               <TableRow>
                 <TableHead>Video</TableHead>
-                <TableHead>Owner</TableHead>
+                <TableHead className="hidden sm:table-cell">Owner</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Render</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead className="hidden sm:table-cell">Render</TableHead>
+                <TableHead className="hidden sm:table-cell">Created</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -122,14 +122,15 @@ export function JobsManager({ overview, videos }: { overview: JobOverview; video
                   <TableCell>
                     <div className="font-medium">{v.kind === "review" ? "Review video" : "AI video"} · {v.template}</div>
                     <div className="text-xs text-text-muted">{v.spaceName}</div>
+                    <div className="max-w-[10rem] truncate text-xs text-text-muted sm:hidden" title={v.ownerEmail ?? undefined}>{v.ownerEmail ?? "Deleted user"}</div>
                   </TableCell>
-                  <TableCell className="text-text-muted">{v.ownerEmail ?? "Deleted user"}</TableCell>
+                  <TableCell className="hidden max-w-[16rem] truncate text-text-muted sm:table-cell" title={v.ownerEmail ?? undefined}>{v.ownerEmail ?? "Deleted user"}</TableCell>
                   <TableCell>
                     <Badge variant={STATUS_VARIANT[v.status] ?? "neutral"}>{v.status}</Badge>
                     {v.error && <div className="mt-1 max-w-xs truncate text-xs text-danger-foreground" title={v.error}>{v.error}</div>}
                   </TableCell>
-                  <TableCell className="tabular-nums text-text-muted">{v.renderMs ? `${(v.renderMs / 1000).toFixed(1)}s` : "-"}</TableCell>
-                  <TableCell className="whitespace-nowrap text-text-muted">{timeAgo(v.createdAt)}</TableCell>
+                  <TableCell className="hidden tabular-nums text-text-muted sm:table-cell">{v.renderMs ? `${(v.renderMs / 1000).toFixed(1)}s` : "-"}</TableCell>
+                  <TableCell className="hidden whitespace-nowrap text-text-muted sm:table-cell">{timeAgo(v.createdAt)}</TableCell>
                 </TableRow>
               ))}
               {videos.length === 0 && (
@@ -173,9 +174,9 @@ function JobTable({
           <TableHeader>
             <TableRow>
               <TableHead>Job</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Attempts</TableHead>
-              <TableHead>Error</TableHead>
+              <TableHead className="hidden sm:table-cell">Status</TableHead>
+              <TableHead className="hidden sm:table-cell">Attempts</TableHead>
+              <TableHead className="hidden sm:table-cell">Error</TableHead>
               <TableHead className="text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
@@ -187,16 +188,18 @@ function JobTable({
                 <TableRow key={j.id}>
                   <TableCell>
                     <div className="font-medium">{TYPE_LABEL[j.type] ?? j.type}</div>
-                    <div className="text-xs text-text-muted">created {timeAgo(j.createdAt)}</div>
+                    <div className="text-xs text-text-muted">created {timeAgo(j.createdAt)}<span className="sm:hidden"> · {j.attempts}/{j.maxAttempts} tries</span></div>
+                    <div className="mt-1 sm:hidden"><Badge variant={STATUS_VARIANT[j.status]}>{j.status}</Badge>{j.stale && <Badge variant="warning" className="ml-1">stuck</Badge>}</div>
+                    {j.lastError && <div className="mt-1 max-w-[12rem] truncate text-xs text-danger-foreground sm:hidden" title={j.lastError}>{j.lastError}</div>}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <Badge variant={STATUS_VARIANT[j.status]}>{j.status}</Badge>
                     {j.stale && <Badge variant="warning" className="ml-1">stuck</Badge>}
                   </TableCell>
-                  <TableCell className="tabular-nums text-text-muted">
+                  <TableCell className="hidden tabular-nums text-text-muted sm:table-cell">
                     {j.attempts}/{j.maxAttempts}
                   </TableCell>
-                  <TableCell className="max-w-xs truncate text-xs text-text-muted" title={j.lastError ?? undefined}>
+                  <TableCell className="hidden max-w-xs truncate text-xs text-text-muted sm:table-cell" title={j.lastError ?? undefined}>
                     {j.lastError ?? "-"}
                   </TableCell>
                   <TableCell className="text-right">

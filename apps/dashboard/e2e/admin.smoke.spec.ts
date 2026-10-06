@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import pg from "pg";
+import AxeBuilder from "@axe-core/playwright";
 import { ADMIN_STATE, CONSENT_FILE, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, REASON_TEXT, STORAGE_ORIGIN, USERS } from "./seed";
 
 /** Smoke tests for the platform-admin area (/admin). Tests run in order and share seeded rows. */
@@ -163,6 +164,15 @@ test.describe("platform admin", () => {
     expect((await request.patch(`/api/admin/users/${target.id}`, { headers: { origin: baseURL! }, data: { isPlatformAdmin: true } })).status()).toBe(200);
     expect((await context.request.get("/api/admin/jobs")).status()).toBe(200);
     await context.close();
+  });
+
+  test("phone width: the Take down button is on screen", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.goto("/admin?tab=moderation");
+    const takeDown = page.getByRole("button", { name: "Take down" }).first();
+    await expect(takeDown).toBeVisible();
+    const tdBox = (await takeDown.boundingBox())!;
+    expect(tdBox.x + tdBox.width, "Take down runs past the right edge").toBeLessThanOrEqual(390);
   });
 
   test("moderation: find a video whose consent was withdrawn and take it down, with a retry after storage fails", async ({ page, playwright }) => {
@@ -423,6 +433,85 @@ test.describe("platform admin", () => {
     await expect(page.getByRole("link", { name: "Newer" })).toBeVisible();
   });
 
+  test("plans & payments: edit a plan's limits, create and archive a plan, switch the payment provider", async ({ page }) => {
+    await page.goto("/admin?tab=plans");
+    const dialog = page.getByRole("dialog");
+
+    // Edit: the badge and the spaces limit change, and survive a reload
+    await row(page, PLAN_NAME).getByRole("button", { name: "Edit" }).click();
+    await dialog.getByLabel("Badge").fill("E2E badge");
+    await dialog.getByLabel("Max spaces", { exact: true }).fill("11");
+    await dialog.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText("Plan updated")).toBeVisible();
+    await page.reload();
+    await expect(row(page, PLAN_NAME).getByText("E2E badge")).toBeVisible();
+    await expect(row(page, PLAN_NAME).getByRole("cell", { name: "11", exact: true })).toBeVisible();
+
+    // Create, then archive it behind a confirmation, then bring it back
+    const created = "E2E Created Plan";
+    await page.getByRole("button", { name: "New plan" }).click();
+    await dialog.getByLabel("Name").fill(created);
+    await dialog.getByLabel("Price (USD)").fill("12.50");
+    await dialog.getByRole("button", { name: "Create plan" }).click();
+    await expect(page.getByText("Plan created")).toBeVisible();
+    await expect(row(page, created)).toContainText("12.5");
+    await row(page, created).getByRole("button", { name: "Archive" }).click();
+    await page.getByRole("button", { name: "Archive plan" }).click();
+    await expect(row(page, created)).toContainText("Archived");
+    await row(page, created).getByRole("button", { name: "Activate" }).click();
+    await expect(row(page, created)).toContainText("Active");
+
+    // Payments: pick Dodo, save, it is still Dodo after a reload; put Stripe back
+    await tab(page, "Payments").click();
+    await page.getByRole("radio", { name: /Dodo/ }).check();
+    await page.getByRole("button", { name: "Save Provider Configuration" }).click();
+    await expect(page.getByText(/Dodo Payments/).first()).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("radio", { name: /Dodo/ })).toBeChecked();
+    await page.getByRole("radio", { name: /Stripe/ }).check();
+    await page.getByRole("button", { name: "Save Provider Configuration" }).click();
+    await page.reload();
+    await expect(page.getByRole("radio", { name: /Stripe/ })).toBeChecked();
+  });
+
+  test("accessibility: no axe violations on any tab", async ({ page }) => {
+    const problems: string[] = [];
+    for (const name of ["plans", "payments", "users", "videos", "usage", "moderation", "audit", "system"]) {
+      await page.goto(`/admin?tab=${name}`);
+      await expect(page.getByRole("heading", { name: "Admin", exact: true })).toBeVisible();
+      const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+      for (const v of violations) problems.push(`${name}: ${v.id} (${v.impact}) ${v.nodes.length} node(s): ${v.nodes[0].target.join(" ")}`);
+    }
+    expect(problems).toEqual([]);
+  });
+
+  test("phone width: job actions are on screen and emails stay on one line", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.goto("/admin?tab=videos");
+    const buttons = page.getByRole("button", { name: /^(Retry|Cancel)$/ });
+    await expect(buttons.first()).toBeVisible();
+    for (const b of await buttons.all()) {
+      const box = (await b.boundingBox())!;
+      expect(box.x + box.width, "an action button runs past the right edge").toBeLessThanOrEqual(390);
+    }
+    // The Manage button on the Users tab must be reachable too
+    await page.goto("/admin?tab=users");
+    const manage = (await page.getByRole("button", { name: "Manage" }).first().boundingBox())!;
+    expect(manage.x + manage.width, "Manage runs past the right edge").toBeLessThanOrEqual(390);
+    for (const tabName of ["users", "moderation", "videos"]) {
+      await page.goto(`/admin?tab=${tabName}`);
+      for (const el of await page.getByText(/@example\.test$/).all()) {
+        if (!(await el.isVisible()) || (await el.evaluate((n) => n.children.length)) > 0) continue;
+        const oneLine = await el.evaluate((n) => {
+          const range = document.createRange();
+          range.selectNodeContents(n);
+          return new Set(Array.from(range.getClientRects()).map((r) => Math.round(r.top))).size === 1;
+        });
+        expect(oneLine, `an email wraps in tab ${tabName}`).toBe(true);
+      }
+    }
+  });
+
   test("phone width: no tab scrolls the page sideways", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 800 });
     for (const name of ["plans", "payments", "users", "videos", "usage", "moderation", "audit", "system"]) {
@@ -430,6 +519,12 @@ test.describe("platform admin", () => {
       await expect(page.getByRole("heading", { name: "Admin", exact: true })).toBeVisible();
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow, `tab ${name} overflows the viewport by ${overflow}px`).toBeLessThanOrEqual(1);
+      // A table wider than its card would hide columns (and buttons) behind a sideways scroll
+      const clipped = await page.evaluate(() =>
+        Array.from(document.querySelectorAll("table")).filter((t) => t.parentElement && t.scrollWidth > t.parentElement.clientWidth + 1).length
+      );
+      expect(clipped, `tab ${name} has a table wider than its card`).toBe(0);
+      if (process.env.E2E_SHOTS) await page.screenshot({ path: `e2e/.results/shots/phone-${name}.png`, fullPage: true });
     }
   });
 });

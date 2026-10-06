@@ -87,9 +87,9 @@ export function UsersManager({ users, plans, currentUserId, q, page, pageSize, t
         <TableHeader>
           <TableRow>
             <TableHead>User</TableHead>
-            <TableHead>Plan</TableHead>
-            <TableHead>Spaces</TableHead>
-            <TableHead>Joined</TableHead>
+            <TableHead className="hidden sm:table-cell">Plan</TableHead>
+            <TableHead className="hidden sm:table-cell">Spaces</TableHead>
+            <TableHead className="hidden sm:table-cell">Joined</TableHead>
             <TableHead className="text-right">Action</TableHead>
           </TableRow>
         </TableHeader>
@@ -101,9 +101,10 @@ export function UsersManager({ users, plans, currentUserId, q, page, pageSize, t
                   {u.name}
                   {u.isPlatformAdmin && <Badge variant="brand">Admin</Badge>}
                 </div>
-                <div className="text-xs text-text-muted">{u.email}</div>
+                <div className="max-w-[11rem] truncate text-xs text-text-muted sm:max-w-none" title={u.email}>{u.email}</div>
+                <div className="text-xs text-text-muted sm:hidden">{u.planName ?? "Free"}{u.subscriptionProvider === "manual" ? " (granted)" : ""} · {u.spaceCount} spaces · joined {timeAgo(u.createdAt)}</div>
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden sm:table-cell">
                 {u.planName ? (
                   <span className="flex flex-wrap items-center gap-2">
                     {u.planName}
@@ -114,8 +115,8 @@ export function UsersManager({ users, plans, currentUserId, q, page, pageSize, t
                   <span className="text-text-muted">Free</span>
                 )}
               </TableCell>
-              <TableCell className="tabular-nums">{u.spaceCount}</TableCell>
-              <TableCell className="text-text-muted">{timeAgo(u.createdAt)}</TableCell>
+              <TableCell className="hidden tabular-nums sm:table-cell">{u.spaceCount}</TableCell>
+              <TableCell className="hidden text-text-muted sm:table-cell">{timeAgo(u.createdAt)}</TableCell>
               <TableCell className="text-right">
                 <Button size="sm" variant="outline" onClick={() => open(u)}>
                   Manage

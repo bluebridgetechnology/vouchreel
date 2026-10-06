@@ -122,6 +122,7 @@ run("admin user management (postgres)", () => {
     expect(page2.rows).toHaveLength(1);
     expect(new Set([...found.rows, ...page2.rows].map((r) => r.id)).size).toBe(3);
 
+    expect((await queries.listAdminUsers(tag, 99, 2)).page).toBe(page2.page);
     const all = (await queries.listAdminUsers(tag, 1, 10)).rows;
     expect(all.find((r) => r.id === ids.target)).toMatchObject({ billedByProvider: true, subscriptionProvider: "stripe", planName: `${tag} Pro` });
     expect(all.find((r) => r.id === ids.other)).toMatchObject({ billedByProvider: false, subscriptionProvider: "manual" });

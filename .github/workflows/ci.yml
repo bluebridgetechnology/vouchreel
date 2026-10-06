@@ -118,8 +118,8 @@ jobs:
       - name: Real-render test (Remotion + Chromium)
         run: npm run test:render -w @vouchreel/video
 
-      - name: Install the Playwright browser
-        run: npx playwright install --with-deps chromium
+      - name: Install the Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
         working-directory: apps/dashboard
 
       - name: Build for the browser tests
@@ -127,8 +127,13 @@ jobs:
         env:
           DATABASE_URL: ${{ env.E2E_DATABASE_URL }}
 
-      - name: Browser smoke tests (/admin)
+      # The suite reseeds the database on every run, so each browser gets a clean start
+      - name: Browser smoke tests (/admin) in Chromium
         run: npm run test:e2e -w @vouchreel/dashboard
+      - name: Browser smoke tests (/admin) in Firefox
+        run: E2E_BROWSER=firefox npm run test:e2e -w @vouchreel/dashboard
+      - name: Browser smoke tests (/admin) in WebKit
+        run: E2E_BROWSER=webkit npm run test:e2e -w @vouchreel/dashboard
 
       - name: Keep the Playwright report when it fails
         if: failure()

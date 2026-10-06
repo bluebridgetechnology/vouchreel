@@ -170,6 +170,8 @@ run("admin video moderation (postgres)", () => {
     expect([p1.length, p2.length, p3.length]).toEqual([3, 3, 1]);
     expect(new Set([...p1, ...p2, ...p3]).size).toBe(7);
     expect((await mod.listModerationItems({ q: tag }, 0, 3)).page).toBe(1);
+    const last = Math.ceil((await mod.listModerationItems({ q: tag }, 1, 3)).total / 3);
+    expect((await mod.listModerationItems({ q: tag }, 999, 3)).page).toBe(last);
   });
 
   it("takes a video down: deletes the file, clears the URL, records who and why, tells the owner", async () => {

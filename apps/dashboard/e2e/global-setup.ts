@@ -23,7 +23,7 @@ export default async function globalSetup(config: FullConfig) {
     // generated_videos keeps its consent (restrict), so remove the videos before the users that own them
     await pool.query(`DELETE FROM generated_videos WHERE space_id IN (SELECT id FROM spaces WHERE embed_key = 'e2e-moderation')`);
     await pool.query(`DELETE FROM "user" WHERE email LIKE 'e2e-%@example.test'`);
-    await pool.query(`DELETE FROM plans WHERE name = $1`, [PLAN_NAME]);
+    await pool.query(`DELETE FROM plans WHERE name = $1 OR name LIKE $2`, [PLAN_NAME, "E2E Created Plan%"]);
     // The whole queue: the worker alerts depend on what is waiting, so leftovers from earlier runs would change them
     await pool.query(`DELETE FROM jobs`);
     await pool.query(`DELETE FROM worker_heartbeats WHERE worker_id LIKE 'e2e-%'`);

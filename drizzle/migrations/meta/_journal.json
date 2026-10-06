@@ -183,6 +183,13 @@
       "when": 1791291307568,
       "tag": "0025_webhook_events",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791293439007,
+      "tag": "0026_video_admin_indexes",
+      "breakpoints": true
     }
   ]
 }

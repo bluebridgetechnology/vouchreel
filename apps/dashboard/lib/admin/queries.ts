@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, ilike, inArray, lt, or } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { clampedPage } from "@/lib/admin/paging";
 import { adminAuditLog, plans, spaces, subscriptions, user } from "@/lib/db/schema";
 
 export interface AdminUserRow {
@@ -28,7 +29,11 @@ export interface AdminUserPage {
 export const USERS_PAGE_SIZE = 25;
 
 /** Customers with their plan and space count, newest first. `q` matches name or email. */
-export async function listAdminUsers(q?: string, page = 1, pageSize = USERS_PAGE_SIZE): Promise<AdminUserPage> {
+export function listAdminUsers(q?: string, page = 1, pageSize = USERS_PAGE_SIZE): Promise<AdminUserPage> {
+  return clampedPage((p) => listAdminUsersAt(q, p, pageSize), page, pageSize);
+}
+
+async function listAdminUsersAt(q: string | undefined, page: number, pageSize: number): Promise<AdminUserPage> {
   const term = q?.trim();
   const where = term ? or(ilike(user.email, `%${term}%`), ilike(user.name, `%${term}%`)) : undefined;
   const safePage = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
@@ -161,7 +166,11 @@ function auditWhere(filter: AuditFilter) {
 }
 
 /** Newest first, filtered and paged. Page numbers below 1 or not numeric fall back to 1. */
-export async function listAuditLog(filter: AuditFilter = {}, page = 1, pageSize = AUDIT_PAGE_SIZE): Promise<AuditPage> {
+export function listAuditLog(filter: AuditFilter = {}, page = 1, pageSize = AUDIT_PAGE_SIZE): Promise<AuditPage> {
+  return clampedPage((p) => listAuditLogAt(filter, p, pageSize), page, pageSize);
+}
+
+async function listAuditLogAt(filter: AuditFilter, page: number, pageSize: number): Promise<AuditPage> {
   const where = auditWhere(filter);
   const safePage = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
 

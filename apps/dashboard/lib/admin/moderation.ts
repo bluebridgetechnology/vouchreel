@@ -5,6 +5,7 @@ import { AI_VIDEO_CONSENT_VERSION } from "@/lib/ai-video/consent";
 import { notifySpaceOwner } from "@/lib/notifications/service";
 import { getStorage } from "@/lib/storage";
 import { storageKeyFromUrl } from "@/lib/storage/video-files";
+import { clampedPage } from "@/lib/admin/paging";
 import { likeLiteral } from "@/lib/admin/queries";
 
 /**
@@ -82,7 +83,11 @@ function whereFor(kind: ModerationKind, query: ModerationQuery): SQL | undefined
   );
 }
 
-export async function listModerationItems(query: ModerationQuery = {}, page = 1, pageSize = MODERATION_PAGE_SIZE): Promise<ModerationPage> {
+export function listModerationItems(query: ModerationQuery = {}, page = 1, pageSize = MODERATION_PAGE_SIZE): Promise<ModerationPage> {
+  return clampedPage((p) => listModerationItemsAt(query, p, pageSize), page, pageSize);
+}
+
+async function listModerationItemsAt(query: ModerationQuery, page: number, pageSize: number): Promise<ModerationPage> {
   const safePage = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
   const kinds: ModerationKind[] = query.kind === "ai" ? ["ai"] : query.kind === "review" ? ["review"] : ["ai", "review"];
   const take = safePage * pageSize; // enough rows from each table to fill this page after merging

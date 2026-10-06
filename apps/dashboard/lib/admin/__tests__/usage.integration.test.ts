@@ -130,7 +130,10 @@ run("admin usage report (postgres)", () => {
     expect(p1.totalAccounts).toBe(3);
     expect([p1.accounts.length, p2.accounts.length]).toEqual([2, 1]);
     expect(new Set([...p1.accounts, ...p2.accounts].map((a) => a.ownerId)).size).toBe(3);
-    expect((await usage.getUsageReport(MONTH, 3, 2)).accounts).toHaveLength(0);
+    // Past the end shows the last page
+    const past = await usage.getUsageReport(MONTH, 3, 2);
+    expect(past.page).toBe(2);
+    expect(past.accounts.map((a) => a.ownerId)).toEqual(p2.accounts.map((a) => a.ownerId));
     expect((await usage.getUsageReport(MONTH, -4, 2)).page).toBe(1);
   });
 

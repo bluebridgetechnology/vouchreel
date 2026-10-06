@@ -56,8 +56,11 @@ run("admin audit log queries (postgres)", () => {
   it("pages without overlap or gaps", async () => {
     const p1 = await q.listAuditLog({}, 1, 4);
     const p2 = await q.listAuditLog({}, 2, 4);
+    expect([p1.rows.length, p2.rows.length]).toEqual([4, 2]);
+    // A page past the end shows the last page, not an empty table
     const p3 = await q.listAuditLog({}, 3, 4);
-    expect([p1.rows.length, p2.rows.length, p3.rows.length]).toEqual([4, 2, 0]);
+    expect(p3.page).toBe(2);
+    expect(p3.rows.map((r) => r.id)).toEqual(p2.rows.map((r) => r.id));
     expect(new Set([...p1.rows, ...p2.rows].map((r) => r.id)).size).toBe(6);
     expect(p3.total).toBe(6);
     // Bad page numbers fall back to the first page

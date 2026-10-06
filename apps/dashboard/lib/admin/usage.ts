@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { getSubscriptionLimits } from "@/lib/payments/subscription";
+import { clampedPage } from "@/lib/admin/paging";
 import { startOfMonthUtc } from "@/lib/ai-video/credits";
 
 /**
@@ -88,6 +89,18 @@ function usageRows(from: Date, to: Date) {
 }
 
 export async function getUsageReport(monthText?: string, page = 1, pageSize = USAGE_PAGE_SIZE, now = new Date()): Promise<UsageReport> {
+  const report = await clampedPage(
+    async (p) => {
+      const r = await usageReportAt(monthText, p, pageSize, now);
+      return Object.assign(r, { total: r.totalAccounts });
+    },
+    page,
+    pageSize
+  );
+  return report;
+}
+
+async function usageReportAt(monthText: string | undefined, page: number, pageSize: number, now: Date): Promise<UsageReport> {
   const { month, from, to } = parseMonth(monthText, now);
   const safePage = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
 

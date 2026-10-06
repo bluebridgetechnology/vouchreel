@@ -229,7 +229,7 @@ const LIMIT_BADGE: Record<LimitState, { label: string; variant: "neutral" | "suc
 function CreditCell({ used, limit }: { used: number; limit: number }) {
   const badge = LIMIT_BADGE[limitState(used, limit)];
   return (
-    <div className="flex flex-wrap items-center gap-2 tabular-nums">
+    <div className="flex flex-col items-start gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 tabular-nums">
       <span>
         {used} <span className="text-text-muted">/ {limit <= 0 && limit !== Infinity ? "not in plan" : formatLimit(limit)}</span>
       </span>
@@ -293,11 +293,11 @@ async function UsageTab({ month: rawMonth, page }: { month?: string; page: numbe
         <TableHeader>
           <TableRow>
             <TableHead>Account</TableHead>
-            <TableHead>Plan</TableHead>
-            <TableHead>Review videos</TableHead>
-            <TableHead>AI videos</TableHead>
-            <TableHead>AI cost</TableHead>
-            <TableHead>Failed</TableHead>
+            <TableHead className="hidden sm:table-cell">Plan</TableHead>
+            <TableHead><span className="sm:hidden">Credits used</span><span className="hidden sm:inline">Review videos</span></TableHead>
+            <TableHead className="hidden sm:table-cell">AI videos</TableHead>
+            <TableHead className="hidden sm:table-cell">AI cost</TableHead>
+            <TableHead className="hidden sm:table-cell">Failed</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -305,17 +305,25 @@ async function UsageTab({ month: rawMonth, page }: { month?: string; page: numbe
             <TableRow key={a.ownerId}>
               <TableCell>
                 <div className="font-medium">{a.name}</div>
-                <div className="text-xs text-text-muted">{a.email}</div>
+                <div className="max-w-[8rem] truncate text-xs text-text-muted sm:max-w-none" title={a.email}>{a.email}</div>
+                <div className="max-w-[8rem] text-xs text-text-muted sm:hidden">
+                  {a.planName ?? "Free"} · {formatUsd(a.aiCostCents)} AI cost · {a.failed} failed
+                </div>
               </TableCell>
-              <TableCell>{a.planName ?? <span className="text-text-muted">Free</span>}</TableCell>
+              <TableCell className="hidden sm:table-cell">{a.planName ?? <span className="text-text-muted">Free</span>}</TableCell>
               <TableCell>
+                <div className="text-xs text-text-muted sm:hidden">Review</div>
                 <CreditCell used={a.reviewCredits} limit={a.reviewLimit} />
+                <div className="mt-2 sm:hidden">
+                  <div className="text-xs text-text-muted">AI</div>
+                  <CreditCell used={a.aiCredits} limit={a.aiLimit} />
+                </div>
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden sm:table-cell">
                 <CreditCell used={a.aiCredits} limit={a.aiLimit} />
               </TableCell>
-              <TableCell className="tabular-nums">{formatUsd(a.aiCostCents)}</TableCell>
-              <TableCell className="tabular-nums text-text-muted">{a.failed}</TableCell>
+              <TableCell className="hidden tabular-nums sm:table-cell">{formatUsd(a.aiCostCents)}</TableCell>
+              <TableCell className="hidden tabular-nums text-text-muted sm:table-cell">{a.failed}</TableCell>
             </TableRow>
           ))}
           {report.accounts.length === 0 && (
@@ -398,7 +406,7 @@ async function AuditTab({ filter, page }: { filter: AuditFilter; page: number })
         <TableHeader>
           <TableRow>
             <TableHead>When</TableHead>
-            <TableHead>Who</TableHead>
+            <TableHead className="hidden sm:table-cell">Who</TableHead>
             <TableHead>What</TableHead>
           </TableRow>
         </TableHeader>
@@ -407,11 +415,12 @@ async function AuditTab({ filter, page }: { filter: AuditFilter; page: number })
             <TableRow key={e.id}>
               <TableCell className="whitespace-nowrap text-text-muted" title={e.createdAt.toISOString()}>
                 {timeAgo(e.createdAt)}
+                <div className="max-w-[6rem] truncate text-xs sm:hidden" title={e.actorEmail ?? undefined}>{e.actorEmail ?? "Deleted user"}</div>
               </TableCell>
-              <TableCell className="text-text-muted">{e.actorEmail ?? "Deleted user"}</TableCell>
+              <TableCell className="hidden text-text-muted sm:table-cell">{e.actorEmail ?? "Deleted user"}</TableCell>
               <TableCell>
-                <div>{e.summary}</div>
-                <div className="text-xs text-text-subtle">
+                <div className="[overflow-wrap:anywhere]">{e.summary}</div>
+                <div className="text-xs text-text-subtle [overflow-wrap:anywhere]">
                   {e.action}
                   {e.entityId ? ` · ${e.entityType} ${e.entityId}` : ""}
                 </div>
@@ -518,10 +527,10 @@ async function WorkersCard() {
             <TableRow>
               <TableHead>Process</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Last seen</TableHead>
-              <TableHead>Started</TableHead>
-              <TableHead>Jobs claimed</TableHead>
-              <TableHead>Found at start-up</TableHead>
+              <TableHead className="hidden md:table-cell">Last seen</TableHead>
+              <TableHead className="hidden md:table-cell">Started</TableHead>
+              <TableHead className="hidden md:table-cell">Jobs claimed</TableHead>
+              <TableHead className="hidden md:table-cell">Found at start-up</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -534,14 +543,18 @@ async function WorkersCard() {
                     <div className="text-xs text-text-muted">
                       {w.hostname ?? "unknown host"} · pid {w.pid ?? "?"} · concurrency {w.concurrency}
                     </div>
+                    <div className="mt-1 text-xs text-text-muted md:hidden">
+                      seen {timeAgo(w.lastSeenAt)} · {w.jobsProcessed} jobs
+                      {problem ? <span className="block text-danger-foreground">{problem}</span> : null}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant={STATUS[w.status].variant}>{STATUS[w.status].label}</Badge>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-text-muted">{timeAgo(w.lastSeenAt)}</TableCell>
-                  <TableCell className="whitespace-nowrap text-text-muted">{timeAgo(w.startedAt)}</TableCell>
-                  <TableCell className="tabular-nums">{w.jobsProcessed}</TableCell>
-                  <TableCell className="text-xs">
+                  <TableCell className="hidden whitespace-nowrap text-text-muted md:table-cell">{timeAgo(w.lastSeenAt)}</TableCell>
+                  <TableCell className="hidden whitespace-nowrap text-text-muted md:table-cell">{timeAgo(w.startedAt)}</TableCell>
+                  <TableCell className="hidden tabular-nums md:table-cell">{w.jobsProcessed}</TableCell>
+                  <TableCell className="hidden text-xs md:table-cell">
                     {Object.entries(w.capabilities).map(([k, v]) => (
                       <div key={k}>
                         {k}: {v.startsWith("error:") ? "error" : v}

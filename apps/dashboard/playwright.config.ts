@@ -1,4 +1,4 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 import { E2E_AUTH_SECRET } from "./e2e/seed";
 
 /**
@@ -16,6 +16,9 @@ import { E2E_AUTH_SECRET } from "./e2e/seed";
 const PORT = Number(process.env.E2E_PORT ?? 3101);
 const STORAGE_PORT = Number(process.env.E2E_STORAGE_PORT ?? 3199);
 const baseURL = `http://localhost:${PORT}`;
+/** The suite shares seeded rows, so run it once per browser: E2E_BROWSER=firefox npm run test:e2e */
+const BROWSER = (process.env.E2E_BROWSER ?? "chromium") as "chromium" | "firefox" | "webkit";
+const DEVICE = { chromium: "Desktop Chrome", firefox: "Desktop Firefox", webkit: "Desktop Safari" } as const;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -28,6 +31,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   reporter: [["list"]],
   outputDir: "./e2e/.results",
+  projects: [{ name: BROWSER, use: { ...devices[DEVICE[BROWSER]] } }],
   use: { baseURL, trace: "retain-on-failure", screenshot: "only-on-failure" },
   webServer: {
     command: `npx next start -p ${PORT}`,

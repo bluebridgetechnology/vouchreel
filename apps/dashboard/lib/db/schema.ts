@@ -1195,6 +1195,9 @@ export const generatedVideos = pgTable(
   (table) => [
     index("generated_videos_testimonial_idx").on(table.testimonialId, table.createdAt),
     index("generated_videos_space_created_idx").on(table.spaceId, table.createdAt),
+    // Admin Usage (by month) and Moderation (newest first) read across all spaces
+    index("generated_videos_trim_approved_idx").on(table.trimApprovedAt),
+    index("generated_videos_created_idx").on(table.createdAt),
   ]
 );
 
@@ -1234,7 +1237,10 @@ export const reviewVideos = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
   },
-  (table) => [index("review_videos_space_created_idx").on(table.spaceId, table.createdAt)]
+  (table) => [
+    index("review_videos_space_created_idx").on(table.spaceId, table.createdAt),
+    index("review_videos_created_idx").on(table.createdAt),
+  ]
 );
 
 /**
