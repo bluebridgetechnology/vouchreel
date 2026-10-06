@@ -39,6 +39,6 @@ apps/dashboard/public/local-uploads/
 packages/video/out/
 
 # Playwright
-e2e/.auth/
-e2e/.results/
-playwright-report/
+**/e2e/.auth/
+**/e2e/.results/
+**/playwright-report/
