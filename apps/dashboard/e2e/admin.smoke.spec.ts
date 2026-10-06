@@ -467,11 +467,12 @@ test.describe("platform admin", () => {
     await tab(page, "Payments").click();
     await page.getByRole("radio", { name: /Dodo/ }).check();
     await page.getByRole("button", { name: "Save Provider Configuration" }).click();
-    await expect(page.getByText(/Dodo Payments/).first()).toBeVisible();
+    await expect(page.getByText(/New checkouts will immediately use this provider/).first()).toBeVisible();
     await page.reload();
     await expect(page.getByRole("radio", { name: /Dodo/ })).toBeChecked();
     await page.getByRole("radio", { name: /Stripe/ }).check();
     await page.getByRole("button", { name: "Save Provider Configuration" }).click();
+    await expect(page.getByText(/New checkouts will immediately use this provider/).first()).toBeVisible();
     await page.reload();
     await expect(page.getByRole("radio", { name: /Stripe/ })).toBeChecked();
   });
