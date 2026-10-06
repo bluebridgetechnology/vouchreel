@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// usage.ts imports the database module; these tests only use its pure helpers
+vi.mock("@/lib/db", () => ({ db: {} }));
+vi.mock("@/lib/payments/subscription", () => ({ getSubscriptionLimits: vi.fn() }));
 import { formatLimit, formatUsd, limitState, parseMonth, shiftMonth } from "../usage";
 
 describe("usage helpers", () => {

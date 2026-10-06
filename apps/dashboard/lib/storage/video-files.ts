@@ -1,4 +1,5 @@
 import { getStorage } from "@/lib/storage";
+import { keyFromUrl } from "./keys";
 
 /**
  * Deleting the stored file behind a finished video. Videos are uploaded under a fixed prefix and
@@ -11,17 +12,7 @@ const KEY_PREFIX: Record<VideoFileKind, string> = { ai: "ai-videos/", review: "r
 
 /** The storage key inside a public file URL, or null when the URL does not look like ours. */
 export function storageKeyFromUrl(url: string, kind: VideoFileKind): string | null {
-  let pathname: string;
-  try {
-    pathname = decodeURIComponent(new URL(url).pathname);
-  } catch {
-    return null;
-  }
-  const i = pathname.indexOf(KEY_PREFIX[kind]);
-  if (i === -1) return null;
-  const key = pathname.slice(i);
-  if (key.split("/").some((part) => part === ".." || part === "." || part === "")) return null;
-  return key;
+  return keyFromUrl(url, [KEY_PREFIX[kind]]);
 }
 
 /**

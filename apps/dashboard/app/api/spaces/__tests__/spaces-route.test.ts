@@ -12,6 +12,8 @@ vi.mock("@/lib/auth/session", () => ({
   getSession: vi.fn(),
 }));
 
+const deleteSpaceWithFiles = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/spaces/delete", () => ({ deleteSpace: deleteSpaceWithFiles }));
 vi.mock("@/lib/db", () => ({
   db: {
     select: vi.fn(),
@@ -324,13 +326,13 @@ describe("Spaces API Routes", () => {
         }),
       });
 
-      (db.delete as any).mockReturnValue({
-        where: vi.fn().mockResolvedValue(undefined),
-      });
+      deleteSpaceWithFiles.mockResolvedValue(2);
 
       const res = await deleteSpace(new Request("http://localhost", { method: "DELETE" }), {
         params: Promise.resolve({ id: "space-1" }),
       });
+      // The delete goes through the helper that also queues cleanup of the space's stored files
+      expect(deleteSpaceWithFiles).toHaveBeenCalledWith("space-1");
 
       expect(res.status).toBe(200);
       const json = await res.json();
