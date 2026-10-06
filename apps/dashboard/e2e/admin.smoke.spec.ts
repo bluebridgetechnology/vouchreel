@@ -463,18 +463,29 @@ test.describe("platform admin", () => {
     await row(page, created).getByRole("button", { name: "Activate" }).click();
     await expect(row(page, created)).toContainText("Active");
 
-    // Payments: pick Dodo, save, it is still Dodo after a reload; put Stripe back
+    // Payments: pick Dodo and save; a fresh page of the same session still shows Dodo. Then put Stripe back.
+    // (A fresh page rather than a reload: WebKit's renderer crashed on repeated reloads in CI.)
+    const saved = new RegExp("New checkouts will immediately use this provider");
+    // Retried, because the toast from a previous save can still be on screen when the next save is clicked
+    const provider = (name: RegExp) =>
+      expect(async () => {
+        const fresh = await page.context().newPage();
+        try {
+          await fresh.goto("/admin?tab=payments");
+          await expect(fresh.getByRole("radio", { name })).toBeChecked({ timeout: 1000 });
+        } finally {
+          await fresh.close();
+        }
+      }).toPass({ timeout: 10_000 });
     await tab(page, "Payments").click();
     await page.getByRole("radio", { name: /Dodo/ }).check();
     await page.getByRole("button", { name: "Save Provider Configuration" }).click();
-    await expect(page.getByText(/New checkouts will immediately use this provider/).first()).toBeVisible();
-    await page.reload();
-    await expect(page.getByRole("radio", { name: /Dodo/ })).toBeChecked();
+    await expect(page.getByText(saved).first()).toBeVisible();
+    await provider(/Dodo/);
     await page.getByRole("radio", { name: /Stripe/ }).check();
     await page.getByRole("button", { name: "Save Provider Configuration" }).click();
-    await expect(page.getByText(/New checkouts will immediately use this provider/).first()).toBeVisible();
-    await page.reload();
-    await expect(page.getByRole("radio", { name: /Stripe/ })).toBeChecked();
+    await expect(page.getByText(saved).nth(0)).toBeVisible();
+    await provider(/Stripe/);
   });
 
   test("accessibility: no axe violations on any tab", async ({ page }) => {
