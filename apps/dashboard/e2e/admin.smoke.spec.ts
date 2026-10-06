@@ -239,6 +239,8 @@ test.describe("platform admin", () => {
     await page.getByRole("dialog").getByLabel("Reason").fill("The reviewer asked us to remove it");
     await page.getByRole("dialog").getByRole("button", { name: "Take down" }).click();
     await expect(page.getByText("Video taken down. Its owner has been told.")).toBeVisible();
+    // Wait for the page's own refresh to land before navigating away (WebKit interrupts a goto otherwise)
+    await expect(row(page, "E2E review video text.")).toContainText("Taken down");
     expect((await deleted())[1]).toMatch(/^review-videos\/.+\.mp4$/);
 
     // The healthy video is untouched, and the action is in the audit log
