@@ -50,11 +50,29 @@ test.describe("platform admin", () => {
     await expect(page.getByRole("link", { name: "Next month" })).toHaveCount(0); // already on the current month
     await tab(page, "System").click();
     await expect(page.getByText("System health")).toBeVisible();
+    await expect(page.getByText("Background workers")).toBeVisible();
+  });
+
+  test("system: workers show their heartbeat status", async ({ page }) => {
+    await page.goto("/admin?tab=system");
+    const video = row(page, "4242");
+    await expect(video).toContainText("Video worker");
+    await expect(video).toContainText("Online");
+    await expect(video).toContainText("chromium: ok");
+    const jobs = row(page, "4343");
+    await expect(jobs).toContainText("Job worker");
+    await expect(jobs).toContainText("Not responding");
+    // The summary says the same in words: the video worker is fine, the job worker is not running
+    await expect(page.getByText("1 worker online.")).toBeVisible();
+    await expect(page.getByText(/No job worker is running/)).toBeVisible();
   });
 
   test("video & jobs: retry a failed job and cancel queued jobs", async ({ page }) => {
     await page.goto("/admin?tab=videos");
     await expect(page.getByText("Failed jobs")).toBeVisible();
+    // Jobs are waiting and no job worker is alive: the page says so at the top
+    await expect(page.getByRole("alert").filter({ hasText: "No job worker is running" })).toBeVisible();
+    await expect(page.getByRole("alert").filter({ hasText: "video worker" })).toHaveCount(0);
 
     // Retry: confirm dialog, success toast, and the job leaves the failed list
     await row(page, FAILED_JOB_ERROR).getByRole("button", { name: "Retry" }).click();

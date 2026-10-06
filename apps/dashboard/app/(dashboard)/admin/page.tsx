@@ -6,6 +6,7 @@ import { getActivePaymentProviderName } from "@/lib/payments";
 import { getFfmpegStatus } from "@/lib/media/ffmpeg";
 import { listAdminPlans } from "@/lib/admin/plans";
 import { getJobOverview, listAdminVideos } from "@/lib/admin/jobs";
+import { capabilityProblem, getWorkerHealth, type KindHealth, type Severity } from "@/lib/admin/workers";
 import { formatLimit, formatUsd, getUsageReport, limitState, parseMonth, shiftMonth, type LimitState } from "@/lib/admin/usage";
 import { listAdminUsers, listAuditEntityTypes, listAuditLog, type AuditFilter } from "@/lib/admin/queries";
 import { timeAgo } from "@/lib/time-ago";
@@ -123,8 +124,16 @@ async function UsersTab({ q, page, currentUserId }: { q?: string; page: number; 
 }
 
 async function VideosTab() {
-  const [overview, videos] = await Promise.all([getJobOverview(), listAdminVideos()]);
-  return <JobsManager overview={overview} videos={videos} />;
+  const [overview, videos, health] = await Promise.all([getJobOverview(), listAdminVideos(), getWorkerHealth()]);
+  const alerts = health.kinds.filter((k) => k.severity !== "ok");
+  return (
+    <div className="space-y-6">
+      {alerts.map((k) => (
+        <WorkerAlert key={k.kind} health={k} />
+      ))}
+      <JobsManager overview={overview} videos={videos} />
+    </div>
+  );
 }
 
 const LIMIT_BADGE: Record<LimitState, { label: string; variant: "neutral" | "success" | "warning" | "danger" } | null> = {
@@ -370,9 +379,117 @@ async function AuditTab({ filter, page }: { filter: AuditFilter; page: number })
   );
 }
 
+const SEVERITY_BADGE: Record<Severity, { label: string; variant: "success" | "warning" | "danger" }> = {
+  ok: { label: "Healthy", variant: "success" },
+  warning: { label: "Attention", variant: "warning" },
+  critical: { label: "Not working", variant: "danger" },
+};
+
+function WorkerAlert({ health }: { health: KindHealth }) {
+  const danger = health.severity === "critical";
+  return (
+    <div
+      role="alert"
+      className={cn(
+        "rounded-card border px-4 py-3 text-sm",
+        danger ? "border-danger/30 bg-danger-soft text-danger-foreground" : "border-warning/30 bg-warning-soft text-warning-foreground",
+      )}
+    >
+      <span className="font-medium">{health.label}: </span>
+      {health.message}{" "}
+      <Link href="/admin?tab=system" className="underline">
+        Details
+      </Link>
+    </div>
+  );
+}
+
+async function WorkersCard() {
+  const { workers, kinds } = await getWorkerHealth();
+  const STATUS = {
+    online: { label: "Online", variant: "success" },
+    not_responding: { label: "Not responding", variant: "danger" },
+    stopped: { label: "Stopped", variant: "neutral" },
+  } as const;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Background workers</CardTitle>
+        <CardDescription>
+          Workers report in every 15 seconds. One that has been silent for 45 seconds is shown as not responding. Only processes
+          seen in the last 24 hours are listed.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6 text-sm">
+        <div className="space-y-3">
+          {kinds.map((k) => (
+            <div key={k.kind} className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="font-medium">{k.label}</div>
+                <div className="text-xs text-text-muted">{k.message}</div>
+              </div>
+              <Badge variant={SEVERITY_BADGE[k.severity].variant}>{SEVERITY_BADGE[k.severity].label}</Badge>
+            </div>
+          ))}
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Process</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Last seen</TableHead>
+              <TableHead>Started</TableHead>
+              <TableHead>Jobs claimed</TableHead>
+              <TableHead>Found at start-up</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {workers.map((w) => {
+              const problem = capabilityProblem(w);
+              return (
+                <TableRow key={w.workerId}>
+                  <TableCell>
+                    <div className="font-medium">{w.kind === "video-worker" ? "Video worker" : "Job worker"}</div>
+                    <div className="text-xs text-text-muted">
+                      {w.hostname ?? "unknown host"} · pid {w.pid ?? "?"} · concurrency {w.concurrency}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={STATUS[w.status].variant}>{STATUS[w.status].label}</Badge>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-text-muted">{timeAgo(w.lastSeenAt)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-text-muted">{timeAgo(w.startedAt)}</TableCell>
+                  <TableCell className="tabular-nums">{w.jobsProcessed}</TableCell>
+                  <TableCell className="text-xs">
+                    {Object.entries(w.capabilities).map(([k, v]) => (
+                      <div key={k}>
+                        {k}: {v.startsWith("error:") ? "error" : v}
+                      </div>
+                    ))}
+                    {problem && <div className="mt-1 text-danger-foreground">{problem}</div>}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            {workers.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="py-8 text-center text-text-muted">
+                  No worker has reported in the last 24 hours. On a VPS run the <code>worker</code> and <code>video-worker</code> services.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
 async function SystemTab() {
   const ffmpeg = await getFfmpegStatus(true);
   return (
+    <div className="space-y-6">
+    <WorkersCard />
     <Card>
       <CardHeader>
         <CardTitle>System health</CardTitle>
@@ -405,5 +522,6 @@ async function SystemTab() {
         )}
       </CardContent>
     </Card>
+    </div>
   );
 }

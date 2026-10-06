@@ -15,5 +15,8 @@ const ffmpeg = await getFfmpegStatus(true);
 if (!ffmpeg.available) console.warn("[worker] FFmpeg not found: media jobs will fail.");
 
 // Video jobs need Chromium, which this worker does not have; the video worker takes those
-await runWorker(controller.signal, { except: [JOB_TYPES.reviewVideo] });
+await runWorker(controller.signal, {
+  except: [JOB_TYPES.reviewVideo],
+  heartbeat: { kind: "worker", capabilities: { ffmpeg: ffmpeg.available ? (ffmpeg.version ?? "installed") : "missing" } },
+});
 process.exit(0);

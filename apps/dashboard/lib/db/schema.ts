@@ -1238,3 +1238,29 @@ export const brandKits = pgTable("brand_kits", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+/**
+ * One row per job-worker process, refreshed every few seconds while it runs. The admin System
+ * tab reads it to show whether workers are alive. Rows are best-effort telemetry: a missing row
+ * means "never seen", not "not running".
+ */
+export const workerHeartbeats = pgTable(
+  "worker_heartbeats",
+  {
+    workerId: text("worker_id").primaryKey(),
+    /** worker = social exports and AI video; video-worker = review videos (needs Chromium). */
+    kind: text("kind").$type<"worker" | "video-worker">().notNull(),
+    hostname: text("hostname"),
+    pid: integer("pid"),
+    concurrency: integer("concurrency").default(1).notNull(),
+    /** Jobs this process has claimed since it started. */
+    jobsProcessed: integer("jobs_processed").default(0).notNull(),
+    /** What the process found on start-up, e.g. { ffmpeg: "7.1", chromium: "ok" }. */
+    capabilities: jsonb("capabilities").$type<Record<string, string>>().default({}).notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).defaultNow().notNull(),
+    /** Set on a clean shutdown. */
+    stoppedAt: timestamp("stopped_at", { withTimezone: true }),
+  },
+  (table) => [index("worker_heartbeats_last_seen_idx").on(table.lastSeenAt)]
+);

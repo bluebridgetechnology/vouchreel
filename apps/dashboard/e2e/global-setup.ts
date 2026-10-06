@@ -20,6 +20,7 @@ export default async function globalSetup(config: FullConfig) {
     await pool.query(`DELETE FROM "user" WHERE email LIKE 'e2e-%@example.test'`);
     await pool.query(`DELETE FROM plans WHERE name = $1`, [PLAN_NAME]);
     await pool.query(`DELETE FROM jobs WHERE type IN ($1, $2)`, [FAILED_JOB_TYPE, QUEUED_JOB_TYPE]);
+    await pool.query(`DELETE FROM worker_heartbeats WHERE worker_id LIKE 'e2e-%'`);
     await pool.query(`DELETE FROM admin_audit_log WHERE summary ILIKE '%e2e%'`); // seeded rows and entries from earlier runs
 
     for (const u of Object.values(USERS)) {
@@ -48,6 +49,13 @@ export default async function globalSetup(config: FullConfig) {
       [FAILED_JOB_TYPE, FAILED_JOB_ERROR]
     );
     await pool.query(`INSERT INTO jobs (type, payload, status) VALUES ($1, '{}', 'queued')`, [QUEUED_JOB_TYPE]);
+    // A video worker that is alive (last seen an hour ahead so it stays "online" however long the run takes)
+    // and a job worker that went quiet ten minutes ago
+    await pool.query(
+      `INSERT INTO worker_heartbeats (worker_id, kind, hostname, pid, concurrency, capabilities, started_at, last_seen_at) VALUES
+         ('e2e-video-worker', 'video-worker', 'e2e-host', 4242, 1, '{"chromium":"ok"}', now() - interval '2 hours', now() + interval '1 hour'),
+         ('e2e-job-worker', 'worker', 'e2e-host', 4343, 2, '{"ffmpeg":"7.1"}', now() - interval '2 hours', now() - interval '10 minutes')`
+    );
     await pool.query(
       `INSERT INTO admin_audit_log (action, entity_type, summary, changes, created_at)
        SELECT 'plan.updated', 'plan', 'E2E seeded entry ' || g, '{"price":{"from":900,"to":1900}}', now() - (g || ' minutes')::interval

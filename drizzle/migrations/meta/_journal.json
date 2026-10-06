@@ -162,6 +162,13 @@
       "when": 1791211005279,
       "tag": "0022_brand_kit_video_style",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791285641758,
+      "tag": "0023_worker_heartbeats",
+      "breakpoints": true
     }
   ]
 }
