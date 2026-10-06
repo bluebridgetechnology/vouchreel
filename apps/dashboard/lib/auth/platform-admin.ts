@@ -6,7 +6,8 @@
  *
  * The flag is stored in `user.is_platform_admin` (default false), exposed on the
  * Better Auth session through `additionalFields`, and granted only with
- * `npm run admin:grant -- <email>` (no self-service path, no signup bootstrap).
+ * `npm run admin:grant -- <email>` (the first admin) or by an existing platform admin in
+ * Admin > Users (no self-service path, no signup bootstrap, never your own flag).
  */
 export function isPlatformAdmin(user: unknown): boolean {
   return (user as { isPlatformAdmin?: unknown } | null | undefined)?.isPlatformAdmin === true;
