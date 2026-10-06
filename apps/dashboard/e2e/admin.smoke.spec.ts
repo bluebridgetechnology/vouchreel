@@ -4,7 +4,7 @@ import { ADMIN_STATE, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSW
 /** Smoke tests for the platform-admin area (/admin). Tests run in order and share seeded rows. */
 test.describe.configure({ mode: "serial" });
 
-const TABS = ["Plans & pricing", "Payments", "Users", "Video & jobs", "Audit log", "System"] as const;
+const TABS = ["Plans & pricing", "Payments", "Users", "Video & jobs", "Usage", "Audit log", "System"] as const;
 
 const tab = (page: Page, name: string) => page.getByRole("navigation", { name: "Admin sections" }).getByRole("link", { name });
 const row = (page: Page, text: string | RegExp) => page.getByRole("row").filter({ hasText: text });
@@ -44,6 +44,10 @@ test.describe("platform admin", () => {
     await expect(page.getByText(PLAN_NAME)).toBeVisible();
     await tab(page, "Payments").click();
     await expect(page.getByText("Active Payment Provider")).toBeVisible();
+    await tab(page, "Usage").click();
+    await expect(page.getByText("Review video credits")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Previous month" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Next month" })).toHaveCount(0); // already on the current month
     await tab(page, "System").click();
     await expect(page.getByText("System health")).toBeVisible();
   });
@@ -146,7 +150,7 @@ test.describe("platform admin", () => {
 
   test("phone width: no tab scrolls the page sideways", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 800 });
-    for (const name of ["plans", "payments", "users", "videos", "audit", "system"]) {
+    for (const name of ["plans", "payments", "users", "videos", "usage", "audit", "system"]) {
       await page.goto(`/admin?tab=${name}`);
       await expect(page.getByRole("heading", { name: "Admin", exact: true })).toBeVisible();
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

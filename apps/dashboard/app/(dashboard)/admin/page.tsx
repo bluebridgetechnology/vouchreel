@@ -6,6 +6,7 @@ import { getActivePaymentProviderName } from "@/lib/payments";
 import { getFfmpegStatus } from "@/lib/media/ffmpeg";
 import { listAdminPlans } from "@/lib/admin/plans";
 import { getJobOverview, listAdminVideos } from "@/lib/admin/jobs";
+import { formatLimit, formatUsd, getUsageReport, limitState, parseMonth, shiftMonth, type LimitState } from "@/lib/admin/usage";
 import { listAdminUsers, listAuditEntityTypes, listAuditLog, type AuditFilter } from "@/lib/admin/queries";
 import { timeAgo } from "@/lib/time-ago";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ const TABS = [
   { id: "payments", label: "Payments" },
   { id: "users", label: "Users" },
   { id: "videos", label: "Video & jobs" },
+  { id: "usage", label: "Usage" },
   { id: "audit", label: "Audit log" },
   { id: "system", label: "System" },
 ] as const;
@@ -37,14 +39,14 @@ type TabId = (typeof TABS)[number]["id"];
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string; page?: string; type?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string; page?: string; type?: string; from?: string; to?: string; month?: string }>;
 }) {
   const session = await requireSession();
   if (!isPlatformAdmin(session.user)) {
     redirect("/dashboard");
   }
 
-  const { tab: rawTab, q, page: rawPage, type, from, to } = await searchParams;
+  const { tab: rawTab, q, page: rawPage, type, from, to, month } = await searchParams;
   const tab: TabId = TABS.some((t) => t.id === rawTab) ? (rawTab as TabId) : "plans";
 
   return (
@@ -78,6 +80,7 @@ export default async function AdminPage({
       {tab === "payments" && <PaymentsTab />}
       {tab === "users" && <UsersTab q={q} page={Number(rawPage) || 1} currentUserId={session.user.id} />}
       {tab === "videos" && <VideosTab />}
+      {tab === "usage" && <UsageTab month={month} page={Number(rawPage) || 1} />}
       {tab === "audit" && <AuditTab filter={{ q, entityType: type && type !== "all" ? type : undefined, from, to }} page={Number(rawPage) || 1} />}
       {tab === "system" && <SystemTab />}
     </div>
@@ -122,6 +125,139 @@ async function UsersTab({ q, page, currentUserId }: { q?: string; page: number; 
 async function VideosTab() {
   const [overview, videos] = await Promise.all([getJobOverview(), listAdminVideos()]);
   return <JobsManager overview={overview} videos={videos} />;
+}
+
+const LIMIT_BADGE: Record<LimitState, { label: string; variant: "neutral" | "success" | "warning" | "danger" } | null> = {
+  none: null,
+  ok: null,
+  unlimited: null,
+  not_in_plan: null,
+  at: { label: "At limit", variant: "warning" },
+  over: { label: "Over limit", variant: "danger" },
+};
+
+function CreditCell({ used, limit }: { used: number; limit: number }) {
+  const badge = LIMIT_BADGE[limitState(used, limit)];
+  return (
+    <div className="flex flex-wrap items-center gap-2 tabular-nums">
+      <span>
+        {used} <span className="text-text-muted">/ {limit <= 0 && limit !== Infinity ? "not in plan" : formatLimit(limit)}</span>
+      </span>
+      {badge && <Badge variant={badge.variant}>{badge.label}</Badge>}
+    </div>
+  );
+}
+
+async function UsageTab({ month: rawMonth, page }: { month?: string; page: number }) {
+  const report = await getUsageReport(rawMonth, page);
+  const { totals } = report;
+  const current = parseMonth(undefined).month;
+  const href = (m: string, p = 1) => `/admin?tab=usage&month=${m}&page=${p}`;
+  const pages = Math.max(1, Math.ceil(report.totalAccounts / report.pageSize));
+  const label = new Date(`${report.month}-01T00:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  const cards: { title: string; value: string; hint?: string }[] = [
+    { title: "Review video credits", value: String(totals.reviewCredits) },
+    { title: "AI video credits", value: String(totals.aiCredits) },
+    { title: "AI provider cost", value: formatUsd(totals.aiCostCents), hint: "Includes failed attempts" },
+    { title: "Failed videos", value: String(totals.failed), hint: "Credit refunded" },
+    { title: "Accounts using credits", value: String(totals.accounts) },
+    {
+      title: "Avg review render",
+      value: totals.avgReviewRenderMs ? `${(totals.avgReviewRenderMs / 1000).toFixed(1)}s` : "-",
+      hint: "Finished review videos",
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-medium">{label}</h2>
+          <p className="text-xs text-text-muted">UTC calendar month. Credits are per account; failed videos do not count.</p>
+        </div>
+        <nav aria-label="Usage month" className="flex items-center gap-2 text-sm">
+          <Link href={href(shiftMonth(report.month, -1))} className="rounded-control border px-3 py-1.5 hover:bg-surface-sunken">
+            Previous month
+          </Link>
+          {report.month < current && (
+            <Link href={href(shiftMonth(report.month, 1))} className="rounded-control border px-3 py-1.5 hover:bg-surface-sunken">
+              Next month
+            </Link>
+          )}
+        </nav>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        {cards.map((c) => (
+          <Card key={c.title}>
+            <CardContent className="p-4">
+              <div className="text-xs text-text-muted">{c.title}</div>
+              <div className="mt-1 text-2xl font-medium tabular-nums">{c.value}</div>
+              {c.hint && <div className="mt-0.5 text-xs text-text-subtle">{c.hint}</div>}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Account</TableHead>
+            <TableHead>Plan</TableHead>
+            <TableHead>Review videos</TableHead>
+            <TableHead>AI videos</TableHead>
+            <TableHead>AI cost</TableHead>
+            <TableHead>Failed</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {report.accounts.map((a) => (
+            <TableRow key={a.ownerId}>
+              <TableCell>
+                <div className="font-medium">{a.name}</div>
+                <div className="text-xs text-text-muted">{a.email}</div>
+              </TableCell>
+              <TableCell>{a.planName ?? <span className="text-text-muted">Free</span>}</TableCell>
+              <TableCell>
+                <CreditCell used={a.reviewCredits} limit={a.reviewLimit} />
+              </TableCell>
+              <TableCell>
+                <CreditCell used={a.aiCredits} limit={a.aiLimit} />
+              </TableCell>
+              <TableCell className="tabular-nums">{formatUsd(a.aiCostCents)}</TableCell>
+              <TableCell className="tabular-nums text-text-muted">{a.failed}</TableCell>
+            </TableRow>
+          ))}
+          {report.accounts.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={6} className="py-10 text-center text-text-muted">
+                No video credits were used in {label}.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-text-subtle">
+        <span>{report.totalAccounts === 0 ? "0 accounts" : `${(report.page - 1) * report.pageSize + 1} to ${Math.min(report.page * report.pageSize, report.totalAccounts)} of ${report.totalAccounts} accounts`}</span>
+        <nav aria-label="Usage pages" className="flex items-center gap-2">
+          {report.page > 1 && (
+            <Link href={href(report.month, report.page - 1)} className="rounded-control border px-3 py-1.5 text-text hover:bg-surface-sunken">
+              Previous
+            </Link>
+          )}
+          <span>
+            Page {report.page} of {pages}
+          </span>
+          {report.page < pages && (
+            <Link href={href(report.month, report.page + 1)} className="rounded-control border px-3 py-1.5 text-text hover:bg-surface-sunken">
+              Next
+            </Link>
+          )}
+        </nav>
+      </div>
+    </div>
+  );
 }
 
 async function AuditTab({ filter, page }: { filter: AuditFilter; page: number }) {
