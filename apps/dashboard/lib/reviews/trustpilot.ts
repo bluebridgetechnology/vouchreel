@@ -185,9 +185,22 @@ export async function fetchTrustpilotStats({
     headers: { apikey: key, Accept: "application/json" },
   });
   if (!response.ok) return null;
-  const data = (await response.json()) as { score?: { trustScore?: number }; numberOfReviews?: { total?: number } };
-  const rating = data.score?.trustScore;
-  const total = data.numberOfReviews?.total;
-  if (typeof rating !== "number" || typeof total !== "number" || total < 1) return null;
+  return parseTrustpilotStats(await response.json().catch(() => null));
+}
+
+/**
+ * Reads the TrustScore and review count out of a business-unit response. Trustpilot has shipped this
+ * in more than one shape (`score.trustScore` / `numberOfReviews.total`, or flat `trustScore` /
+ * `numberOfReviews`), so each known place is tried. Anything else returns null, never a wrong number.
+ */
+export function parseTrustpilotStats(data: unknown): ProviderStats | null {
+  if (!data || typeof data !== "object") return null;
+  const d = data as Record<string, unknown>;
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  const score = d.score && typeof d.score === "object" ? (d.score as Record<string, unknown>) : {};
+  const count = d.numberOfReviews && typeof d.numberOfReviews === "object" ? (d.numberOfReviews as Record<string, unknown>) : {};
+  const rating = num(score.trustScore) ?? num(d.trustScore);
+  const total = num(count.total) ?? num(d.numberOfReviews);
+  if (rating === null || total === null || total < 1 || rating < 0 || rating > 5) return null;
   return { rating, total };
 }

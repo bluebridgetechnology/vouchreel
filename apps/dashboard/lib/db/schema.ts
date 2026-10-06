@@ -414,10 +414,25 @@ export const subscriptions = pgTable("subscriptions", {
   providerCustomerId: text("provider_customer_id"),
   providerSubscriptionId: text("provider_subscription_id"),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  /** Time of the newest provider event applied to this row, so a late older event cannot undo a newer one. */
+  lastEventAt: timestamp("last_event_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
 });
+
+/**
+ * Payment webhook events already handled, so a provider re-sending an event (they retry) is applied once.
+ */
+export const webhookEvents = pgTable(
+  "webhook_events",
+  {
+    provider: text("provider").notNull(),
+    eventId: text("event_id").notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex("webhook_events_provider_event_idx").on(table.provider, table.eventId), index("webhook_events_received_idx").on(table.receivedAt)]
+);
 
 /**
  * Admin settings — key-value store for global admin configuration

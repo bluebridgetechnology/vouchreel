@@ -4,7 +4,7 @@ import { apiError } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, testimonials, testimonialTranslations } from "@/lib/db/schema";
-import { getOrTranslateTestimonial } from "@/lib/translations";
+import { getOrTranslateTestimonial, TranslationNotConfiguredError } from "@/lib/translations";
 
 interface RouteParams {
   params: Promise<{ id: string; tid: string }>;
@@ -126,6 +126,9 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ translation }, { status: 201 });
   } catch (error) {
+    if (error instanceof TranslationNotConfiguredError) {
+      return apiError(503, "SERVICE_UNAVAILABLE", "Translation is not available on this server yet.");
+    }
     console.error("Failed to generate translation:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to generate translation");
   }

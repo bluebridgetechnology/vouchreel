@@ -2,6 +2,7 @@
  * Entry point for the video worker (Remotion + Chromium). Bundled to dist/video-worker.mjs by
  * scripts/build-worker.mjs. It claims only review_video jobs; everything else stays with main.ts.
  */
+import { hostname } from "node:os";
 import { checkBrowser } from "@vouchreel/video/render";
 import { registerVideoHandlers } from "@/lib/review-video/register";
 import { JOB_TYPES } from "./handlers";
@@ -23,7 +24,7 @@ if (!browser.ok) console.warn(`[video-worker] Chromium could not start, renders 
 await runWorker(controller.signal, {
   only: [JOB_TYPES.reviewVideo],
   concurrency: Number(process.env.WORKER_CONCURRENCY ?? 1),
-  workerId: `video-worker-${process.pid}`,
+  workerId: `video-worker-${hostname()}-${process.pid}`,
   heartbeat: { kind: "video-worker", capabilities: { chromium: browser.ok ? "ok" : `error: ${browser.error}` } },
 });
 process.exit(0);

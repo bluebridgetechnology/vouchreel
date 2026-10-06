@@ -176,6 +176,13 @@
       "when": 1791286460860,
       "tag": "0024_video_moderation",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791291307568,
+      "tag": "0025_webhook_events",
+      "breakpoints": true
     }
   ]
 }

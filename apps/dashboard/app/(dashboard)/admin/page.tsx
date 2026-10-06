@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth/session";
-import { isPlatformAdmin } from "@/lib/auth/platform-admin";
+import { isPlatformAdminFresh } from "@/lib/auth/platform-admin-server";
 import { getActivePaymentProviderName } from "@/lib/payments";
 import { getFfmpegStatus } from "@/lib/media/ffmpeg";
 import { listAdminPlans } from "@/lib/admin/plans";
@@ -47,7 +47,7 @@ export default async function AdminPage({
   searchParams: Promise<{ tab?: string; q?: string; page?: string; type?: string; from?: string; to?: string; month?: string; kind?: string; filter?: string }>;
 }) {
   const session = await requireSession();
-  if (!isPlatformAdmin(session.user)) {
+  if (!(await isPlatformAdminFresh(session.user))) {
     redirect("/dashboard");
   }
 

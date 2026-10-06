@@ -1,7 +1,8 @@
 import Stripe from "stripe";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../db";
 import { plans, subscriptions } from "../db/schema";
+import { claimWebhookEvent, eventTimeOf, notNewerThan, releaseWebhookEvent } from "./webhook-guard";
 import type {
   PaymentProvider,
   CheckoutParams,
@@ -167,7 +168,23 @@ export class StripeProvider implements PaymentProvider {
       };
     }
 
+    if (!(await claimWebhookEvent("stripe", event.id))) {
+      return { received: true, event: event.type, actionTaken: "duplicate_ignored" };
+    }
+
+    try {
+      return await this.applyEvent(event);
+    } catch (err) {
+      // Let the provider's retry be processed instead of being dropped as a duplicate
+      await releaseWebhookEvent("stripe", event.id);
+      throw err;
+    }
+  }
+
+  private async applyEvent(event: Stripe.Event): Promise<WebhookResult> {
     let actionTaken = "none";
+    const eventTime = eventTimeOf(event.created);
+    const fresh = notNewerThan(eventTime);
 
     switch (event.type) {
       case "checkout.session.completed": {
@@ -198,8 +215,9 @@ export class StripeProvider implements PaymentProvider {
                 provider: "stripe",
                 providerCustomerId: customerId,
                 providerSubscriptionId: subscriptionId,
+                lastEventAt: eventTime,
               })
-              .where(eq(subscriptions.id, existing.id));
+              .where(and(eq(subscriptions.id, existing.id), fresh));
           } else {
             await db.insert(subscriptions).values({
               userId,
@@ -208,6 +226,7 @@ export class StripeProvider implements PaymentProvider {
               provider: "stripe",
               providerCustomerId: customerId,
               providerSubscriptionId: subscriptionId,
+              lastEventAt: eventTime,
             });
           }
           actionTaken = "subscription_created";
@@ -227,8 +246,9 @@ export class StripeProvider implements PaymentProvider {
           .set({
             status,
             currentPeriodEnd: periodEnd,
+            lastEventAt: eventTime,
           })
-          .where(eq(subscriptions.providerSubscriptionId, sub.id));
+          .where(and(eq(subscriptions.providerSubscriptionId, sub.id), fresh));
 
         actionTaken = "subscription_updated";
         break;
@@ -241,8 +261,9 @@ export class StripeProvider implements PaymentProvider {
           .update(subscriptions)
           .set({
             status: "canceled",
+            lastEventAt: eventTime,
           })
-          .where(eq(subscriptions.providerSubscriptionId, sub.id));
+          .where(and(eq(subscriptions.providerSubscriptionId, sub.id), fresh));
 
         actionTaken = "subscription_canceled";
         break;
@@ -259,8 +280,9 @@ export class StripeProvider implements PaymentProvider {
             .update(subscriptions)
             .set({
               status: "past_due",
+              lastEventAt: eventTime,
             })
-            .where(eq(subscriptions.providerSubscriptionId, subscriptionId));
+            .where(and(eq(subscriptions.providerSubscriptionId, subscriptionId), fresh));
 
           actionTaken = "subscription_marked_past_due";
         }

@@ -4,6 +4,7 @@ import {
   GoogleTranslateProvider,
   DeepLProvider,
   getTranslationProvider,
+  TranslationNotConfiguredError,
   getOrTranslateTestimonial,
 } from "../index";
 import { db } from "@/lib/db";
@@ -241,6 +242,14 @@ describe("Translation Providers and Factory", () => {
     it("falls back to MockTranslationProvider when no keys are configured", () => {
       const provider = getTranslationProvider();
       expect(provider.name).toBe("mock");
+    });
+
+    it("in production without a key it refuses instead of returning fake translations", () => {
+      vi.stubEnv("NODE_ENV", "production");
+      expect(() => getTranslationProvider()).toThrow(TranslationNotConfiguredError);
+      vi.stubEnv("TRANSLATION_ALLOW_MOCK", "1");
+      expect(getTranslationProvider().name).toBe("mock");
+      vi.unstubAllEnvs();
     });
 
     it("returns requested provider explicitly by name", () => {

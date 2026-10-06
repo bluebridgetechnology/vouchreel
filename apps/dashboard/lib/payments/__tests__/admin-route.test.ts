@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 vi.mock("@/lib/auth/session", () => ({
   getSession: vi.fn(),
 }));
+vi.mock("@/lib/auth/platform-admin-server", () => ({ isPlatformAdminFresh: async (u: { isPlatformAdmin?: boolean } | null) => u?.isPlatformAdmin === true }));
 
 vi.mock("@/lib/db", () => ({
   db: {

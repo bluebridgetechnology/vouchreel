@@ -1,9 +1,21 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import pg from "pg";
 import { ADMIN_STATE, CONSENT_FILE, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, REASON_TEXT, STORAGE_ORIGIN, USERS } from "./seed";
 
 /** Smoke tests for the platform-admin area (/admin). Tests run in order and share seeded rows. */
 test.describe.configure({ mode: "serial" });
+
+/** Signs in through the API. Better Auth allows a few sign-ins per 10 seconds from one address, so wait and retry when told to slow down. */
+async function signIn(context: { post: (url: string, options: { headers: Record<string, string>; data: unknown }) => Promise<{ ok(): boolean; status(): number }> }, base: string, email: string) {
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    const res = await context.post("/api/auth/sign-in/email", { headers: { origin: base }, data: { email, password: PASSWORD } });
+    if (res.ok()) return;
+    if (res.status() !== 429) throw new Error(`Sign-in as ${email} failed with ${res.status()}`);
+    await new Promise((r) => setTimeout(r, 4000));
+  }
+  throw new Error(`Sign-in as ${email} kept being rate limited`);
+}
 
 const TABS = ["Plans & pricing", "Payments", "Users", "Video & jobs", "Usage", "Moderation", "Audit log", "System"] as const;
 
@@ -129,6 +141,30 @@ test.describe("platform admin", () => {
     await expect(page.getByRole("dialog").getByText("You cannot change your own admin access.")).toBeVisible();
   });
 
+  test("revoking admin takes effect at once, even for someone whose signed-in session still says admin", async ({ browser, request, baseURL }) => {
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    const { rows: [target] } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [USERS.promote.email]);
+    await pool.end();
+
+    // Signed in as the user the earlier test promoted: their session cookie now records "admin"
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.promote.email);
+    expect((await context.request.get("/api/admin/jobs")).status()).toBe(200);
+
+    // An admin takes it away. The other person's cookie is untouched and still says admin.
+    const revoke = await request.patch(`/api/admin/users/${target.id}`, { headers: { origin: baseURL! }, data: { isPlatformAdmin: false } });
+    expect(revoke.status()).toBe(200);
+    expect((await context.request.get("/api/admin/jobs")).status()).toBe(403);
+    const page = await context.newPage();
+    await page.goto("/admin");
+    await expect(page).not.toHaveURL(/\/admin/);
+
+    // Giving it back works at once too
+    expect((await request.patch(`/api/admin/users/${target.id}`, { headers: { origin: baseURL! }, data: { isPlatformAdmin: true } })).status()).toBe(200);
+    expect((await context.request.get("/api/admin/jobs")).status()).toBe(200);
+    await context.close();
+  });
+
   test("moderation: find a video whose consent was withdrawn and take it down, with a retry after storage fails", async ({ page, playwright }) => {
     const deleted = async () => (await (await page.request.get(`${STORAGE_ORIGIN}/__deleted`)).json()) as string[];
     await page.goto("/admin?tab=moderation&q=E2E%20Moderation");
@@ -206,8 +242,7 @@ test.describe("platform admin", () => {
   test("moderation: the owner sees why a video was removed, and deleting a video deletes its file", async ({ playwright, baseURL }) => {
     const base = baseURL!;
     const api = await playwright.request.newContext({ baseURL: base });
-    const signIn = await api.post("/api/auth/sign-in/email", { headers: { origin: base }, data: { email: USERS.customer.email, password: PASSWORD } });
-    expect(signIn.ok()).toBe(true);
+    await signIn(api, base, USERS.customer.email);
 
     // Find the owner's space and the testimonial of the taken-down video through the owner's own API
     const spaces = await (await api.get("/api/spaces")).json();
@@ -276,7 +311,7 @@ test.describe("platform admin", () => {
 
     // The owner sees it: the video is marked removed with the customer's reason, and no new one can be made
     const api = await playwright.request.newContext({ baseURL: baseURL! });
-    expect((await api.post("/api/auth/sign-in/email", { headers: { origin: baseURL! }, data: { email: USERS.customer.email, password: PASSWORD } })).ok()).toBe(true);
+    await signIn(api, baseURL!, USERS.customer.email);
     const spaces = await (await api.get("/api/spaces")).json();
     const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
     const list = await (await api.get(`/api/spaces/${space.id}/testimonials`)).json();
@@ -302,7 +337,7 @@ test.describe("platform admin", () => {
 
   test("owner panels in the browser: a removed video says so and why, and the owner can record a withdrawal", async ({ browser, baseURL }) => {
     const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
-    expect((await context.request.post("/api/auth/sign-in/email", { headers: { origin: baseURL! }, data: { email: USERS.customer.email, password: PASSWORD } })).ok()).toBe(true);
+    await signIn(context.request, baseURL!, USERS.customer.email);
     const page = await context.newPage();
     const spaces = await (await context.request.get("/api/spaces")).json();
     const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
@@ -350,7 +385,8 @@ test.describe("platform admin", () => {
   test("audit log: the actions above are recorded, and filters and paging work", async ({ page }) => {
     await page.goto("/admin?tab=audit&type=user");
     await expect(page.getByText(`Changed plan for ${USERS.customer.email}`)).toBeVisible();
-    await expect(page.getByText(`Granted admin for ${USERS.promote.email}`)).toBeVisible();
+    await expect(page.getByText(`Granted admin for ${USERS.promote.email}`).first()).toBeVisible();
+    await expect(page.getByText(`Revoked admin for ${USERS.promote.email}`)).toBeVisible();
 
     await page.goto("/admin?tab=audit&type=job");
     await expect(page.getByText(/Retried e2e_failed_probe job/)).toBeVisible();

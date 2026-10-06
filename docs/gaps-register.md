@@ -38,9 +38,9 @@ repo: network access, an account, real data), **Feature** (a separate piece of w
 
 | ID | Gap | Class | State |
 | --- | --- | --- | --- |
-| S1 | A revoked platform admin keeps access until their cached session expires (up to 5 minutes) | Fix | Open |
-| S2 | A real Stripe or Dodo webhook replacing a manual plan grant was never tested | Fix | Open |
-| S3 | A manual plan grant's effect on the user's limits was only read in code | Fix | Open |
+| S1 | A revoked platform admin keeps access until their cached session expires (up to 5 minutes) | Fix | Closed. `isPlatformAdminFresh` reads the flag from the database for the admin guard, the admin page and the settings route, so a revoked admin loses access at once. `platform-admin-server.integration.test.ts` and a browser test ("revoking admin takes effect at once", signed in with the old cookie). |
+| S2 | A real Stripe or Dodo webhook replacing a manual plan grant was never tested | Fix | Closed. `webhooks.integration.test.ts` (real Postgres; only the signature check is stubbed): an admin grants a plan by hand, a Stripe checkout event replaces it, and the admin can no longer grant over it. |
+| S3 | A manual plan grant's effect on the user's limits was only read in code | Fix | Closed. Same test: `getSubscriptionLimits` returns the granted plan's limits (42 spaces), then the Stripe plan's (7). |
 | S4 | Users tab: suspend a user, adjust credits, separate user detail page | Decision | Open |
 
 ## D. Admin area quality
@@ -63,8 +63,8 @@ repo: network access, an account, real data), **Feature** (a separate piece of w
 | ID | Gap | Class | State |
 | --- | --- | --- | --- |
 | W1 | Never ran the real `video-worker` Docker image (apt and Chromium download are blocked from this sandbox) | CI | Closed by CI. GitHub Actions run 37464367356 (commit 90e3409): the real `video-worker` image built, rendered a frame, and as a worker reported a working Chromium and a clean stop. Also found and fixed two CI bugs. |
-| W2 | Video worker id is `video-worker-<pid>`: in containers every restart reuses one row, and replicas collide | Fix | Open |
-| W3 | The 24-hour listing and 7-day pruning of heartbeats were never run against time | Fix | Open |
+| W2 | Video worker id is `video-worker-<pid>`: in containers every restart reuses one row, and replicas collide | Fix | Closed. The video worker id is `video-worker-<hostname>-<pid>`, so container replicas and restarts get their own rows. Not run in a container here; the CI image job still checks the row appears. |
+| W3 | The 24-hour listing and 7-day pruning of heartbeats were never run against time | Fix | Closed. `heartbeat-aging.integration.test.ts` inserts rows 20 h, 30 h, 6 d and 8 d old in Postgres: only the 24 h ones are listed, and starting a worker deletes the 8 d row and keeps the 6 d row. |
 | W4 | No alert outside the admin area when a worker goes quiet | Decision | Open |
 | W5 | Per-worker current job and restart controls | Decision | Open |
 
@@ -73,7 +73,7 @@ repo: network access, an account, real data), **Feature** (a separate piece of w
 | ID | Gap | Class | State |
 | --- | --- | --- | --- |
 | P1 | Trustpilot totals call: which API, and the response field names, are unconfirmed | External | Open (needs the Trustpilot docs or a key) |
-| P2 | Trustpilot stats parser breaks silently if the response nests differently | Fix | Open |
+| P2 | Trustpilot stats parser breaks silently if the response nests differently | Fix | Closed as far as it can be without the docs. `parseTrustpilotStats` accepts the nested and the flat shape and returns null for anything else (`trustpilot-stats.test.ts`). Which shape the real API returns is still P1. |
 | P3 | Google attribution says "Google Reviews" with the G icon; Places policy text says the Google Maps logo or "Google Maps" | Decision | Open |
 | P4 | Google and Trustpilot terms on storing review text and on shortening it are unread | External | Open |
 | P5 | Style picker swatches are CSS approximations | Decision | Open |
@@ -95,11 +95,11 @@ them are marked Fix and are in scope here; the rest wait for your go-ahead.
 | B7 | Direct-to-storage uploads (100 MB is buffered through a Next route today) | Feature | Open |
 | B8 | Error tracking, structured logging, metrics | Feature | Open |
 | B9 | Nonce-based Content Security Policy | Feature | Open |
-| B10 | Stripe/Dodo webhook idempotency ledger: verify, add if missing | Fix | Open |
+| B10 | Stripe/Dodo webhook idempotency ledger: verify, add if missing | Fix | Closed. New `webhook_events` ledger (migration 0025) and `subscriptions.last_event_at`. A redelivered Stripe or Dodo event is acknowledged and not applied twice; an older event cannot overwrite a newer one; a handling that throws releases its claim so the retry is processed. All four proved in `webhooks.integration.test.ts`. |
 | B11 | GDPR: account deletion, data export, consent records | Feature | Open |
-| B12 | Translations silently fall back to a mock provider (customers can get fake translations) | Fix | Open |
-| B13 | The seeded Agency plan has no yearly price | Fix | Open |
+| B12 | Translations silently fall back to a mock provider (customers can get fake translations) | Fix | Closed. In production with no DeepL or Google key, translating now fails with a clear 503 instead of saving "[ES] text" as the translation (`TRANSLATION_ALLOW_MOCK=1` opts back in). Factory test. |
+| B13 | The seeded Agency plan has no yearly price | Fix | Not reproducible. The seed already has a yearly Agency plan ($990); `seed-plans.test.ts` now guards that every active paid plan has monthly and yearly. If a live database lacks it, that database was seeded before the row existed: external, check with the Plans tab. |
 | B14 | Large client files to split (`experiments-view`, `analytics-dashboard`, `live-preview`) | Feature | Open |
 | B15 | Notification channels: Slack, browser push, full-page inbox | Feature | Open |
-| B16 | "Coming soon, AI auto-clipping" placeholder badge on testimonial cards | Fix | Open |
+| B16 | "Coming soon, AI auto-clipping" placeholder badge on testimonial cards | Fix | Closed. The badge is removed from the testimonial card. |
 | B17 | Pages still using their own card and tab markup instead of `Card` / `Tabs` | Feature | Open |

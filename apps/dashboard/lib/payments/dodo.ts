@@ -1,7 +1,8 @@
 import DodoPayments from "dodopayments";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../db";
 import { plans, subscriptions } from "../db/schema";
+import { claimWebhookEvent, eventTimeOf, notNewerThan, releaseWebhookEvent } from "./webhook-guard";
 import type {
   PaymentProvider,
   CheckoutParams,
@@ -162,9 +163,25 @@ export class DodoProvider implements PaymentProvider {
       };
     }
 
+    // Dodo follows the Standard Webhooks spec: the delivery id is the `webhook-id` header
+    const eventId = headersRecord["webhook-id"] || null;
+    if (!(await claimWebhookEvent("dodo", eventId))) {
+      return { received: true, event: payload.type, actionTaken: "duplicate_ignored" };
+    }
+
+    try {
+      return await this.applyEvent(payload, eventTimeOf(payload.timestamp ?? headersRecord["webhook-timestamp"]));
+    } catch (err) {
+      await releaseWebhookEvent("dodo", eventId);
+      throw err;
+    }
+  }
+
+  private async applyEvent(payload: any, eventTime: Date): Promise<WebhookResult> {
     const eventType = payload.type;
     const data = payload.data;
     let actionTaken = "none";
+    const fresh = notNewerThan(eventTime);
 
     switch (eventType) {
       case "payment.succeeded":
@@ -189,8 +206,9 @@ export class DodoProvider implements PaymentProvider {
                 provider: "dodo",
                 providerCustomerId: customerId || existing.providerCustomerId,
                 providerSubscriptionId: subscriptionId || existing.providerSubscriptionId,
+                lastEventAt: eventTime,
               })
-              .where(eq(subscriptions.id, existing.id));
+              .where(and(eq(subscriptions.id, existing.id), fresh));
           } else {
             await db.insert(subscriptions).values({
               userId,
@@ -199,6 +217,7 @@ export class DodoProvider implements PaymentProvider {
               provider: "dodo",
               providerCustomerId: customerId,
               providerSubscriptionId: subscriptionId,
+              lastEventAt: eventTime,
             });
           }
           actionTaken = "subscription_created";
@@ -218,8 +237,9 @@ export class DodoProvider implements PaymentProvider {
             .set({
               status,
               currentPeriodEnd: nextBilling,
+              lastEventAt: eventTime,
             })
-            .where(eq(subscriptions.providerSubscriptionId, subscriptionId));
+            .where(and(eq(subscriptions.providerSubscriptionId, subscriptionId), fresh));
 
           actionTaken = "subscription_updated";
         }
@@ -233,8 +253,9 @@ export class DodoProvider implements PaymentProvider {
             .update(subscriptions)
             .set({
               status: "canceled",
+              lastEventAt: eventTime,
             })
-            .where(eq(subscriptions.providerSubscriptionId, subscriptionId));
+            .where(and(eq(subscriptions.providerSubscriptionId, subscriptionId), fresh));
 
           actionTaken = "subscription_canceled";
         }
@@ -249,8 +270,9 @@ export class DodoProvider implements PaymentProvider {
             .update(subscriptions)
             .set({
               status: "past_due",
+              lastEventAt: eventTime,
             })
-            .where(eq(subscriptions.providerSubscriptionId, subscriptionId));
+            .where(and(eq(subscriptions.providerSubscriptionId, subscriptionId), fresh));
 
           actionTaken = "subscription_marked_past_due";
         }

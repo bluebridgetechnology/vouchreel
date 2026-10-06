@@ -4,6 +4,7 @@ import { POST } from "../[kind]/[id]/route";
 import { getSession } from "@/lib/auth/session";
 
 vi.mock("@/lib/auth/session", () => ({ getSession: vi.fn() }));
+vi.mock("@/lib/auth/platform-admin-server", () => ({ isPlatformAdminFresh: async (u: { isPlatformAdmin?: boolean } | null) => u?.isPlatformAdmin === true }));
 
 const list = vi.fn();
 const takeDown = vi.fn();
