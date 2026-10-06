@@ -4,6 +4,10 @@ Source: `docs/handover-2026-10-05.md` plus a code check of the admin area.
 
 Note: the handover lists PRs #16 to #18 as open. `git log` on this branch shows all three already merged into `main` (latest commit `510ee6e`, "Merge pull request #18"). Treat "merge PRs" as done; confirm on GitHub.
 
+## Status update, closing pass
+
+The "NOT verified" notes in the phase sections below were written as each item was built. Many have since been closed with a test or a run: see `docs/gaps-register.md`, which is the source of truth (one row per gap, with the evidence for each one marked Closed). Where a note below and the register disagree, the register is newer.
+
 ## Admin area gap (confirmed)
 
 The handover does not mention admin at all. An admin area does exist (Sprint 15, `/admin`), but it was built before the video features and has not been extended since.
