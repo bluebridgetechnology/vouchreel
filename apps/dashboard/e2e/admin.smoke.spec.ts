@@ -30,11 +30,16 @@ test.describe("access control", () => {
   });
 
   test("a signed-in customer cannot open the admin area", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel("Email").fill(USERS.member.email);
-    await page.getByLabel("Password").fill(PASSWORD);
-    await page.getByRole("button", { name: "Sign in" }).click();
-    // A brand-new account lands on onboarding, an established one on the dashboard
+    // Better Auth rate-limits sign-ins (a few per 10 seconds per address), so when the form comes back to /login, wait and try again
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      await page.goto("/login");
+      await page.getByLabel("Email").fill(USERS.member.email);
+      await page.getByLabel("Password").fill(PASSWORD);
+      await page.getByRole("button", { name: "Sign in" }).click();
+      // A brand-new account lands on onboarding, an established one on the dashboard
+      if (await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 8000 }).then(() => true, () => false)) break;
+      await page.waitForTimeout(4000);
+    }
     await expect(page).toHaveURL(/\/(dashboard|onboarding)/);
 
     await page.goto("/admin");
