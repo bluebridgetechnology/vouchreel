@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AdminPanel } from "./admin-panel";
+import { AuditTypeSelect } from "./audit-type-select";
 import { JobsManager } from "./jobs-manager";
 import { UsersManager } from "./users-manager";
 import { PlansManager } from "./plans-manager";
@@ -77,7 +78,7 @@ export default async function AdminPage({
       {tab === "payments" && <PaymentsTab />}
       {tab === "users" && <UsersTab q={q} page={Number(rawPage) || 1} currentUserId={session.user.id} />}
       {tab === "videos" && <VideosTab />}
-      {tab === "audit" && <AuditTab filter={{ q, entityType: type, from, to }} page={Number(rawPage) || 1} />}
+      {tab === "audit" && <AuditTab filter={{ q, entityType: type && type !== "all" ? type : undefined, from, to }} page={Number(rawPage) || 1} />}
       {tab === "system" && <SystemTab />}
     </div>
   );
@@ -147,18 +148,7 @@ async function AuditTab({ filter, page }: { filter: AuditFilter; page: number })
         </label>
         <label className="flex flex-col gap-1 text-xs text-text-muted">
           Type
-          <select
-            name="type"
-            defaultValue={filter.entityType ?? ""}
-            className="h-10 rounded-control border bg-surface px-3 text-sm text-text"
-          >
-            <option value="">All types</option>
-            {types.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+          <AuditTypeSelect types={types} value={filter.entityType} />
         </label>
         <label className="flex flex-col gap-1 text-xs text-text-muted">
           From

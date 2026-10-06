@@ -1,0 +1,15 @@
+export const PASSWORD = "E2e-Passw0rd!Passw0rd";
+export const USERS = {
+  admin: { name: "E2E Admin", email: "e2e-admin@example.test" },
+  member: { name: "E2E Member", email: "e2e-member@example.test" },
+  customer: { name: "E2E Customer", email: "e2e-customer@example.test" },
+  promote: { name: "E2E Promote", email: "e2e-promote@example.test" },
+  billed: { name: "E2E Billed", email: "e2e-billed@example.test" },
+} as const;
+export const PLAN_NAME = "E2E Plan";
+export const FAILED_JOB_ERROR = "E2E render failed: chromium missing";
+/** Job types nothing consumes, so a running server never touches these rows. */
+export const FAILED_JOB_TYPE = "e2e_failed_probe";
+export const QUEUED_JOB_TYPE = "e2e_queued_probe";
+export const AUDIT_SEED_COUNT = 60;
+export const ADMIN_STATE = "e2e/.auth/admin.json";

@@ -275,8 +275,9 @@
 
     /* Stacking */
     --z-nav: 40;
-    --z-dropdown: 50;
     --z-modal: 60;
+    /* Menus and selects must sit above modals, or a Select inside a dialog opens behind it */
+    --z-dropdown: 65;
     --z-toast: 70;
 
     color-scheme: light;
