@@ -9,6 +9,8 @@ Classes: **Fix** (code or tests I can change and prove here), **CI** (proved by 
 **Decision** (needs a product or legal choice from you first), **External** (needs something outside this
 repo: network access, an account, real data), **Feature** (a separate piece of work from the old backlog).
 
+Last full check: GitHub Actions run 37480868676, commit aa7a833, all three jobs green.
+
 ## A. Stored files that outlive what they belong to
 
 | ID | Gap | Class | State |
@@ -53,7 +55,7 @@ repo: network access, an account, real data), **Feature** (a separate piece of w
 | A4 | Phone layouts were only checked for sideways page scroll, not looked at, for most tabs | Fix | Closed. Every tab was viewed at 390 px; fixes above. A browser test now fails if any table on any tab is wider than its card. |
 | A5 | No accessibility (axe) checks | Fix | Closed. `@axe-core/playwright` runs WCAG 2 A/AA rules on all eight tabs: zero violations. It covers the default state of each tab, not open dialogs. |
 | A6 | Plans & pricing and Payments tabs are only checked for rendering, never edited in a browser | Fix | Closed. Browser test edits a plan (badge, max spaces, persists after reload), creates a plan, archives it behind the confirmation, reactivates it, and switches the payment provider to Dodo and back with reloads. |
-| A7 | Only Chromium is tested | CI | Closed in config, proof pending CI. The browser suite can run in Firefox and WebKit (`E2E_BROWSER`) and CI runs all three; the result is recorded below once the run is read. |
+| A7 | Only Chromium is tested | CI | Closed. GitHub Actions run 37480868676 (commit aa7a833): the whole browser suite, 17 tests, passed in Chromium, Firefox and WebKit, together with lint, unit and integration tests (real Postgres and S3-compatible server), the real Remotion render and the Docker image. Getting there found four test problems that only the other browsers exposed (a navigation interrupted by a redirect, a WebKit renderer crash on repeated reload, the sign-in rate limit on the form, a wait on text that was always on the page); none was an app bug. |
 | A8 | No indexes for the Usage and Moderation queries (scans the month's rows); audit text search scans the table | Fix | Closed. Measured on 600,000 videos: usage query 80 ms to 3 ms, moderation list 46-56 ms to 0.5 ms. Migration 0026 adds the three indexes. Audit text search (`ILIKE %x%`) still scans the table; it needs a trigram index and is not worth it until the log is large. |
 | A9 | Admin tests and the e2e suite are not in CI | CI | Closed. CI now runs the unit tests, the integration tests against Postgres and an S3-compatible server, the real render test, the browser suite and the Docker image (green in run 37464367356). |
 | A10 | Nice-to-haves noted along the way: CSV export of audit log and usage, per-space usage, chart over time, filter audit by admin, link an audit entry to what it changed | Decision | Open |
