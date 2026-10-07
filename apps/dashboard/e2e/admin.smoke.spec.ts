@@ -443,7 +443,7 @@ test.describe("platform admin", () => {
     // Only https links are accepted
     await form.getByLabel(/Link to the review/).fill("http://insecure.example/reviews");
     await form.getByRole("button", { name: "Save review" }).click();
-    await expect(form.locator("div[role=alert].rounded-control")).toContainText("https");
+    await expect(form.locator("div[role=alert].bg-danger-soft")).toContainText("https");
 
     await form.getByLabel(/Link to the review/).fill("https://www.priyas-bakery.example/reviews/1");
     await form.getByRole("button", { name: "Save review" }).click();
@@ -559,7 +559,7 @@ test.describe("platform admin", () => {
     const totp = new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(secret), digits: 6, period: 30, algorithm: "SHA1" });
     await page.getByLabel("Code from the app").fill("000000");
     await page.getByRole("button", { name: "Turn on" }).click();
-    await expect(page.locator("div[role=alert].rounded-control")).toBeVisible(); // a wrong code is refused
+    await expect(page.locator("div[role=alert].bg-danger-soft")).toBeVisible(); // a wrong code is refused
     await page.getByLabel("Code from the app").fill(totp.generate());
     await page.getByRole("button", { name: "Turn on" }).click();
     await expect(page.getByTestId("backup-codes")).toBeVisible();
@@ -574,7 +574,7 @@ test.describe("platform admin", () => {
     await signInForm(/\/two-factor/);
     await page.getByLabel("Code", { exact: true }).fill("000000");
     await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page.locator("div[role=alert].rounded-control")).toBeVisible();
+    await expect(page.locator("div[role=alert].bg-danger-soft")).toBeVisible();
     await page.getByRole("button", { name: "Use a backup code" }).click();
     await submitCodeUntilIn(() => page.getByLabel("Backup code").fill(codes[0].trim()));
 
@@ -584,7 +584,7 @@ test.describe("platform admin", () => {
     await page.getByRole("button", { name: "Use a backup code" }).click();
     await page.getByLabel("Backup code").fill(codes[0].trim());
     await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page.locator("div[role=alert].rounded-control")).toBeVisible();
+    await expect(page.locator("div[role=alert].bg-danger-soft")).toBeVisible();
     await page.getByRole("button", { name: "Use my authenticator app" }).click();
     await submitCodeUntilIn(() => page.getByLabel("Code", { exact: true }).fill(totp.generate()));
 
