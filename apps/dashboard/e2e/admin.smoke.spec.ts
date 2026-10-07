@@ -537,6 +537,17 @@ test.describe("platform admin", () => {
       throw new Error(`never arrived at ${arrive}`);
     };
 
+    /** Submits the code step and waits to arrive; the code endpoints are rate limited (a few per 10 seconds), so wait and try again. */
+    const submitCodeUntilIn = async (fill: () => Promise<void>) => {
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        await fill();
+        await page.getByRole("button", { name: "Continue" }).click();
+        if (await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 6000 }).then(() => true, () => false)) return;
+        await page.waitForTimeout(5000);
+      }
+      throw new Error("the code step never let the person in");
+    };
+
     await signInForm(/\/(dashboard|onboarding)/);
 
     // Set up: password, scan (we read the key instead), confirm with a code, keep the backup codes
@@ -563,9 +574,7 @@ test.describe("platform admin", () => {
     await page.getByRole("button", { name: "Continue" }).click();
     await expect(page.getByRole("alert")).toBeVisible();
     await page.getByRole("button", { name: "Use a backup code" }).click();
-    await page.getByLabel("Backup code").fill(codes[0].trim());
-    await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page).toHaveURL(/\/(dashboard|onboarding)/);
+    await submitCodeUntilIn(() => page.getByLabel("Backup code").fill(codes[0].trim()));
 
     // The same backup code cannot be used again; an authenticator code works
     await context.clearCookies();
@@ -575,9 +584,7 @@ test.describe("platform admin", () => {
     await page.getByRole("button", { name: "Continue" }).click();
     await expect(page.getByRole("alert")).toBeVisible();
     await page.getByRole("button", { name: "Use my authenticator app" }).click();
-    await page.getByLabel("Code", { exact: true }).fill(totp.generate());
-    await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page).toHaveURL(/\/(dashboard|onboarding)/);
+    await submitCodeUntilIn(() => page.getByLabel("Code", { exact: true }).fill(totp.generate()));
 
     // Turning it off needs the password
     await open(page, "/settings/security");
