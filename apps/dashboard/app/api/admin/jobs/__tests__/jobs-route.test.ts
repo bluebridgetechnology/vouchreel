@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 
 vi.mock("@/lib/auth/session", () => ({ getSession: vi.fn() }));
 vi.mock("@/lib/auth/platform-admin-server", () => ({ isPlatformAdminFresh: async (u: { isPlatformAdmin?: boolean } | null) => u?.isPlatformAdmin === true }));
+vi.mock("@/lib/auth/two-factor-policy", () => ({ adminNeedsTwoFactorSetup: async () => false, TWO_FACTOR_REQUIRED_MESSAGE: "Set up two-factor sign-in" }));
 
 const overview = { byStatus: { queued: 0, running: 0, done: 0, failed: 0 }, byType: [], oldestQueuedAt: null, staleRunning: 0, failed: [], active: [] };
 const job = { id: "j1", type: "review_video", videoId: "v1" };

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { notify } from "@/lib/notify";
+import { useConfirm } from "@/components/ui/confirm";
 import { timeAgo } from "@/lib/time-ago";
 import type { AdminUserRow } from "@/lib/admin/queries";
 import type { AdjustmentRow } from "@/lib/admin/credit-adjustments";
@@ -40,6 +41,7 @@ interface Props {
 
 export function UsersManager({ users, plans, currentUserId, q, page, pageSize, total }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [editing, setEditing] = useState<AdminUserRow | null>(null);
   const [planValue, setPlanValue] = useState(NONE);
   const [admin, setAdmin] = useState(false);
@@ -95,6 +97,20 @@ export function UsersManager({ users, plans, currentUserId, q, page, pageSize, t
     } finally {
       setCrediting(false);
     }
+  }
+
+  async function resetTwoFactor() {
+    if (!editing) return;
+    if (!(await confirm({ title: "Reset two-factor sign-in?", description: `${editing.email} will be able to sign in with just their password until they set it up again. Do this only for someone who has lost their phone and backup codes.`, confirmLabel: "Reset", tone: "danger" }))) return;
+    const res = await fetch(`/api/admin/users/${editing.id}/two-factor`, { method: "DELETE" });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      notify.error(data?.error?.message || "Could not reset two-factor sign-in");
+      return;
+    }
+    notify.success("Two-factor sign-in reset.");
+    setEditing(null);
+    router.refresh();
   }
 
   async function save() {
@@ -264,6 +280,20 @@ export function UsersManager({ users, plans, currentUserId, q, page, pageSize, t
                   <Input id="user-suspend-reason" value={suspendReason} maxLength={300} onChange={(e) => setSuspendReason(e.target.value)} />
                 </Field>
               )}
+              <Field
+                label="Two-factor sign-in"
+                htmlFor="user-two-factor"
+                hint={isSelf ? "Ask another admin to reset yours." : "For someone locked out. It is recorded in the audit log."}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-sm">{editing.twoFactorEnabled ? "On" : "Off"}</span>
+                  {editing.twoFactorEnabled && !isSelf && (
+                    <Button id="user-two-factor" type="button" variant="outline-danger" size="sm" onClick={resetTwoFactor}>
+                      Reset two-factor
+                    </Button>
+                  )}
+                </div>
+              </Field>
               <fieldset className="space-y-3 rounded-card border p-4">
                 <legend className="px-2 text-sm font-medium">Video credits this month</legend>
                 <p className="text-xs text-text-muted">Adds to (or, with a minus, takes from) the plan's allowance for this calendar month only.</p>

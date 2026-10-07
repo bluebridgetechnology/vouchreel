@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { twoFactor } from "better-auth/plugins";
 import { db } from "../db";
 import { sendEmail } from "../email/transport";
 import { renderEmail } from "../email/templates";
@@ -51,6 +52,9 @@ export const auth = betterAuth({
       await sendEmail({ to: user.email, subject: "Confirm your Vouchreel email address", text, html });
     },
   },
+
+  // Authenticator-app codes (and single-use backup codes) as a second step of sign-in
+  plugins: [twoFactor({ issuer: "Vouchreel" })],
 
   // OAuth providers
   socialProviders: {

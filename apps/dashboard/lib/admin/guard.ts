@@ -2,6 +2,7 @@ import type { NextResponse } from "next/server";
 import { forbidden, unauthorized } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { isPlatformAdminFresh } from "@/lib/auth/platform-admin-server";
+import { TWO_FACTOR_REQUIRED_MESSAGE, adminNeedsTwoFactorSetup } from "@/lib/auth/two-factor-policy";
 
 type AdminSession = NonNullable<Awaited<ReturnType<typeof getSession>>>;
 
@@ -17,6 +18,9 @@ export async function requirePlatformAdminApi(): Promise<
   if (!session?.user) return { ok: false, response: unauthorized("Unauthorized") };
   if (!(await isPlatformAdminFresh(session.user))) {
     return { ok: false, response: forbidden("Forbidden: Admin access required") };
+  }
+  if (await adminNeedsTwoFactorSetup(session.user)) {
+    return { ok: false, response: forbidden(TWO_FACTOR_REQUIRED_MESSAGE) };
   }
   return { ok: true, session };
 }

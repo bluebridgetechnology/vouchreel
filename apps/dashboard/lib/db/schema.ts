@@ -186,6 +186,8 @@ export const user = pgTable("user", {
   /** Legacy, unused for authorization. Platform access is `isPlatformAdmin`. */
   role: text("role").default("owner"),
   isPlatformAdmin: boolean("is_platform_admin").default(false).notNull(),
+  /** Sign-in asks for a code from an authenticator app (Better Auth two-factor plugin). */
+  twoFactorEnabled: boolean("two_factor_enabled").default(false),
   /** A platform admin suspended this account: it cannot sign in, and open sessions stop working. */
   suspendedAt: timestamp("suspended_at", { withTimezone: true }),
   /** Shown to the person on a refused sign-in. */
@@ -197,6 +199,19 @@ export const user = pgTable("user", {
     .defaultNow()
     .notNull(),
 });
+
+/** Better Auth two-factor plugin: one row per account that has set up an authenticator app. */
+export const twoFactor = pgTable("two_factor", {
+  id: text("id").primaryKey(),
+  secret: text("secret").notNull(),
+  backupCodes: text("backup_codes").notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  verified: boolean("verified").default(true),
+  failedVerificationCount: integer("failed_verification_count").default(0),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
+}, (table) => [index("two_factor_user_idx").on(table.userId)]);
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),

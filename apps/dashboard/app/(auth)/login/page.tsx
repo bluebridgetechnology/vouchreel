@@ -36,6 +36,9 @@ export default function LoginPage() {
             ? "Please confirm your email address first. We just sent you a fresh link."
             : result.error.message || "Invalid email or password"
         );
+      } else if ((result.data as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect) {
+        // The two-factor step takes over from here (the client plugin navigates to /two-factor)
+        return;
       } else {
         router.push("/dashboard");
         router.refresh();

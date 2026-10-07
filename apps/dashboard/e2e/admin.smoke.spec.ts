@@ -18,6 +18,20 @@ async function signIn(context: { post: (url: string, options: { headers: Record<
   throw new Error(`Sign-in as ${email} kept being rate limited`);
 }
 
+/** Creates an account through the API (waits out the sign-up rate limit) and confirms its email with the link's token, made the way the server makes it. */
+async function createConfirmedAccount(context: { post: (url: string, options: { headers: Record<string, string>; data: unknown }) => Promise<{ ok(): boolean; status(): number }>; get: (url: string, options: { maxRedirects: number }) => Promise<{ status(): number }> }, base: string, email: string, name: string) {
+  for (let attempt = 1; ; attempt++) {
+    const res = await context.post("/api/auth/sign-up/email", { headers: { origin: base }, data: { email, password: PASSWORD, name } });
+    if (res.ok()) break;
+    if (res.status() !== 429 || attempt >= 6) throw new Error(`Sign-up as ${email} failed with ${res.status()}`);
+    await new Promise((r) => setTimeout(r, 4000));
+  }
+  const { createEmailVerificationToken } = await import("better-auth/api");
+  const token = await createEmailVerificationToken(E2E_AUTH_SECRET, email, undefined, 3600);
+  const verified = await context.get(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, { maxRedirects: 0 });
+  if (verified.status() >= 400) throw new Error(`Confirming ${email} failed with ${verified.status()}`);
+}
+
 /** Navigates, and tries again when the app's own redirect or refresh interrupts the navigation (seen in Firefox and WebKit). */
 async function open(page: Page, url: string) {
   for (let attempt = 1; ; attempt++) {
@@ -493,6 +507,79 @@ test.describe("platform admin", () => {
 
     const ok = await attempt();
     expect(ok.status(), await ok.text()).toBe(200);
+    await context.close();
+  });
+
+  test("two-factor sign-in: set up an authenticator app, sign in with a code and with a backup code, turn it off", async ({ browser, baseURL }) => {
+    const OTPAuth = await import("otpauth");
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    const email = `e2e-2fa-${Date.now()}@example.test`;
+
+    await createConfirmedAccount(context.request, baseURL!, email, "E2E TwoFactor");
+    await context.clearCookies();
+
+    /** Signs in through the form, waiting out the sign-in rate limit, and returns where it ended up. */
+    const signInForm = async (arrive: RegExp) => {
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        await open(page, "/login");
+        await page.getByLabel("Email").fill(email);
+        await page.getByLabel("Password").fill(PASSWORD);
+        await page.getByRole("button", { name: "Sign in" }).click();
+        if (await page.waitForURL(arrive, { timeout: 8000 }).then(() => true, () => false)) return;
+        await page.waitForTimeout(4000);
+      }
+      throw new Error(`never arrived at ${arrive}`);
+    };
+
+    await signInForm(/\/(dashboard|onboarding)/);
+
+    // Set up: password, scan (we read the key instead), confirm with a code, keep the backup codes
+    await open(page, "/settings/security");
+    await page.getByRole("button", { name: "Turn on" }).click();
+    await page.getByLabel("Password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Continue" }).click();
+    const secret = (await page.getByTestId("totp-secret").textContent())!.trim();
+    const totp = new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(secret), digits: 6, period: 30, algorithm: "SHA1" });
+    await page.getByLabel("Code from the app").fill("000000");
+    await page.getByRole("button", { name: "Turn on" }).click();
+    await expect(page.getByRole("alert")).toBeVisible(); // a wrong code is refused
+    await page.getByLabel("Code from the app").fill(totp.generate());
+    await page.getByRole("button", { name: "Turn on" }).click();
+    const codes = await page.getByTestId("backup-codes").locator("li").allTextContents();
+    expect(codes.length).toBeGreaterThanOrEqual(5);
+    await page.getByRole("button", { name: "I have saved them" }).click();
+    await expect(page.getByText(/On\. You will be asked for a code/)).toBeVisible();
+
+    // Signing in now stops at the code step: a wrong code is refused, a backup code works once
+    await context.clearCookies();
+    await signInForm(/\/two-factor/);
+    await page.getByLabel("Code", { exact: true }).fill("000000");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByRole("alert")).toBeVisible();
+    await page.getByRole("button", { name: "Use a backup code" }).click();
+    await page.getByLabel("Backup code").fill(codes[0].trim());
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page).toHaveURL(/\/(dashboard|onboarding)/);
+
+    // The same backup code cannot be used again; an authenticator code works
+    await context.clearCookies();
+    await signInForm(/\/two-factor/);
+    await page.getByRole("button", { name: "Use a backup code" }).click();
+    await page.getByLabel("Backup code").fill(codes[0].trim());
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByRole("alert")).toBeVisible();
+    await page.getByRole("button", { name: "Use my authenticator app" }).click();
+    await page.getByLabel("Code", { exact: true }).fill(totp.generate());
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page).toHaveURL(/\/(dashboard|onboarding)/);
+
+    // Turning it off needs the password
+    await open(page, "/settings/security");
+    await page.getByRole("button", { name: "Turn off" }).click();
+    await page.getByLabel("Password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Turn off" }).last().click();
+    await expect(page.getByText(/Off\. Your account is protected by your password alone/)).toBeVisible();
     await context.close();
   });
 

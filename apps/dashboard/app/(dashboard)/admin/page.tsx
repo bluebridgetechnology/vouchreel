@@ -3,6 +3,7 @@ import { RestartWorkerButton } from "./restart-worker-button";
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth/session";
 import { isPlatformAdminFresh } from "@/lib/auth/platform-admin-server";
+import { TWO_FACTOR_SETUP_PATH, adminNeedsTwoFactorSetup } from "@/lib/auth/two-factor-policy";
 import { getActivePaymentProviderName } from "@/lib/payments";
 import { getFfmpegStatus } from "@/lib/media/ffmpeg";
 import { listAdminPlans } from "@/lib/admin/plans";
@@ -50,6 +51,10 @@ export default async function AdminPage({
   const session = await requireSession();
   if (!(await isPlatformAdminFresh(session.user))) {
     redirect("/dashboard");
+  }
+  // Admins must have two-factor sign-in on before the admin area opens
+  if (await adminNeedsTwoFactorSetup(session.user)) {
+    redirect(TWO_FACTOR_SETUP_PATH);
   }
 
   const { tab: rawTab, q, page: rawPage, type, from, to, month, kind, filter: rawFilter } = await searchParams;

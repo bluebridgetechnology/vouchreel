@@ -15,6 +15,7 @@ The database is Postgres. Migrations live in `drizzle/` at the repo root and are
 - [Environment variables](#environment-variables)
 - [VPS deployment (Docker Compose)](#vps-deployment-docker-compose)
 - [Email verification](#email-verification)
+- [Two-factor sign-in](#two-factor-sign-in)
 - [Self-hosted observability](#self-hosted-observability)
 - [Vercel deployment](#vercel-deployment)
 - [Widget CDN deployment](#widget-cdn-deployment)
@@ -145,6 +146,21 @@ New accounts can be required to confirm their email address before they can sign
 
 From then on a new sign-up sees "Check your email", and signing in before using the link is refused and sends a
 fresh link (valid 24 hours). People who sign in with Google are verified by Google.
+
+## Two-factor sign-in
+
+Anyone can turn on two-factor sign-in under Settings, Security: scan a QR code with an authenticator app, confirm
+with a code, and keep the backup codes (shown once, each works once). Sign-in then asks for a code after the
+password. Turning it off needs the password.
+
+**Platform admins must have it on.** Until they do, the Admin area sends them to Settings, Security, and the admin
+API answers 403. Existing admins hit this the first time they open Admin after this release; tell them first.
+`REQUIRE_ADMIN_2FA=false` switches the rule off (for example while testing); leave it unset in production.
+
+**Locked out.** A person who lost their phone uses a backup code. If they lost those too, another platform admin
+opens Admin, Users, the person, "Reset two-factor". It is recorded in the audit log, and nobody can reset their own.
+(If the only admin is locked out, run `UPDATE "user" SET two_factor_enabled = false WHERE email = '...'` and
+`DELETE FROM two_factor WHERE user_id = ...` on the database.)
 
 ## Self-hosted observability
 

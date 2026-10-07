@@ -44,6 +44,8 @@ export default defineConfig({
       BETTER_AUTH_URL: baseURL,
       // New accounts have to confirm their email (the seed marks its people confirmed)
       REQUIRE_EMAIL_VERIFICATION: "true",
+      // The seeded admins have no authenticator app; the rule itself is covered by unit tests
+      REQUIRE_ADMIN_2FA: "false",
       NEXT_PUBLIC_APP_URL: baseURL,
       // Takedowns delete files through the real S3 client; e2e/fake-s3.ts answers it
       STORAGE_PROVIDER: "r2",
