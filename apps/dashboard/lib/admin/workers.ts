@@ -1,6 +1,6 @@
-import { gte, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { workerHeartbeats } from "@/lib/db/schema";
+import { jobs, workerHeartbeats } from "@/lib/db/schema";
 import { ONLINE_WITHIN_MS } from "@/lib/jobs/heartbeat";
 import { JOB_TYPES } from "@/lib/jobs/handlers";
 
@@ -29,6 +29,9 @@ export interface AdminWorker {
   startedAt: Date;
   lastSeenAt: Date;
   stoppedAt: Date | null;
+  restartRequestedAt: Date | null;
+  /** Jobs this process has claimed and not finished. */
+  currentJobs: { id: string; type: string; since: Date | null }[];
   status: WorkerStatus;
 }
 
@@ -122,8 +125,18 @@ export async function getWorkerHealth(now = new Date()): Promise<WorkerHealth> {
       GROUP BY 1`),
   ]);
 
+  const running = rows.length
+    ? await db
+        .select({ id: jobs.id, type: jobs.type, lockedBy: jobs.lockedBy, lockedAt: jobs.lockedAt })
+        .from(jobs)
+        .where(and(eq(jobs.status, "running"), inArray(jobs.lockedBy, rows.map((r) => r.workerId))))
+    : [];
   const workers: AdminWorker[] = rows
-    .map((r) => ({ ...r, status: workerStatus(r, now.getTime()) }))
+    .map((r) => ({
+      ...r,
+      currentJobs: running.filter((j) => j.lockedBy === r.workerId).map((j) => ({ id: j.id, type: j.type, since: j.lockedAt })),
+      status: workerStatus(r, now.getTime()),
+    }))
     .sort((a, b) => b.lastSeenAt.getTime() - a.lastSeenAt.getTime());
 
   const q = new Map(

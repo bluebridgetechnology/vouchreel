@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const calls = vi.hoisted(() => ({ inserted: [] as Record<string, unknown>[], updated: [] as Record<string, unknown>[], fail: false, deleted: 0 }));
+const calls = vi.hoisted(() => ({ inserted: [] as Record<string, unknown>[], updated: [] as Record<string, unknown>[], fail: false, deleted: 0, restartAt: null as Date | null }));
 
 vi.mock("@/lib/db", () => ({
   db: {
@@ -13,6 +13,7 @@ vi.mock("@/lib/db", () => ({
         },
       }),
     }),
+    select: () => ({ from: () => ({ where: async () => [{ at: calls.restartAt }] }) }),
     delete: () => ({
       where: () => {
         calls.deleted++;
@@ -30,6 +31,7 @@ beforeEach(() => {
   calls.updated.length = 0;
   calls.fail = false;
   calls.deleted = 0;
+  calls.restartAt = null;
 });
 afterEach(() => vi.useRealTimers());
 
@@ -87,5 +89,20 @@ describe("startHeartbeat", () => {
 
   it("reports online for longer than one missed beat", () => {
     expect(ONLINE_WITHIN_MS).toBeGreaterThan(HEARTBEAT_INTERVAL_MS * 2);
+  });
+
+  it("asks its worker to restart once, when a request newer than this process appears", async () => {
+    const onRestartRequested = vi.fn();
+    const hb = startHeartbeat({ workerId: "w-r", kind: "worker", concurrency: 1, onRestartRequested });
+    await vi.advanceTimersByTimeAsync(0);
+    // A request from before this process started is for an earlier run of the same id
+    calls.restartAt = new Date(Date.now() - 60_000);
+    await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS);
+    expect(onRestartRequested).not.toHaveBeenCalled();
+    calls.restartAt = new Date(Date.now() + 1000);
+    await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS);
+    await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS);
+    expect(onRestartRequested).toHaveBeenCalledTimes(1);
+    await hb.stop();
   });
 });

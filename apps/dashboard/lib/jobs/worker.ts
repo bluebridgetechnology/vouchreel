@@ -72,10 +72,13 @@ export async function runWorker(signal: AbortSignal, options: RunOptions = {}): 
   const concurrency = Math.max(1, options.concurrency ?? Number(process.env.WORKER_CONCURRENCY ?? 2));
   const pollMs = Number(process.env.WORKER_POLL_MS ?? 2000);
   let lastReclaim = 0;
-  const heartbeat = options.heartbeat ? startHeartbeat({ workerId, concurrency, ...options.heartbeat }) : null;
+  // An admin's restart request ends the loop the same way a shutdown signal does
+  const restart = new AbortController();
+  const stop = AbortSignal.any([signal, restart.signal]);
+  const heartbeat = options.heartbeat ? startHeartbeat({ workerId, concurrency, ...options.heartbeat, onRestartRequested: () => restart.abort() }) : null;
 
   console.log(`[worker] ${workerId} started (concurrency ${concurrency})`);
-  while (!signal.aborted) {
+  while (!stop.aborted) {
     if (Date.now() - lastReclaim > 60_000) {
       lastReclaim = Date.now();
       try {
@@ -95,7 +98,7 @@ export async function runWorker(signal: AbortSignal, options: RunOptions = {}): 
     if (processed === 0) {
       await new Promise<void>((resolve) => {
         const t = setTimeout(resolve, pollMs);
-        signal.addEventListener(
+        stop.addEventListener(
           "abort",
           () => {
             clearTimeout(t);

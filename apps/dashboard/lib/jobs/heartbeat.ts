@@ -1,5 +1,5 @@
 import os from "node:os";
-import { lt } from "drizzle-orm";
+import { eq, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { workerHeartbeats } from "@/lib/db/schema";
 
@@ -21,6 +21,8 @@ export interface HeartbeatOptions {
   /** What the process found on start-up, shown in the admin System tab. */
   capabilities?: Record<string, string>;
   intervalMs?: number;
+  /** Called once when a platform admin asks this process to restart: finish in-flight jobs, then exit (the supervisor starts it again). */
+  onRestartRequested?: () => void;
 }
 
 export interface Heartbeat {
@@ -34,6 +36,7 @@ export function startHeartbeat(options: HeartbeatOptions): Heartbeat {
   const startedAt = new Date();
   let processed = 0;
   let failing = false;
+  let restartAsked = false;
 
   async function beat(stopped = false) {
     try {
@@ -53,6 +56,15 @@ export function startHeartbeat(options: HeartbeatOptions): Heartbeat {
       await db.insert(workerHeartbeats).values(values).onConflictDoUpdate({ target: workerHeartbeats.workerId, set: update });
       if (failing) console.log(`[heartbeat] ${options.workerId} recovered`);
       failing = false;
+      if (!stopped && !restartAsked && options.onRestartRequested) {
+        const [row] = await db.select({ at: workerHeartbeats.restartRequestedAt }).from(workerHeartbeats).where(eq(workerHeartbeats.workerId, options.workerId));
+        // A request older than this process is for an earlier run of the same id
+        if (row?.at && row.at.getTime() > startedAt.getTime()) {
+          restartAsked = true;
+          console.log(`[heartbeat] ${options.workerId} was asked to restart`);
+          options.onRestartRequested();
+        }
+      }
     } catch (error) {
       // Log the first failure only, so a database outage does not flood the log every 15 seconds
       if (!failing) console.warn(`[heartbeat] ${options.workerId} could not record a heartbeat:`, error instanceof Error ? error.message : error);

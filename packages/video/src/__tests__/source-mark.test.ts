@@ -42,7 +42,7 @@ describe("markLayout", () => {
   });
 
   it("adds the source name next to the Google icon, but not next to the Trustpilot logo (it contains the name)", () => {
-    expect(markLayout("google", false).label).toBe("Google Reviews");
+    expect(markLayout("google", false).label).toBe("Google Maps");
     expect(markLayout("trustpilot", false).label).toBeNull();
   });
 });

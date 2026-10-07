@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RestartWorkerButton } from "./restart-worker-button";
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth/session";
 import { isPlatformAdminFresh } from "@/lib/auth/platform-admin-server";
@@ -531,6 +532,7 @@ async function WorkersCard() {
               <TableHead className="hidden md:table-cell">Started</TableHead>
               <TableHead className="hidden md:table-cell">Jobs claimed</TableHead>
               <TableHead className="hidden md:table-cell">Found at start-up</TableHead>
+              <TableHead className="hidden text-right md:table-cell">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -543,6 +545,14 @@ async function WorkersCard() {
                     <div className="text-xs text-text-muted">
                       {w.hostname ?? "unknown host"} · pid {w.pid ?? "?"} · concurrency {w.concurrency}
                     </div>
+                    {w.status === "online" && (
+                      <div className="mt-1 text-xs text-text-muted">
+                        {w.currentJobs.length === 0
+                          ? "Idle"
+                          : `Working on ${w.currentJobs.map((j) => `${j.type.replace(/_/g, " ")}${j.since ? ` (${timeAgo(j.since)})` : ""}`).join(", ")}`}
+                        {w.restartRequestedAt && w.restartRequestedAt.getTime() > w.startedAt.getTime() ? " · restart requested" : ""}
+                      </div>
+                    )}
                     <div className="mt-1 text-xs text-text-muted md:hidden">
                       seen {timeAgo(w.lastSeenAt)} · {w.jobsProcessed} jobs
                       {problem ? <span className="block text-danger-foreground">{problem}</span> : null}
@@ -562,12 +572,15 @@ async function WorkersCard() {
                     ))}
                     {problem && <div className="mt-1 text-danger-foreground">{problem}</div>}
                   </TableCell>
+                  <TableCell className="hidden text-right md:table-cell">
+                    {w.status === "online" && <RestartWorkerButton workerId={w.workerId} label={w.kind === "video-worker" ? "Video worker" : "Job worker"} />}
+                  </TableCell>
                 </TableRow>
               );
             })}
             {workers.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-text-muted">
+                <TableCell colSpan={7} className="py-8 text-center text-text-muted">
                   No worker has reported in the last 24 hours. On a VPS run the <code>worker</code> and <code>video-worker</code> services.
                 </TableCell>
               </TableRow>

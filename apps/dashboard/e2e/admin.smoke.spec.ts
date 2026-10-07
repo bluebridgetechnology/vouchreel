@@ -557,6 +557,24 @@ test.describe("platform admin", () => {
     await Promise.all([member.dispose(), again.dispose()]);
   });
 
+  test("system: see what a worker is doing and ask it to restart; only a running worker can be", async ({ page }) => {
+    await open(page, "/admin?tab=system");
+    const video = row(page, "4242");
+    await expect(video).toContainText("Idle");
+    // The job worker went quiet ten minutes ago: nothing to restart
+    await expect(row(page, "4343").getByRole("button", { name: "Restart" })).toHaveCount(0);
+
+    await video.getByRole("button", { name: "Restart" }).click();
+    await expect(page.getByRole("dialog").getByText("Restart this video worker?")).toBeVisible();
+    await expect(page.getByRole("dialog").getByText(/only comes back if something supervises it/)).toBeVisible();
+    await page.getByRole("button", { name: "Restart", exact: true }).last().click();
+    await expect(page.getByText(/Restart requested/).first()).toBeVisible();
+    await expect(row(page, "4242")).toContainText("restart requested");
+
+    await open(page, "/admin?tab=audit&q=restart");
+    await expect(page.getByText("Asked the video worker on e2e-host to restart")).toBeVisible();
+  });
+
   test("accessibility: no axe violations on any tab", async ({ page }) => {
     const problems: string[] = [];
     for (const name of ["plans", "payments", "users", "videos", "usage", "moderation", "audit", "system"]) {

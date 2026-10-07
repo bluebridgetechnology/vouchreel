@@ -1,6 +1,16 @@
 {
   "crons": [
-    { "path": "/api/cron/process-webhooks", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/sync-reviews", "schedule": "0 * * * *" }
+    {
+      "path": "/api/cron/process-webhooks",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/sync-reviews",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/check-workers",
+      "schedule": "*/5 * * * *"
+    }
   ]
 }

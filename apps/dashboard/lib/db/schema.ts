@@ -1298,9 +1298,27 @@ export const workerHeartbeats = pgTable(
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).defaultNow().notNull(),
     /** Set on a clean shutdown. */
     stoppedAt: timestamp("stopped_at", { withTimezone: true }),
+    /** A platform admin asked this process to finish its jobs and exit; its supervisor restarts it. Ignored if older than this process's start. */
+    restartRequestedAt: timestamp("restart_requested_at", { withTimezone: true }),
   },
   (table) => [index("worker_heartbeats_last_seen_idx").on(table.lastSeenAt)]
 );
+
+/**
+ * Last known state of each thing the platform alerts admins about (for example "worker:video-worker"),
+ * so one outage sends one email, not one every few minutes.
+ */
+export const adminAlertState = pgTable("admin_alert_state", {
+  key: text("key").primaryKey(),
+  /** "ok", "warning" or "critical" as of the last check. */
+  severity: text("severity").notNull(),
+  /** When it entered this severity. */
+  since: timestamp("since", { withTimezone: true }).notNull(),
+  /** The last time an email went out for it. */
+  lastNotifiedAt: timestamp("last_notified_at", { withTimezone: true }),
+  /** Whether that email was about a problem (so a recovery email is owed). */
+  problemNotified: boolean("problem_notified").default(false).notNull(),
+});
 
 
 /**

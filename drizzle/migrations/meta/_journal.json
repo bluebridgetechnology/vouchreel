@@ -204,6 +204,13 @@
       "when": 1791362492762,
       "tag": "0028_user_suspension_credit_adjustments",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791362898313,
+      "tag": "0029_worker_restart_alert_state",
+      "breakpoints": true
     }
   ]
 }
