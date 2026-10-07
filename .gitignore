@@ -42,3 +42,6 @@ packages/video/out/
 **/e2e/.auth/
 **/e2e/.results/
 **/playwright-report/
+
+# Stray downloads
+*.whl
