@@ -588,6 +588,52 @@ test.describe("platform admin", () => {
     await context.close();
   });
 
+  test("delete account: password, emailed link, and the account is gone for good", async ({ browser, baseURL }) => {
+    // The link's token, made the way lib/account/deletion.ts makes it
+    const { createHmac } = await import("node:crypto");
+    const deletionToken = (userId: string) => {
+      const expires = Date.now() + 30 * 60_000;
+      return `${userId}.${expires}.${createHmac("sha256", E2E_AUTH_SECRET).update(`account-delete:${userId}:${expires}`).digest("hex")}`;
+    };
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    const email = `e2e-delete-${Date.now()}@example.test`;
+    await createConfirmedAccount(context.request, baseURL!, email, "E2E Delete");
+    await context.clearCookies();
+
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      await open(page, "/login");
+      await page.getByLabel("Email").fill(email);
+      await page.getByLabel("Password").fill(PASSWORD);
+      await page.getByRole("button", { name: "Sign in" }).click();
+      if (await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 8000 }).then(() => true, () => false)) break;
+      await page.waitForTimeout(4000);
+    }
+
+    await open(page, "/settings");
+    await page.getByRole("button", { name: "Delete my account" }).click();
+    await page.getByLabel("Your password").fill("not-my-password");
+    await page.getByRole("button", { name: "Email me the link" }).click();
+    await expect(page.getByText("That password is not right.")).toBeVisible();
+    await page.getByLabel("Your password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Email me the link" }).click();
+    await expect(page.getByText(/We sent a confirmation link/)).toBeVisible();
+
+    // A link for someone else's account, and a made-up one, are refused
+    await open(page, "/account/delete?token=nonsense");
+    await expect(page.getByText(/expired or is not valid/)).toBeVisible();
+
+    // The emailed link (made the way the server makes it)
+    const me = await (await context.request.get("/api/auth/get-session")).json();
+    await open(page, `/account/delete?token=${encodeURIComponent(deletionToken(me.user.id))}`);
+    await page.getByRole("button", { name: "Delete my account forever" }).click();
+    await expect(page.getByText("Your account has been deleted")).toBeVisible();
+
+    const gone = await context.request.post("/api/auth/sign-in/email", { headers: { origin: baseURL! }, data: { email, password: PASSWORD } });
+    expect(gone.ok()).toBe(false);
+    await context.close();
+  });
+
   test("audit log: the actions above are recorded, and filters and paging work", async ({ page }) => {
     await open(page, "/admin?tab=audit&type=user");
     await expect(page.getByText(`Changed plan for ${USERS.customer.email}`)).toBeVisible();

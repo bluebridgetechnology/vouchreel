@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { requireSession } from "@/lib/auth/session";
+import { hasPassword } from "@/lib/account/deletion";
+import { DeleteAccountCard } from "./delete-account-card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -7,6 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const session = await requireSession();
+  const needsPassword = await hasPassword(session.user.id);
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -118,6 +121,8 @@ export default async function SettingsPage() {
             </Link>
           </div>
         </div>
+
+        <DeleteAccountCard needsPassword={needsPassword} />
       </div>
     </div>
   );
