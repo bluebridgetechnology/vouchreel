@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { twoFactorApi } from "@/lib/auth/auth-client";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Em } from "@/components/ui/em";
 import { Field } from "@/components/ui/field";
@@ -83,7 +84,7 @@ export default function TwoFactorPage() {
             setCode("");
             setError(null);
           }}
-          className="underline-offset-4 hover:text-text hover:underline"
+          className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm underline-offset-4 hover:underline")}
         >
           {useBackup ? "Use my authenticator app" : "Use a backup code"}
         </button>

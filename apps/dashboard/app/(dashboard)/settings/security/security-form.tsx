@@ -140,7 +140,7 @@ export function SecurityForm({ enabled, email }: { enabled: boolean; email: stri
             <li>Enter the 6-digit code it shows.</li>
           </ol>
           {qr && (
-            <img src={qr} alt="QR code for your authenticator app" width={192} height={192} className="rounded-control border bg-white" />
+            <img src={qr} alt="QR code for your authenticator app" width={192} height={192} className="rounded-control border bg-text-on-accent p-1" />
           )}
           <p className="break-all font-mono text-xs text-text-muted">
             Key: <span data-testid="totp-secret">{secret}</span>

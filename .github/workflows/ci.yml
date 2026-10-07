@@ -242,7 +242,7 @@ jobs:
       - name: Prometheus has its scrape job configured
         run: |
           $COMPOSE --env-file .env.production exec -T prometheus wget -qO- http://localhost:9090/api/v1/targets | grep -q '"job":"vouchreel"'
-      - name: An error sent to GlitchTip is stored
+      - name: An error sent to GlitchTip is accepted and stored
         run: |
           $COMPOSE --env-file .env.production exec -T glitchtip-web ./manage.py shell -c "
           from django.contrib.auth import get_user_model
@@ -252,14 +252,21 @@ jobs:
           org = Organization.objects.create(name='ci')
           org.add_user(u)
           p = Project.objects.create(name='vouchreel', organization=org)
-          print('DSN=' + str(ProjectKey.objects.filter(project=p).first().public_key))
+          print('PROJECT=' + str(p.id))
+          print('KEY=' + ProjectKey.objects.filter(project=p).first().public_key.hex)
           " | tee key.txt
-          KEY=$(grep '^DSN=' key.txt | cut -d= -f2 | tr -d '\r')
-          PID=$(curl -fsS http://localhost:8001/api/0/projects/ -u ci@example.com:ci-pass-123 || true)
-          echo "$PID" | head -c 300
-          curl -fsS -X POST "http://localhost:8001/api/1/store/?sentry_key=$KEY&sentry_version=7" \
+          PID=$(grep '^PROJECT=' key.txt | cut -d= -f2 | tr -d '\r')
+          KEY=$(grep '^KEY=' key.txt | cut -d= -f2 | tr -d '\r')
+          EVENT_ID=$(cat /proc/sys/kernel/random/uuid | tr -d '-')
+          status=$(curl -sS -o resp.txt -w '%{http_code}' -X POST "http://localhost:8001/api/$PID/store/?sentry_key=$KEY&sentry_version=7" \
             -H 'Content-Type: application/json' \
-            -d '{"message":"ci test event","level":"error","platform":"node"}'
+            -d "{\"event_id\":\"$EVENT_ID\",\"message\":\"ci test event\",\"level\":\"error\",\"platform\":\"javascript\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}")
+          echo "store answered $status: $(cat resp.txt)"
+          [ "$status" = "200" ]
+          # Give the worker a moment, then ask the database whether an event arrived
+          sleep 10
+          $COMPOSE --env-file .env.production exec -T glitchtip-postgres psql -U glitchtip -tAc "select count(*) from issue_events_issueevent" | tee count.txt
+          [ "$(tr -d '[:space:]' < count.txt)" -ge 1 ]
       - name: Logs on failure
         if: failure()
         run: $COMPOSE --env-file .env.production logs --tail=200

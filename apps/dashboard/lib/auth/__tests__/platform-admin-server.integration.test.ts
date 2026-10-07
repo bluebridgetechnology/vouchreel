@@ -22,6 +22,7 @@ run("admin access follows the database, not the cached session (postgres)", () =
 
   beforeAll(async () => {
     process.env.DATABASE_URL = url;
+    process.env.REQUIRE_ADMIN_2FA = "false"; // this file is about the admin flag; two-factor is covered in two-factor-policy.test.ts
     releaseLock = await (await import("@/lib/test/db-lock")).acquireTestDbLock(url!);
     ({ db } = await import("@/lib/db"));
     ({ eq } = await import("drizzle-orm"));
