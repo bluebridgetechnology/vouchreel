@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { REVIEW_RIGHTS_DETAIL, REVIEW_RIGHTS_HEADLINE } from "@/lib/review-video/rights";
 import { Badge } from "@/components/ui/badge";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -430,8 +431,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                   <label className="flex items-start gap-3 rounded-card border bg-surface-sunken/40 p-4 text-xs text-text-muted">
                     <Checkbox checked={rights} onCheckedChange={(v) => setRights(v === true)} className="mt-0.5" />
                     <span>
-                      <span className="font-medium text-text">I have the right to use these reviews in my marketing.</span> They are shown exactly as written, with the
-                      reviewer's name, rating and source, and are not edited or shortened.
+                      <span className="font-medium text-text">{REVIEW_RIGHTS_HEADLINE}</span> {REVIEW_RIGHTS_DETAIL}
                     </span>
                   </label>
 

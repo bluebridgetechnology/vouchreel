@@ -124,6 +124,8 @@ run("review videos (postgres)", () => {
     const video = await svc.createReviewVideo(base());
     expect(video.status).toBe("queued");
     expect(video.rightsConfirmedAt).toBeTruthy();
+    // The wording the owner agreed to is recorded, so the confirmation can be matched to it later
+    expect(video.rightsWordingVersion).toBe((await import("../rights")).REVIEW_RIGHTS_VERSION);
     expect(video.reviewIds).toEqual([ids.reviews[0]]);
 
     const props = video.props as { reviews: { text: string; author: string; date: string; source: string }[]; brand: string };

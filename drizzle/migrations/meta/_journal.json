@@ -190,6 +190,13 @@
       "when": 1791293439007,
       "tag": "0026_video_admin_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791362401586,
+      "tag": "0027_review_rights_wording",
+      "breakpoints": true
     }
   ]
 }

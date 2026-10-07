@@ -1221,6 +1221,8 @@ export const reviewVideos = pgTable(
     reviewIds: jsonb("review_ids").$type<string[]>().default([]).notNull(),
     /** The owner confirmed they may use these reviews in marketing. Required to create a video. */
     rightsConfirmedAt: timestamp("rights_confirmed_at", { withTimezone: true }).notNull(),
+    /** Which wording of the rights statement the owner saw (lib/review-video/rights.ts). Null on videos made before it was recorded. */
+    rightsWordingVersion: text("rights_wording_version"),
     creditsUsed: integer("credits_used").default(1).notNull(),
     jobId: uuid("job_id").references(() => jobs.id, { onDelete: "set null" }),
     outputUrl: text("output_url"),

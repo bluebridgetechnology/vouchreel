@@ -2,6 +2,7 @@ import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql, type 
 import { db } from "@/lib/db";
 import { generatedVideos, reviewVideos, spaces, testimonialConsents, testimonials, user } from "@/lib/db/schema";
 import { AI_VIDEO_CONSENT_VERSION } from "@/lib/ai-video/consent";
+import { REVIEW_RIGHTS_VERSION } from "@/lib/review-video/rights";
 import { notifySpaceOwner } from "@/lib/notifications/service";
 import { getStorage } from "@/lib/storage";
 import { storageKeyFromUrl } from "@/lib/storage/video-files";
@@ -38,8 +39,9 @@ export interface ModerationItem {
   attribution: string | null;
   /** AI videos only: the consent the customer gave. */
   consent: { source: string; textVersion: string; grantedAt: Date; revokedAt: Date | null; currentWording: boolean } | null;
-  /** Review videos only: when the owner confirmed they may use the reviews. */
+  /** Review videos only: when the owner confirmed they may use the reviews, and which wording they saw (null on videos made before it was recorded). */
   rightsConfirmedAt: Date | null;
+  rightsWording: { version: string | null; current: boolean } | null;
   /** The consent was withdrawn but the video is still up. */
   needsAttention: boolean;
   removed: { at: Date; reason: string | null; byEmail: string | null } | null;
@@ -143,6 +145,7 @@ async function listModerationItemsAt(query: ModerationQuery, page: number, pageS
           currentWording: f.consent.textVersion === AI_VIDEO_CONSENT_VERSION,
         },
         rightsConfirmedAt: null,
+        rightsWording: null,
         needsAttention: !!f.v.outputUrl && !f.v.moderatedAt && !!f.consent.revokedAt,
         removed: f.v.moderatedAt ? { at: f.v.moderatedAt, reason: f.v.moderationReason, byEmail: f.v.moderatedBy ? (byIds.get(f.v.moderatedBy) ?? null) : null } : null,
       });
@@ -183,6 +186,7 @@ async function listModerationItemsAt(query: ModerationQuery, page: number, pageS
         attribution,
         consent: null,
         rightsConfirmedAt: f.v.rightsConfirmedAt,
+        rightsWording: { version: f.v.rightsWordingVersion, current: f.v.rightsWordingVersion === REVIEW_RIGHTS_VERSION },
         needsAttention: false,
         removed: f.v.moderatedAt ? { at: f.v.moderatedAt, reason: f.v.moderationReason, byEmail: f.v.moderatedBy ? (byIds.get(f.v.moderatedBy) ?? null) : null } : null,
       });

@@ -1,4 +1,5 @@
 import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
+import { REVIEW_RIGHTS_VERSION } from "./rights";
 import { db } from "@/lib/db";
 import { reviewSources, reviewVideos, reviews, socialExportSettings, spaces } from "@/lib/db/schema";
 import { deleteVideoFile } from "@/lib/storage/video-files";
@@ -225,6 +226,7 @@ export async function createReviewVideo(input: CreateReviewVideoInput) {
         props: props as unknown as Record<string, unknown>,
         reviewIds: ids,
         rightsConfirmedAt: new Date(),
+        rightsWordingVersion: REVIEW_RIGHTS_VERSION,
       })
       .returning();
     const job = await enqueueJob(JOB_TYPES.reviewVideo, { videoId: video.id }, {}, tx);

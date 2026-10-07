@@ -104,7 +104,16 @@ export function ModerationManager({ items }: { items: ModerationItem[] }) {
                     {!v.consent.currentWording && <div className="text-text-muted">Older wording ({v.consent.textVersion})</div>}
                   </div>
                 )}
-                {v.rightsConfirmedAt && <div>Owner confirmed rights {date(v.rightsConfirmedAt)}</div>}
+                {v.rightsConfirmedAt && (
+                  <div>
+                    Owner confirmed rights {date(v.rightsConfirmedAt)}
+                    {v.rightsWording && (
+                      <span className="text-text-muted">
+                        {v.rightsWording.version === null ? " (wording not recorded)" : v.rightsWording.current ? "" : ` (older wording ${v.rightsWording.version})`}
+                      </span>
+                    )}
+                  </div>
+                )}
               </TableCell>
               <TableCell className="hidden md:table-cell">
                 {v.removed ? (

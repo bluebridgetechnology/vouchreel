@@ -160,6 +160,9 @@ run("admin video moderation (postgres)", () => {
     expect(byId[v.aiRevoked].consent?.revokedAt).not.toBeNull();
     expect(byId[v.revLive]).toMatchObject({ kind: "review", content: "Setup took ten minutes.  |  Lovely team.", attribution: "Maya, Dan", consent: null, needsAttention: false });
     expect(byId[v.revLive].rightsConfirmedAt).not.toBeNull();
+    // Seeded without a wording version, like a video made before it was recorded
+    expect(byId[v.revLive].rightsWording).toEqual({ version: null, current: false });
+    expect(byId[v.aiLive].rightsWording).toBeNull();
     expect(byId[v.aiRemoved].removed).toMatchObject({ reason: "Misleading claim", byEmail: `${tag}-admin@example.test` });
   });
 
