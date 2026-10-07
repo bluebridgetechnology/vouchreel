@@ -1,6 +1,7 @@
 import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { adjustmentFor, applyAdjustment } from "@/lib/admin/credit-adjustments";
-import { REVIEW_RIGHTS_VERSION } from "./rights";
+import { rightsVersionFor } from "./rights";
+import { linkDomain } from "@/lib/reviews/own";
 import { db } from "@/lib/db";
 import { reviewSources, reviewVideos, reviews, socialExportSettings, spaces } from "@/lib/db/schema";
 import { deleteVideoFile } from "@/lib/storage/video-files";
@@ -76,9 +77,12 @@ export async function getReviewVideoCredits(ownerId: string, executor: Executor 
 export interface ReviewOption {
   id: string;
   author: string;
-  rating: number;
+  /** Null for a review the owner typed in. */
+  rating: number | null;
   text: string;
-  source: "google" | "trustpilot";
+  source: "google" | "trustpilot" | "own";
+  /** Owner-supplied reviews only: the site domain shown with the review. */
+  link: string | null;
   date: string | null;
   /** Template ids this review can be shown in without shortening it. */
   fits: string[];
@@ -107,14 +111,15 @@ export async function listReviewOptions(spaceId: string): Promise<{ reviews: Rev
       rating: r.rating,
       text: r.text!.trim(),
       source: r.provider,
+      link: r.provider === "own" ? (linkDomain(r.linkUrl) ?? null) : null,
       date: formatReviewMonth(r.reviewDate) ?? null,
       fits: TEMPLATES.filter((t) => reviewFits(t, { text: r.text! })).map((t) => t.id),
     }));
 
   const sources = await db.select().from(reviewSources).where(eq(reviewSources.spaceId, spaceId));
   const stats: SourceStats[] = sources
-    .filter((s) => s.ratingAverage != null && s.ratingTotal != null && s.ratingTotal > 0)
-    .map((s) => ({ source: s.provider, rating: s.ratingAverage!, total: s.ratingTotal! }));
+    .filter((s) => s.provider !== "own" && s.ratingAverage != null && s.ratingTotal != null && s.ratingTotal > 0)
+    .map((s) => ({ source: s.provider as "google" | "trustpilot", rating: s.ratingAverage!, total: s.ratingTotal! }));
 
   return { reviews: options, stats };
 }
@@ -137,7 +142,7 @@ export interface CreateReviewVideoInput {
 
 /** Builds the exact content to render from stored reviews. Pure given its inputs; exported for tests. */
 export function buildProps(
-  rows: { authorName: string; rating: number; text: string | null; reviewDate: Date | null; provider: "google" | "trustpilot" }[],
+  rows: { authorName: string; rating: number | null; text: string | null; reviewDate: Date | null; provider: "google" | "trustpilot" | "own"; linkUrl?: string | null }[],
   brand: string,
   aggregate?: VideoAggregate,
   theme?: VideoTheme
@@ -148,6 +153,7 @@ export function buildProps(
     text: (r.text ?? "").trim(), // verbatim: only surrounding whitespace is removed
     date: formatReviewMonth(r.reviewDate),
     source: r.provider,
+    ...(r.provider === "own" && linkDomain(r.linkUrl) ? { link: linkDomain(r.linkUrl) } : {}),
   }));
   return { reviews: items, brand, ...(aggregate ? { aggregate } : {}), ...(theme && (theme.style || theme.secondary) ? { theme } : {}) };
 }
@@ -184,7 +190,7 @@ export async function createReviewVideo(input: CreateReviewVideoInput) {
 
   // Rating totals come from the provider (stored at sync), for the source of the featured review
   let aggregate: VideoAggregate | undefined;
-  if (template.requiresAggregate) {
+  if (template.requiresAggregate && ordered[0].provider !== "own") {
     const provider = ordered[0].provider;
     const [source] = await db
       .select()
@@ -228,7 +234,7 @@ export async function createReviewVideo(input: CreateReviewVideoInput) {
         props: props as unknown as Record<string, unknown>,
         reviewIds: ids,
         rightsConfirmedAt: new Date(),
-        rightsWordingVersion: REVIEW_RIGHTS_VERSION,
+        rightsWordingVersion: rightsVersionFor(ordered.map((r) => r.provider)),
       })
       .returning();
     const job = await enqueueJob(JOB_TYPES.reviewVideo, { videoId: video.id }, {}, tx);

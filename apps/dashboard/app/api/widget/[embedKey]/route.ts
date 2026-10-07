@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq, and, asc, desc, inArray } from "drizzle-orm";
+import { eq, and, asc, desc, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { spaces, testimonials, widgetConfigs, conversionGoals, reviews, experiments, testimonialTranslations, whiteLabelSettings } from "@/lib/db/schema";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
@@ -194,7 +194,8 @@ export async function GET(request: Request, { params }: RouteParams) {
       })
       .from(reviews)
       .where(
-        and(eq(reviews.spaceId, space.id), eq(reviews.isApproved, true))
+        // Reviews the owner typed in are for videos only: the widget's badges name a provider
+        and(eq(reviews.spaceId, space.id), eq(reviews.isApproved, true), ne(reviews.provider, "own"))
       )
       .orderBy(desc(reviews.reviewDate), desc(reviews.createdAt));
 

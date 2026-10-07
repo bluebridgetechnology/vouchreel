@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { STYLES, TEMPLATES, compositionId, durationInFrames, effectiveStyle, getTemplate, isBackgroundStyle, reviewFits, validateProps, type ReviewVideoProps } from "../registry";
-import { BACKGROUND_STYLES } from "../types";
+import { BACKGROUND_STYLES, SOURCE_LABELS } from "../types";
 import { SAMPLE_PROPS } from "../sample";
 import { TEMPLATE_COMPONENTS } from "../templates";
 
@@ -133,5 +133,27 @@ describe("background styles", () => {
     expect(validateProps("spotlight", { ...sample, theme: { style: "neon" as never } })[0]).toMatch(/Unknown background style/);
     expect(validateProps("spotlight", { ...sample, theme: { secondary: "blue" } })[0]).toMatch(/second colour/);
     expect(validateProps("spotlight", { ...sample, theme: { secondary: "#1d4ed8" } })).toEqual([]);
+  });
+});
+
+describe("reviews the owner typed in", () => {
+  const own = (over = {}) => review({ source: "own" as const, rating: null, ...over });
+
+  it("need no rating, and only they may go without one", () => {
+    for (const t of TEMPLATES.filter((t) => !t.requiresAggregate)) {
+      expect(validateProps(t.id, { reviews: Array.from({ length: t.reviews.min }, () => own()), brand: "#cf3d0b" }), t.id).toEqual([]);
+    }
+    const t = TEMPLATES.find((t) => !t.requiresAggregate)!;
+    const problems = validateProps(t.id, { reviews: Array.from({ length: t.reviews.min }, () => review({ rating: null })), brand: "#cf3d0b" });
+    expect(problems.join(" ")).toMatch(/rating from 1 to 5/);
+  });
+
+  it("cannot use a template that needs provider totals", () => {
+    const t = TEMPLATES.find((t) => t.requiresAggregate)!;
+    expect(validateProps(t.id, { reviews: [own()], brand: "#cf3d0b" }).join(" ")).toMatch(/overall rating/);
+  });
+
+  it("carry no source name", () => {
+    expect(SOURCE_LABELS.own).toBe("");
   });
 });

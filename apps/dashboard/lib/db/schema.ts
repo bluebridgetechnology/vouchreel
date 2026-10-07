@@ -31,6 +31,8 @@ export const platformEnum = pgEnum("platform", [
 export const reviewProviderEnum = pgEnum("review_provider", [
   "google",
   "trustpilot",
+  // Typed in by the space owner: no provider, no rating
+  "own",
 ]);
 
 export const widgetTemplateEnum = pgEnum("widget_template", [
@@ -548,8 +550,11 @@ export const reviews = pgTable("reviews", {
   provider: reviewProviderEnum("provider").notNull(),
   authorName: text("author_name").notNull(),
   authorPhotoUrl: text("author_photo_url"),
-  rating: integer("rating").notNull(),
+  // Null only for owner-supplied reviews (provider "own")
+  rating: integer("rating"),
   text: text("text"),
+  /** Owner-supplied reviews: the page the review came from (https), shown as its domain */
+  linkUrl: text("link_url"),
   reviewDate: timestamp("review_date", { withTimezone: true }),
   providerReviewId: text("provider_review_id").notNull().unique(),
   isApproved: boolean("is_approved").default(true).notNull(),

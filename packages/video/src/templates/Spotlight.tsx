@@ -36,8 +36,8 @@ export const Spotlight: React.FC<ReviewVideoProps> = (props) => {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 22 * u, marginBottom: 44 * u }}>
-            <SourceMark source={review.source} u={u} onDark={palette.style !== "light"} textColor={palette.text} />
-            <Stars rating={review.rating} size={54 * u} color={palette.star} emptyColor={tint(palette, 0.25)} />
+            <SourceMark source={review.source} domain={review.link} u={u} onDark={palette.style !== "light"} textColor={palette.text} />
+            {review.rating != null && <Stars rating={review.rating} size={54 * u} color={palette.star} emptyColor={tint(palette, 0.25)} />}
           </div>
 
           <div style={{ fontSize: 200 * u, lineHeight: 0.6, height: 100 * u, color: tint(palette, 0.35), fontWeight: 600 }}>“</div>

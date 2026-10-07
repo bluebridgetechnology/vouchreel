@@ -2,7 +2,7 @@ import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql, type 
 import { db } from "@/lib/db";
 import { generatedVideos, reviewVideos, spaces, testimonialConsents, testimonials, user } from "@/lib/db/schema";
 import { AI_VIDEO_CONSENT_VERSION } from "@/lib/ai-video/consent";
-import { REVIEW_RIGHTS_VERSION } from "@/lib/review-video/rights";
+import { isCurrentRightsVersion } from "@/lib/review-video/rights";
 import { notifySpaceOwner } from "@/lib/notifications/service";
 import { getStorage } from "@/lib/storage";
 import { storageKeyFromUrl } from "@/lib/storage/video-files";
@@ -186,7 +186,7 @@ async function listModerationItemsAt(query: ModerationQuery, page: number, pageS
         attribution,
         consent: null,
         rightsConfirmedAt: f.v.rightsConfirmedAt,
-        rightsWording: { version: f.v.rightsWordingVersion, current: f.v.rightsWordingVersion === REVIEW_RIGHTS_VERSION },
+        rightsWording: { version: f.v.rightsWordingVersion, current: isCurrentRightsVersion(f.v.rightsWordingVersion) },
         needsAttention: false,
         removed: f.v.moderatedAt ? { at: f.v.moderatedAt, reason: f.v.moderationReason, byEmail: f.v.moderatedBy ? (byIds.get(f.v.moderatedBy) ?? null) : null } : null,
       });

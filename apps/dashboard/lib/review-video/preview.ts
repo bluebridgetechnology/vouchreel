@@ -34,7 +34,7 @@ export function previewProps(input: PreviewInput): PreviewResult {
   const enough = input.picked.length >= input.template.reviews.min && input.picked.length <= input.template.reviews.max;
 
   const reviews: ReviewVideoProps["reviews"] = enough
-    ? input.picked.map((r) => ({ author: r.author, rating: r.rating, text: r.text, date: r.date ?? undefined, source: r.source }))
+    ? input.picked.map((r) => ({ author: r.author, rating: r.rating, text: r.text, date: r.date ?? undefined, source: r.source, ...(r.link ? { link: r.link } : {}) }))
     : (sample?.reviews ?? []);
 
   const aggregate = input.template.requiresAggregate ? (input.stats[0] ? { source: input.stats[0].source, rating: input.stats[0].rating, total: input.stats[0].total } : sample?.aggregate) : undefined;

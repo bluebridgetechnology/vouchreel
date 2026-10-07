@@ -68,8 +68,8 @@ const ReviewScene: React.FC<{ review: ReviewVideoProps["reviews"][number]; palet
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36 * u }}>
-          <Stars rating={review.rating} size={50 * u} emptyColor="rgba(0,0,0,0.12)" startSeconds={0.3} />
-          <SourceMark source={review.source} u={u * 0.9} onDark={false} />
+          {review.rating != null && <Stars rating={review.rating} size={50 * u} emptyColor="rgba(0,0,0,0.12)" startSeconds={0.3} />}
+          <SourceMark source={review.source} domain={review.link} u={u * 0.9} onDark={false} />
         </div>
         <div style={{ fontSize: 170 * u, lineHeight: 0.55, height: 84 * u, color: rgba(palette.accent, 0.33), fontWeight: 600 }}>“</div>
         <WordReveal

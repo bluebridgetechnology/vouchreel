@@ -1,15 +1,18 @@
-export type ReviewSource = "google" | "trustpilot";
+/** `own` is a review the owner typed in themselves: no provider, no logo, no rating. */
+export type ReviewSource = "google" | "trustpilot" | "own";
 export type Aspect = "9:16" | "16:9";
 
 /** One review exactly as the provider returned it. Text is never edited by templates. */
 export interface VideoReview {
   author: string;
-  /** Whole stars, 1 to 5. */
-  rating: number;
+  /** Whole stars, 1 to 5. Null for an owner-supplied review, which has no rating (no stars are drawn). */
+  rating: number | null;
   text: string;
   /** Pre-formatted, e.g. "March 2026". Optional. */
   date?: string;
   source: ReviewSource;
+  /** Owner-supplied reviews only: the site the review came from, shown as its domain ("example.com"). */
+  link?: string;
 }
 
 /** Provider-reported totals ("4.8 from 213 reviews"), never computed from a subset. */
@@ -47,6 +50,8 @@ export const SOURCE_LABELS: Record<ReviewSource, string> = {
   /** Reviews come from the Google Places API, whose attribution rule (as last read, not confirmed against the policy page) is the Google Maps logo or the text "Google Maps". See docs/gaps-register.md P3. */
   google: "Google Maps",
   trustpilot: "Trustpilot",
+  /** Nothing: an owner-supplied review claims no outside source. */
+  own: "",
 };
 
 export const ASPECTS: Record<Aspect, { width: number; height: number }> = {

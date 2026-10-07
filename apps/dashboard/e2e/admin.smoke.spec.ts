@@ -413,6 +413,53 @@ test.describe("platform admin", () => {
     await context.close();
   });
 
+  test("owner reviews: add one by hand, it needs no Google or Trustpilot, and videos made from it use its own wording", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+    const spaces = await (await context.request.get("/api/spaces")).json();
+    const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
+    await open(page, `/spaces/${space.id}/reviews`);
+
+    await page.getByRole("button", { name: "Add your own review" }).click();
+    const form = page.getByRole("dialog", { name: "Add your own review" });
+    await form.getByLabel("Name", { exact: true }).fill("Priya N.");
+    await form.getByLabel("Review", { exact: true }).fill("They fixed our books in a week and never made us feel silly for asking.");
+
+    // Only https links are accepted
+    await form.getByLabel(/Link to the review/).fill("http://insecure.example/reviews");
+    await form.getByRole("button", { name: "Save review" }).click();
+    await expect(form.getByRole("alert")).toContainText("https");
+
+    await form.getByLabel(/Link to the review/).fill("https://www.priyas-bakery.example/reviews/1");
+    await form.getByRole("button", { name: "Save review" }).click();
+    await expect(page.getByText("Review added")).toBeVisible();
+
+    // It shows with its own badge and no stars, and can be edited
+    const card = page.locator("div").filter({ hasText: "Priya N." }).filter({ has: page.getByRole("button", { name: "Edit" }) }).filter({ hasText: "Added by you" }).last();
+    await expect(card.getByText("Added by you")).toBeVisible();
+    await expect(card.getByText(/\.0$/)).toHaveCount(0);
+    await card.getByRole("button", { name: "Edit" }).click();
+    await form.getByLabel("Name", { exact: true }).fill("Priya Nair");
+    await form.getByRole("button", { name: "Save review" }).click();
+    await expect(page.getByText("Priya Nair")).toBeVisible();
+
+    // The video picker offers it, and picking it switches the confirmation to the wording for your own reviews
+    await page.getByRole("button", { name: "Create review video" }).click();
+    const picker = page.getByRole("dialog").last();
+    await picker.getByRole("button", { name: /Priya Nair/ }).click();
+    await expect(picker.getByText("Added by you")).toBeVisible();
+    await expect(picker.getByText(/genuine reviews from real customers/)).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    // Clean up so the rest of the run is unaffected
+    const own = await (await context.request.get(`/api/spaces/${space.id}/reviews`)).json();
+    for (const r of own.reviews.filter((r: { provider: string }) => r.provider === "own")) {
+      expect((await context.request.delete(`/api/spaces/${space.id}/reviews/${r.id}`, { headers: { origin: baseURL! } })).ok()).toBe(true);
+    }
+    await context.close();
+  });
+
   test("audit log: the actions above are recorded, and filters and paging work", async ({ page }) => {
     await open(page, "/admin?tab=audit&type=user");
     await expect(page.getByText(`Changed plan for ${USERS.customer.email}`)).toBeVisible();

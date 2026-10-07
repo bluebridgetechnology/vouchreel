@@ -8,3 +8,16 @@ describe("review video rights wording", () => {
     expect(REVIEW_RIGHTS_DETAIL).toMatch(/exactly as written/i);
   });
 });
+
+describe("rights wording for reviews the owner typed in", () => {
+  it("uses its own wording and version when any picked review is owner-supplied", async () => {
+    const r = await import("../rights");
+    expect(r.rightsVersionFor(["google", "own"])).toBe(r.REVIEW_RIGHTS_OWN_VERSION);
+    expect(r.rightsVersionFor(["google", "trustpilot"])).toBe(r.REVIEW_RIGHTS_VERSION);
+    expect(r.rightsTextFor(["own"]).headline).toMatch(/genuine reviews from real customers/i);
+    expect(r.rightsTextFor(["google"]).headline).toBe(r.REVIEW_RIGHTS_HEADLINE);
+    expect(r.isCurrentRightsVersion(r.REVIEW_RIGHTS_OWN_VERSION)).toBe(true);
+    expect(r.isCurrentRightsVersion("2026-01-v0")).toBe(false);
+    expect(r.isCurrentRightsVersion(null)).toBe(false);
+  });
+});

@@ -88,8 +88,8 @@ export const ReviewStack: React.FC<ReviewVideoProps> = (props) => {
               >
                 <div style={{ opacity: interpolate(shift, [0, 0.45], [1, 0], clamped) }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 30 * u }}>
-                    <Stars rating={review.rating} size={42 * u} emptyColor="rgba(0,0,0,0.12)" startSeconds={starts[i] + 0.2} />
-                    <SourceMark source={review.source} u={u * 0.85} onDark={false} />
+                    {review.rating != null && <Stars rating={review.rating} size={42 * u} emptyColor="rgba(0,0,0,0.12)" startSeconds={starts[i] + 0.2} />}
+                    <SourceMark source={review.source} domain={review.link} u={u * 0.85} onDark={false} />
                   </div>
                   <WordReveal
                     text={review.text}

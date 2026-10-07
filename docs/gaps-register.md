@@ -9,7 +9,7 @@ Classes: **Fix** (code or tests I can change and prove here), **CI** (proved by 
 **Decision** (needs a product or legal choice from you first), **External** (needs something outside this
 repo: network access, an account, real data), **Feature** (a separate piece of work from the old backlog).
 
-The open features (C3, B1-B3, B6-B9, B11, B14, B15, B17) are planned in `docs/plan-2026-10-07-feature-backlog.md`.
+The open features (C3, B1-B3, B6, B7, B9, B11, B14, B15, B17) are planned in `docs/plan-2026-10-07-feature-backlog.md`.
 
 Last full check: GitHub Actions run 37480868676, commit aa7a833, all three jobs green.
 
@@ -106,4 +106,5 @@ them are marked Fix and are in scope here; the rest wait for your go-ahead.
 | B14 | Large client files to split (`experiments-view`, `analytics-dashboard`, `live-preview`) | Feature | Open |
 | B15 | Notification channels: Slack, browser push, full-page inbox | Feature | Open |
 | B16 | "Coming soon, AI auto-clipping" placeholder badge on testimonial cards | Fix | Closed. The badge is removed from the testimonial card. |
+| B18 | Reviews the owner types in themselves (name, text, optional link), for people whose reviews live on their own site | Feature | Closed (2026-10-07). Stored in `reviews` with provider `own` (no rating, no date, no link kept except https; migration 0030), added/edited from the Reviews page (`POST /api/spaces/:id/reviews/own`, `PUT .../own/:reviewId`, delete as for other reviews; 60 per hour per account, 200 per space). Videos from them show no stars, no Google/Trustpilot logo and no date; the site domain is shown if a link was given; Rating Spotlight is refused (it needs provider totals). Own confirmation wording ("genuine reviews from real customers", version `2026-10-own-v1`) is recorded per video and shown in the moderation list. Left out of the public widget on purpose (its badges name a provider). Tests: input, rights wording and routes (unit), real Postgres (video, wording version, listing, spotlight refused), template validation, browser (add, bad link, edit, picker wording, delete; Chromium run locally). Not verified: the real MP4 render of an owner review and Firefox/WebKit runs until CI is green. |
 | B17 | Pages still using their own card and tab markup instead of `Card` / `Tabs` | Feature | Open |

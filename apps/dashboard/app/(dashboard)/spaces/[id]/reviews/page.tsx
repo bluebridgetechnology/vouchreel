@@ -4,7 +4,7 @@ import { use, useEffect, useState } from "react";
 import { ReviewVideoModal } from "@/components/review-video/review-video-modal";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { inputClass } from "@/components/ui/input";
+import { inputClass, textareaClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { ModalOverlay } from "@/components/ui/modal";
 import { notify } from "@/lib/notify";
@@ -23,11 +23,12 @@ interface ReviewItem {
   id: string;
   spaceId: string;
   sourceId: string | null;
-  provider: "google" | "trustpilot";
+  provider: "google" | "trustpilot" | "own";
   authorName: string;
   authorPhotoUrl: string | null;
-  rating: number;
+  rating: number | null;
   text: string | null;
+  linkUrl: string | null;
   reviewDate: string | null;
   providerReviewId: string;
   isApproved: boolean;
@@ -60,6 +61,49 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
   const [apiKey, setApiKey] = useState("");
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
+
+  // Reviews the owner types in themselves: null = closed, "new" = adding, an id = editing that review
+  const [ownEditing, setOwnEditing] = useState<string | "new" | null>(null);
+  const [ownName, setOwnName] = useState("");
+  const [ownText, setOwnText] = useState("");
+  const [ownLink, setOwnLink] = useState("");
+  const [ownSaving, setOwnSaving] = useState(false);
+  const [ownError, setOwnError] = useState<string | null>(null);
+
+  function openOwnForm(review?: ReviewItem) {
+    setOwnEditing(review ? review.id : "new");
+    setOwnName(review?.authorName ?? "");
+    setOwnText(review?.text ?? "");
+    setOwnLink(review?.linkUrl ?? "");
+    setOwnError(null);
+  }
+
+  async function handleSaveOwn(e: React.FormEvent) {
+    e.preventDefault();
+    if (!ownEditing) return;
+    try {
+      setOwnSaving(true);
+      setOwnError(null);
+      const editing = ownEditing !== "new";
+      const res = await fetch(`/api/spaces/${spaceId}/reviews/own${editing ? `/${ownEditing}` : ""}`, {
+        method: editing ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: ownName, text: ownText, link: ownLink.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const fields = data.error?.details as Record<string, string[]> | undefined;
+        throw new Error(fields ? Object.values(fields).flat()[0] : data.error?.message || "Could not save the review");
+      }
+      setOwnEditing(null);
+      notify.success(editing ? "Review updated" : "Review added");
+      await loadData();
+    } catch (err) {
+      setOwnError(err instanceof Error ? err.message : "Could not save the review");
+    } finally {
+      setOwnSaving(false);
+    }
+  }
 
   // Syncing state
   const [syncingSourceId, setSyncingSourceId] = useState<string | null>(null);
@@ -262,10 +306,54 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
             reviews and showcase them alongside video testimonials.
           </p>
         </div>
-        <button type="button" onClick={() => setVideoOpen(true)} className={buttonVariants({ variant: "primary", size: "md" })}>
-          Create review video
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => openOwnForm()} className={buttonVariants({ variant: "outline", size: "md" })}>
+            Add your own review
+          </button>
+          <button type="button" onClick={() => setVideoOpen(true)} className={buttonVariants({ variant: "primary", size: "md" })}>
+            Create review video
+          </button>
+        </div>
       </div>
+
+      {ownEditing && (
+        <ModalOverlay label="Add your own review" onClose={() => setOwnEditing(null)}>
+          <form onSubmit={handleSaveOwn} className="w-full max-w-md space-y-4 rounded-card border bg-surface p-4 shadow-float sm:p-6">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-base font-medium text-text">{ownEditing === "new" ? "Add your own review" : "Edit review"}</h3>
+              <button type="button" onClick={() => setOwnEditing(null)} className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")} aria-label="Close">
+                ✕
+              </button>
+            </div>
+            <p className="text-xs text-text-muted">
+              For reviews that live on your own site or came to you directly. Use them only if they are genuine, and add them exactly as written.
+              No rating or logo is shown with them.
+            </p>
+            {ownError && <div role="alert" className="rounded-card border border-danger/30 bg-danger-soft p-3 text-xs text-danger-foreground">{ownError}</div>}
+            <label className="block space-y-1.5 text-xs font-medium text-text">
+              Name
+              <input value={ownName} onChange={(e) => setOwnName(e.target.value)} maxLength={80} required className={inputClass} />
+            </label>
+            <label className="block space-y-1.5 text-xs font-medium text-text">
+              Review
+              <textarea value={ownText} onChange={(e) => setOwnText(e.target.value)} maxLength={1000} required rows={5} className={textareaClass} />
+            </label>
+            <label className="block space-y-1.5 text-xs font-medium text-text">
+              Link to the review (optional)
+              <input value={ownLink} onChange={(e) => setOwnLink(e.target.value)} type="url" placeholder="https://yoursite.com/reviews" className={inputClass} />
+              <span className="block font-normal text-text-muted">Only the site name (for example yoursite.com) is shown in videos.</span>
+            </label>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setOwnEditing(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={ownSaving}>
+                {ownSaving ? "Saving..." : "Save review"}
+              </Button>
+            </div>
+          </form>
+        </ModalOverlay>
+      )}
 
       {videoOpen && <ReviewVideoModal spaceId={spaceId} onClose={() => setVideoOpen(false)} />}
 
@@ -594,7 +682,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-medium text-text">Imported Reviews</h3>
+            <h3 className="text-lg font-medium text-text">Reviews</h3>
             <span className="rounded-pill bg-surface-sunken px-2.5 py-0.5 text-xs font-medium text-text-muted">
               {reviewsList.length}
             </span>
@@ -639,7 +727,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
             <h4 className="font-medium text-text text-sm">No reviews found</h4>
             <p className="text-xs text-text-muted max-w-sm mx-auto">
               {reviewsList.length === 0
-                ? "Connect your Google Places or Trustpilot business profile above to import customer reviews."
+                ? "Connect your Google Places or Trustpilot business profile above to import customer reviews, or add your own."
                 : "No reviews match your search or filter."}
             </p>
           </div>
@@ -659,10 +747,12 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                       className={`inline-flex items-center gap-1.5 rounded-pill px-2 py-0.5 text-2xs font-medium ${
                         review.provider === "google"
                           ? "bg-info-soft text-info-foreground border border-info/30"
-                          : "bg-success-soft text-success-foreground border border-success/30"
+                          : review.provider === "own"
+                            ? "bg-surface-sunken text-text-muted border"
+                            : "bg-success-soft text-success-foreground border border-success/30"
                       }`}
                     >
-                      {review.provider === "google" ? "Google" : "Trustpilot"}
+                      {review.provider === "google" ? "Google" : review.provider === "own" ? "Added by you" : "Trustpilot"}
                     </span>
 
                     <span
@@ -677,16 +767,18 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                   </div>
 
                   {/* Stars */}
+                  {review.rating != null && (
                   <div className="flex items-center gap-1 text-warning">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <span key={i} className="text-xs">
-                        {i < review.rating ? "★" : "☆"}
+                        {i < (review.rating ?? 0) ? "★" : "☆"}
                       </span>
                     ))}
                     <span className="text-2xs font-medium text-text ml-1">
                       {review.rating}.0
                     </span>
                   </div>
+                  )}
 
                   {/* Review Text */}
                   <p className="text-xs text-text/90 line-clamp-4 leading-relaxed">
@@ -722,6 +814,11 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
 
                   {/* Approve/Hide Toggle & Delete */}
                   <div className="flex items-center gap-1.5">
+                    {review.provider === "own" && (
+                      <button type="button" onClick={() => openOwnForm(review)} className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 px-2.5 text-2xs")}>
+                        Edit
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => handleToggleApprove(review)}

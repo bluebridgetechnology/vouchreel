@@ -40,8 +40,11 @@ export function SourceMark({
   onDark,
   textColor = "#44403c",
   size = 1,
+  domain,
 }: {
   source: ReviewSource;
+  /** Owner-supplied reviews: the site domain to show instead of a logo (nothing is drawn without one). */
+  domain?: string;
   /** Layout scale factor (see useLayout). */
   u: number;
   /** True when the background is coloured or dark: puts the logo on a white chip. */
@@ -50,6 +53,9 @@ export function SourceMark({
   textColor?: string;
   size?: number;
 }) {
+  if (source === "own") {
+    return domain ? <span style={{ fontSize: 30 * u * size, fontWeight: 500, color: onDark ? "rgba(255,255,255,0.8)" : textColor, whiteSpace: "nowrap" }}>{domain}</span> : null;
+  }
   const { chip, label } = markLayout(source, onDark);
   const height = 38 * u * size;
   const logo =

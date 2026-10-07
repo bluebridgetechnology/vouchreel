@@ -171,6 +171,55 @@ run("review videos (postgres)", () => {
     await expect(svc.createReviewVideo(base({ template: "rating-spotlight", reviewIds: [ids.reviews[1]] }))).rejects.toMatchObject({ status: 422 });
   });
 
+  describe("reviews the owner typed in", () => {
+    let ownId = "";
+    beforeAll(async () => {
+      const id = crypto.randomUUID();
+      await db.insert(s.reviews).values({
+        id,
+        spaceId: ids.space,
+        provider: "own",
+        providerReviewId: `own:${id}`,
+        authorName: "Priya N.",
+        rating: null,
+        text: "They fixed our books in a week and never once made us feel silly for asking.",
+        linkUrl: "https://www.priyas-bakery.example/testimonials/42",
+        reviewDate: null,
+      });
+      ownId = id;
+    });
+
+    it("makes a video with no rating, no date and no provider, shows only the site, and records the own wording", async () => {
+      const video = await svc.createReviewVideo(base({ reviewIds: [ownId], template: "dark-card" }));
+      expect(video.rightsWordingVersion).toBe((await import("../rights")).REVIEW_RIGHTS_OWN_VERSION);
+      const props = video.props as { reviews: Record<string, unknown>[]; aggregate?: unknown };
+      expect(props.reviews[0]).toEqual({
+        author: "Priya N.",
+        rating: null,
+        text: "They fixed our books in a week and never once made us feel silly for asking.",
+        source: "own",
+        link: "priyas-bakery.example",
+      });
+      expect(props.aggregate).toBeUndefined();
+    });
+
+    it("cannot use rating spotlight (there are no provider totals to show)", async () => {
+      await expect(svc.createReviewVideo(base({ reviewIds: [ownId], template: "rating-spotlight" }))).rejects.toMatchObject({ status: 422 });
+    });
+
+    it("is listed with no rating and its site", async () => {
+      const { reviews } = await svc.listReviewOptions(ids.space);
+      expect(reviews.find((r) => r.id === ownId)).toMatchObject({ rating: null, source: "own", link: "priyas-bakery.example", date: null });
+    });
+
+    it("renders a real MP4 without stars or a logo", async () => {
+      const video = await svc.createReviewVideo(base({ reviewIds: [ownId], template: "minimal", aspect: "16:9" }));
+      await render.renderQueuedReviewVideo(video.id);
+      const [done] = await db.select().from(s.reviewVideos).where(eq(s.reviewVideos.id, video.id));
+      expect(done.status).toBe("done");
+    }, 240_000);
+  });
+
   it("lists reviews with the templates each one fits, and the provider stats", async () => {
     const { reviews, stats } = await svc.listReviewOptions(ids.space);
     const long = reviews.find((r) => r.text === LONG_TEXT)!;
