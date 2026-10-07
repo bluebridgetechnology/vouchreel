@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { internalError, unauthorized } from "@/lib/api/errors";
 import { listNotifications } from "@/lib/notifications/queries";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
     const data = await listNotifications(session.user.id, Number.isFinite(limit) ? limit : 20);
     return NextResponse.json(data, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
-    console.error("Failed to list notifications:", err);
+    log.error("Failed to list notifications:", err);
     return internalError("Failed to load notifications");
   }
 }

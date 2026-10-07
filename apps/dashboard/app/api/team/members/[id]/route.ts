@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { teamMembers } from "@/lib/db/schema";
 import { apiError, badRequest, forbidden, notFound, unauthorized } from "@/lib/api/errors";
 import { updateMemberRoleSchema } from "@/lib/validations/team";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -62,7 +63,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       member: updated,
     });
   } catch (error) {
-    console.error("Failed to update team member role:", error);
+    log.error("Failed to update team member role:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to update team member role");
   }
 }
@@ -108,7 +109,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       message: isSelf ? "You have left the team" : "Member removed from team",
     });
   } catch (error) {
-    console.error("Failed to delete team member:", error);
+    log.error("Failed to delete team member:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to remove team member");
   }
 }

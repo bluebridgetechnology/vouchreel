@@ -6,6 +6,7 @@ import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import { badRequest, notFound, internalError } from "@/lib/api/errors";
 import { canAccess } from "@/lib/auth/feature-gate";
 import { applyBrandKitToTheme, getBrandKit, toValues } from "@/lib/brand-kit/service";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ embedKey: string }>;
@@ -157,7 +158,7 @@ export async function GET(request: Request, { params }: RouteParams) {
           translationsList = res;
         }
       } catch (err) {
-        console.warn("Could not load translations for widget testimonials:", err);
+        log.warn("Could not load translations for widget testimonials:", err);
       }
     }
 
@@ -277,7 +278,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       }
     );
   } catch (error) {
-    console.error("Error fetching widget data:", error);
+    log.error("Error fetching widget data:", error);
     return internalError("Internal server error", corsHeaders);
   }
 }

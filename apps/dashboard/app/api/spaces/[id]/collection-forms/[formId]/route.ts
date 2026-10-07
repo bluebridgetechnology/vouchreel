@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { deleteCollectionForm } from "@/lib/spaces/delete";
 import { collectionForms, spaces } from "@/lib/db/schema";
 import { updateCollectionFormSchema } from "@/lib/validations/collection-forms";
+import { log } from "@/lib/log";
 
 interface RouteParams { params: Promise<{ id: string; formId: string }> }
 async function authorize(spaceId: string, formId: string, userId: string) {
@@ -24,12 +25,12 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     if (!parsed.success) return apiError(400, "VALIDATION_ERROR", "Validation failed", { details: parsed.error.flatten().fieldErrors });
     const [collectionForm] = await db.update(collectionForms).set(parsed.data).where(and(eq(collectionForms.id, formId), eq(collectionForms.spaceId, id))).returning();
     return NextResponse.json({ collectionForm });
-  } catch (err) { console.error("Failed to update collection form:", err); return apiError(500, "INTERNAL_ERROR", "Failed to update collection form"); }
+  } catch (err) { log.error("Failed to update collection form:", err); return apiError(500, "INTERNAL_ERROR", "Failed to update collection form"); }
 }
 
 export async function DELETE(_: Request, { params }: RouteParams) {
   const session = await getSession(); if (!session?.user?.id) return apiError(401, "UNAUTHORIZED", "Unauthorized");
   const { id, formId } = await params; const error = await authorize(id, formId, session.user.id); if (error) return apiError(error[0], error[1], error[2]);
   try { const deleted = await deleteCollectionForm(id, formId); if (!deleted) return apiError(404, "NOT_FOUND", "Collection form not found"); return NextResponse.json({ success: true }); }
-  catch (err) { console.error("Failed to delete collection form:", err); return apiError(500, "INTERNAL_ERROR", "Failed to delete collection form"); }
+  catch (err) { log.error("Failed to delete collection form:", err); return apiError(500, "INTERNAL_ERROR", "Failed to delete collection form"); }
 }

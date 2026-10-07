@@ -1,3 +1,4 @@
+import { log } from "@/lib/log";
 /**
  * Fixed-window rate limiter.
  *
@@ -87,7 +88,7 @@ export async function rateLimit(identifier: string, options: RateLimitOptions = 
     try {
       return await redisLimit(identifier, windowMs, max);
     } catch (error) {
-      console.error("[rate-limit] Redis unavailable, using in-memory counters:", error);
+      log.error("[rate-limit] Redis unavailable, using in-memory counters:", error);
     }
   }
   return memoryLimit(identifier, windowMs, max);

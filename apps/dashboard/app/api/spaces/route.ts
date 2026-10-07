@@ -10,6 +10,7 @@ import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import { getAccessibleSpacesWithCounts } from "@/lib/auth/permissions";
 import { canCreateSpace } from "@/lib/payments/subscription";
 import { createNotification } from "@/lib/notifications/service";
+import { log } from "@/lib/log";
 
 /**
  * GET /api/spaces
@@ -25,7 +26,7 @@ export async function GET() {
     const spacesWithCounts = await getAccessibleSpacesWithCounts(session.user.id);
     return NextResponse.json({ spaces: spacesWithCounts });
   } catch (error) {
-    console.error("Failed to fetch spaces:", error);
+    log.error("Failed to fetch spaces:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch spaces");
   }
 }
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Failed to create space:", error);
+    log.error("Failed to create space:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to create space");
   }
 }

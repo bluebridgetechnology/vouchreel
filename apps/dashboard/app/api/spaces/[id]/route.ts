@@ -7,6 +7,7 @@ import { deleteSpace } from "@/lib/spaces/delete";
 import { spaces, testimonials } from "@/lib/db/schema";
 import { updateSpaceSchema } from "@/lib/validations/spaces";
 import { verifySpaceAccess } from "@/lib/auth/permissions";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -46,7 +47,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("Failed to fetch space:", error);
+    log.error("Failed to fetch space:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch space");
   }
 }
@@ -94,7 +95,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("Failed to update space:", error);
+    log.error("Failed to update space:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to update space");
   }
 }
@@ -121,7 +122,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete space:", error);
+    log.error("Failed to delete space:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to delete space");
   }
 }

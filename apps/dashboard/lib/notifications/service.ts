@@ -4,6 +4,7 @@ import { notificationPreferences, notifications, spaces, user } from "@/lib/db/s
 import { sendEmail } from "@/lib/email/transport";
 import { renderEmail } from "@/lib/email/templates";
 import { NOTIFICATION_CATALOG, resolvePrefs, type NotificationType } from "./catalog";
+import { log } from "@/lib/log";
 
 export interface CreateNotificationInput {
   userId: string;
@@ -87,7 +88,7 @@ export async function createNotification(input: CreateNotificationInput): Promis
       }
     }
   } catch (error) {
-    console.error(`[notifications] failed to create ${input.type}:`, error);
+    log.error(`[notifications] failed to create ${input.type}:`, error);
   }
   return result;
 }
@@ -102,7 +103,7 @@ export async function notifySpaceOwner(
     if (!space) return { created: false, emailed: false };
     return createNotification({ ...input, userId: space.ownerId });
   } catch (error) {
-    console.error("[notifications] owner lookup failed:", error);
+    log.error("[notifications] owner lookup failed:", error);
     return { created: false, emailed: false };
   }
 }

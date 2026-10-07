@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "crypto";
 import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { apiKeys, spaces } from "@/lib/db/schema";
+import { log } from "@/lib/log";
 
 export const KEY_PREFIX = "vr_live_";
 
@@ -75,7 +76,7 @@ export async function authenticateApiKey(
       .set({ lastUsedAt: new Date() })
       .where(eq(apiKeys.id, record.id))
       .catch((err) => {
-        console.warn("Failed to update API key lastUsedAt:", err);
+        log.warn("Failed to update API key lastUsedAt:", err);
       });
 
     return {
@@ -84,7 +85,7 @@ export async function authenticateApiKey(
       ownerId: record.ownerId,
     };
   } catch (error) {
-    console.error("Error authenticating API key:", error);
+    log.error("Error authenticating API key:", error);
     return null;
   }
 }

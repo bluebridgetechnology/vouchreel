@@ -19,6 +19,7 @@ import {
   resolveDateRange,
   resolvePreviousDateRange,
 } from "@/lib/validations/analytics";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -186,7 +187,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       }
     }
   } catch (error) {
-    console.error("Failed to fetch analytics:", error);
+    log.error("Failed to fetch analytics:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch analytics");
   }
 }

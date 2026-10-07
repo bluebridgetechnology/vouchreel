@@ -7,6 +7,7 @@ import { requirePlatformAdminApi } from "@/lib/admin/guard";
 import { diffFields, logAdminAction } from "@/lib/admin/audit";
 import { getAdminPlan, toAdminPlan, getSubscriberCounts } from "@/lib/admin/plans";
 import { updatePlanSchema } from "@/lib/validations/plans";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +63,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ plan: toAdminPlan(row, counts.get(id) ?? 0) });
   } catch (err) {
-    console.error("Failed to update plan:", err);
+    log.error("Failed to update plan:", err);
     return internalError("Failed to update plan");
   }
 }
@@ -91,7 +92,7 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     });
     return NextResponse.json({ plan: toAdminPlan(row, counts.get(id) ?? 0) });
   } catch (err) {
-    console.error("Failed to archive plan:", err);
+    log.error("Failed to archive plan:", err);
     return internalError("Failed to archive plan");
   }
 }

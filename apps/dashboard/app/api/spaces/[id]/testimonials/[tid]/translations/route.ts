@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, testimonials, testimonialTranslations } from "@/lib/db/schema";
 import { getOrTranslateTestimonial, TranslationNotConfiguredError } from "@/lib/translations";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string; tid: string }>;
@@ -89,7 +90,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ translations }, { status: 200 });
   } catch (error) {
-    console.error("Failed to fetch translations:", error);
+    log.error("Failed to fetch translations:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch translations");
   }
 }
@@ -129,7 +130,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     if (error instanceof TranslationNotConfiguredError) {
       return apiError(503, "SERVICE_UNAVAILABLE", "Translation is not available on this server yet.");
     }
-    console.error("Failed to generate translation:", error);
+    log.error("Failed to generate translation:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to generate translation");
   }
 }

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { internalError, unauthorized, validationError } from "@/lib/api/errors";
 import { markNotificationsRead } from "@/lib/notifications/queries";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
     await markNotificationsRead(session.user.id, "all" in parsed.data ? undefined : parsed.data.ids);
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("Failed to mark notifications read:", err);
+    log.error("Failed to mark notifications read:", err);
     return internalError("Failed to update notifications");
   }
 }

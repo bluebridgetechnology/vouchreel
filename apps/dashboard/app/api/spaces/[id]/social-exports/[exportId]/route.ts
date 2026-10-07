@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { socialExports, spaces } from "@/lib/db/schema";
 import { queueFileCleanup } from "@/lib/storage/cleanup";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string; exportId: string }>;
@@ -48,7 +49,7 @@ export async function GET(_: Request, { params }: RouteParams) {
 
     return NextResponse.json({ export: exportRecord });
   } catch (error) {
-    console.error("Failed to fetch export status:", error);
+    log.error("Failed to fetch export status:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch export status");
   }
 }
@@ -85,7 +86,7 @@ export async function DELETE(_: Request, { params }: RouteParams) {
     if (result === "busy") return apiError(400, "BAD_REQUEST", "This export is still being made. Wait for it to finish.");
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete export:", error);
+    log.error("Failed to delete export:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to delete the export");
   }
 }

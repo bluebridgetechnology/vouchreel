@@ -3,6 +3,7 @@ import { withApiKeyAuth, apiV1Options } from "@/lib/api/v1-handler";
 import { getOverviewStats } from "@/lib/analytics/queries";
 import { analyticsQuerySchema, resolveDateRange } from "@/lib/validations/analytics";
 import { apiError, validationError } from "@/lib/api/errors";
+import { log } from "@/lib/log";
 
 export const OPTIONS = apiV1Options();
 
@@ -34,7 +35,7 @@ export const GET = withApiKeyAuth(
         },
       });
     } catch (error) {
-      console.error("v1 GET /analytics/overview error:", error);
+      log.error("v1 GET /analytics/overview error:", error);
       return apiError(500, "INTERNAL_ERROR", "Failed to fetch analytics overview");
     }
   },

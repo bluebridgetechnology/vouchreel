@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces } from "@/lib/db/schema";
 import { AiVideoError } from "./errors";
+import { log } from "@/lib/log";
 
 /** Resolves the signed-in space owner, or returns the error response to send. */
 export async function requireSpaceOwner(
@@ -25,6 +26,6 @@ export function aiVideoErrorResponse(error: unknown, fallback: string): NextResp
   if (error instanceof AiVideoError) {
     return apiError(error.status, error.code, error.message, error.details !== undefined ? { details: error.details } : undefined);
   }
-  console.error(fallback, error);
+  log.error(fallback, error);
   return apiError(500, "INTERNAL_ERROR", fallback);
 }

@@ -7,6 +7,7 @@ import { testimonials } from "@/lib/db/schema";
 import { updateTestimonialV1Schema } from "@/lib/validations/v1-api";
 import { apiError, notFound, validationError } from "@/lib/api/errors";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
+import { log } from "@/lib/log";
 
 export const OPTIONS = apiV1Options();
 
@@ -41,7 +42,7 @@ export const GET = withApiKeyAuth<RouteParams>(
 
       return NextResponse.json({ testimonial: item });
     } catch (error) {
-      console.error("v1 GET /testimonials/[id] error:", error);
+      log.error("v1 GET /testimonials/[id] error:", error);
       return apiError(500, "INTERNAL_ERROR", "Failed to fetch testimonial");
     }
   }
@@ -107,7 +108,7 @@ export const PUT = withApiKeyAuth<RouteParams>(
 
       return NextResponse.json({ testimonial: updated });
     } catch (error) {
-      console.error("v1 PUT /testimonials/[id] error:", error);
+      log.error("v1 PUT /testimonials/[id] error:", error);
       return apiError(500, "INTERNAL_ERROR", "Failed to update testimonial");
     }
   }
@@ -139,7 +140,7 @@ export const DELETE = withApiKeyAuth<RouteParams>(
 
       return NextResponse.json({ success: true, id: deleted.id });
     } catch (error) {
-      console.error("v1 DELETE /testimonials/[id] error:", error);
+      log.error("v1 DELETE /testimonials/[id] error:", error);
       return apiError(500, "INTERNAL_ERROR", "Failed to delete testimonial");
     }
   }

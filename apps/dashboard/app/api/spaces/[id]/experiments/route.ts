@@ -12,6 +12,7 @@ import { db } from "@/lib/db";
 import { experiments, spaces } from "@/lib/db/schema";
 import { getExperimentsWithStats } from "@/lib/experiments/queries";
 import { createExperimentSchema } from "@/lib/validations/experiments";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -57,7 +58,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       experiments: experimentsList,
     });
   } catch (error) {
-    console.error("Failed to list experiments:", error);
+    log.error("Failed to list experiments:", error);
     return internalError("Failed to fetch experiments");
   }
 }
@@ -105,7 +106,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ experiment: created }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create experiment:", error);
+    log.error("Failed to create experiment:", error);
     return internalError("Failed to create experiment");
   }
 }

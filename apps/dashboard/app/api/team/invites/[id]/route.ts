@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { teamInvites } from "@/lib/db/schema";
 import { apiError, notFound, unauthorized } from "@/lib/api/errors";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -35,7 +36,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true, message: "Invitation cancelled" });
   } catch (error) {
-    console.error("Failed to cancel team invite:", error);
+    log.error("Failed to cancel team invite:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to cancel team invitation");
   }
 }

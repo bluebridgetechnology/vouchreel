@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { syncAllActiveReviewSources } from "@/lib/reviews/sync";
 import { authorizeCron } from "@/lib/security/cron-auth";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ async function handleSync(request: Request) {
       ...result,
     });
   } catch (error) {
-    console.error("Cron reviews sync failed:", error);
+    log.error("Cron reviews sync failed:", error);
     return NextResponse.json(
       { error: "Internal server error during sync" },
       { status: 500 }

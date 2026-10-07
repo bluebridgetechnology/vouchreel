@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { collectionForms, submissions } from "@/lib/db/schema";
 import { apiError, notFound } from "@/lib/api/errors";
 import { paginationV1Schema } from "@/lib/validations/v1-api";
+import { log } from "@/lib/log";
 
 export const OPTIONS = apiV1Options();
 
@@ -78,7 +79,7 @@ export const GET = withApiKeyAuth<RouteParams>(
         },
       });
     } catch (error) {
-      console.error("v1 GET /collection-forms/[id]/submissions error:", error);
+      log.error("v1 GET /collection-forms/[id]/submissions error:", error);
       return apiError(500, "INTERNAL_ERROR", "Failed to fetch submissions");
     }
   }

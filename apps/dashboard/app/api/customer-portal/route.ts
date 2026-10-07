@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { subscriptions } from "@/lib/db/schema";
 import { getPaymentProvider, createPaymentProvider } from "@/lib/payments";
 import { unauthorized, badRequest, internalError } from "@/lib/api/errors";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export async function POST() {
 
     return NextResponse.json({ url: portalSession.url });
   } catch (err) {
-    console.error("Customer portal error:", err);
+    log.error("Customer portal error:", err);
     const message = err instanceof Error ? err.message : "Failed to create portal session";
     return internalError(message);
   }

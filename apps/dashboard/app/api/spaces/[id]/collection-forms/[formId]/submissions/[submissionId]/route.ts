@@ -8,6 +8,7 @@ import { collectionForms, spaces, submissions, testimonialConsents, testimonials
 import { updateSubmissionStatusSchema } from "@/lib/validations/collection-forms";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 import { enforceTestimonialLimit } from "@/lib/payments/enforce";
+import { log } from "@/lib/log";
 
 interface RouteParams { params: Promise<{ id: string; formId: string; submissionId: string }> }
 export async function PATCH(request: Request, { params }: RouteParams) {
@@ -72,5 +73,5 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       }
     }
     return NextResponse.json(result);
-  } catch (err) { console.error("Failed to review submission:", err); return apiError(500, "INTERNAL_ERROR", "Failed to review submission"); }
+  } catch (err) { log.error("Failed to review submission:", err); return apiError(500, "INTERNAL_ERROR", "Failed to review submission"); }
 }

@@ -14,6 +14,7 @@ import { spaces, reviewSources } from "@/lib/db/schema";
 import { connectReviewSourceSchema } from "@/lib/validations/reviews";
 import { encryptCredentials } from "@/lib/reviews/crypto";
 import { syncReviewSource } from "@/lib/reviews/sync";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -137,7 +138,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Failed to connect review source:", error);
+    log.error("Failed to connect review source:", error);
     return internalError("Failed to connect review source");
   }
 }

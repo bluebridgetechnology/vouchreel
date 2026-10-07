@@ -12,6 +12,7 @@ import { db } from "@/lib/db";
 import { experiments, spaces, widgetConfigs } from "@/lib/db/schema";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import { applyWinnerSchema } from "@/lib/validations/experiments";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string; expId: string }>;
@@ -165,7 +166,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       winningVariant,
     });
   } catch (error) {
-    console.error("Failed to apply winning variant:", error);
+    log.error("Failed to apply winning variant:", error);
     return internalError("Failed to apply winning variant");
   }
 }

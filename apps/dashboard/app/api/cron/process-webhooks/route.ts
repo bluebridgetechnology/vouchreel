@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { webhookDeliveries, webhookEndpoints } from "@/lib/db/schema";
 import { attemptDelivery } from "@/lib/webhooks/deliver";
 import { authorizeCron } from "@/lib/security/cron-auth";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +65,7 @@ export async function GET(request: Request) {
       timestamp: now.toISOString(),
     });
   } catch (error) {
-    console.error("Cron failed to process webhooks:", error);
+    log.error("Cron failed to process webhooks:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

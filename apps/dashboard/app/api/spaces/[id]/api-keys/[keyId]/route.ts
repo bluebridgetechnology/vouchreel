@@ -4,6 +4,7 @@ import { apiError, notFound, forbidden } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, apiKeys } from "@/lib/db/schema";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string; keyId: string }>;
@@ -47,7 +48,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true, id: deleted.id });
   } catch (error) {
-    console.error("Failed to delete API key:", error);
+    log.error("Failed to delete API key:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to delete API key");
   }
 }

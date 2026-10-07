@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { spaces, webhookEndpoints } from "@/lib/db/schema";
 import { createWebhookEndpointSchema } from "@/lib/validations/webhooks";
 import { UnsafeUrlError, assertPublicUrl } from "@/lib/security/ssrf";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -58,7 +59,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ webhooks: endpoints });
   } catch (error) {
-    console.error("Failed to fetch webhooks:", error);
+    log.error("Failed to fetch webhooks:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch webhooks");
   }
 }
@@ -121,7 +122,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Failed to create webhook endpoint:", error);
+    log.error("Failed to create webhook endpoint:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to create webhook endpoint");
   }
 }

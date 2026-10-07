@@ -19,6 +19,7 @@ import {
   resolveDateRange,
 } from "@/lib/validations/analytics";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -156,7 +157,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("Failed to generate analytics report:", error);
+    log.error("Failed to generate analytics report:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to generate analytics report");
   }
 }

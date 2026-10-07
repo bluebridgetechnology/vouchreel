@@ -2,6 +2,7 @@ import os from "node:os";
 import { eq, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { workerHeartbeats } from "@/lib/db/schema";
+import { log } from "@/lib/log";
 
 /**
  * Worker liveness. Each worker process upserts one row in worker_heartbeats every few seconds;
@@ -62,20 +63,20 @@ export function startHeartbeat(options: HeartbeatOptions): Heartbeat {
       };
       const { workerId: _id, ...update } = values;
       await db.insert(workerHeartbeats).values(values).onConflictDoUpdate({ target: workerHeartbeats.workerId, set: update });
-      if (failing) console.log(`[heartbeat] ${options.workerId} recovered`);
+      if (failing) log.info(`[heartbeat] ${options.workerId} recovered`);
       failing = false;
       if (!stopped && !restartAsked && options.onRestartRequested) {
         const [row] = await db.select({ at: workerHeartbeats.restartRequestedAt }).from(workerHeartbeats).where(eq(workerHeartbeats.workerId, options.workerId));
         // A request older than this process is for an earlier run of the same id
         if (row?.at && row.at.getTime() > startedAt.getTime()) {
           restartAsked = true;
-          console.log(`[heartbeat] ${options.workerId} was asked to restart`);
+          log.info(`[heartbeat] ${options.workerId} was asked to restart`);
           options.onRestartRequested();
         }
       }
     } catch (error) {
       // Log the first failure only, so a database outage does not flood the log every 15 seconds
-      if (!failing) console.warn(`[heartbeat] ${options.workerId} could not record a heartbeat:`, error instanceof Error ? error.message : error);
+      if (!failing) log.warn(`[heartbeat] ${options.workerId} could not record a heartbeat:`, error instanceof Error ? error.message : error);
       failing = true;
     }
   }

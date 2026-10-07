@@ -22,6 +22,7 @@ import {
   type VideoReview,
   type VideoTheme,
 } from "@vouchreel/video";
+import { log } from "@/lib/log";
 
 /**
  * Review videos: styled videos made from reviews imported from Google or Trustpilot.
@@ -260,7 +261,7 @@ export async function removeReviewVideo(videoId: string, spaceId: string): Promi
     try {
       await deleteVideoFile(video.outputUrl, "review");
     } catch (error) {
-      console.error(`[review-video] could not delete the file of video ${videoId}:`, error);
+      log.error(`[review-video] could not delete the file of video ${videoId}:`, error);
       throw new AiVideoError(502, "INTERNAL_ERROR", "We could not delete the video file just now. Nothing was changed; please try again.");
     }
     await db.update(reviewVideos).set({ deletedAt: new Date(), outputUrl: null }).where(eq(reviewVideos.id, videoId));

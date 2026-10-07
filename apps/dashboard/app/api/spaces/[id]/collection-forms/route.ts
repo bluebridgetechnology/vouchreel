@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { collectionForms as collectionFormsTable, spaces, submissions } from "@/lib/db/schema";
 import { createCollectionFormSchema } from "@/lib/validations/collection-forms";
+import { log } from "@/lib/log";
 
 interface RouteParams { params: Promise<{ id: string }> }
 
@@ -33,7 +34,7 @@ export async function GET(_: Request, { params }: RouteParams) {
       .where(eq(collectionFormsTable.spaceId, id)).groupBy(collectionFormsTable.id).orderBy(desc(collectionFormsTable.createdAt));
     return NextResponse.json({ collectionForms });
   } catch (error) {
-    console.error("Failed to fetch collection forms:", error);
+    log.error("Failed to fetch collection forms:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch collection forms");
   }
 }
@@ -57,7 +58,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
     return apiError(500, "INTERNAL_ERROR", "Unable to generate a unique collection link");
   } catch (error) {
-    console.error("Failed to create collection form:", error);
+    log.error("Failed to create collection form:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to create collection form");
   }
 }

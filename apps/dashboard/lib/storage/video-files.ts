@@ -1,5 +1,6 @@
 import { getStorage } from "@/lib/storage";
 import { keyFromUrl } from "./keys";
+import { log } from "@/lib/log";
 
 /**
  * Deleting the stored file behind a finished video. Videos are uploaded under a fixed prefix and
@@ -26,7 +27,7 @@ export async function deleteVideoFile(url: string | null | undefined, kind: Vide
   if (!url) return "none";
   const key = storageKeyFromUrl(url, kind);
   if (!key) {
-    console.warn(`[storage] could not tell which file ${url} is; it was not deleted`);
+    log.warn(`[storage] could not tell which file ${url} is; it was not deleted`);
     return "unrecognized";
   }
   await getStorage().delete(key);

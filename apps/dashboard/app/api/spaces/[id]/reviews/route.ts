@@ -4,6 +4,7 @@ import { unauthorized, forbidden, notFound, internalError } from "@/lib/api/erro
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, reviews, reviewSources } from "@/lib/db/schema";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -58,7 +59,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       sources,
     });
   } catch (error) {
-    console.error("Failed to list reviews:", error);
+    log.error("Failed to list reviews:", error);
     return internalError("Failed to fetch reviews");
   }
 }

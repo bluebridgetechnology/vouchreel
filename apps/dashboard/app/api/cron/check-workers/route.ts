@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authorizeCron } from "@/lib/security/cron-auth";
 import { runWorkerAlerts } from "@/lib/admin/worker-alerts";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
   try {
     return NextResponse.json({ success: true, ...(await runWorkerAlerts()) });
   } catch (error) {
-    console.error("Cron failed to check workers:", error);
+    log.error("Cron failed to check workers:", error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }
