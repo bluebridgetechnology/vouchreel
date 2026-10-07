@@ -1,5 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import pg from "pg";
 import AxeBuilder from "@axe-core/playwright";
 import { ADMIN_STATE, CONSENT_FILE, E2E_AUTH_SECRET, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, REASON_TEXT, STORAGE_ORIGIN, USERS } from "./seed";
@@ -807,6 +810,88 @@ test.describe("platform admin", () => {
     } finally {
       // Leave the shared space as it was: no kit, so later tests see the defaults
       await pool.query(`DELETE FROM brand_kits WHERE space_id = $1`, [space.id]);
+      await pool.end();
+      await context.close();
+    }
+  });
+
+  test("videos in the widget: the owner switches one on, a real page shows it, and it is gone once it is taken down", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+    const spaces = await (await context.request.get("/api/spaces")).json();
+    const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    const key = `review-videos/${space.id}/e2e-widget.mp4`;
+    const objectUrl = `${STORAGE_ORIGIN}/e2e-bucket/${key}`;
+    const widgetData = async () => (await (await context.request.get("/api/widget/e2e-moderation")).json()) as { testimonials: { id: string; generated?: string; customerName: string }[] };
+    // A stand-in for a customer's page, served from this origin so the widget has a normal page to run in
+    await page.route(`${baseURL}/e2e-embed-host`, (route) =>
+      route.fulfill({ contentType: "text/html", body: `<!doctype html><title>Customer site</title><div data-vouchreel-embed></div><script src="/widget/vouchreel-widget.js" data-key="e2e-moderation"></script>` })
+    );
+    const embed = () => page.goto("/e2e-embed-host");
+    let videoId = "";
+    try {
+      // A small video a browser can play (VP8 in WebM; the site's real files are MP4)
+      const dir = mkdtempSync(path.join(tmpdir(), "e2e-widget-"));
+      execFileSync("ffmpeg", ["-v", "error", "-f", "lavfi", "-i", "color=c=0xcf3d0b:s=160x90:d=1:r=10", "-c:v", "libvpx", "-b:v", "100k", path.join(dir, "v.webm")]);
+      const webm = readFileSync(path.join(dir, "v.webm"));
+      // The browser fetches the file from the storage address; serve it from here (a test-only shortcut around
+      // the browser's rules for localhost to 127.0.0.1) so the widget's behaviour is what is tested
+      let fileGone = false;
+      await page.route(objectUrl, (route) =>
+        fileGone ? route.fulfill({ status: 404 }) : route.fulfill({ status: 200, body: webm, headers: { "content-type": "video/webm", "access-control-allow-origin": "*" } })
+      );
+      const props = { reviews: [{ author: "Alice <b>M.</b>", rating: 5, text: "Great experience, would use again.", source: "google" }], brand: "#cf3d0b" };
+      const { rows } = await pool.query(
+        `INSERT INTO review_videos (space_id, template, status, props, rights_confirmed_at, output_url, duration_seconds) VALUES ($1, 'spotlight', 'done', $2, now(), $3, 1) RETURNING id`,
+        [space.id, JSON.stringify(props), objectUrl]
+      );
+      videoId = rows[0].id;
+      await pool.query(`INSERT INTO widget_configs (space_id, template, trigger_type, trigger_value) VALUES ($1, 'wall-of-love', 'delay', '{"seconds":0}') ON CONFLICT (space_id) DO UPDATE SET template = 'wall-of-love', trigger_type = 'delay', trigger_value = '{"seconds":0}'`, [space.id]);
+
+      // Off until the owner turns it on
+      expect((await widgetData()).testimonials.filter((t) => t.generated)).toEqual([]);
+
+      // Only the owner can turn it on
+      const stranger = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+      expect((await stranger.request.put(`/api/spaces/${space.id}/review-videos/${videoId}/widget`, { headers: { origin: baseURL! }, data: { show: true } })).status()).toBe(401);
+      await stranger.close();
+      expect((await context.request.put(`/api/spaces/${space.id}/review-videos/${videoId}/widget`, { headers: { origin: baseURL! }, data: { show: "yes" } })).status()).toBe(400);
+      expect((await context.request.put(`/api/spaces/${space.id}/review-videos/${videoId}/widget`, { headers: { origin: baseURL! }, data: { show: true } })).ok()).toBe(true);
+
+      const shown = (await widgetData()).testimonials.filter((t) => t.generated);
+      expect(shown).toHaveLength(1);
+      expect(shown[0]).toMatchObject({ id: videoId, generated: "review", customerName: "Alice <b>M.</b>" });
+
+      // A real page with the embed script (not every browser build can play WebM, so say so rather than guess)
+      await page.goto("/login");
+      const canPlay = await page.evaluate(() => document.createElement("video").canPlayType('video/webm; codecs="vp8"') !== "");
+      if (canPlay) {
+        await embed();
+        // (the space also has an ordinary video testimonial; this is the made one)
+        const card = page.locator(".vr-blend-video-card", { hasText: "Review video" });
+        await expect(card).toHaveCount(1, { timeout: 15_000 });
+        // The name is text, not markup: the <b> is shown as typed
+        await expect(card.locator(".vr-card-author-name")).toHaveText("Alice <b>M.</b>");
+        await expect(card.locator(".vr-card-author-name b")).toHaveCount(0);
+        await expect.poll(() => card.locator("video").evaluate((v: HTMLVideoElement) => v.readyState)).toBeGreaterThanOrEqual(1);
+
+        // The file goes (a takedown deletes it at once) while the list still names it: the tile drops itself
+        fileGone = true;
+        await embed();
+        await expect(page.locator(".vr-blend-video-card", { hasText: "Ada" })).toHaveCount(1, { timeout: 15_000 }); // the page did load its widget
+        await expect(page.locator(".vr-blend-video-card", { hasText: "Review video" })).toHaveCount(0);
+      }
+
+      // And the next response no longer lists it
+      await pool.query(`UPDATE review_videos SET moderated_at = now(), output_url = NULL WHERE id = $1`, [videoId]);
+      expect((await widgetData()).testimonials.filter((t) => t.generated)).toEqual([]);
+      // A taken-down video cannot be switched on again
+      expect((await context.request.put(`/api/spaces/${space.id}/review-videos/${videoId}/widget`, { headers: { origin: baseURL! }, data: { show: true } })).status()).toBe(400);
+    } finally {
+      await pool.query(`DELETE FROM review_videos WHERE space_id = $1`, [space.id]);
+      await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
       await pool.end();
       await context.close();
     }

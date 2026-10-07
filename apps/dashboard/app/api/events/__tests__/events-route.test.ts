@@ -172,4 +172,35 @@ describe("Analytics Events API Route", () => {
     expect(json.count).toBe(2);
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
   });
+
+  describe("an id that is not a testimonial (a made video in the widget)", () => {
+    const madeVideoId = "c2aabb77-7a2b-4ed6-9b4d-4bb7bd160c33";
+    const insert = vi.fn().mockResolvedValue(undefined);
+
+    function post(testimonialIds: (string | undefined)[]) {
+      // First lookup: the space. Second: which of the named ids are testimonials.
+      const rows = [[{ id: validSpaceId }], [{ id: validTestimonialId }]];
+      (db.select as any).mockImplementation(() => ({ from: () => ({ where: () => Promise.resolve(rows.shift() ?? []) }) }));
+      insert.mockClear();
+      (db.insert as any).mockReturnValue({ values: insert });
+      return postEvents(
+        new Request("http://localhost/api/events", {
+          method: "POST",
+          body: JSON.stringify({ events: testimonialIds.map((testimonialId) => ({ spaceId: validSpaceId, testimonialId, sessionId: "s", eventType: "play" })) }),
+        })
+      );
+    }
+
+    it("is still counted for the space, instead of failing the whole batch on the foreign key", async () => {
+      const res = await post([madeVideoId]);
+      expect(res.status).toBe(201);
+      expect(insert.mock.calls[0][0]).toEqual([expect.objectContaining({ spaceId: validSpaceId, testimonialId: null, eventType: "play" })]);
+    });
+
+    it("leaves real testimonials attributed, in the same batch", async () => {
+      const res = await post([validTestimonialId, madeVideoId, undefined]);
+      expect(res.status).toBe(201);
+      expect(insert.mock.calls[0][0].map((e: { testimonialId: string | null }) => e.testimonialId)).toEqual([validTestimonialId, null, null]);
+    });
+  });
 });

@@ -137,6 +137,12 @@ By default the widget shows on **all pages** (`*`). In the dashboard you can res
 
 `pagesIncluded` is checked first, then `pagesExcluded` — a page must match an include and must not match any exclude.
 
+## Videos made by Vouchreel in the widget
+
+Videos made from your Google and Trustpilot reviews, and AI-narrated videos made from your testimonials, can be shown in the widget. Each one has a **Show in my widget** switch next to its download button (off until you turn it on). A video shows up as an ordinary video card, labelled "Review video" or "AI-generated video", in the card-based layouts (Wall of Love, Carousel, Masonry); the other layouts show it without a picture.
+
+A video stops being shown when you turn the switch off, delete it, our team removes it, its AI consent is withdrawn, or its testimonial is hidden. The video file is deleted at the same time, and a card whose file has gone drops itself when a page loads. A visitor who already had the page open keeps the card until they reload, but playing it fails because the file is gone. Pages that include videos are cached for one minute at the edge (five minutes otherwise), so the list catches up quickly.
+
 ## Conversion tracking
 
 You can record conversions (e.g. a purchase or signup) from your own site. Enable goals in the dashboard (**Analytics → Conversion goals**) and note the goal ID, then fire:

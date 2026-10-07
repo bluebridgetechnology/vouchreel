@@ -13,6 +13,7 @@ import { ModalOverlay } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
 import { VideoStylePicker } from "@/components/brand/video-style-picker";
 import { VideoFontPicker } from "@/components/brand/video-font-picker";
+import { WidgetVideoSwitch } from "@/components/review-video/widget-switch";
 import { VideoPreview } from "@/components/review-video/video-preview";
 import { previewProps } from "@/lib/review-video/preview";
 import { STYLES, getVideoFont, type BackgroundStyle, type VideoFontId } from "@vouchreel/video";
@@ -527,6 +528,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                             src={posterSrc(video.outputUrl, video.durationSeconds)}
                             className={cn("mx-auto rounded-card bg-scrim", video.aspect === "9:16" ? "max-h-[50vh] w-auto" : "w-full")}
                           />
+                          <WidgetVideoSwitch endpoint={`${url}/${video.id}/widget`} checked={Boolean(video.showInWidget)} onChanged={load} />
                           <div className="flex flex-wrap justify-center gap-2">
                             <a href={video.outputUrl} download className={buttonVariants({ variant: "primary", size: "sm" })}>
                               Download

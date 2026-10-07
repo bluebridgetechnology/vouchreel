@@ -43,6 +43,14 @@ export interface WidgetWhiteLabelConfig {
   logoUrl?: string | null;
 }
 
+/** A div whose content is text, never markup: names and other words from visitors and review sites must not become HTML on a customer's page. */
+function textDiv(className: string, text: string): HTMLDivElement {
+  const el = document.createElement("div");
+  el.className = className;
+  el.textContent = text;
+  return el;
+}
+
 export interface WidgetOptions {
   embedKey: string;
   config: WidgetConfig;
@@ -341,6 +349,14 @@ export class VouchreelWidget {
       img.src = item.thumbnailUrl;
       img.alt = item.customerName || "Video testimonial thumbnail";
       thumb.appendChild(img);
+    } else if (item.generated) {
+      // A made video has no poster: show its first frames. If the file is gone (taken down), drop the card.
+      const frame = document.createElement("video");
+      frame.src = `${item.videoUrl}#t=1`;
+      frame.preload = "metadata";
+      frame.muted = true;
+      frame.onerror = () => card.remove();
+      thumb.appendChild(frame);
     }
 
     const playBadge = document.createElement("div");
@@ -362,7 +378,10 @@ export class VouchreelWidget {
 
     // Badge
     const badgeRow = document.createElement("div");
-    badgeRow.innerHTML = `<span class="vr-provider-badge vr-badge-video">📹 Video Testimonial</span>`;
+    const badge = document.createElement("span");
+    badge.className = "vr-provider-badge vr-badge-video";
+    badge.textContent = (item.badge as string) || "📹 Video Testimonial";
+    badgeRow.appendChild(badge);
     card.appendChild(badgeRow);
 
     // Quote / Title (with multi-language translation support)
@@ -388,10 +407,8 @@ export class VouchreelWidget {
     authorRow.appendChild(avatar);
 
     const info = document.createElement("div");
-    info.innerHTML = `
-      <div class="vr-card-author-name">${item.customerName || "Customer"}</div>
-      ${item.customerCompany ? `<div class="vr-card-author-sub">${item.customerCompany}</div>` : ""}
-    `;
+    info.appendChild(textDiv("vr-card-author-name", item.customerName || "Customer"));
+    if (item.customerCompany) info.appendChild(textDiv("vr-card-author-sub", item.customerCompany));
     authorRow.appendChild(info);
     card.appendChild(authorRow);
 
@@ -469,10 +486,8 @@ export class VouchreelWidget {
     const dateStr = review.reviewDate
       ? new Date(review.reviewDate).toLocaleDateString()
       : "";
-    info.innerHTML = `
-      <div class="vr-card-author-name">${review.authorName}</div>
-      ${dateStr ? `<div class="vr-card-author-sub">${dateStr}</div>` : ""}
-    `;
+    info.appendChild(textDiv("vr-card-author-name", review.authorName));
+    if (dateStr) info.appendChild(textDiv("vr-card-author-sub", dateStr));
     authorRow.appendChild(info);
     card.appendChild(authorRow);
 
@@ -707,10 +722,8 @@ export class VouchreelWidget {
 
       const info = document.createElement("div");
       info.className = "vr-card-info";
-      info.innerHTML = `
-        <div class="vr-card-name">${firstReview.authorName}</div>
-        <div class="vr-card-quote">★ ${firstReview.rating}.0 on ${firstReview.provider}</div>
-      `;
+      info.appendChild(textDiv("vr-card-name", firstReview.authorName));
+      info.appendChild(textDiv("vr-card-quote", `★ ${firstReview.rating}.0 on ${firstReview.provider}`));
       openBtn.appendChild(info);
       openBtn.addEventListener("click", () => this.expandReview(firstReview));
       card.appendChild(openBtn);

@@ -15,6 +15,8 @@ export interface AiVideoView {
   durationSeconds: number | null;
   error: string | null;
   createdAt: string;
+  /** Shown in the owner's embedded widget. */
+  showInWidget?: boolean;
   /** Set when a platform administrator took the video down; its file is gone. */
   moderatedAt?: string | null;
   moderationReason?: string | null;

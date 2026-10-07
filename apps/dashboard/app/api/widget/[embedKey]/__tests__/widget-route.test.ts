@@ -19,10 +19,15 @@ vi.mock("@/lib/brand-kit/service", async () => {
   };
 });
 
+// Made videos have their own lookup (and tests in lib/widget-videos); mocked for the same reason
+const madeVideos = vi.hoisted(() => ({ current: [] as Record<string, unknown>[] }));
+vi.mock("@/lib/widget-videos", () => ({ listWidgetVideos: vi.fn(async () => madeVideos.current) }));
+
 describe("Widget Data Public API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     brandKit.current = null;
+    madeVideos.current = [];
   });
 
   it("handles OPTIONS preflight with CORS headers", async () => {
@@ -390,6 +395,56 @@ describe("Widget Data Public API Route", () => {
       expect(json.config.theme.fontMode).toBe("inherit");
       expect(json.config.theme).not.toHaveProperty("fontFamily");
       expect(json.config.theme.borderRadius).toBe(8); // kit radius unset, widget's stays
+    });
+  });
+
+  describe("videos made from reviews or by AI", () => {
+    const space = { id: "space-uuid-1", name: "Acme Space", ownerId: "owner-1", embedKey: "emb_valid_123" };
+    const made = {
+      id: "rv-1",
+      videoUrl: "https://cdn.test/review-videos/space/rv-1.mp4",
+      platform: "mp4",
+      thumbnailUrl: null,
+      title: null,
+      quote: "Great experience!",
+      customerName: "Alice M.",
+      customerCompany: null,
+      durationSeconds: 12,
+      generated: "review",
+      badge: "⭐ Review video",
+    };
+
+    function setup() {
+      const chain = (val: unknown) => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockImplementation(() => {
+            const promise = Promise.resolve(val);
+            return Object.assign(promise, {
+              orderBy: vi.fn().mockImplementation(() => Object.assign(Promise.resolve(val), { limit: vi.fn().mockResolvedValue(val) })),
+              limit: vi.fn().mockResolvedValue(val),
+            });
+          }),
+        }),
+      });
+      let n = 0;
+      (db.select as any).mockImplementation(() => chain(++n === 1 ? [space] : []));
+    }
+    const get = () => getWidgetData(new Request("http://localhost/api/widget/emb_valid_123"), { params: Promise.resolve({ embedKey: "emb_valid_123" }) });
+
+    it("adds them after the testimonials, in the shape the widget already plays, and caches that response for less at the CDN", async () => {
+      setup();
+      madeVideos.current = [made];
+      const res = await get();
+      const json = await res.json();
+      expect(json.testimonials).toEqual([{ ...made, translations: [] }]);
+      expect(res.headers.get("Cache-Control")).toBe("public, max-age=60, s-maxage=60");
+    });
+
+    it("leaves the response and its five-minute cache as they were when there are none", async () => {
+      setup();
+      const res = await get();
+      expect((await res.json()).testimonials).toEqual([]);
+      expect(res.headers.get("Cache-Control")).toBe("public, max-age=60, s-maxage=300");
     });
   });
 });

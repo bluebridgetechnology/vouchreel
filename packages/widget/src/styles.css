@@ -682,7 +682,8 @@
   background-color: var(--vr-media);
 }
 
-.vr-card-video-thumb img {
+.vr-card-video-thumb img,
+.vr-card-video-thumb video {
   position: absolute;
   inset: 0;
   width: 100%;
