@@ -6,6 +6,7 @@ import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import { badRequest, notFound, internalError } from "@/lib/api/errors";
 import { canAccess } from "@/lib/auth/feature-gate";
 import { applyBrandKitToTheme, getBrandKit, toValues } from "@/lib/brand-kit/service";
+import { listWidgetVideos } from "@/lib/widget-videos";
 import { log } from "@/lib/log";
 
 interface RouteParams {
@@ -199,6 +200,14 @@ export async function GET(request: Request, { params }: RouteParams) {
       )
       .orderBy(desc(reviews.reviewDate), desc(reviews.createdAt));
 
+    // Videos the owner chose to show (made from reviews, or AI-narrated). They play like any MP4 testimonial.
+    let madeVideos: Awaited<ReturnType<typeof listWidgetVideos>> = [];
+    try {
+      madeVideos = await listWidgetVideos(space.id);
+    } catch (err) {
+      log.warn("Could not load generated videos for the widget:", err);
+    }
+
     // Fetch conversion goals for this space
     const goals = await db
       .select({
@@ -256,7 +265,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       {
         spaceId: space.id,
         config,
-        testimonials: testimonialsWithTranslations,
+        testimonials: [...testimonialsWithTranslations, ...madeVideos.map((v) => ({ ...v, translations: [] }))],
         reviews: approvedReviews,
         conversionGoals: goals,
         activeExperiment: activeExp
@@ -274,7 +283,9 @@ export async function GET(request: Request, { params }: RouteParams) {
         status: 200,
         headers: {
           ...corsHeaders,
-          "Cache-Control": "public, max-age=60, s-maxage=300",
+          // A response that carries made videos is cached for less at the CDN: a removed video's file is deleted at once,
+          // and this keeps the list that points at it from lingering for minutes
+          "Cache-Control": madeVideos.length > 0 ? "public, max-age=60, s-maxage=60" : "public, max-age=60, s-maxage=300",
         },
       }
     );

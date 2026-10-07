@@ -1216,6 +1216,8 @@ export const generatedVideos = pgTable(
     outputUrl: text("output_url"),
     durationSeconds: integer("duration_seconds"),
     error: text("error"),
+    /** The owner chose to show this video in their embedded widget. Off until they do. */
+    showInWidget: boolean("show_in_widget").default(false).notNull(),
     /** Owner deleted a finished video. The row stays so the credit it used is still counted. */
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     /** A platform admin took this video down: its file is deleted and its URL cleared. Irreversible. */
@@ -1253,6 +1255,8 @@ export const reviewVideos = pgTable(
     /** ReviewVideoProps as rendered: verbatim review text, authors, ratings, brand colour, aggregate. */
     props: jsonb("props").$type<Record<string, unknown>>().notNull(),
     reviewIds: jsonb("review_ids").$type<string[]>().default([]).notNull(),
+    /** The owner chose to show this video in their embedded widget. Off until they do. */
+    showInWidget: boolean("show_in_widget").default(false).notNull(),
     /** The owner confirmed they may use these reviews in marketing. Required to create a video. */
     rightsConfirmedAt: timestamp("rights_confirmed_at", { withTimezone: true }).notNull(),
     /** Which wording of the rights statement the owner saw (lib/review-video/rights.ts). Null on videos made before it was recorded. */

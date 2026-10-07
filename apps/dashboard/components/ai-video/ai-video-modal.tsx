@@ -23,6 +23,7 @@ import {
 } from "@/lib/ai-video/ui-state";
 import { MAX_SCRIPT_WORDS, countWords } from "@/lib/ai-video/trim";
 import { notify } from "@/lib/notify";
+import { WidgetVideoSwitch } from "@/components/review-video/widget-switch";
 import { cn } from "@/lib/utils";
 
 interface Options {
@@ -433,6 +434,7 @@ export function AiVideoModal({ spaceId, testimonial, onClose }: Props) {
                   <p className="text-center text-xs text-text-muted">
                     Labelled "AI-generated from a written review" in the video, so viewers always know.
                   </p>
+                  <WidgetVideoSwitch endpoint={`${base}/ai-videos/${active.id}/widget`} checked={Boolean(active.showInWidget)} isAi onChanged={load} />
                   <div className="flex flex-wrap justify-center gap-2">
                     <a href={active.outputUrl} download className={buttonVariants({ variant: "primary", size: "sm" })}>
                       Download

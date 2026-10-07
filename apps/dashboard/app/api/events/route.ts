@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { events, spaces } from "@/lib/db/schema";
+import { events, spaces, testimonials } from "@/lib/db/schema";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   apiError,
@@ -147,6 +147,15 @@ export async function POST(request: Request) {
   }
 
   try {
+    // The widget also shows made videos, whose ids are not testimonials. An event naming an id that is not a
+    // testimonial keeps counting for the space, instead of failing the whole batch on the foreign key.
+    const named = Array.from(new Set(eventList.map((e) => e.testimonialId).filter((id): id is string => Boolean(id))));
+    const known = new Set<string>();
+    if (named.length > 0) {
+      const rows = await db.select({ id: testimonials.id }).from(testimonials).where(inArray(testimonials.id, named));
+      for (const row of rows ?? []) known.add(row.id);
+    }
+
     const insertValues = eventList.map((evt) => {
       let parsedTimestamp = new Date();
       if (evt.timestamp) {
@@ -158,7 +167,7 @@ export async function POST(request: Request) {
 
       return {
         spaceId: evt.spaceId,
-        testimonialId: evt.testimonialId || null,
+        testimonialId: evt.testimonialId && known.has(evt.testimonialId) ? evt.testimonialId : null,
         sessionId: evt.sessionId || null,
         eventType: evt.eventType,
         pageUrl: evt.pageUrl || null,

@@ -1,0 +1,2 @@
+ALTER TABLE "generated_videos" ADD COLUMN "show_in_widget" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "review_videos" ADD COLUMN "show_in_widget" boolean DEFAULT false NOT NULL;
