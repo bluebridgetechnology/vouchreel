@@ -562,6 +562,8 @@ test.describe("platform admin", () => {
     await expect(page.getByRole("alert")).toBeVisible(); // a wrong code is refused
     await page.getByLabel("Code from the app").fill(totp.generate());
     await page.getByRole("button", { name: "Turn on" }).click();
+    await expect(page.getByTestId("backup-codes")).toBeVisible();
+    await expect(page.getByTestId("backup-codes").locator("li").first()).toBeVisible();
     const codes = await page.getByTestId("backup-codes").locator("li").allTextContents();
     expect(codes.length).toBeGreaterThanOrEqual(5);
     await page.getByRole("button", { name: "I have saved them" }).click();
