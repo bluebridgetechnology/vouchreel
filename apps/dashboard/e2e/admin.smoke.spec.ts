@@ -119,8 +119,8 @@ test.describe("platform admin", () => {
     await open(page, "/admin?tab=videos");
     await expect(page.getByText("Failed jobs")).toBeVisible();
     // Jobs are waiting and no job worker is alive: the page says so at the top
-    await expect(page.getByRole("alert").filter({ hasText: "No job worker is running" })).toBeVisible();
-    await expect(page.getByRole("alert").filter({ hasText: "video worker" })).toHaveCount(0);
+    await expect(page.locator("div[role=alert]").filter({ hasText: "No job worker is running" })).toBeVisible();
+    await expect(page.locator("div[role=alert]").filter({ hasText: "video worker" })).toHaveCount(0);
 
     // Retry: confirm dialog, success toast, and the job leaves the failed list
     await row(page, FAILED_JOB_ERROR).getByRole("button", { name: "Retry" }).click();
@@ -443,7 +443,7 @@ test.describe("platform admin", () => {
     // Only https links are accepted
     await form.getByLabel(/Link to the review/).fill("http://insecure.example/reviews");
     await form.getByRole("button", { name: "Save review" }).click();
-    await expect(form.getByRole("alert")).toContainText("https");
+    await expect(form.locator("div[role=alert]")).toContainText("https");
 
     await form.getByLabel(/Link to the review/).fill("https://www.priyas-bakery.example/reviews/1");
     await form.getByRole("button", { name: "Save review" }).click();
@@ -559,7 +559,7 @@ test.describe("platform admin", () => {
     const totp = new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(secret), digits: 6, period: 30, algorithm: "SHA1" });
     await page.getByLabel("Code from the app").fill("000000");
     await page.getByRole("button", { name: "Turn on" }).click();
-    await expect(page.getByRole("alert")).toBeVisible(); // a wrong code is refused
+    await expect(page.locator("div[role=alert]")).toBeVisible(); // a wrong code is refused
     await page.getByLabel("Code from the app").fill(totp.generate());
     await page.getByRole("button", { name: "Turn on" }).click();
     await expect(page.getByTestId("backup-codes")).toBeVisible();
@@ -574,7 +574,7 @@ test.describe("platform admin", () => {
     await signInForm(/\/two-factor/);
     await page.getByLabel("Code", { exact: true }).fill("000000");
     await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page.locator("div[role=alert]")).toBeVisible();
     await page.getByRole("button", { name: "Use a backup code" }).click();
     await submitCodeUntilIn(() => page.getByLabel("Backup code").fill(codes[0].trim()));
 
@@ -584,7 +584,7 @@ test.describe("platform admin", () => {
     await page.getByRole("button", { name: "Use a backup code" }).click();
     await page.getByLabel("Backup code").fill(codes[0].trim());
     await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page.locator("div[role=alert]")).toBeVisible();
     await page.getByRole("button", { name: "Use my authenticator app" }).click();
     await submitCodeUntilIn(() => page.getByLabel("Code", { exact: true }).fill(totp.generate()));
 
