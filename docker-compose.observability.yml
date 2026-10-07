@@ -40,12 +40,24 @@ services:
       timeout: 5s
       retries: 10
 
+  # GlitchTip's cache and task queue
+  glitchtip-valkey:
+    image: valkey/valkey:8-alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   glitchtip-migrate:
     image: ${GLITCHTIP_IMAGE:-glitchtip/glitchtip:latest}
     restart: 'no'
     command: ./manage.py migrate
     environment: &glitchtip_env
       DATABASE_URL: postgres://glitchtip:${GLITCHTIP_DB_PASSWORD}@glitchtip-postgres:5432/glitchtip
+      VALKEY_URL: valkey://glitchtip-valkey:6379/0
+      REDIS_URL: redis://glitchtip-valkey:6379/0
       SECRET_KEY: ${GLITCHTIP_SECRET_KEY:?GLITCHTIP_SECRET_KEY must be set}
       GLITCHTIP_DOMAIN: ${GLITCHTIP_DOMAIN:-http://localhost:8001}
       DEFAULT_FROM_EMAIL: ${GLITCHTIP_FROM_EMAIL:-glitchtip@localhost}
@@ -56,6 +68,8 @@ services:
       GLITCHTIP_MAX_EVENT_LIFE_DAYS: ${GLITCHTIP_RETENTION_DAYS:-30}
     depends_on:
       glitchtip-postgres:
+        condition: service_healthy
+      glitchtip-valkey:
         condition: service_healthy
 
   glitchtip-web:

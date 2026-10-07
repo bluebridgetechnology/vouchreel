@@ -479,12 +479,17 @@ test.describe("platform admin", () => {
     const page = await context.newPage();
     const email = `e2e-verify-${Date.now()}@example.test`;
 
-    await open(page, "/signup");
-    await page.getByLabel("Full name").fill("E2E Verify");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password").fill(PASSWORD);
-    await page.getByRole("button", { name: /create account/i }).click();
-    await expect(page.getByRole("heading", { name: /Check your email/ })).toBeVisible();
+    // The sign-up rate limit sends the form back with an error: wait and try again
+    for (let attempt = 1; ; attempt++) {
+      await open(page, "/signup");
+      await page.getByLabel("Full name").fill("E2E Verify");
+      await page.getByLabel("Email").fill(email);
+      await page.getByLabel("Password").fill(PASSWORD);
+      await page.getByRole("button", { name: /create account/i }).click();
+      if (await page.getByRole("heading", { name: /Check your email/ }).waitFor({ timeout: 8000 }).then(() => true, () => false)) break;
+      if (attempt >= 5) throw new Error("sign-up never reached the check-your-email step");
+      await page.waitForTimeout(4000);
+    }
 
     // Signing in is refused until the link has been used
     // (the sign-in rate limit answers 429 when attempts come close together: wait and ask again)
