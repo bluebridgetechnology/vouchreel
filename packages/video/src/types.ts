@@ -1,3 +1,5 @@
+import type { VideoFontId } from "./lib/font-catalog";
+
 /** `own` is a review the owner typed in themselves: no provider, no logo, no rating. */
 export type ReviewSource = "google" | "trustpilot" | "own";
 export type Aspect = "9:16" | "16:9";
@@ -32,6 +34,8 @@ export type BackgroundStyle = "gradient" | "solid" | "aurora" | "dots" | "light"
 export const BACKGROUND_STYLES: BackgroundStyle[] = ["gradient", "solid", "aurora", "dots", "light", "dark"];
 
 export interface VideoTheme {
+  /** Font for the review text. When omitted the template uses its own typography (Outfit, Playfair quotes in Minimal). */
+  font?: VideoFontId;
   /** Background style. When omitted the template uses its own default. */
   style?: BackgroundStyle;
   /** Optional second colour: the far end of the gradient (colour styles only). */

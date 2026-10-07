@@ -1,6 +1,7 @@
 import React from "react";
 import { Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { GOLD } from "../lib/theme";
+import { getVideoFont } from "../lib/font-catalog";
 
 export interface Layout {
   width: number;
@@ -21,10 +22,12 @@ export function useLayout(): Layout {
  * Font size (in 1080-based px) that keeps a whole review on screen. Reviews are shown in full,
  * so long ones get smaller type instead of being shortened.
  */
-export function fitFontSize(text: string, portrait: boolean): number {
+export function fitFontSize(text: string, portrait: boolean, font?: string | null): number {
   const n = text.length;
   const base = n <= 90 ? 74 : n <= 160 ? 64 : n <= 240 ? 55 : n <= 320 ? 48 : 42;
-  return portrait ? base : Math.round(base * 0.92);
+  // A font that runs wider or narrower than Outfit gets a matching size, so a review takes about the same room
+  const scaled = base * getVideoFont(font).sizeScale;
+  return Math.round(portrait ? scaled : scaled * 0.92);
 }
 
 export const clamped = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;

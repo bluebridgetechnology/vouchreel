@@ -20,6 +20,7 @@ import {
   type BackgroundStyle,
   type ReviewVideoProps,
   type VideoAggregate,
+  type VideoFontId,
   type VideoReview,
   type VideoTheme,
 } from "@vouchreel/video";
@@ -136,6 +137,8 @@ export interface CreateReviewVideoInput {
   style?: BackgroundStyle;
   /** Second colour for this video. Omit to use the brand kit's; null for none. */
   secondaryColor?: string | null;
+  /** Font for this video. Omit to use the brand kit's default (then the template's own typography). */
+  font?: VideoFontId;
   /** The owner confirmed they may use these reviews in marketing. */
   rightsConfirmed: boolean;
 }
@@ -155,7 +158,7 @@ export function buildProps(
     source: r.provider,
     ...(r.provider === "own" && linkDomain(r.linkUrl) ? { link: linkDomain(r.linkUrl) } : {}),
   }));
-  return { reviews: items, brand, ...(aggregate ? { aggregate } : {}), ...(theme && (theme.style || theme.secondary) ? { theme } : {}) };
+  return { reviews: items, brand, ...(aggregate ? { aggregate } : {}), ...(theme && (theme.style || theme.secondary || theme.font) ? { theme } : {}) };
 }
 
 export async function createReviewVideo(input: CreateReviewVideoInput) {
@@ -204,7 +207,8 @@ export async function createReviewVideo(input: CreateReviewVideoInput) {
   // Background: this video's choice, then the brand kit's default; otherwise each template uses its own default
   const style = input.style ?? kit?.videoStyle ?? undefined;
   const secondary = input.secondaryColor === undefined ? (kit?.videoSecondaryColor ?? undefined) : (input.secondaryColor ?? undefined);
-  const props = buildProps(ordered, brand, aggregate, { ...(style ? { style } : {}), ...(secondary ? { secondary } : {}) });
+  const font = input.font ?? kit?.videoFont ?? undefined;
+  const props = buildProps(ordered, brand, aggregate, { ...(style ? { style } : {}), ...(secondary ? { secondary } : {}), ...(font ? { font } : {}) });
   const problems = validateProps(template.id, props);
   if (problems.length) throw new AiVideoError(422, "VALIDATION_ERROR", problems.join(" "), { problems });
 

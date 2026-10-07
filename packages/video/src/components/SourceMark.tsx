@@ -2,6 +2,7 @@ import React from "react";
 import { Img } from "remotion";
 import googleIcon from "../assets/google-icon.svg";
 import trustpilotLogo from "../assets/trustpilot-logo.svg";
+import { FONT_SANS } from "../lib/theme";
 import { SOURCE_LABELS, type ReviewSource } from "../types";
 
 /**
@@ -70,6 +71,8 @@ export function SourceMark({
       style={{
         display: "inline-flex",
         alignItems: "center",
+        // The provider's name always reads the same, whatever font the customer chose for their review
+        fontFamily: FONT_SANS,
         gap: 14 * u * size,
         flexShrink: 0,
         whiteSpace: "nowrap",

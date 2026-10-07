@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BACKGROUND_STYLES } from "@vouchreel/video";
+import { BACKGROUND_STYLES, VIDEO_FONT_IDS, type VideoFontId } from "@vouchreel/video";
 
 export const FONT_MODES = ["default", "inherit", "custom"] as const;
 export type FontModeValue = (typeof FONT_MODES)[number];
@@ -36,6 +36,7 @@ export const brandKitSchema = z
     inheritTextColor: z.boolean(),
     videoStyle: z.enum(BACKGROUND_STYLES).nullable().optional(),
     videoSecondaryColor: color("Second colour").nullable().optional(),
+    videoFont: z.enum(VIDEO_FONT_IDS as [VideoFontId, ...VideoFontId[]]).nullable().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.fontMode === "custom" && !data.fontFamily) {

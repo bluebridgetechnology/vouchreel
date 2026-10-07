@@ -57,7 +57,7 @@ run("brand kit (postgres)", () => {
   });
 
   const input = (over: Record<string, unknown> = {}) =>
-    ({ primaryColor: "#112233", accentColor: null, borderRadius: null, fontMode: "inherit", fontFamily: null, inheritTextColor: false, videoStyle: null, videoSecondaryColor: null, ...over }) as Parameters<typeof kitService.saveBrandKit>[1];
+    ({ primaryColor: "#112233", accentColor: null, borderRadius: null, fontMode: "inherit", fontFamily: null, inheritTextColor: false, videoStyle: null, videoSecondaryColor: null, videoFont: null, ...over }) as Parameters<typeof kitService.saveBrandKit>[1];
 
   it("has no kit until one is saved, and suggests what the widget uses today", async () => {
     expect(await kitService.getBrandKit(ids.space)).toBeNull();

@@ -8,7 +8,8 @@
     ".": "./src/registry.ts",
     "./render": "./src/render.ts",
     "./entry": "./src/entry.tsx",
-    "./player": "./src/player.tsx"
+    "./player": "./src/player.tsx",
+    "./font-faces": "./src/lib/font-faces.ts"
   },
   "scripts": {
     "studio": "remotion studio src/entry.tsx",
@@ -17,9 +18,15 @@
     "test": "vitest run",
     "test:render": "VIDEO_RENDER_TESTS=1 vitest run render.integration",
     "typecheck": "tsc --noEmit",
-    "swatches:compare": "tsx scripts/compare-swatches.mts"
+    "swatches:compare": "tsx scripts/compare-swatches.mts",
+    "fonts:measure": "tsx scripts/measure-fonts.mts"
   },
   "dependencies": {
+    "@fontsource/barlow-condensed": "5.3.0",
+    "@fontsource/caveat": "5.3.0",
+    "@fontsource/jetbrains-mono": "5.3.0",
+    "@fontsource/lora": "5.2.8",
+    "@fontsource/nunito": "5.3.0",
     "@fontsource/outfit": "5.2.8",
     "@fontsource/playfair-display": "5.2.8",
     "@remotion/bundler": "4.0.532",
@@ -33,6 +40,7 @@
   },
   "devDependencies": {
     "@types/react": "*",
+    "playwright": "1.56.1",
     "tsx": "*",
     "typescript": "*",
     "vitest": "*"

@@ -239,6 +239,13 @@
       "when": 1791388072599,
       "tag": "0033_webhook_format",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791405582760,
+      "tag": "0034_brand_kit_video_font",
+      "breakpoints": true
     }
   ]
 }

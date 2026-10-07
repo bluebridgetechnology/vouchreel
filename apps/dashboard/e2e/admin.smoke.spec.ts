@@ -770,6 +770,48 @@ test.describe("platform admin", () => {
     }
   });
 
+  test("video fonts: pick one on the Brand page, see it in the preview, and it is still there after a reload", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+    const spaces = await (await context.request.get("/api/spaces")).json();
+    const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    try {
+      await open(page, `/spaces/${space.id}/brand`);
+      const group = page.getByRole("radiogroup", { name: "Video font" });
+      await expect(group.getByRole("radio")).toHaveCount(7); // "each template's own" and the six fonts
+      await expect(group.getByRole("radio", { name: /Each template's own/ })).toHaveAttribute("aria-checked", "true");
+
+      await group.getByRole("radio", { name: /Lora/ }).click();
+      await expect(group.getByRole("radio", { name: /Lora/ })).toHaveAttribute("aria-checked", "true");
+      // The sample in the picker is drawn in the real font file, and the live preview uses it too
+      await expect.poll(() => page.evaluate(() => document.fonts.check('600 20px "Lora"'))).toBe(true);
+      await expect
+        .poll(() => page.evaluate(() => [...document.querySelectorAll("*")].filter((el) => getComputedStyle(el).fontFamily.includes("Lora")).length))
+        .toBeGreaterThan(1);
+
+      await page.getByRole("button", { name: /^Save/ }).click();
+      await expect(page.getByText("Brand settings saved.")).toBeVisible();
+      expect((await (await context.request.get(`/api/spaces/${space.id}/brand-kit`)).json()).values.videoFont).toBe("lora");
+
+      await open(page, `/spaces/${space.id}/brand`);
+      await expect(page.getByRole("radiogroup", { name: "Video font" }).getByRole("radio", { name: /Lora/ })).toHaveAttribute("aria-checked", "true");
+
+      // The wrong value is refused by the server, not just hidden by the page
+      const forged = await context.request.put(`/api/spaces/${space.id}/brand-kit`, {
+        headers: { origin: baseURL! },
+        data: { primaryColor: "#112233", fontMode: "inherit", inheritTextColor: false, videoFont: "Comic Sans" },
+      });
+      expect(forged.status()).toBe(400);
+    } finally {
+      // Leave the shared space as it was: no kit, so later tests see the defaults
+      await pool.query(`DELETE FROM brand_kits WHERE space_id = $1`, [space.id]);
+      await pool.end();
+      await context.close();
+    }
+  });
+
   test("content security policy: a fresh nonce on every page, and the main pages break none of it", async ({ browser, baseURL }) => {
     const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
     const page = await context.newPage();
@@ -800,7 +842,10 @@ test.describe("platform admin", () => {
 
     // Signed in: the dashboard and the pages added most recently
     await signIn(context.request, baseURL!, USERS.customer.email);
-    for (const path of ["/dashboard", "/settings", "/settings/security", "/notifications", "/settings/webhooks"]) {
+    const spaceList = await (await context.request.get("/api/spaces")).json();
+    const brandSpace = (spaceList.spaces ?? spaceList).find((sp: { name: string }) => sp.name === "E2E Moderation Space");
+    // The Brand page has the live video preview (Remotion's player), which needs data: media
+    for (const path of ["/dashboard", "/settings", "/settings/security", "/notifications", "/settings/webhooks", `/spaces/${brandSpace.id}/brand`]) {
       await page.goto(path);
       await page.waitForLoadState("networkidle");
       expect(await violations(), `${path} violations`).toEqual([]);

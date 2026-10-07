@@ -1,6 +1,20 @@
+import { isVideoFont, maxCharsFor } from "./lib/font-catalog";
 import { ASPECTS, BACKGROUND_STYLES, FPS, type Aspect, type BackgroundStyle, type ReviewVideoProps, type VideoReview } from "./types";
 
 export * from "./types";
+export {
+  DEFAULT_VIDEO_FONT,
+  VIDEO_FONTS,
+  VIDEO_FONT_IDS,
+  VIDEO_FONT_WEIGHTS,
+  fontStack,
+  getVideoFont,
+  isVideoFont,
+  maxCharsFor,
+  videoFontFile,
+  type VideoFontId,
+  type VideoFontInfo,
+} from "./lib/font-catalog";
 export { derivePalette, auroraBlobs, tint, type Palette, type PaletteOptions } from "./lib/palette";
 export { swatchFor, type Swatch } from "./lib/swatch";
 export { SAMPLE_PROPS } from "./sample";
@@ -129,10 +143,10 @@ export const compositionId = (templateId: string, aspect: Aspect) => `${template
 
 export const dimensionsFor = (aspect: Aspect) => ASPECTS[aspect];
 
-/** Whether a review can be shown by the template without trimming it. */
-export function reviewFits(template: TemplateInfo, review: Pick<VideoReview, "text">): boolean {
+/** Whether a review can be shown by the template, in the given font, without trimming it. */
+export function reviewFits(template: TemplateInfo, review: Pick<VideoReview, "text">, font?: string | null): boolean {
   const length = review.text.trim().length;
-  return length >= 12 && length <= template.maxChars;
+  return length >= 12 && length <= maxCharsFor(template.maxChars, font);
 }
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -147,6 +161,7 @@ export function validateProps(templateId: string, props: ReviewVideoProps): stri
 
   if (!HEX.test(brand)) problems.push("Brand colour must be a hex colour like #cf3d0b.");
   if (theme?.style !== undefined && !isBackgroundStyle(theme.style)) problems.push(`Unknown background style "${String(theme.style)}".`);
+  if (theme?.font !== undefined && !isVideoFont(theme.font)) problems.push(`Unknown font "${String(theme.font)}".`);
   if (theme?.secondary !== undefined && !HEX.test(theme.secondary)) problems.push("The second colour must be a hex colour like #1d4ed8.");
   if (!Array.isArray(reviews) || reviews.length < template.reviews.min || reviews.length > template.reviews.max) {
     const range = template.reviews.min === template.reviews.max ? `${template.reviews.min}` : `${template.reviews.min} to ${template.reviews.max}`;
@@ -158,8 +173,8 @@ export function validateProps(templateId: string, props: ReviewVideoProps): stri
     const label = `Review ${i + 1}`;
     if (!review.author?.trim()) problems.push(`${label} has no author.`);
     if (review.rating == null ? review.source !== "own" : !Number.isInteger(review.rating) || review.rating < 1 || review.rating > 5) problems.push(`${label} needs a rating from 1 to 5.`);
-    if (!reviewFits(template, review)) {
-      problems.push(`${label} must be between 12 and ${template.maxChars} characters for this template (reviews are never shortened).`);
+    if (!reviewFits(template, review, isVideoFont(theme?.font) ? theme?.font : undefined)) {
+      problems.push(`${label} must be between 12 and ${maxCharsFor(template.maxChars, isVideoFont(theme?.font) ? theme?.font : undefined)} characters for this template${isVideoFont(theme?.font) ? " in this font" : ""} (reviews are never shortened).`);
     }
     if (review.source !== "google" && review.source !== "trustpilot" && review.source !== "own") problems.push(`${label} has an unknown source.`);
   });

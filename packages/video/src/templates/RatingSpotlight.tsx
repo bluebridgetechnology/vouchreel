@@ -4,7 +4,7 @@ import { Backdrop } from "../components/Backdrop";
 import { SourceMark } from "../components/SourceMark";
 import { Avatar, Stars, WordReveal, clamped, fitFontSize, useFadeIn, useLayout, useOutro, useSpringIn } from "../components/primitives";
 import { RATING_INTRO_SECONDS } from "../registry";
-import { FONT_SANS, rgba } from "../lib/theme";
+import { bodyFont, rgba } from "../lib/theme";
 import { tint, type Palette } from "../lib/palette";
 import { usePalette } from "../lib/usePalette";
 import type { ReviewVideoProps } from "../types";
@@ -43,7 +43,7 @@ const RatingScene: React.FC<{ aggregate: NonNullable<ReviewVideoProps["aggregate
 };
 
 /** Scene 2: one standout review on a white card. */
-const ReviewScene: React.FC<{ review: ReviewVideoProps["reviews"][number]; palette: Palette }> = ({ review, palette }) => {
+const ReviewScene: React.FC<{ review: ReviewVideoProps["reviews"][number]; palette: Palette; font?: string }> = ({ review, palette, font }) => {
   const { u, portrait } = useLayout();
   const { durationInFrames } = useVideoConfig();
   const slide = useSpringIn(0, { damping: 17, stiffness: 90 });
@@ -51,7 +51,7 @@ const ReviewScene: React.FC<{ review: ReviewVideoProps["reviews"][number]; palet
   const revealEnd = 0.8 + review.text.split(/\s+/).length / wordsPerSecond;
   const authorIn = useFadeIn(revealEnd - 0.3, 0.6);
   const outro = useOutro(durationInFrames);
-  const fontSize = fitFontSize(review.text, portrait) * 0.82 * u;
+  const fontSize = fitFontSize(review.text, portrait, font) * 0.82 * u;
 
   return (
     <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: (portrait ? 80 : 170) * u, opacity: outro }}>
@@ -102,7 +102,7 @@ export const RatingSpotlight: React.FC<ReviewVideoProps> = (props) => {
   const overlap = Math.round(0.4 * fps);
 
   return (
-    <AbsoluteFill style={{ fontFamily: FONT_SANS }}>
+    <AbsoluteFill style={{ fontFamily: bodyFont(props.theme?.font) }}>
       <Backdrop palette={palette} secondary={props.theme?.secondary} />
       {aggregate && (
         <Sequence from={0} durationInFrames={introFrames}>
@@ -110,7 +110,7 @@ export const RatingSpotlight: React.FC<ReviewVideoProps> = (props) => {
         </Sequence>
       )}
       <Sequence from={introFrames - overlap} durationInFrames={Math.max(1, durationInFrames - (introFrames - overlap))}>
-        <ReviewScene review={reviews[0]} palette={palette} />
+        <ReviewScene review={reviews[0]} palette={palette} font={props.theme?.font} />
       </Sequence>
     </AbsoluteFill>
   );

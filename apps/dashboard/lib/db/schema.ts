@@ -1,4 +1,5 @@
 import { relations } from "drizzle-orm";
+import type { VideoFontId } from "@vouchreel/video";
 import {
   pgTable,
   uuid,
@@ -1301,6 +1302,8 @@ export const brandKits = pgTable("brand_kits", {
   videoStyle: text("video_style").$type<"gradient" | "solid" | "aurora" | "dots" | "light" | "dark">(),
   /** Optional second colour for review video backgrounds. */
   videoSecondaryColor: text("video_secondary_color"),
+  /** Font for review video text (an id from the font catalogue in @vouchreel/video). Null = each template's own typography. */
+  videoFont: text("video_font").$type<VideoFontId>(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

@@ -3,6 +3,8 @@
  * widget preview) and server code can share them.
  */
 
+import type { VideoFontId } from "@vouchreel/video";
+
 /** Background styles for review videos (see packages/video). */
 export type VideoStyleValue = "gradient" | "solid" | "aurora" | "dots" | "light" | "dark";
 
@@ -18,6 +20,8 @@ export interface BrandKitValues {
   videoStyle: VideoStyleValue | null;
   /** Optional second colour for review video backgrounds. */
   videoSecondaryColor: string | null;
+  /** Font for review video text; null = each template's own typography. */
+  videoFont: VideoFontId | null;
 }
 
 /**

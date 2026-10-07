@@ -12,9 +12,10 @@ import { inputClass } from "@/components/ui/input";
 import { ModalOverlay } from "@/components/ui/modal";
 import { Spinner } from "@/components/ui/spinner";
 import { VideoStylePicker } from "@/components/brand/video-style-picker";
+import { VideoFontPicker } from "@/components/brand/video-font-picker";
 import { VideoPreview } from "@/components/review-video/video-preview";
 import { previewProps } from "@/lib/review-video/preview";
-import { STYLES, type BackgroundStyle } from "@vouchreel/video";
+import { STYLES, getVideoFont, type BackgroundStyle, type VideoFontId } from "@vouchreel/video";
 import { toggleStyle } from "@/components/ui/toggle";
 import { summarizeCredits, type CreditsView } from "@/lib/ai-video/ui-state";
 import {
@@ -46,6 +47,7 @@ interface Loaded {
   /** The brand kit's video defaults, shown as the meaning of "brand default". */
   brandStyle: BackgroundStyle | null;
   brandSecondary: string | null;
+  brandFont: VideoFontId | null;
 }
 
 const SOURCE_NAMES = { google: "Google", trustpilot: "Trustpilot", own: "Added by you" } as const;
@@ -71,6 +73,9 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
   // null = the brand kit's default style; secondary: undefined = the brand default, null = none, string = this colour
   const [style, setStyle] = useState<BackgroundStyle | null>(null);
   const [secondary, setSecondary] = useState<string | null | undefined>(undefined);
+  // null = the brand kit's default font (then each template's own typography)
+  const [font, setFont] = useState<VideoFontId | null>(null);
+  const effectiveFont = font ?? data?.brandFont ?? null;
   const [rights, setRights] = useState(false);
   const [creating, setCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -120,17 +125,26 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
   const livePreview = useMemo(
     () =>
       data && template
-        ? previewProps({ template, picked, stats: data.stats, brand, style, brandStyle: data.brandStyle, secondary, brandSecondary: data.brandSecondary })
+        ? previewProps({ template, picked, stats: data.stats, brand, style, brandStyle: data.brandStyle, secondary, brandSecondary: data.brandSecondary, font, brandFont: data.brandFont })
         : null,
-    [data, template, picked, brand, style, secondary],
+    [data, template, picked, brand, style, secondary, font],
   );
-  const blocked = data && template ? templateBlockedReason(template, data.stats, data.reviews) : null;
+  const blocked = data && template ? templateBlockedReason(template, data.stats, data.reviews, effectiveFont) : null;
 
   function chooseTemplate(next: TemplateView) {
     if (!data) return;
     setTemplateId(next.id);
-    setSelected((current) => pruneSelection(current, next, data.reviews));
+    setSelected((current) => pruneSelection(current, next, data.reviews, effectiveFont));
     setActionError(null);
+  }
+
+  function chooseFont(next: VideoFontId | null) {
+    if (!data || !template) return;
+    setFont(next);
+    // A wider font fits fewer characters, so a pick that no longer fits is dropped
+    const kept = pruneSelection(selected, template, data.reviews, next ?? data.brandFont);
+    if (kept.length < selected.length) notify.info("Some picked reviews are too long for that font and were removed.");
+    setSelected(kept);
   }
 
   async function create() {
@@ -147,6 +161,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
           reviewIds: selected,
           brandColor: brand,
           ...(style ? { style } : {}),
+          ...(font ? { font } : {}),
           ...(secondary !== undefined ? { secondaryColor: secondary } : {}),
           rightsConfirmed: rights,
         }),
@@ -265,7 +280,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                     <legend className="text-xs font-medium text-text">Template</legend>
                     <div role="radiogroup" aria-label="Template" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                       {data.templates.map((t) => {
-                        const reason = templateBlockedReason(t, data.stats, data.reviews);
+                        const reason = templateBlockedReason(t, data.stats, data.reviews, effectiveFont);
                         return (
                           <button
                             key={t.id}
@@ -322,6 +337,19 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                       <p className="text-xs text-text-muted">The text colour adjusts automatically, so it stays easy to read on any colour.</p>
                     </div>
                   </div>
+
+                  <fieldset className="space-y-3">
+                    <legend className="text-xs font-medium text-text">Font</legend>
+                    <VideoFontPicker
+                      label="Video font"
+                      value={font}
+                      onChange={chooseFont}
+                      defaultOption={{
+                        title: data.brandFont ? `Brand default: ${getVideoFont(data.brandFont).label}` : "Template's own type",
+                        hint: data.brandFont ? "Set on your Brand page" : "Each template keeps its signature type",
+                      }}
+                    />
+                  </fieldset>
 
                   <fieldset className="space-y-3">
                     <legend className="text-xs font-medium text-text">Background</legend>
@@ -383,7 +411,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                     </legend>
                     <ul className="max-h-72 divide-y overflow-y-auto rounded-card border">
                       {data.reviews.map((review) => {
-                        const state = reviewPickState(review, template, selected);
+                        const state = reviewPickState(review, template, selected, effectiveFont);
                         const index = selected.indexOf(review.id);
                         return (
                           <li key={review.id}>

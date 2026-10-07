@@ -4,7 +4,8 @@ import { Backdrop } from "../components/Backdrop";
 import { SourceMark } from "../components/SourceMark";
 import { Avatar, Stars, WordReveal, clamped, useFadeIn, useLayout, useOutro } from "../components/primitives";
 import { STACK_HEADER_SECONDS, stackItemSeconds } from "../registry";
-import { FONT_SANS, mix } from "../lib/theme";
+import { bodyFont, mix } from "../lib/theme";
+import { getVideoFont } from "../lib/font-catalog";
 import { tint } from "../lib/palette";
 import { usePalette } from "../lib/usePalette";
 import type { ReviewVideoProps } from "../types";
@@ -38,7 +39,7 @@ export const ReviewStack: React.FC<ReviewVideoProps> = (props) => {
   const active = starts.reduce((acc, s, i) => (s <= nowSeconds ? i : acc), -1);
 
   return (
-    <AbsoluteFill style={{ fontFamily: FONT_SANS, opacity: outro }}>
+    <AbsoluteFill style={{ fontFamily: bodyFont(props.theme?.font), opacity: outro }}>
       <Backdrop palette={palette} secondary={props.theme?.secondary} />
 
       <div
@@ -66,7 +67,7 @@ export const ReviewStack: React.FC<ReviewVideoProps> = (props) => {
             // how far later cards have already pushed this one back (fractional while they animate in)
             let shift = 0;
             for (let j = i + 1; j <= active; j++) shift += entrance(j);
-            const size = textSize(review.text.length) * u * (portrait ? 1 : 0.9);
+            const size = textSize(review.text.length) * getVideoFont(props.theme?.font).sizeScale * u * (portrait ? 1 : 0.9);
 
             return (
               <div

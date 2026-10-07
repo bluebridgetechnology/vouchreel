@@ -124,6 +124,9 @@ jobs:
         run: npx playwright install --with-deps chromium firefox webkit
         working-directory: apps/dashboard
 
+      - name: Video font widths match the numbers in the catalogue
+        run: npm run fonts:measure -w @vouchreel/video -- --check
+
       - name: Build for the browser tests
         run: npm run build:e2e -w @vouchreel/dashboard
         env:

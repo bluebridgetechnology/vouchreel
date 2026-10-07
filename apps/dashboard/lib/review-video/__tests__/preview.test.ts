@@ -44,6 +44,13 @@ describe("previewProps", () => {
     expect(previewProps({ ...base, template: single, picked: [], brand: "red" }).props.brand).not.toBe("red");
   });
 
+  it("resolves the font the way the server does: this video, then the brand kit, then the template's own", () => {
+    expect(previewProps({ ...base, template: single, picked: [] }).props.theme).toBeUndefined();
+    expect(previewProps({ ...base, template: single, picked: [], brandFont: "lora" }).props.theme).toEqual({ font: "lora" });
+    expect(previewProps({ ...base, template: single, picked: [], brandFont: "lora", font: "caveat" }).props.theme).toEqual({ font: "caveat" });
+    expect(previewProps({ ...base, template: single, picked: [], style: "dark", font: "nunito" }).props.theme).toEqual({ style: "dark", font: "nunito" });
+  });
+
   it("resolves the style the way the server does: this video, then the brand kit, then the template's own", () => {
     expect(previewProps({ ...base, template: single, picked: [] }).props.theme).toBeUndefined();
     expect(previewProps({ ...base, template: single, picked: [], brandStyle: "aurora" }).props.theme).toEqual({ style: "aurora" });

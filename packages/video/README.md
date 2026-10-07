@@ -58,8 +58,9 @@ per video with `style` / `secondaryColor` on create.
   differs); the Trustpilot logo already contains its name. Whether these files and this usage satisfy each
   provider's current brand and data-use guidelines is the company's responsibility to confirm.
 - **Rating totals are the provider's**, stored at sync time, never computed from a subset.
-- Fonts (Outfit, Playfair Display) are bundled, so renders are identical everywhere. Non-Latin text
-  falls back to system fonts (the Docker image installs Noto).
+- Fonts are bundled, so renders are identical everywhere. Non-Latin text falls back to system fonts (the
+  Docker image installs Noto). The customer can pick one of six open-licence (SIL OFL) fonts, see
+  [Video fonts](#video-fonts); Playfair Display italic stays as Minimal's own quote font.
 
 ## Layout of the package
 
@@ -118,6 +119,23 @@ Frames used for the current thumbnails: spotlight, minimal and dark-card 9.5 s, 
 
 `npm test -w @vouchreel/video` runs the unit tests. `npm run test:render -w @vouchreel/video` additionally renders
 the aurora, dots and light styles in real Chromium (slow; skipped by default, not run in CI).
+
+## Video fonts
+
+The list is `VIDEO_FONTS` in `src/lib/font-catalog.ts` (Outfit, Lora, Nunito, Barlow Condensed, JetBrains Mono,
+Caveat), chosen from the brand kit or per video as `theme.font`. With no font set, every template looks exactly
+as it always did. Each font has three weights (400, 500, 600), bundled in `src/lib/fonts.ts` for renders and
+copied with its licence to `apps/dashboard/public/video-fonts` for the browser preview.
+
+A font that runs wider or narrower than Outfit gets a matching type size, and a template's `maxChars` shrinks
+for a font that cannot fit as much (JetBrains Mono: 85%). Those numbers are measured, not guessed:
+`npm run fonts:measure -w @vouchreel/video` loads the real files in Chromium and prints them (`-- --check` fails
+when the committed numbers are stale). Provider attribution ("Google Maps") always stays in the default font.
+
+To add a font: add the `@fontsource` package, an entry in the catalogue, its three imports in `fonts.ts`, the
+files and licence in `public/video-fonts`, then run the measure script. The tests fail until each step is done.
+Preview every font on every template at its longest allowed review with
+`npm run preview -w @vouchreel/video -- --font=lora --fill --end`.
 
 ## Live preview in the dashboard
 

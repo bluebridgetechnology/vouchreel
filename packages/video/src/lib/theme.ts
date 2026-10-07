@@ -1,3 +1,5 @@
+import { fontStack } from "./font-catalog";
+
 export interface Rgb {
   r: number;
   g: number;
@@ -60,6 +62,16 @@ export function brandForWhiteText(brand: string): string {
 export const GOLD = "#ffc83d";
 export const FONT_SANS = "'Outfit', 'Noto Sans', 'Segoe UI', Arial, sans-serif";
 export const FONT_SERIF = "'Playfair Display', 'Noto Serif', Georgia, serif";
+
+/** Font for a template's text: the customer's choice, else the default (Outfit). */
+export const bodyFont = (font?: string | null): string => (font ? fontStack(font) : FONT_SANS);
+
+/**
+ * Font for Minimal's large quote. Left alone it is Playfair Display italic; a chosen font is used as it
+ * is (upright: only the regular weights ship, and a made-up slant looks wrong).
+ */
+export const quoteFont = (font?: string | null): { fontFamily: string; fontStyle: "italic" | "normal" } =>
+  font ? { fontFamily: fontStack(font), fontStyle: "normal" } : { fontFamily: FONT_SERIF, fontStyle: "italic" };
 
 export interface Hsl {
   h: number;

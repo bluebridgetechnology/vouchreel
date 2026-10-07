@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { applyBrandKitToTheme, collectBrandFromKit, contrastBetween, describeFont, type BrandKitValues } from "../theme";
+import { VIDEO_FONT_IDS } from "@vouchreel/video";
 import { brandKitSchema, normalizeHex } from "@/lib/validations/brand-kit";
 import { valuesToStore } from "../service";
 
@@ -15,6 +16,7 @@ const kit = (over: Partial<BrandKitValues> = {}): BrandKitValues => ({
   inheritTextColor: false,
   videoStyle: null,
   videoSecondaryColor: null,
+  videoFont: null,
   ...over,
 });
 
@@ -152,6 +154,15 @@ describe("video style defaults", () => {
     expect(aurora).toMatchObject({ videoStyle: "aurora", videoSecondaryColor: "#1d4ed8" });
     const light = valuesToStore(brandKitSchema.parse({ ...base, videoStyle: "light", videoSecondaryColor: "#1d4ed8" }));
     expect(light).toMatchObject({ videoStyle: "light", videoSecondaryColor: null });
+  });
+
+  it("accepts the catalogue fonts, rejects anything else, and stores the choice (null = template default)", () => {
+    for (const id of VIDEO_FONT_IDS) expect(brandKitSchema.safeParse({ ...base, videoFont: id }).success, id).toBe(true);
+    expect(brandKitSchema.safeParse({ ...base, videoFont: "Comic Sans" }).success).toBe(false);
+    expect(brandKitSchema.safeParse({ ...base, videoFont: "<script>" }).success).toBe(false);
+    expect(valuesToStore(brandKitSchema.parse({ ...base, videoFont: "lora" })).videoFont).toBe("lora");
+    expect(valuesToStore(brandKitSchema.parse({ ...base, videoFont: null })).videoFont).toBeNull();
+    expect(valuesToStore(brandKitSchema.parse(base)).videoFont).toBeNull();
   });
 
   it("no style stored means null (template default), not a made-up value", () => {
