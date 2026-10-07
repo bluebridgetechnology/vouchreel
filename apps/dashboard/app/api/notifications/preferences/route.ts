@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { internalError, unauthorized, validationError } from "@/lib/api/errors";
 import { NOTIFICATION_TYPES } from "@/lib/notifications/catalog";
 import { getPreferences, setPreference } from "@/lib/notifications/queries";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export async function GET() {
   try {
     return NextResponse.json({ preferences: await getPreferences(session.user.id) });
   } catch (err) {
-    console.error("Failed to load notification preferences:", err);
+    log.error("Failed to load notification preferences:", err);
     return internalError("Failed to load preferences");
   }
 }
@@ -43,7 +44,7 @@ export async function PUT(request: Request) {
     });
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("Failed to update notification preference:", err);
+    log.error("Failed to update notification preference:", err);
     return internalError("Failed to update preference");
   }
 }

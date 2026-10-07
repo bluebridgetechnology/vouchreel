@@ -12,6 +12,7 @@ import { db } from "@/lib/db";
 import { experiments, spaces } from "@/lib/db/schema";
 import { getExperimentMetrics } from "@/lib/experiments/queries";
 import { updateExperimentStatusSchema } from "@/lib/validations/experiments";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string; expId: string }>;
@@ -84,7 +85,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("Failed to fetch experiment:", error);
+    log.error("Failed to fetch experiment:", error);
     return internalError("Failed to fetch experiment");
   }
 }
@@ -149,7 +150,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ experiment: updated });
   } catch (error) {
-    console.error("Failed to update experiment status:", error);
+    log.error("Failed to update experiment status:", error);
     return internalError("Failed to update experiment status");
   }
 }
@@ -182,7 +183,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete experiment:", error);
+    log.error("Failed to delete experiment:", error);
     return internalError("Failed to delete experiment");
   }
 }

@@ -4,6 +4,7 @@ import { withApiKeyAuth, apiV1Options } from "@/lib/api/v1-handler";
 import { db } from "@/lib/db";
 import { collectionForms } from "@/lib/db/schema";
 import { apiError, notFound } from "@/lib/api/errors";
+import { log } from "@/lib/log";
 
 export const OPTIONS = apiV1Options();
 
@@ -57,7 +58,7 @@ export const GET = withApiKeyAuth<RouteParams>(
         },
       });
     } catch (error) {
-      console.error("v1 GET /collection-forms/[id] error:", error);
+      log.error("v1 GET /collection-forms/[id] error:", error);
       return apiError(500, "INTERNAL_ERROR", "Failed to fetch collection form");
     }
   }

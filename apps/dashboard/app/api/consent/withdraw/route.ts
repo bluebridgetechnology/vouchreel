@@ -4,6 +4,7 @@ import { apiError, validationError } from "@/lib/api/errors";
 import { consentIdFromToken, withdrawConsent } from "@/lib/ai-video/consent-withdrawal";
 import { rateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/security/client-ip";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     if (result.status === "not_found") return apiError(404, "NOT_FOUND", "This agreement no longer exists.");
     return NextResponse.json({ status: result.status, removedVideos: result.removedVideos });
   } catch (error) {
-    console.error("Failed to withdraw consent:", error);
+    log.error("Failed to withdraw consent:", error);
     return apiError(500, "INTERNAL_ERROR", "Something went wrong. Please try again.");
   }
 }

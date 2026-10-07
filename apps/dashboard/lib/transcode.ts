@@ -9,6 +9,7 @@ import { collectionForms, submissions } from "@/lib/db/schema";
 import { getStorage } from "@/lib/storage";
 import { ensureFfmpeg, friendlyMediaError, runFfmpeg } from "@/lib/media/ffmpeg";
 import { notifySpaceOwner } from "@/lib/notifications/service";
+import { log } from "@/lib/log";
 
 /**
  * Runs in-process in the self-hosted deployment after a video upload. A durable
@@ -82,9 +83,9 @@ export async function transcodeSubmission(submissionId: string) {
       .where(eq(submissions.id, submissionId));
 
     // The transcoded copy replaced the raw upload, which nothing points at any more: delete it
-    await queueFileCleanup([submission.videoUrl]).catch((error) => console.error(`Could not queue cleanup of the raw upload of ${submissionId}:`, error));
+    await queueFileCleanup([submission.videoUrl]).catch((error) => log.error(`Could not queue cleanup of the raw upload of ${submissionId}:`, error));
   } catch (error) {
-    console.error(`Failed to transcode submission ${submissionId}:`, error);
+    log.error(`Failed to transcode submission ${submissionId}:`, error);
     const reason = friendlyMediaError(error);
     await db
       .update(submissions)

@@ -6,6 +6,7 @@ import { requirePlatformAdminApi } from "@/lib/admin/guard";
 import { logAdminAction } from "@/lib/admin/audit";
 import { listAdminPlans, toAdminPlan } from "@/lib/admin/plans";
 import { createPlanSchema } from "@/lib/validations/plans";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export async function GET() {
   try {
     return NextResponse.json({ plans: await listAdminPlans() });
   } catch (err) {
-    console.error("Failed to list plans:", err);
+    log.error("Failed to list plans:", err);
     return internalError("Failed to load plans");
   }
 }
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ plan: toAdminPlan(row, 0) }, { status: 201 });
   } catch (err) {
-    console.error("Failed to create plan:", err);
+    log.error("Failed to create plan:", err);
     return internalError("Failed to create plan");
   }
 }

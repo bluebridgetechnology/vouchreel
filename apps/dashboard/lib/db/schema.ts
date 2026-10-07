@@ -11,7 +11,14 @@ import {
   pgEnum,
   index,
   uniqueIndex,
+  customType,
 } from "drizzle-orm/pg-core";
+
+const bytea = customType<{ data: Buffer; default: false }>({
+  dataType() {
+    return "bytea";
+  },
+});
 
 // ─── Enums ──────────────────────────────────────────────────────────────────
 
@@ -31,6 +38,8 @@ export const platformEnum = pgEnum("platform", [
 export const reviewProviderEnum = pgEnum("review_provider", [
   "google",
   "trustpilot",
+  // Typed in by the space owner: no provider, no rating
+  "own",
 ]);
 
 export const widgetTemplateEnum = pgEnum("widget_template", [
@@ -184,6 +193,8 @@ export const user = pgTable("user", {
   /** Legacy, unused for authorization. Platform access is `isPlatformAdmin`. */
   role: text("role").default("owner"),
   isPlatformAdmin: boolean("is_platform_admin").default(false).notNull(),
+  /** Sign-in asks for a code from an authenticator app (Better Auth two-factor plugin). */
+  twoFactorEnabled: boolean("two_factor_enabled").default(false),
   /** A platform admin suspended this account: it cannot sign in, and open sessions stop working. */
   suspendedAt: timestamp("suspended_at", { withTimezone: true }),
   /** Shown to the person on a refused sign-in. */
@@ -195,6 +206,19 @@ export const user = pgTable("user", {
     .defaultNow()
     .notNull(),
 });
+
+/** Better Auth two-factor plugin: one row per account that has set up an authenticator app. */
+export const twoFactor = pgTable("two_factor", {
+  id: text("id").primaryKey(),
+  secret: text("secret").notNull(),
+  backupCodes: text("backup_codes").notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  verified: boolean("verified").default(true),
+  failedVerificationCount: integer("failed_verification_count").default(0),
+  lockedUntil: timestamp("locked_until", { withTimezone: true }),
+}, (table) => [index("two_factor_user_idx").on(table.userId)]);
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
@@ -548,8 +572,11 @@ export const reviews = pgTable("reviews", {
   provider: reviewProviderEnum("provider").notNull(),
   authorName: text("author_name").notNull(),
   authorPhotoUrl: text("author_photo_url"),
-  rating: integer("rating").notNull(),
+  // Null only for owner-supplied reviews (provider "own")
+  rating: integer("rating"),
   text: text("text"),
+  /** Owner-supplied reviews: the page the review came from (https), shown as its domain */
+  linkUrl: text("link_url"),
   reviewDate: timestamp("review_date", { withTimezone: true }),
   providerReviewId: text("provider_review_id").notNull().unique(),
   isApproved: boolean("is_approved").default(true).notNull(),
@@ -1342,4 +1369,27 @@ export const creditAdjustments = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [index("credit_adjustments_user_month_idx").on(table.userId, table.month)]
+);
+
+/**
+ * "Download my data" requests. The zip is kept here (not in public file storage) so it is only ever
+ * served to its owner by an authenticated route, and is deleted after a week.
+ */
+export const dataExports = pgTable(
+  "data_exports",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: text("status").$type<"queued" | "ready" | "failed">().default("queued").notNull(),
+    /** The finished zip. Null until ready, and again once expired. */
+    zip: bytea("zip"),
+    sizeBytes: integer("size_bytes"),
+    error: text("error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    readyAt: timestamp("ready_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+  },
+  (table) => [index("data_exports_user_idx").on(table.userId, table.createdAt)]
 );

@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { conversionGoals, spaces } from "@/lib/db/schema";
 import { createConversionGoalSchema } from "@/lib/validations/conversion-goals";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -56,7 +57,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ goals });
   } catch (error) {
-    console.error("Failed to fetch conversion goals:", error);
+    log.error("Failed to fetch conversion goals:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch conversion goals");
   }
 }
@@ -99,7 +100,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ goal }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create conversion goal:", error);
+    log.error("Failed to create conversion goal:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to create conversion goal");
   }
 }
@@ -140,7 +141,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete conversion goal:", error);
+    log.error("Failed to delete conversion goal:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to delete conversion goal");
   }
 }

@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import pg from "pg";
 import AxeBuilder from "@axe-core/playwright";
-import { ADMIN_STATE, CONSENT_FILE, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, REASON_TEXT, STORAGE_ORIGIN, USERS } from "./seed";
+import { ADMIN_STATE, CONSENT_FILE, E2E_AUTH_SECRET, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, REASON_TEXT, STORAGE_ORIGIN, USERS } from "./seed";
 
 /** Smoke tests for the platform-admin area (/admin). Tests run in order and share seeded rows. */
 test.describe.configure({ mode: "serial" });
@@ -16,6 +16,20 @@ async function signIn(context: { post: (url: string, options: { headers: Record<
     await new Promise((r) => setTimeout(r, 4000));
   }
   throw new Error(`Sign-in as ${email} kept being rate limited`);
+}
+
+/** Creates an account through the API (waits out the sign-up rate limit) and confirms its email with the link's token, made the way the server makes it. */
+async function createConfirmedAccount(context: { post: (url: string, options: { headers: Record<string, string>; data: unknown }) => Promise<{ ok(): boolean; status(): number }>; get: (url: string, options: { maxRedirects: number }) => Promise<{ status(): number }> }, base: string, email: string, name: string) {
+  for (let attempt = 1; ; attempt++) {
+    const res = await context.post("/api/auth/sign-up/email", { headers: { origin: base }, data: { email, password: PASSWORD, name } });
+    if (res.ok()) break;
+    if (res.status() !== 429 || attempt >= 6) throw new Error(`Sign-up as ${email} failed with ${res.status()}`);
+    await new Promise((r) => setTimeout(r, 4000));
+  }
+  const { createEmailVerificationToken } = await import("better-auth/api");
+  const token = await createEmailVerificationToken(E2E_AUTH_SECRET, email, undefined, 3600);
+  const verified = await context.get(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, { maxRedirects: 0 });
+  if (verified.status() >= 400) throw new Error(`Confirming ${email} failed with ${verified.status()}`);
 }
 
 /** Navigates, and tries again when the app's own redirect or refresh interrupts the navigation (seen in Firefox and WebKit). */
@@ -105,8 +119,8 @@ test.describe("platform admin", () => {
     await open(page, "/admin?tab=videos");
     await expect(page.getByText("Failed jobs")).toBeVisible();
     // Jobs are waiting and no job worker is alive: the page says so at the top
-    await expect(page.getByRole("alert").filter({ hasText: "No job worker is running" })).toBeVisible();
-    await expect(page.getByRole("alert").filter({ hasText: "video worker" })).toHaveCount(0);
+    await expect(page.locator("div[role=alert]").filter({ hasText: "No job worker is running" })).toBeVisible();
+    await expect(page.locator("div[role=alert]").filter({ hasText: "video worker" })).toHaveCount(0);
 
     // Retry: confirm dialog, success toast, and the job leaves the failed list
     await row(page, FAILED_JOB_ERROR).getByRole("button", { name: "Retry" }).click();
@@ -413,6 +427,222 @@ test.describe("platform admin", () => {
     await context.close();
   });
 
+  test("owner reviews: add one by hand, it needs no Google or Trustpilot, and videos made from it use its own wording", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+    const spaces = await (await context.request.get("/api/spaces")).json();
+    const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
+    await open(page, `/spaces/${space.id}/reviews`);
+
+    await page.getByRole("button", { name: "Add your own review" }).click();
+    const form = page.getByRole("dialog", { name: "Add your own review" });
+    await form.getByLabel("Name", { exact: true }).fill("Priya N.");
+    await form.getByLabel("Review", { exact: true }).fill("They fixed our books in a week and never made us feel silly for asking.");
+
+    // Only https links are accepted
+    await form.getByLabel(/Link to the review/).fill("http://insecure.example/reviews");
+    await form.getByRole("button", { name: "Save review" }).click();
+    await expect(form.locator("div[role=alert].bg-danger-soft")).toContainText("https");
+
+    await form.getByLabel(/Link to the review/).fill("https://www.priyas-bakery.example/reviews/1");
+    await form.getByRole("button", { name: "Save review" }).click();
+    await expect(page.getByText("Review added")).toBeVisible();
+
+    // It shows with its own badge and no stars, and can be edited
+    const card = page.locator("div").filter({ hasText: "Priya N." }).filter({ has: page.getByRole("button", { name: "Edit" }) }).filter({ hasText: "Added by you" }).last();
+    await expect(card.getByText("Added by you")).toBeVisible();
+    await expect(card.getByText(/\.0$/)).toHaveCount(0);
+    await card.getByRole("button", { name: "Edit" }).click();
+    await form.getByLabel("Name", { exact: true }).fill("Priya Nair");
+    await form.getByRole("button", { name: "Save review" }).click();
+    await expect(page.getByText("Priya Nair")).toBeVisible();
+
+    // The video picker offers it, and picking it switches the confirmation to the wording for your own reviews
+    await page.getByRole("button", { name: "Create review video" }).click();
+    const picker = page.getByRole("dialog").last();
+    await picker.getByRole("button", { name: /Priya Nair/ }).click();
+    await expect(picker.getByText("Added by you")).toBeVisible();
+    await expect(picker.getByText(/genuine reviews from real customers/)).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    // Clean up so the rest of the run is unaffected
+    const own = await (await context.request.get(`/api/spaces/${space.id}/reviews`)).json();
+    for (const r of own.reviews.filter((r: { provider: string }) => r.provider === "own")) {
+      expect((await context.request.delete(`/api/spaces/${space.id}/reviews/${r.id}`, { headers: { origin: baseURL! } })).ok()).toBe(true);
+    }
+    await context.close();
+  });
+
+  test("email verification: a new account cannot sign in until its email link is used", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    const email = `e2e-verify-${Date.now()}@example.test`;
+
+    // The sign-up rate limit sends the form back with an error: wait and try again
+    for (let attempt = 1; ; attempt++) {
+      await open(page, "/signup");
+      await page.getByLabel("Full name").fill("E2E Verify");
+      await page.getByLabel("Email").fill(email);
+      await page.getByLabel("Password").fill(PASSWORD);
+      await page.getByRole("button", { name: /create account/i }).click();
+      if (await page.getByRole("heading", { name: /Check your email/ }).waitFor({ timeout: 8000 }).then(() => true, () => false)) break;
+      if (attempt >= 5) throw new Error("sign-up never reached the check-your-email step");
+      await page.waitForTimeout(4000);
+    }
+
+    // Signing in is refused until the link has been used
+    // (the sign-in rate limit answers 429 when attempts come close together: wait and ask again)
+    const attempt = async () => {
+      for (let i = 0; i < 6; i++) {
+        const res = await context.request.post("/api/auth/sign-in/email", { headers: { origin: baseURL! }, data: { email, password: PASSWORD } });
+        if (res.status() !== 429) return res;
+        await new Promise((r) => setTimeout(r, 4000));
+      }
+      throw new Error("kept being rate limited");
+    };
+    expect((await attempt()).status()).toBe(403);
+
+    // The link in the email carries a token signed with the server's secret; make the same one
+    const { createEmailVerificationToken } = await import("better-auth/api");
+    const token = await createEmailVerificationToken(E2E_AUTH_SECRET, email, undefined, 3600);
+    const verified = await context.request.get(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, { maxRedirects: 0 });
+    expect(verified.status(), verified.headers().location).toBeLessThan(400);
+    expect(verified.headers().location ?? "").not.toMatch(/error/i);
+
+    const ok = await attempt();
+    expect(ok.status(), await ok.text()).toBe(200);
+    await context.close();
+  });
+
+  test("two-factor sign-in: set up an authenticator app, sign in with a code and with a backup code, turn it off", async ({ browser, baseURL }) => {
+    const OTPAuth = await import("otpauth");
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    const email = `e2e-2fa-${Date.now()}@example.test`;
+
+    await createConfirmedAccount(context.request, baseURL!, email, "E2E TwoFactor");
+    await context.clearCookies();
+
+    /** Signs in through the form, waiting out the sign-in rate limit, and returns where it ended up. */
+    const signInForm = async (arrive: RegExp) => {
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        await open(page, "/login");
+        await page.getByLabel("Email").fill(email);
+        await page.getByLabel("Password").fill(PASSWORD);
+        await page.getByRole("button", { name: "Sign in" }).click();
+        if (await page.waitForURL(arrive, { timeout: 8000 }).then(() => true, () => false)) return;
+        await page.waitForTimeout(4000);
+      }
+      throw new Error(`never arrived at ${arrive}`);
+    };
+
+    /** Submits the code step and waits to arrive; the code endpoints are rate limited (a few per 10 seconds), so wait and try again. */
+    const submitCodeUntilIn = async (fill: () => Promise<void>) => {
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        await fill();
+        await page.getByRole("button", { name: "Continue" }).click();
+        if (await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 6000 }).then(() => true, () => false)) return;
+        await page.waitForTimeout(5000);
+      }
+      throw new Error("the code step never let the person in");
+    };
+
+    await signInForm(/\/(dashboard|onboarding)/);
+
+    // Set up: password, scan (we read the key instead), confirm with a code, keep the backup codes
+    await open(page, "/settings/security");
+    await page.getByRole("button", { name: "Turn on" }).click();
+    await page.getByLabel("Password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Continue" }).click();
+    const secret = (await page.getByTestId("totp-secret").textContent())!.trim();
+    const totp = new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(secret), digits: 6, period: 30, algorithm: "SHA1" });
+    await page.getByLabel("Code from the app").fill("000000");
+    await page.getByRole("button", { name: "Turn on" }).click();
+    await expect(page.locator("div[role=alert].bg-danger-soft")).toBeVisible(); // a wrong code is refused
+    await page.getByLabel("Code from the app").fill(totp.generate());
+    await page.getByRole("button", { name: "Turn on" }).click();
+    await expect(page.getByTestId("backup-codes")).toBeVisible();
+    await expect(page.getByTestId("backup-codes").locator("li").first()).toBeVisible();
+    const codes = await page.getByTestId("backup-codes").locator("li").allTextContents();
+    expect(codes.length).toBeGreaterThanOrEqual(5);
+    await page.getByRole("button", { name: "I have saved them" }).click();
+    await expect(page.getByText(/On\. You will be asked for a code/)).toBeVisible();
+
+    // Signing in now stops at the code step: a wrong code is refused, a backup code works once
+    await context.clearCookies();
+    await signInForm(/\/two-factor/);
+    await page.getByLabel("Code", { exact: true }).fill("000000");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.locator("div[role=alert].bg-danger-soft")).toBeVisible();
+    await page.getByRole("button", { name: "Use a backup code" }).click();
+    await submitCodeUntilIn(() => page.getByLabel("Backup code").fill(codes[0].trim()));
+
+    // The same backup code cannot be used again; an authenticator code works
+    await context.clearCookies();
+    await signInForm(/\/two-factor/);
+    await page.getByRole("button", { name: "Use a backup code" }).click();
+    await page.getByLabel("Backup code").fill(codes[0].trim());
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.locator("div[role=alert].bg-danger-soft")).toBeVisible();
+    await page.getByRole("button", { name: "Use my authenticator app" }).click();
+    await submitCodeUntilIn(() => page.getByLabel("Code", { exact: true }).fill(totp.generate()));
+
+    // Turning it off needs the password
+    await open(page, "/settings/security");
+    await page.getByRole("button", { name: "Turn off" }).click();
+    await page.getByLabel("Password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Turn off" }).last().click();
+    await expect(page.getByText(/Off\. Your account is protected by your password alone/)).toBeVisible();
+    await context.close();
+  });
+
+  test("delete account: password, emailed link, and the account is gone for good", async ({ browser, baseURL }) => {
+    // The link's token, made the way lib/account/deletion.ts makes it
+    const { createHmac } = await import("node:crypto");
+    const deletionToken = (userId: string) => {
+      const expires = Date.now() + 30 * 60_000;
+      return `${userId}.${expires}.${createHmac("sha256", E2E_AUTH_SECRET).update(`account-delete:${userId}:${expires}`).digest("hex")}`;
+    };
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    const email = `e2e-delete-${Date.now()}@example.test`;
+    await createConfirmedAccount(context.request, baseURL!, email, "E2E Delete");
+    await context.clearCookies();
+
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      await open(page, "/login");
+      await page.getByLabel("Email").fill(email);
+      await page.getByLabel("Password").fill(PASSWORD);
+      await page.getByRole("button", { name: "Sign in" }).click();
+      if (await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 8000 }).then(() => true, () => false)) break;
+      await page.waitForTimeout(4000);
+    }
+
+    await open(page, "/settings");
+    await page.getByRole("button", { name: "Delete my account" }).click();
+    await page.getByLabel("Your password").fill("not-my-password");
+    await page.getByRole("button", { name: "Email me the link" }).click();
+    await expect(page.getByText("That password is not right.")).toBeVisible();
+    await page.getByLabel("Your password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Email me the link" }).click();
+    await expect(page.getByText(/We sent a confirmation link/)).toBeVisible();
+
+    // A link for someone else's account, and a made-up one, are refused
+    await open(page, "/account/delete?token=nonsense");
+    await expect(page.getByText(/expired or is not valid/)).toBeVisible();
+
+    // The emailed link (made the way the server makes it)
+    const me = await (await context.request.get("/api/auth/get-session")).json();
+    await open(page, `/account/delete?token=${encodeURIComponent(deletionToken(me.user.id))}`);
+    await page.getByRole("button", { name: "Delete my account forever" }).click();
+    await expect(page.getByText("Your account has been deleted")).toBeVisible();
+
+    const gone = await context.request.post("/api/auth/sign-in/email", { headers: { origin: baseURL! }, data: { email, password: PASSWORD } });
+    expect(gone.ok()).toBe(false);
+    await context.close();
+  });
+
   test("audit log: the actions above are recorded, and filters and paging work", async ({ page }) => {
     await open(page, "/admin?tab=audit&type=user");
     await expect(page.getByText(`Changed plan for ${USERS.customer.email}`)).toBeVisible();
@@ -526,7 +756,13 @@ test.describe("platform admin", () => {
 
     // The open session stops working at once, and signing in again is refused with the reason's wording
     expect((await member.get("/api/spaces")).status()).toBe(401);
-    const refused = await (await playwright.request.newContext({ baseURL: base })).post("/api/auth/sign-in/email", { headers: { origin: base }, data: { email: USERS.member.email, password: PASSWORD } });
+    // (the sign-in rate limit answers 429 when attempts come close together: wait and ask again)
+    const refusing = await playwright.request.newContext({ baseURL: base });
+    let refused = await refusing.post("/api/auth/sign-in/email", { headers: { origin: base }, data: { email: USERS.member.email, password: PASSWORD } });
+    for (let attempt = 1; refused.status() === 429 && attempt <= 5; attempt++) {
+      await new Promise((r) => setTimeout(r, 4000));
+      refused = await refusing.post("/api/auth/sign-in/email", { headers: { origin: base }, data: { email: USERS.member.email, password: PASSWORD } });
+    }
     expect(refused.status()).toBe(403);
     expect(await refused.text()).toContain("suspended");
 

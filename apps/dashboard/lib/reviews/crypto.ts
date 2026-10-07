@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { log } from "@/lib/log";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
@@ -75,7 +76,7 @@ export function decryptCredentials(data: unknown): Record<string, unknown> {
 
     return JSON.parse(decrypted);
   } catch (error) {
-    console.error("Failed to decrypt credentials:", error);
+    log.error("Failed to decrypt credentials:", error);
     return {};
   }
 }

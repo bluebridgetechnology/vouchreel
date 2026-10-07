@@ -8,6 +8,7 @@ import { updateTestimonialSchema } from "@/lib/validations/testimonials";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 import { verifySpaceAccess, TeamRole } from "@/lib/auth/permissions";
 import { deleteTestimonialPermanently } from "@/lib/spaces/delete";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string; tid: string }>;
@@ -125,7 +126,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ testimonial: updated });
   } catch (error) {
-    console.error("Failed to update testimonial:", error);
+    log.error("Failed to update testimonial:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to update testimonial");
   }
 }
@@ -161,7 +162,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true, id: tid });
   } catch (error) {
-    console.error("Failed to delete testimonial:", error);
+    log.error("Failed to delete testimonial:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to delete testimonial");
   }
 }

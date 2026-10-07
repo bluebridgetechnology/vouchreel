@@ -4,6 +4,7 @@ import { apiError, notFound, forbidden } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, webhookEndpoints, webhookDeliveries } from "@/lib/db/schema";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string; webhookId: string }>;
@@ -71,7 +72,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ deliveries });
   } catch (error) {
-    console.error("Failed to fetch webhook deliveries:", error);
+    log.error("Failed to fetch webhook deliveries:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch webhook deliveries");
   }
 }

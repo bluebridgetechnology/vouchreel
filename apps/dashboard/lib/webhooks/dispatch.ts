@@ -2,6 +2,7 @@ import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { webhookEndpoints, webhookDeliveries } from "@/lib/db/schema";
 import { attemptDelivery } from "./deliver";
+import { log } from "@/lib/log";
 
 export interface WebhookDispatchEvent {
   event:
@@ -64,12 +65,12 @@ export async function dispatchWebhookEvent(
         // Asynchronously attempt immediate delivery
         attemptDelivery(delivery.id, ep.url, ep.secret, event.event, event.payload).catch(
           (err) => {
-            console.error("Error during initial webhook delivery:", err);
+            log.error("Error during initial webhook delivery:", err);
           }
         );
       }
     }
   } catch (error) {
-    console.error("Failed to dispatch webhook event:", error);
+    log.error("Failed to dispatch webhook event:", error);
   }
 }

@@ -24,6 +24,13 @@ licence no longer says "up to 3 employees" and "Company License". It will fail w
 to a version with new terms (5.0 announces them), which is the moment to read the new licence before
 shipping the upgrade.
 
+## Third-party review sources (Google, Trustpilot)
+
+Decision (2026-10-07): reviews are pulled, turned into a video, attributed and saved, as built. The platforms' own
+terms on storing and re-displaying reviews were not checked against their current text (their pages were not
+reachable from the build environment), and the risk was accepted by the owner. Revisit if a platform objects, or
+before a large launch. Reviews the owner types in themselves (provider `own`) involve no third party.
+
 ## Other things worth knowing
 
 - FFmpeg is called as a separate program on the server (not linked into the app). Its own licence applies to

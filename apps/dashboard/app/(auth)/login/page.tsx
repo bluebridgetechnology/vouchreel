@@ -31,7 +31,14 @@ export default function LoginPage() {
       });
 
       if (result.error) {
-        setError(result.error.message || "Invalid email or password");
+        setError(
+          result.error.code === "EMAIL_NOT_VERIFIED"
+            ? "Please confirm your email address first. We just sent you a fresh link."
+            : result.error.message || "Invalid email or password"
+        );
+      } else if ((result.data as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect) {
+        // The two-factor step takes over from here (the client plugin navigates to /two-factor)
+        return;
       } else {
         router.push("/dashboard");
         router.refresh();

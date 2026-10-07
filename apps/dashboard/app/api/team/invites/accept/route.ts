@@ -6,6 +6,7 @@ import { teamInvites, teamMembers } from "@/lib/db/schema";
 import { apiError, badRequest, notFound, unauthorized } from "@/lib/api/errors";
 import { acceptInviteSchema } from "@/lib/validations/team";
 import { createNotification } from "@/lib/notifications/service";
+import { log } from "@/lib/log";
 
 /**
  * POST /api/team/invites/accept
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
       membership: memberRecord,
     });
   } catch (error) {
-    console.error("Failed to accept team invite:", error);
+    log.error("Failed to accept team invite:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to accept team invitation");
   }
 }

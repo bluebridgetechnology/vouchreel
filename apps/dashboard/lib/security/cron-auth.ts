@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
+import { log } from "@/lib/log";
 
 function safeEqual(a: string, b: string): boolean {
   const left = Buffer.from(a);
@@ -21,7 +22,7 @@ export function authorizeCron(request: Request): NextResponse | null {
 
   if (!secret) {
     if (process.env.NODE_ENV === "production") {
-      console.error("[cron] CRON_SECRET is not set; refusing to run scheduled jobs.");
+      log.error("[cron] CRON_SECRET is not set; refusing to run scheduled jobs.");
       return NextResponse.json({ error: "Cron is not configured" }, { status: 503 });
     }
     return null;

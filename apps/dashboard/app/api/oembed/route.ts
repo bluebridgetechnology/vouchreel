@@ -9,6 +9,7 @@ import {
   type ApiErrorCode,
 } from "@/lib/api/errors";
 import { getClientIp } from "@/lib/security/client-ip";
+import { log } from "@/lib/log";
 
 /**
  * GET /api/oembed?url=...
@@ -72,7 +73,7 @@ export async function GET(request: Request) {
       return apiError(error.statusCode, code, error.message);
     }
 
-    console.error("Unexpected oEmbed proxy error:", error);
+    log.error("Unexpected oEmbed proxy error:", error);
     return internalError("Failed to fetch video metadata");
   }
 }

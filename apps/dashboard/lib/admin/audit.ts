@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { adminAuditLog } from "@/lib/db/schema";
+import { log } from "@/lib/log";
 
 export interface AuditEntry {
   actorId: string;
@@ -22,7 +23,7 @@ export async function logAdminAction(entry: AuditEntry): Promise<void> {
       changes: entry.changes ?? {},
     });
   } catch (error) {
-    console.error("[audit] failed to record admin action:", error);
+    log.error("[audit] failed to record admin action:", error);
   }
 }
 

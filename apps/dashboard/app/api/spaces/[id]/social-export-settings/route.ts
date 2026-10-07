@@ -7,6 +7,7 @@ import { socialExportSettings, spaces } from "@/lib/db/schema";
 import { getSubscriptionLimits } from "@/lib/payments/subscription";
 import { updateSocialExportSettingsSchema } from "@/lib/validations/social-export";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -71,7 +72,7 @@ export async function GET(_: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("Failed to fetch social export settings:", error);
+    log.error("Failed to fetch social export settings:", error);
     return apiError(
       500,
       "INTERNAL_ERROR",
@@ -149,7 +150,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("Failed to update social export settings:", error);
+    log.error("Failed to update social export settings:", error);
     return apiError(
       500,
       "INTERNAL_ERROR",

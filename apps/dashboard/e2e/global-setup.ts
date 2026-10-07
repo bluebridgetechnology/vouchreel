@@ -43,6 +43,8 @@ export default async function globalSetup(config: FullConfig) {
       }
     }
 
+    // The server runs with email verification required; the seeded people have "confirmed" already
+    await pool.query(`UPDATE "user" SET email_verified = true WHERE email = ANY($1)`, [Object.values(USERS).map((u) => u.email)]);
     await pool.query(`UPDATE "user" SET is_platform_admin = true WHERE email = $1`, [USERS.admin.email]);
     const { rows: [plan] } = await pool.query(`INSERT INTO plans (name, price, interval) VALUES ($1, 1900, 'month') RETURNING id`, [PLAN_NAME]);
     await pool.query(

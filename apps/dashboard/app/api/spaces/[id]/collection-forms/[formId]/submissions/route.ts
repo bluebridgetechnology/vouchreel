@@ -4,6 +4,7 @@ import { apiError } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { collectionForms, spaces, submissions } from "@/lib/db/schema";
+import { log } from "@/lib/log";
 
 interface RouteParams { params: Promise<{ id: string; formId: string }> }
 export async function GET(request: Request, { params }: RouteParams) {
@@ -21,5 +22,5 @@ export async function GET(request: Request, { params }: RouteParams) {
     if (status) conditions.push(eq(submissions.status, status as "pending" | "approved" | "rejected"));
     const items = await db.select().from(submissions).where(and(...conditions)).orderBy(desc(submissions.createdAt));
     return NextResponse.json({ collectionForm, submissions: items });
-  } catch (err) { console.error("Failed to fetch submissions:", err); return apiError(500, "INTERNAL_ERROR", "Failed to fetch submissions"); }
+  } catch (err) { log.error("Failed to fetch submissions:", err); return apiError(500, "INTERNAL_ERROR", "Failed to fetch submissions"); }
 }

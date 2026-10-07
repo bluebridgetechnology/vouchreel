@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { teamMembers, user } from "@/lib/db/schema";
 import { apiError, unauthorized } from "@/lib/api/errors";
+import { log } from "@/lib/log";
 
 export interface TeamMemberItem {
   id: string; // team_members.id or "owner"
@@ -87,7 +88,7 @@ export async function GET() {
       currentUserId: session.user.id,
     });
   } catch (error) {
-    console.error("Failed to list team members:", error);
+    log.error("Failed to list team members:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to list team members");
   }
 }

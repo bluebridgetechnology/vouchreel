@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { apiError, unauthorized } from "@/lib/api/errors";
 import { canAccess } from "@/lib/auth/feature-gate";
 import { getAgencyOverview, AgencyQueryOptions } from "@/lib/agency/queries";
+import { log } from "@/lib/log";
 
 /**
  * GET /api/agency/overview
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
       isEntitled,
     });
   } catch (error) {
-    console.error("Failed to load agency overview:", error);
+    log.error("Failed to load agency overview:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to load agency overview");
   }
 }

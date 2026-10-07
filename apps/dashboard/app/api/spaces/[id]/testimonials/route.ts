@@ -10,6 +10,7 @@ import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 import { verifySpaceAccess } from "@/lib/auth/permissions";
 import { canAddTestimonial } from "@/lib/payments/subscription";
 import { enforceTestimonialLimit } from "@/lib/payments/enforce";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -49,7 +50,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ testimonials: items });
   } catch (error) {
-    console.error("Failed to fetch testimonials:", error);
+    log.error("Failed to fetch testimonials:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch testimonials");
   }
 }
@@ -115,7 +116,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         if (durationSeconds === undefined) durationSeconds = meta.durationSeconds;
         if (!platform) platform = meta.platform;
       } catch (err) {
-        console.warn("Could not auto-fetch oEmbed metadata for testimonial:", err);
+        log.warn("Could not auto-fetch oEmbed metadata for testimonial:", err);
         if (!title) title = "Video Testimonial";
       }
     }
@@ -163,7 +164,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Failed to create testimonial:", error);
+    log.error("Failed to create testimonial:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to create testimonial");
   }
 }

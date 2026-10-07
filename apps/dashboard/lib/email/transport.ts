@@ -1,3 +1,4 @@
+import { log } from "@/lib/log";
 export interface EmailMessage {
   to: string;
   subject: string;
@@ -25,7 +26,7 @@ const defaultFrom = () => process.env.EMAIL_FROM || "Vouchreel <no-reply@vouchre
 export async function sendEmail(message: EmailMessage): Promise<EmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    console.log(`[email:log] to=${message.to} subject="${message.subject}"\n${message.text}`);
+    log.info(`[email:log] to=${message.to} subject="${message.subject}"\n${message.text}`);
     return { sent: false, provider: "log" };
   }
 

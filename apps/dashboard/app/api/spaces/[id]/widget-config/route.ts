@@ -14,6 +14,7 @@ import {
   validationError,
   internalError,
 } from "@/lib/api/errors";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -105,7 +106,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("Failed to fetch widget config:", error);
+    log.error("Failed to fetch widget config:", error);
     return internalError("Failed to fetch widget config");
   }
 }
@@ -191,7 +192,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("Failed to update widget config:", error);
+    log.error("Failed to update widget config:", error);
     return internalError("Failed to update widget config");
   }
 }

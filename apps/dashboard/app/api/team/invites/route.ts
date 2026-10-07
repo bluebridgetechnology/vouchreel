@@ -7,6 +7,7 @@ import { apiError, badRequest, forbidden, unauthorized } from "@/lib/api/errors"
 import { createInviteSchema } from "@/lib/validations/team";
 import { canAccess } from "@/lib/auth/feature-gate";
 import { createInviteToken, sendTeamInviteEmail } from "@/lib/email/invite";
+import { log } from "@/lib/log";
 
 /**
  * GET /api/team/invites
@@ -37,7 +38,7 @@ export async function GET() {
 
     return NextResponse.json({ invites });
   } catch (error) {
-    console.error("Failed to list team invites:", error);
+    log.error("Failed to list team invites:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to list team invites");
   }
 }
@@ -163,7 +164,7 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Failed to create team invite:", error);
+    log.error("Failed to create team invite:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to send team invitation");
   }
 }

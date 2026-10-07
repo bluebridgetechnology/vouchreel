@@ -37,8 +37,8 @@ export const Minimal: React.FC<ReviewVideoProps> = (props) => {
       <AbsoluteFill style={{ justifyContent: "center", padding: (portrait ? 110 : 190) * u }}>
         <div style={{ maxWidth: (portrait ? 860 : 1380) * u }}>
           <div style={{ display: "flex", alignItems: "center", gap: 24 * u, opacity: head }}>
-            <Stars rating={review.rating} size={44 * u} color={starColor} emptyColor={tint(palette, 0.16)} startSeconds={0.2} />
-            <SourceMark source={review.source} u={u} onDark={!onLight} textColor={palette.textMuted} />
+            {review.rating != null && <Stars rating={review.rating} size={44 * u} color={starColor} emptyColor={tint(palette, 0.16)} startSeconds={0.2} />}
+            <SourceMark source={review.source} domain={review.link} u={u} onDark={!onLight} textColor={palette.textMuted} />
           </div>
 
           <div style={{ height: 3 * u, width: 150 * u * ruleWidth, background: ruleColor, margin: `${38 * u}px 0 ${44 * u}px` }} />

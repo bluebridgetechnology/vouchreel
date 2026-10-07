@@ -13,6 +13,7 @@ import { queueSocialExport } from "@/lib/social/pipeline";
 import { createSocialExportSchema } from "@/lib/validations/social-export";
 
 import type { ApiErrorCode } from "@/lib/api/errors";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string; tid: string }>;
@@ -133,7 +134,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ export: createdExport }, { status: 201 });
   } catch (error) {
-    console.error("Failed to trigger social export:", error);
+    log.error("Failed to trigger social export:", error);
     return apiError(
       500,
       "INTERNAL_ERROR",

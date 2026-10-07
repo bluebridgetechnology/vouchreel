@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { spaces, webhookEndpoints } from "@/lib/db/schema";
 import { updateWebhookEndpointSchema } from "@/lib/validations/webhooks";
 import { UnsafeUrlError, assertPublicUrl } from "@/lib/security/ssrf";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string; webhookId: string }>;
@@ -65,7 +66,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ webhook: endpoint });
   } catch (error) {
-    console.error("Failed to fetch webhook:", error);
+    log.error("Failed to fetch webhook:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch webhook");
   }
 }
@@ -123,7 +124,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ webhook: updated });
   } catch (error) {
-    console.error("Failed to update webhook:", error);
+    log.error("Failed to update webhook:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to update webhook");
   }
 }
@@ -159,7 +160,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true, id: deleted.id });
   } catch (error) {
-    console.error("Failed to delete webhook:", error);
+    log.error("Failed to delete webhook:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to delete webhook");
   }
 }

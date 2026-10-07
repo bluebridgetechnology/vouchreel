@@ -13,6 +13,7 @@ import {
   analyticsExportQuerySchema,
   resolveDateRange,
 } from "@/lib/validations/analytics";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -83,7 +84,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("Failed to export analytics CSV:", error);
+    log.error("Failed to export analytics CSV:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to export analytics");
   }
 }

@@ -4,6 +4,7 @@ import { adminSettings } from "../db/schema";
 import type { PaymentProvider, PaymentProviderName } from "./types";
 import { StripeProvider } from "./stripe";
 import { DodoProvider } from "./dodo";
+import { log } from "@/lib/log";
 
 export * from "./types";
 export { StripeProvider, mapStripeSubscriptionStatus } from "./stripe";
@@ -56,7 +57,7 @@ export async function getActivePaymentProviderName(): Promise<PaymentProviderNam
 
     return "stripe";
   } catch (err) {
-    console.warn("Failed to read active payment provider from admin_settings, defaulting to stripe:", err);
+    log.warn("Failed to read active payment provider from admin_settings, defaulting to stripe:", err);
     return "stripe";
   }
 }

@@ -4,6 +4,7 @@ import { forbidden, internalError, notFound, unauthorized } from "@/lib/api/erro
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, reviewSources } from "@/lib/db/schema";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string; sourceId: string }>;
@@ -50,7 +51,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete review source:", error);
+    log.error("Failed to delete review source:", error);
     return internalError("Failed to delete review source");
   }
 }

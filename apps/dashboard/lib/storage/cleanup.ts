@@ -4,6 +4,7 @@ import { collectionForms, generatedVideos, reviewVideos, socialExports, submissi
 import { enqueueJob, type JobExecutor } from "@/lib/jobs/queue";
 import { getStorage } from "@/lib/storage";
 import { keyFromUrl } from "./keys";
+import { log } from "@/lib/log";
 
 /**
  * Deleting stored files when the rows that own them are deleted.
@@ -27,7 +28,7 @@ export function keysFromUrls(urls: (string | null | undefined)[]): string[] {
     if (!url) continue;
     const key = keyFromUrl(url);
     if (key) keys.add(key);
-    else console.warn(`[storage] ${url} is not a file this app stored; it will not be cleaned up`);
+    else log.warn(`[storage] ${url} is not a file this app stored; it will not be cleaned up`);
   }
   return [...keys];
 }

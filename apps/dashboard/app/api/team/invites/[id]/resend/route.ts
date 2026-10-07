@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { teamInvites } from "@/lib/db/schema";
 import { apiError, notFound, unauthorized } from "@/lib/api/errors";
 import { createInviteToken, sendTeamInviteEmail } from "@/lib/email/invite";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -57,7 +58,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       inviteUrl: emailResult.inviteUrl,
     });
   } catch (error) {
-    console.error("Failed to resend team invite:", error);
+    log.error("Failed to resend team invite:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to resend team invitation");
   }
 }

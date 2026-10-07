@@ -15,6 +15,7 @@ import { AI_VIDEO_TEMPLATES, getTemplate, type AiVideoAspect } from "./templates
 import { VOICES, getVoice, isTtsConfigured } from "./tts";
 import { proposeTrim, validateTrim } from "./trim";
 import { deleteVideoFile } from "@/lib/storage/video-files";
+import { log } from "@/lib/log";
 
 export interface CreateDraftInput {
   spaceId: string;
@@ -191,7 +192,7 @@ export async function removeVideo(videoId: string, spaceId: string): Promise<"re
     try {
       await deleteVideoFile(video.outputUrl, "ai");
     } catch (error) {
-      console.error(`[ai-video] could not delete the file of video ${videoId}:`, error);
+      log.error(`[ai-video] could not delete the file of video ${videoId}:`, error);
       throw new AiVideoError(502, "INTERNAL_ERROR", "We could not delete the video file just now. Nothing was changed; please try again.");
     }
     await db.update(generatedVideos).set({ deletedAt: new Date(), outputUrl: null }).where(eq(generatedVideos.id, videoId));

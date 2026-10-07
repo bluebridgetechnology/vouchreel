@@ -11,6 +11,7 @@ import { apiError, validationError } from "@/lib/api/errors";
 import { getOEmbedMetadata, detectPlatform, validateUrl } from "@/lib/oembed";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 import { enforceTestimonialLimit } from "@/lib/payments/enforce";
+import { log } from "@/lib/log";
 
 export const OPTIONS = apiV1Options();
 
@@ -56,7 +57,7 @@ export const GET = withApiKeyAuth(async (request, { apiKey }) => {
       },
     });
   } catch (error) {
-    console.error("v1 GET /testimonials error:", error);
+    log.error("v1 GET /testimonials error:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch testimonials");
   }
 });
@@ -162,7 +163,7 @@ export const POST = withApiKeyAuth(async (request, { apiKey }) => {
 
     return NextResponse.json({ testimonial: newTestimonial }, { status: 201 });
   } catch (error) {
-    console.error("v1 POST /testimonials error:", error);
+    log.error("v1 POST /testimonials error:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to create testimonial");
   }
 });

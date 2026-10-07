@@ -30,6 +30,7 @@ import {
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 import { notifySpaceOwner } from "@/lib/notifications/service";
 import { safeFetch } from "@/lib/security/ssrf";
+import { log } from "@/lib/log";
 
 export interface FiltergraphOptions {
   framing: FramingMode;
@@ -382,7 +383,7 @@ export async function renderSocialExport(exportId: string): Promise<void> {
     });
   } catch (error) {
     const errorMsg = friendlyMediaError(error);
-    console.error(`Social export rendering error for ${exportId}:`, error);
+    log.error(`Social export rendering error for ${exportId}:`, error);
 
     await db
       .update(socialExports)

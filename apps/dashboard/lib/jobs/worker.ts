@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { claimJob, completeJob, failJob, reclaimStaleJobs, type ClaimFilter, type Job } from "./queue";
 import { getJobFailureHandler, getJobHandler, registerBuiltInHandlers } from "./handlers";
 import { startHeartbeat, type HeartbeatOptions } from "./heartbeat";
+import { log } from "@/lib/log";
 
 export interface RunOptions extends ClaimFilter {
   workerId?: string;
@@ -24,13 +25,13 @@ export async function processJob(job: Job): Promise<"done" | "retry" | "failed">
     await completeJob(job.id);
     return "done";
   } catch (error) {
-    console.error(`[worker] job ${job.id} (${job.type}) failed:`, error);
+    log.error(`[worker] job ${job.id} (${job.type}) failed:`, error);
     const outcome = await failJob(job, error);
     if (outcome === "failed") {
       try {
         await getJobFailureHandler(job.type)?.(job.payload, error);
       } catch (settleError) {
-        console.error(`[worker] failure handler for job ${job.id} threw:`, settleError);
+        log.error(`[worker] failure handler for job ${job.id} threw:`, settleError);
       }
     }
     return outcome;
@@ -77,15 +78,15 @@ export async function runWorker(signal: AbortSignal, options: RunOptions = {}): 
   const stop = AbortSignal.any([signal, restart.signal]);
   const heartbeat = options.heartbeat ? startHeartbeat({ workerId, concurrency, ...options.heartbeat, onRestartRequested: () => restart.abort() }) : null;
 
-  console.log(`[worker] ${workerId} started (concurrency ${concurrency})`);
+  log.info(`[worker] ${workerId} started (concurrency ${concurrency})`);
   while (!stop.aborted) {
     if (Date.now() - lastReclaim > 60_000) {
       lastReclaim = Date.now();
       try {
         const n = await reclaimStaleJobs();
-        if (n) console.warn(`[worker] reclaimed ${n} stale job(s)`);
+        if (n) log.warn(`[worker] reclaimed ${n} stale job(s)`);
       } catch (error) {
-        console.error("[worker] reclaim failed:", error);
+        log.error("[worker] reclaim failed:", error);
       }
     }
     let processed = 0;
@@ -93,7 +94,7 @@ export async function runWorker(signal: AbortSignal, options: RunOptions = {}): 
       processed = await drainQueue({ workerId, concurrency, only: options.only, except: options.except });
       heartbeat?.recordProcessed(processed);
     } catch (error) {
-      console.error("[worker] poll failed:", error);
+      log.error("[worker] poll failed:", error);
     }
     if (processed === 0) {
       await new Promise<void>((resolve) => {
@@ -110,5 +111,5 @@ export async function runWorker(signal: AbortSignal, options: RunOptions = {}): 
     }
   }
   await heartbeat?.stop();
-  console.log(`[worker] ${workerId} stopped`);
+  log.info(`[worker] ${workerId} stopped`);
 }

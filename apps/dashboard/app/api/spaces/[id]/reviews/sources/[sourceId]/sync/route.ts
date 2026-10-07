@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, reviewSources } from "@/lib/db/schema";
 import { syncReviewSource } from "@/lib/reviews/sync";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string; sourceId: string }>;
@@ -68,7 +69,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     if (message.includes("Rate limit cooldown")) {
       return badRequest(message);
     }
-    console.error("Failed to sync review source:", error);
+    log.error("Failed to sync review source:", error);
     return internalError(message);
   }
 }

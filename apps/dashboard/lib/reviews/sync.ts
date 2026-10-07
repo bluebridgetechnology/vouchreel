@@ -4,6 +4,7 @@ import { reviewSources, reviews } from "@/lib/db/schema";
 import { decryptCredentials } from "./crypto";
 import { fetchGoogleReviews, NormalizedReview } from "./google";
 import { fetchTrustpilotReviews, fetchTrustpilotStats } from "./trustpilot";
+import { log } from "@/lib/log";
 
 export interface SyncResult {
   sourceId: string;
@@ -157,7 +158,7 @@ export async function syncAllActiveReviewSources(): Promise<{
       // If error was just cooldown, ignore, otherwise log
       const message = err instanceof Error ? err.message : String(err);
       if (!message.includes("Rate limit cooldown")) {
-        console.error(`Failed to sync source ${source.id}:`, err);
+        log.error(`Failed to sync source ${source.id}:`, err);
         errors.push({ sourceId: source.id, error: message });
       }
     }

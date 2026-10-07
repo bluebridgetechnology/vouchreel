@@ -4,9 +4,10 @@ import { durationInFrames, getTemplate, reviewFits, type ReviewVideoProps } from
 export interface ReviewOptionView {
   id: string;
   author: string;
-  rating: number;
+  rating: number | null;
   text: string;
-  source: "google" | "trustpilot";
+  source: "google" | "trustpilot" | "own";
+  link?: string | null;
   date: string | null;
   fits: string[];
 }
@@ -117,7 +118,7 @@ export function estimateSeconds(template: TemplateView, picked: ReviewOptionView
   if (!info || picked.length < template.reviews.min) return null;
   const props: ReviewVideoProps = {
     brand: "#000000",
-    reviews: picked.map((r) => ({ author: r.author, rating: r.rating, text: r.text, source: r.source })),
+    reviews: picked.map((r) => ({ author: r.author, rating: r.rating, text: r.text, source: r.source, ...(r.link ? { link: r.link } : {}) })),
     ...(stats[0] ? { aggregate: stats[0] } : {}),
   };
   return durationInFrames(template.id, props) / 30;

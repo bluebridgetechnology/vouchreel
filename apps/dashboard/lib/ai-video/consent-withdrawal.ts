@@ -7,6 +7,7 @@ import { renderEmail } from "@/lib/email/templates";
 import { notifySpaceOwner } from "@/lib/notifications/service";
 import { getStorage } from "@/lib/storage";
 import { keysFromUrls, queueFileCleanup } from "@/lib/storage/cleanup";
+import { log } from "@/lib/log";
 
 /**
  * A customer withdrawing the agreement they gave to AI video. Withdrawal is recorded on the consent,
@@ -132,6 +133,6 @@ export async function sendConsentReceipt(params: { consentId: string; to: string
     const { html } = renderEmail({ title, body, cta: { label: "Withdraw my agreement", url }, footer: "If you are happy for this to go ahead, you do not need to do anything." });
     await sendEmail({ to: params.to, subject: title, text: `${body}\n\nWithdraw: ${url}`, html });
   } catch (error) {
-    console.error("[consent] could not send the consent receipt:", error);
+    log.error("[consent] could not send the consent receipt:", error);
   }
 }

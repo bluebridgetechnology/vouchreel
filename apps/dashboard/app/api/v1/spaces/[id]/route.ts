@@ -4,6 +4,7 @@ import { withApiKeyAuth, apiV1Options } from "@/lib/api/v1-handler";
 import { db } from "@/lib/db";
 import { spaces, testimonials } from "@/lib/db/schema";
 import { apiError, forbidden, notFound } from "@/lib/api/errors";
+import { log } from "@/lib/log";
 
 export const OPTIONS = apiV1Options();
 
@@ -52,7 +53,7 @@ export const GET = withApiKeyAuth<RouteParams>(
         },
       });
     } catch (error) {
-      console.error("v1 GET /spaces/[id] error:", error);
+      log.error("v1 GET /spaces/[id] error:", error);
       return apiError(500, "INTERNAL_ERROR", "Failed to fetch space");
     }
   }

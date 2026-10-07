@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { REVIEW_RIGHTS_DETAIL, REVIEW_RIGHTS_HEADLINE } from "@/lib/review-video/rights";
+import { rightsTextFor } from "@/lib/review-video/rights";
 import { Badge } from "@/components/ui/badge";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -48,7 +48,7 @@ interface Loaded {
   brandSecondary: string | null;
 }
 
-const SOURCE_NAMES = { google: "Google", trustpilot: "Trustpilot" } as const;
+const SOURCE_NAMES = { google: "Google", trustpilot: "Trustpilot", own: "Added by you" } as const;
 const STATUS_BADGE = { queued: "info", rendering: "info", done: "success", failed: "danger" } as const;
 
 async function readError(res: Response, fallback: string): Promise<string> {
@@ -116,6 +116,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
   );
   const check = template ? checkSelection(template, selected, rights) : null;
   const seconds = data && template ? estimateSeconds(template, picked, data.stats) : null;
+  const rightsText = rightsTextFor(picked.map((r) => r.source));
   const livePreview = useMemo(
     () =>
       data && template
@@ -411,10 +412,12 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                               <span className="min-w-0 flex-1">
                                 <span className="flex flex-wrap items-center gap-2">
                                   <span className="font-medium text-text">{review.author}</span>
-                                  <span className="text-warning-foreground" aria-label={`${review.rating} stars`}>
-                                    {"★".repeat(review.rating)}
-                                    <span className="text-border-strong">{"★".repeat(5 - review.rating)}</span>
-                                  </span>
+                                  {review.rating != null && (
+                                    <span className="text-warning-foreground" aria-label={`${review.rating} stars`}>
+                                      {"★".repeat(review.rating)}
+                                      <span className="text-border-strong">{"★".repeat(5 - review.rating)}</span>
+                                    </span>
+                                  )}
                                   <Badge variant="neutral">{SOURCE_NAMES[review.source]}</Badge>
                                   {review.date && <span className="text-text-muted">{review.date}</span>}
                                 </span>
@@ -431,7 +434,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                   <label className="flex items-start gap-3 rounded-card border bg-surface-sunken/40 p-4 text-xs text-text-muted">
                     <Checkbox checked={rights} onCheckedChange={(v) => setRights(v === true)} className="mt-0.5" />
                     <span>
-                      <span className="font-medium text-text">{REVIEW_RIGHTS_HEADLINE}</span> {REVIEW_RIGHTS_DETAIL}
+                      <span className="font-medium text-text">{rightsText.headline}</span> {rightsText.detail}
                     </span>
                   </label>
 

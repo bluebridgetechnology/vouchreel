@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { spaces, apiKeys } from "@/lib/db/schema";
 import { generateApiKey } from "@/lib/api/api-keys";
 import { createApiKeySchema } from "@/lib/validations/api-keys";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -58,7 +59,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ apiKeys: keys });
   } catch (error) {
-    console.error("Failed to fetch API keys:", error);
+    log.error("Failed to fetch API keys:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch API keys");
   }
 }
@@ -113,7 +114,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Failed to create API key:", error);
+    log.error("Failed to create API key:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to create API key");
   }
 }

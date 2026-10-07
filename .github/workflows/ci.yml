@@ -201,3 +201,72 @@ jobs:
           stopped=$(psql -h localhost -U postgres -tAc "select count(*) from worker_heartbeats where kind = 'video-worker' and stopped_at is not null")
           echo "marked stopped: $stopped"
           [ "$stopped" = "1" ]
+
+  # The optional self-hosted observability stack: the compose files are valid, every service starts,
+  # Grafana has its datasources and dashboard, and an error sent to GlitchTip is stored.
+  observability-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      COMPOSE: >-
+        docker compose -f docker-compose.yml -f docker-compose.production.yml -f docker-compose.observability.yml
+    steps:
+      - uses: actions/checkout@v4
+      - name: Write a throwaway environment
+        run: |
+          cat > .env.production <<ENV
+          POSTGRES_PASSWORD=ci
+          NEXT_PUBLIC_APP_URL=http://localhost:3000
+          METRICS_TOKEN=ci-metrics-token
+          GLITCHTIP_SECRET_KEY=ci-glitchtip-secret-0123456789abcdef
+          GLITCHTIP_DB_PASSWORD=ci
+          GRAFANA_ADMIN_PASSWORD=ci-admin
+          CRON_SECRET=ci-cron
+          ENV
+      - name: The compose files are valid together
+        run: $COMPOSE --env-file .env.production config -q
+      - name: Start the stack (without the app)
+        run: |
+          $COMPOSE --env-file .env.production up -d glitchtip-web glitchtip-worker loki alloy prometheus grafana
+      - name: Every service answers
+        run: |
+          wait_for() { for i in $(seq 1 60); do curl -fsS "$1" >/dev/null 2>&1 && return 0; sleep 3; done; echo "not ready: $1"; $COMPOSE --env-file .env.production logs --tail=80; return 1; }
+          wait_for http://localhost:8001/_health/
+          wait_for http://localhost:3001/api/health
+          docker compose -f docker-compose.yml -f docker-compose.production.yml -f docker-compose.observability.yml --env-file .env.production exec -T loki wget -qO- http://localhost:3100/ready || true
+      - name: Grafana has the datasources and the dashboard
+        run: |
+          curl -fsS -u admin:ci-admin http://localhost:3001/api/datasources | tee /dev/stderr | grep -q '"uid":"loki"'
+          curl -fsS -u admin:ci-admin http://localhost:3001/api/datasources | grep -q '"uid":"prometheus"'
+          curl -fsS -u admin:ci-admin "http://localhost:3001/api/search?query=Vouchreel" | grep -q vouchreel-overview
+      - name: Prometheus has its scrape job configured
+        run: |
+          $COMPOSE --env-file .env.production exec -T prometheus wget -qO- http://localhost:9090/api/v1/targets | grep -q '"job":"vouchreel"'
+      - name: An error sent to GlitchTip is accepted and stored
+        run: |
+          $COMPOSE --env-file .env.production exec -T glitchtip-web ./manage.py shell -c "
+          from django.contrib.auth import get_user_model
+          from apps.organizations_ext.models import Organization
+          from apps.projects.models import Project, ProjectKey
+          u = get_user_model().objects.create_superuser(email='ci@example.com', password='ci-pass-123')
+          org = Organization.objects.create(name='ci')
+          org.add_user(u)
+          p = Project.objects.create(name='vouchreel', organization=org)
+          print('PROJECT=' + str(p.id))
+          print('KEY=' + ProjectKey.objects.filter(project=p).first().public_key.hex)
+          " | tee key.txt
+          PID=$(grep '^PROJECT=' key.txt | cut -d= -f2 | tr -d '\r')
+          KEY=$(grep '^KEY=' key.txt | cut -d= -f2 | tr -d '\r')
+          EVENT_ID=$(cat /proc/sys/kernel/random/uuid | tr -d '-')
+          status=$(curl -sS -o resp.txt -w '%{http_code}' -X POST "http://localhost:8001/api/$PID/store/?sentry_key=$KEY&sentry_version=7" \
+            -H 'Content-Type: application/json' \
+            -d "{\"event_id\":\"$EVENT_ID\",\"message\":\"ci test event\",\"level\":\"error\",\"platform\":\"javascript\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}")
+          echo "store answered $status: $(cat resp.txt)"
+          [ "$status" = "200" ]
+          # Give the worker a moment, then ask the database whether an event arrived
+          sleep 10
+          $COMPOSE --env-file .env.production exec -T glitchtip-postgres psql -U glitchtip -tAc "select count(*) from issue_events_issueevent" | tee count.txt
+          [ "$(tr -d '[:space:]' < count.txt)" -ge 1 ]
+      - name: Logs on failure
+        if: failure()
+        run: $COMPOSE --env-file .env.production logs --tail=200

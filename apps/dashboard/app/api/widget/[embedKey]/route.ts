@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { eq, and, asc, desc, inArray } from "drizzle-orm";
+import { eq, and, asc, desc, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { spaces, testimonials, widgetConfigs, conversionGoals, reviews, experiments, testimonialTranslations, whiteLabelSettings } from "@/lib/db/schema";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import { badRequest, notFound, internalError } from "@/lib/api/errors";
 import { canAccess } from "@/lib/auth/feature-gate";
 import { applyBrandKitToTheme, getBrandKit, toValues } from "@/lib/brand-kit/service";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ embedKey: string }>;
@@ -157,7 +158,7 @@ export async function GET(request: Request, { params }: RouteParams) {
           translationsList = res;
         }
       } catch (err) {
-        console.warn("Could not load translations for widget testimonials:", err);
+        log.warn("Could not load translations for widget testimonials:", err);
       }
     }
 
@@ -193,7 +194,8 @@ export async function GET(request: Request, { params }: RouteParams) {
       })
       .from(reviews)
       .where(
-        and(eq(reviews.spaceId, space.id), eq(reviews.isApproved, true))
+        // Reviews the owner typed in are for videos only: the widget's badges name a provider
+        and(eq(reviews.spaceId, space.id), eq(reviews.isApproved, true), ne(reviews.provider, "own"))
       )
       .orderBy(desc(reviews.reviewDate), desc(reviews.createdAt));
 
@@ -277,7 +279,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       }
     );
   } catch (error) {
-    console.error("Error fetching widget data:", error);
+    log.error("Error fetching widget data:", error);
     return internalError("Internal server error", corsHeaders);
   }
 }

@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/errors";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 import { getClientIp } from "@/lib/security/client-ip";
+import { log } from "@/lib/log";
 
 // navigator.sendBeacon sends cross-origin requests with credentials mode "include",
 // for which browsers reject `Access-Control-Allow-Origin: *`. Reflect the request
@@ -184,7 +185,7 @@ export async function POST(request: Request) {
       { status: 201, headers: corsHeaders }
     );
   } catch (error) {
-    console.error("Failed to insert events:", error);
+    log.error("Failed to insert events:", error);
     return internalError("Failed to store events", corsHeaders);
   }
 }

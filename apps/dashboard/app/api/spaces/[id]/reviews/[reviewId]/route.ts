@@ -12,6 +12,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, reviews } from "@/lib/db/schema";
 import { updateReviewSchema } from "@/lib/validations/reviews";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string; reviewId: string }>;
@@ -70,7 +71,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ review: updated });
   } catch (error) {
-    console.error("Failed to update review status:", error);
+    log.error("Failed to update review status:", error);
     return internalError("Failed to update review status");
   }
 }
@@ -114,7 +115,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete review:", error);
+    log.error("Failed to delete review:", error);
     return internalError("Failed to delete review");
   }
 }

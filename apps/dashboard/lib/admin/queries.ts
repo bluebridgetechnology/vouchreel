@@ -11,6 +11,8 @@ export interface AdminUserRow {
   /** When an admin suspended the account, if they did. */
   suspendedAt: Date | null;
   suspendedReason: string | null;
+  /** Signs in with an authenticator app. */
+  twoFactorEnabled: boolean;
   createdAt: Date;
   planId: string | null;
   planName: string | null;
@@ -50,6 +52,7 @@ async function listAdminUsersAt(q: string | undefined, page: number, pageSize: n
       isPlatformAdmin: user.isPlatformAdmin,
       suspendedAt: user.suspendedAt,
       suspendedReason: user.suspendedReason,
+      twoFactorEnabled: user.twoFactorEnabled,
       createdAt: user.createdAt,
     })
     .from(user)
@@ -87,6 +90,7 @@ async function listAdminUsersAt(q: string | undefined, page: number, pageSize: n
       const sub = subByUser.get(r.id);
       return {
         ...r,
+        twoFactorEnabled: r.twoFactorEnabled === true,
         planId: sub?.planId ?? null,
         planName: sub?.planName ?? null,
         subscriptionStatus: sub?.status ?? null,

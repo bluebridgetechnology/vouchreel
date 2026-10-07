@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { plans, subscriptions } from "@/lib/db/schema";
 import { getPaymentProvider } from "@/lib/payments";
 import { unauthorized, badRequest, notFound, internalError } from "@/lib/api/errors";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
       provider: provider.name,
     });
   } catch (err) {
-    console.error("Checkout creation error:", err);
+    log.error("Checkout creation error:", err);
     const message = err instanceof Error ? err.message : "Failed to create checkout session";
     return internalError(message);
   }

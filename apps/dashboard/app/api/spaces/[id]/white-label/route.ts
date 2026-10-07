@@ -7,6 +7,7 @@ import { whiteLabelSettings } from "@/lib/db/schema";
 import { whiteLabelSettingsSchema } from "@/lib/validations/white-label";
 import { verifySpaceAccess } from "@/lib/auth/permissions";
 import { canAccess } from "@/lib/auth/feature-gate";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -54,7 +55,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       isEntitled,
     });
   } catch (error) {
-    console.error("Failed to fetch white-label settings:", error);
+    log.error("Failed to fetch white-label settings:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch white-label settings");
   }
 }
@@ -136,7 +137,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       isEntitled,
     });
   } catch (error) {
-    console.error("Failed to update white-label settings:", error);
+    log.error("Failed to update white-label settings:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to update white-label settings");
   }
 }

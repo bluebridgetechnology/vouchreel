@@ -14,6 +14,7 @@ import { getClientIp } from "@/lib/security/client-ip";
 import { AI_VIDEO_CONSENT_VERSION } from "@/lib/ai-video/consent";
 import { allowsText, allowsVideo } from "@/lib/collect/modes";
 import { baseMimeType, matchesDeclaredType } from "@/lib/security/video-sniff";
+import { log } from "@/lib/log";
 
 export const runtime = "nodejs";
 
@@ -148,7 +149,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ submission }, { status: 201 });
   } catch (error) {
-    console.error("Failed to create collection submission:", error);
+    log.error("Failed to create collection submission:", error);
     return internalError("Unable to submit your testimonial. Please try again.");
   }
 }

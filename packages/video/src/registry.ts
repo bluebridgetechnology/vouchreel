@@ -157,11 +157,11 @@ export function validateProps(templateId: string, props: ReviewVideoProps): stri
   reviews.forEach((review, i) => {
     const label = `Review ${i + 1}`;
     if (!review.author?.trim()) problems.push(`${label} has no author.`);
-    if (!Number.isInteger(review.rating) || review.rating < 1 || review.rating > 5) problems.push(`${label} needs a rating from 1 to 5.`);
+    if (review.rating == null ? review.source !== "own" : !Number.isInteger(review.rating) || review.rating < 1 || review.rating > 5) problems.push(`${label} needs a rating from 1 to 5.`);
     if (!reviewFits(template, review)) {
       problems.push(`${label} must be between 12 and ${template.maxChars} characters for this template (reviews are never shortened).`);
     }
-    if (review.source !== "google" && review.source !== "trustpilot") problems.push(`${label} has an unknown source.`);
+    if (review.source !== "google" && review.source !== "trustpilot" && review.source !== "own") problems.push(`${label} has an unknown source.`);
   });
 
   if (template.requiresAggregate) {

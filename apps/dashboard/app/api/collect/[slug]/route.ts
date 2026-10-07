@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { collectionForms, spaces, whiteLabelSettings } from "@/lib/db/schema";
 import { badRequest, internalError, notFound } from "@/lib/api/errors";
 import { canAccess } from "@/lib/auth/feature-gate";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ slug: string }>;
@@ -63,7 +64,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("Failed to load public collection form:", error);
+    log.error("Failed to load public collection form:", error);
     return internalError("Failed to load collection form");
   }
 }

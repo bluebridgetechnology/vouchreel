@@ -14,6 +14,9 @@ The database is Postgres. Migrations live in `drizzle/` at the repo root and are
 - [Local development](#local-development)
 - [Environment variables](#environment-variables)
 - [VPS deployment (Docker Compose)](#vps-deployment-docker-compose)
+- [Email verification](#email-verification)
+- [Two-factor sign-in](#two-factor-sign-in)
+- [Self-hosted observability](#self-hosted-observability)
 - [Vercel deployment](#vercel-deployment)
 - [Widget CDN deployment](#widget-cdn-deployment)
 - [Troubleshooting](#troubleshooting)
@@ -132,6 +135,69 @@ The `migrate` service re-runs on every `up`, applying only new migrations. To re
 
 ---
 
+## Email verification
+
+New accounts can be required to confirm their email address before they can sign in. It is off by default.
+
+1. Make sure email is delivered: set `RESEND_API_KEY` and `EMAIL_FROM`, and check that the password reset email arrives.
+2. Mark everyone who already has an account as verified, so they are not locked out:
+   `npm run auth:verify-existing -w @vouchreel/dashboard` (shows the count), then add `-- --apply`.
+3. Set `REQUIRE_EMAIL_VERIFICATION=true` and restart the app.
+
+From then on a new sign-up sees "Check your email", and signing in before using the link is refused and sends a
+fresh link (valid 24 hours). People who sign in with Google are verified by Google.
+
+## Two-factor sign-in
+
+Anyone can turn on two-factor sign-in under Settings, Security: scan a QR code with an authenticator app, confirm
+with a code, and keep the backup codes (shown once, each works once). Sign-in then asks for a code after the
+password. Turning it off needs the password.
+
+**Platform admins must have it on.** Until they do, the Admin area sends them to Settings, Security, and the admin
+API answers 403. Existing admins hit this the first time they open Admin after this release; tell them first.
+`REQUIRE_ADMIN_2FA=false` switches the rule off (for example while testing); leave it unset in production.
+
+**Locked out.** A person who lost their phone uses a backup code. If they lost those too, another platform admin
+opens Admin, Users, the person, "Reset two-factor". It is recorded in the audit log, and nobody can reset their own.
+(If the only admin is locked out, run `UPDATE "user" SET two_factor_enabled = false WHERE email = '...'` and
+`DELETE FROM two_factor WHERE user_id = ...` on the database.)
+
+## Self-hosted observability
+
+Optional. Error tracking, logs and metrics on your own server; nothing is sent to a third party.
+
+| Piece | What it does | Address (this server only) |
+|---|---|---|
+| GlitchTip | Error tracking (Sentry-compatible) | http://127.0.0.1:8001 |
+| Loki + Alloy | Alloy reads every container's logs and stores them in Loki | (internal) |
+| Prometheus | Scrapes `/api/metrics` every 30 s | (internal) |
+| Grafana | Dashboards over logs and metrics | http://127.0.0.1:3001 |
+
+### Set up
+
+1. In `.env.production` fill `METRICS_TOKEN`, `GLITCHTIP_SECRET_KEY`, `GLITCHTIP_DB_PASSWORD`, `GRAFANA_ADMIN_PASSWORD` (use `openssl rand -hex 32`) and `GLITCHTIP_DOMAIN` (the public address you will serve GlitchTip on).
+2. Start everything with the third compose file:
+   ```bash
+   docker compose --env-file .env.production \
+     -f docker-compose.yml -f docker-compose.production.yml -f docker-compose.observability.yml \
+     up -d --build
+   ```
+3. Create the GlitchTip admin: `docker compose ... exec glitchtip-web ./manage.py createsuperuser`, sign in at port 8001, create an organization and a project, and copy the project's DSN.
+4. Put the DSN in `.env.production` as `SENTRY_DSN` and restart `app`, `worker` and `video-worker`. Without a DSN the app sends nothing.
+5. Open Grafana (port 3001, user `admin`). The "Vouchreel overview" dashboard is already there: job queue, workers, and error logs.
+
+Reach the two UIs from outside through your reverse proxy with TLS; both ports are bound to 127.0.0.1 on purpose.
+
+### What it keeps
+
+Errors: 30 days (`GLITCHTIP_RETENTION_DAYS`). Logs: 14 days (`observability/loki.yml`). Metrics: 30 days (`PROMETHEUS_RETENTION`). Everything is scrubbed in the app before it leaves (emails, tokens, and the words people wrote are removed; see `lib/observability/scrub.ts`).
+
+### Notes
+
+- Alloy needs the Docker socket (read-only) to read container logs; that is the usual trade-off of this approach.
+- Sizing: about 1 GB of memory for the whole stack at low traffic. On a small server, run it on a second machine or skip Grafana.
+- CI starts this stack, checks Grafana's datasources and dashboard, and sends a test error to GlitchTip. Not covered by CI: the app-to-GlitchTip path with a real DSN, and Alloy-to-Loki log flow.
+
 ## Vercel deployment
 
 The dashboard deploys to Vercel as a standard Next.js app. It must be configured as a **monorepo project**.
@@ -183,6 +249,9 @@ Run this once before the first deploy of each release that contains new migratio
 | Setting | Why it matters |
 | --- | --- |
 | `CRON_SECRET` | **Required in production.** `/api/cron/process-webhooks` and `/api/cron/sync-reviews` refuse to run (503) without it. Vercel Cron sends it automatically (`vercel.json` schedules both jobs); the VPS compose file runs a `scheduler` service that calls them every 5 minutes / hourly. Generate with `openssl rand -hex 32`. |
+| `SENTRY_DSN` | Optional. Turns on error tracking for the web app and both workers. Any Sentry-compatible server works (hosted Sentry, GlitchTip). Unset = nothing is sent anywhere. Every event is scrubbed first: email addresses, tokens, cookies, request bodies and the words customers wrote are removed; only the account id is kept. `SENTRY_ENVIRONMENT` (default `NODE_ENV`) and `SENTRY_RELEASE` (for example the git commit) label the events. |
+| `LOG_LEVEL`, `LOG_FORMAT` | `LOG_LEVEL` is `debug`, `info` (default), `warn`, `error` or `silent`. `LOG_FORMAT` is `json` (default in production, one line per event) or `text`. Logs are scrubbed the same way as error events. |
+| `METRICS_TOKEN` | Optional. Enables `GET /api/metrics` (Prometheus text: job counts by type and status, oldest waiting job, stale locks, workers online, worker severity). Off (404) when unset; callers send `Authorization: Bearer <token>`. Counts only, nothing about customers. Scrape example: `bearer_token: <token>`, `metrics_path: /api/metrics`. |
 | `TRUSTED_PROXY_HOPS` | Number of reverse proxies in front of the app (Vercel or one nginx/Caddy = `1`, Cloudflare + nginx = `2`, none = `0`). The client IP for rate limiting is taken that many entries from the **end** of `X-Forwarded-For`, because the start of that header is client-controlled. |
 | Job worker | Social exports (and later AI video) run on a Postgres-backed queue (`jobs` table), not in the web process. On a VPS the `worker` compose service processes them (`WORKER_CONCURRENCY`, default 2); it needs FFmpeg, so it is its own image target. Without a worker, call `/api/cron/process-jobs` on a schedule as a fallback. Jobs retry with backoff (3 attempts) and stuck jobs are reclaimed after 15 minutes. Run `db:migrate` first (migration 0015). |
 | Video takedowns | Admin > Moderation lists finished AI videos and review videos and lets a platform admin take one down (migration 0024: run `db:migrate`). A takedown deletes the stored file through the storage adapter (so the public link stops working), clears the URL, records who and why, tells the owner, and does not refund the credit. It only completes when the delete succeeds, so a storage outage leaves the video as it was and the action can be retried. The file URL must contain `ai-videos/` or `review-videos/` (it always does for files this app wrote); anything else is refused rather than guessed. An owner deleting a finished video from their own dashboard also deletes its file (if storage fails the delete is refused with a message and can be retried). Files of videos deleted before this change, and files of social exports, uploaded testimonial videos, spaces and accounts that were deleted, are not removed by the app: clean those up in the bucket. |

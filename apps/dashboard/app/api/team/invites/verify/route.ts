@@ -3,6 +3,7 @@ import { eq, and, gt } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { teamInvites, user } from "@/lib/db/schema";
 import { badRequest, notFound, apiError } from "@/lib/api/errors";
+import { log } from "@/lib/log";
 
 /**
  * GET /api/team/invites/verify?token=...
@@ -57,7 +58,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Failed to verify invite token:", error);
+    log.error("Failed to verify invite token:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to verify invitation");
   }
 }

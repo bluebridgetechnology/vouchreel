@@ -4,6 +4,7 @@ import { apiError } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { socialExports, spaces, testimonials } from "@/lib/db/schema";
+import { log } from "@/lib/log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -55,7 +56,7 @@ export async function GET(_: Request, { params }: RouteParams) {
 
     return NextResponse.json({ exports: exportsList });
   } catch (error) {
-    console.error("Failed to fetch space social exports:", error);
+    log.error("Failed to fetch space social exports:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to fetch space social exports");
   }
 }

@@ -56,7 +56,7 @@ export const DarkCard: React.FC<ReviewVideoProps> = (props) => {
                 {review.date && <div style={{ color: CARD_MUTED, fontSize: 28 * u, marginTop: 4 * u }}>{review.date}</div>}
               </div>
             </div>
-            <Stars rating={review.rating} size={44 * u} emptyColor="rgba(255,255,255,0.16)" startSeconds={0.5} />
+            {review.rating != null && <Stars rating={review.rating} size={44 * u} emptyColor="rgba(255,255,255,0.16)" startSeconds={0.5} />}
           </div>
 
           <WordReveal
@@ -68,7 +68,7 @@ export const DarkCard: React.FC<ReviewVideoProps> = (props) => {
           />
 
           <div style={{ marginTop: 50 * u, opacity: footerIn }}>
-            <SourceMark source={review.source} u={u} onDark />
+            <SourceMark source={review.source} domain={review.link} u={u} onDark />
           </div>
         </div>
       </AbsoluteFill>
