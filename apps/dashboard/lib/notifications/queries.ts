@@ -67,3 +67,36 @@ export async function setPreference(userId: string, type: NotificationType, pref
       set: { ...next, updatedAt: new Date() },
     });
 }
+
+export const INBOX_PAGE_SIZE = 20;
+
+/** A page of the full inbox, optionally only unread, newest first. Pages past the end show the last page. */
+export async function listInbox(userId: string, opts: { page?: number; unreadOnly?: boolean } = {}) {
+  const where = opts.unreadOnly
+    ? and(eq(notifications.userId, userId), isNull(notifications.readAt))
+    : eq(notifications.userId, userId);
+  const [{ value: total }] = await db.select({ value: count() }).from(notifications).where(where);
+  const [{ value: unreadCount }] = await db
+    .select({ value: count() })
+    .from(notifications)
+    .where(and(eq(notifications.userId, userId), isNull(notifications.readAt)));
+  const pages = Math.max(1, Math.ceil(total / INBOX_PAGE_SIZE));
+  const requested = Number.isFinite(opts.page) && (opts.page ?? 1) >= 1 ? Math.floor(opts.page as number) : 1;
+  const page = Math.min(requested, pages);
+  const items = await db
+    .select({
+      id: notifications.id,
+      type: notifications.type,
+      title: notifications.title,
+      body: notifications.body,
+      href: notifications.href,
+      readAt: notifications.readAt,
+      createdAt: notifications.createdAt,
+    })
+    .from(notifications)
+    .where(where)
+    .orderBy(desc(notifications.createdAt), desc(notifications.id))
+    .limit(INBOX_PAGE_SIZE)
+    .offset((page - 1) * INBOX_PAGE_SIZE);
+  return { items, total, unreadCount, page, pages };
+}

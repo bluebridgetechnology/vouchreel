@@ -75,6 +75,17 @@ export default async function globalSetup(config: FullConfig) {
     const fileUrl = (key: string) => `${STORAGE_ORIGIN}/${STORAGE_BUCKET}/${key}`;
     const { rows: [owner] } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [USERS.customer.email]);
     const { rows: [space] } = await pool.query(`INSERT INTO spaces (name, owner_id, embed_key) VALUES ('E2E Moderation Space', $1, 'e2e-moderation') RETURNING id`, [owner.id]);
+    // An inbox of 25 (the first ten unread) and a Slack-format webhook whose address cannot be reached
+    await pool.query(
+      `INSERT INTO notifications (user_id, type, title, body, read_at, created_at)
+       SELECT $1, 'submission.received', 'E2E notice ' || g, 'Seeded for the inbox test', CASE WHEN g > 10 THEN now() ELSE NULL END, now() - (g || ' minutes')::interval
+       FROM generate_series(1, 25) g`,
+      [owner.id]
+    );
+    await pool.query(
+      `INSERT INTO webhook_endpoints (space_id, url, secret, events, format) VALUES ($1, 'https://hooks.slack.invalid/services/T000/B000/e2e', 'whsec_e2e', ARRAY['testimonial.created'], 'slack')`,
+      [space.id]
+    );
     const { rows: [t1] } = await pool.query(
       `INSERT INTO testimonials (space_id, platform, quote, customer_name, customer_company) VALUES ($1, 'text', 'Great product.', 'Ada Lovelace', 'Analytical Co') RETURNING id`,
       [space.id]

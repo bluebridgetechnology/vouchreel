@@ -1,0 +1,1 @@
+ALTER TABLE "webhook_endpoints" ADD COLUMN "format" text DEFAULT 'json' NOT NULL;

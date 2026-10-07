@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { webhookEndpoints, webhookDeliveries } from "@/lib/db/schema";
+import { webhookEndpoints, webhookDeliveries, spaces } from "@/lib/db/schema";
 import { attemptDelivery } from "./deliver";
 import { log } from "@/lib/log";
 
@@ -32,6 +32,7 @@ export async function dispatchWebhookEvent(
         url: webhookEndpoints.url,
         secret: webhookEndpoints.secret,
         events: webhookEndpoints.events,
+        format: webhookEndpoints.format,
       })
       .from(webhookEndpoints)
       .where(
@@ -48,6 +49,12 @@ export async function dispatchWebhookEvent(
 
     if (matchingEndpoints.length === 0) return;
 
+    let spaceName = "";
+    if (matchingEndpoints.some((ep) => ep.format === "slack")) {
+      const [space] = await db.select({ name: spaces.name }).from(spaces).where(eq(spaces.id, event.spaceId));
+      spaceName = space?.name ?? "";
+    }
+
     for (const ep of matchingEndpoints) {
       const [delivery] = await db
         .insert(webhookDeliveries)
@@ -63,7 +70,7 @@ export async function dispatchWebhookEvent(
 
       if (delivery) {
         // Asynchronously attempt immediate delivery
-        attemptDelivery(delivery.id, ep.url, ep.secret, event.event, event.payload).catch(
+        attemptDelivery(delivery.id, ep.url, ep.secret, event.event, event.payload, { format: ep.format, spaceName }).catch(
           (err) => {
             log.error("Error during initial webhook delivery:", err);
           }

@@ -620,6 +620,8 @@ export const webhookEndpoints = pgTable("webhook_endpoints", {
   url: text("url").notNull(),
   secret: text("secret").notNull(),
   events: text("events").array().notNull(),
+  /** "json" posts the event with a signature; "slack" posts {"text": "..."} for a Slack incoming webhook. */
+  format: text("format").$type<"json" | "slack">().default("json").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

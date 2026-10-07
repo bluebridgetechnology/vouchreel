@@ -50,6 +50,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         id: webhookEndpoints.id,
         url: webhookEndpoints.url,
         events: webhookEndpoints.events,
+        format: webhookEndpoints.format,
         isActive: webhookEndpoints.isActive,
         createdAt: webhookEndpoints.createdAt,
       })
@@ -102,12 +103,14 @@ export async function POST(request: Request, { params }: RouteParams) {
         url: validated.data.url,
         secret,
         events: validated.data.events,
+        format: validated.data.format,
         isActive: true,
       })
       .returning({
         id: webhookEndpoints.id,
         url: webhookEndpoints.url,
         events: webhookEndpoints.events,
+        format: webhookEndpoints.format,
         isActive: webhookEndpoints.isActive,
         createdAt: webhookEndpoints.createdAt,
       });

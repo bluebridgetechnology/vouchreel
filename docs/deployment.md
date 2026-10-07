@@ -15,6 +15,7 @@ The database is Postgres. Migrations live in `drizzle/` at the repo root and are
 - [Environment variables](#environment-variables)
 - [VPS deployment (Docker Compose)](#vps-deployment-docker-compose)
 - [Email verification](#email-verification)
+- [Sending notifications to Slack](#sending-notifications-to-slack)
 - [Two-factor sign-in](#two-factor-sign-in)
 - [Self-hosted observability](#self-hosted-observability)
 - [Vercel deployment](#vercel-deployment)
@@ -146,6 +147,18 @@ New accounts can be required to confirm their email address before they can sign
 
 From then on a new sign-up sees "Check your email", and signing in before using the link is refused and sends a
 fresh link (valid 24 hours). People who sign in with Google are verified by Google.
+
+## Sending notifications to Slack
+
+Vouchreel does not need a Slack app. Use Slack's own incoming webhook with a webhook endpoint in Vouchreel:
+
+1. In Slack, create an *Incoming Webhook* for the channel you want (api.slack.com/messaging/webhooks) and copy its URL.
+2. In Vouchreel, Settings, Webhooks: add an endpoint, paste the URL, set **Message format** to **Slack message**, pick the events (new testimonial, new submission, and so on).
+3. Press **Send test** on the endpoint. A test message appears in the channel, or Vouchreel shows what Slack answered.
+
+Messages are one readable line ("New testimonial from Ada in Acme Reviews") with the quote underneath. Customer names and words are escaped so they cannot ping a channel. Failed sends are retried like any other webhook, and the failure shows in the endpoint's logs. The default **JSON** format is unchanged.
+
+The full list of notifications is at **Notifications** (the bell's "View all"), with an unread filter and "Mark all read".
 
 ## Two-factor sign-in
 

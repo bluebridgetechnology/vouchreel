@@ -643,6 +643,55 @@ test.describe("platform admin", () => {
     await context.close();
   });
 
+  test("notification inbox: filter unread, page, open an item, mark all read", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+
+    await open(page, "/notifications");
+    await expect(page.getByRole("heading", { name: "Notifications" })).toBeVisible();
+    await expect(page.getByText(/\d+ unread/)).toBeVisible();
+    await expect(page.getByText("E2E notice 1", { exact: true })).toBeVisible(); // newest first
+    await expect(page.getByText(/Page 1 of \d+/)).toBeVisible();
+
+    await page.getByRole("link", { name: "Older" }).click();
+    await expect(page.getByText(/Page 2 of \d+/)).toBeVisible();
+    // A page past the end shows the last page, where the oldest notice is
+    await open(page, "/notifications?page=99");
+    await expect(page.getByText("E2E notice 25", { exact: true })).toBeVisible();
+
+    await open(page, "/notifications?filter=unread");
+    await expect(page.getByText("E2E notice 10", { exact: true })).toBeVisible();
+    await expect(page.getByText("E2E notice 11", { exact: true })).toHaveCount(0); // read ones are hidden
+
+    // The bell leads here
+    await page.getByRole("button", { name: /Notifications, \d+ unread/ }).first().click();
+    await page.getByRole("menuitem", { name: "View all" }).click();
+    await expect(page).toHaveURL(/\/notifications$/);
+
+    await page.locator("main").getByRole("button", { name: "Mark all read" }).click();
+    await expect(page.locator("main").getByText("You are all caught up")).toBeVisible();
+    await open(page, "/notifications?filter=unread");
+    await expect(page.getByText("Nothing unread.")).toBeVisible();
+    await context.close();
+  });
+
+  test("webhooks: a Slack-format endpoint is marked as one, and the test message reports an unreachable address", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+    await open(page, "/settings/webhooks");
+    await expect(page.getByText("hooks.slack.invalid")).toBeVisible();
+    await expect(page.getByText("Slack", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Send test" }).click();
+    await expect(page.getByText(/Could not reach the endpoint|The endpoint answered/)).toBeVisible();
+
+    // The format choice is on the add form
+    await page.getByRole("button", { name: /Add (Webhook|Endpoint)/ }).first().click();
+    await expect(page.getByLabel("Message format")).toBeVisible();
+    await context.close();
+  });
+
   test("audit log: the actions above are recorded, and filters and paging work", async ({ page }) => {
     await open(page, "/admin?tab=audit&type=user");
     await expect(page.getByText(`Changed plan for ${USERS.customer.email}`)).toBeVisible();

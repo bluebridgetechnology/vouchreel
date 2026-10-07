@@ -4,9 +4,45 @@ import { db } from "@/lib/db";
 import { webhookDeliveries, webhookEndpoints } from "@/lib/db/schema";
 import { notifySpaceOwner } from "@/lib/notifications/service";
 import { assertPublicUrl } from "@/lib/security/ssrf";
+import { slackBody } from "./slack";
 
 // Backoff schedule in seconds: attempt 1 -> 30s, attempt 2 -> 5m, attempt 3 -> 30m
 const RETRY_BACKOFF_SECONDS = [30, 300, 1800];
+
+export interface DeliveryOptions {
+  /** "slack" sends {"text": "..."} instead of the signed JSON envelope. */
+  format?: "json" | "slack";
+  /** Named in the Slack message. */
+  spaceName?: string;
+}
+
+/**
+ * Sends one message now, outside the retry queue, so the owner can see whether an endpoint works.
+ * Nothing is recorded as a delivery.
+ */
+export async function sendTestMessage(url: string, secret: string, format: "json" | "slack", spaceName: string): Promise<{ ok: boolean; status: number | null; detail: string }> {
+  const payload = { message: "This is a test from Vouchreel." };
+  const body = format === "slack" ? slackBody("test", payload, spaceName) : JSON.stringify({ event: "webhook.test", data: payload, timestamp: new Date().toISOString() });
+  try {
+    await assertPublicUrl(url);
+    const response = await fetch(url, {
+      redirect: "manual",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Vouchreel-Signature": `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`,
+        "X-Vouchreel-Event": "webhook.test",
+        "User-Agent": "Vouchreel-Webhooks/1.0",
+      },
+      body,
+      signal: AbortSignal.timeout(10_000),
+    });
+    const detail = (await response.text().catch(() => "")).substring(0, 200);
+    return { ok: response.ok, status: response.status, detail };
+  } catch (error) {
+    return { ok: false, status: null, detail: error instanceof Error ? error.message : "Network/timeout error" };
+  }
+}
 
 /**
  * Executes delivery of a webhook event to the target endpoint URL.
@@ -17,13 +53,17 @@ export async function attemptDelivery(
   url: string,
   secret: string,
   event: string,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  options: DeliveryOptions = {}
 ): Promise<void> {
-  const body = JSON.stringify({
-    event,
-    data: payload,
-    timestamp: new Date().toISOString(),
-  });
+  const body =
+    options.format === "slack"
+      ? slackBody(event, payload, options.spaceName ?? "")
+      : JSON.stringify({
+          event,
+          data: payload,
+          timestamp: new Date().toISOString(),
+        });
 
   const signature = createHmac("sha256", secret).update(body).digest("hex");
 
