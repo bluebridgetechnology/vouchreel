@@ -1,0 +1,18 @@
+name: Install FFmpeg and fonts
+description: >-
+  FFmpeg and a font for the real-FFmpeg tests. The downloaded packages are cached, and the package index is only
+  refreshed if installing without it fails (the refresh is the slow, sometimes very slow, part on a runner).
+runs:
+  using: composite
+  steps:
+    - uses: actions/cache@v4
+      with:
+        path: ~/apt-archives
+        key: apt-ffmpeg-${{ runner.os }}-${{ runner.arch }}-v1
+    - name: Install
+      shell: bash
+      run: |
+        mkdir -p ~/apt-archives/partial
+        install() { sudo apt-get install -y --no-install-recommends -o Dir::Cache::archives="$HOME/apt-archives" ffmpeg fonts-dejavu-core; }
+        install || { sudo apt-get update && install; }
+        ffmpeg -hide_banner -filters | grep -q drawtext
