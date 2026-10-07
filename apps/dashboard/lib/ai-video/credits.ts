@@ -1,4 +1,5 @@
 import { and, eq, gte, inArray, sql } from "drizzle-orm";
+import { adjustmentFor, applyAdjustment } from "@/lib/admin/credit-adjustments";
 import { db } from "@/lib/db";
 import { generatedVideos, spaces } from "@/lib/db/schema";
 import { getSubscriptionLimits } from "@/lib/payments/subscription";
@@ -34,6 +35,6 @@ export async function getAiVideoCredits(ownerId: string, executor: Executor = db
       )
     );
   const used = row?.used ?? 0;
-  const limit = limits.aiVideoCredits;
+  const limit = applyAdjustment(limits.aiVideoCredits, await adjustmentFor(ownerId, "ai", now));
   return { limit, used, remaining: Math.max(0, limit - used) };
 }

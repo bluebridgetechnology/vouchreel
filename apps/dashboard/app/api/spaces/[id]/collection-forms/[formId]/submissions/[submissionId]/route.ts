@@ -1,3 +1,4 @@
+import { sendConsentReceipt } from "@/lib/ai-video/consent-withdrawal";
 import { NextResponse } from "next/server";
 import { and, eq, max } from "drizzle-orm";
 import { apiError } from "@/lib/api/errors";
@@ -25,6 +26,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       const blocked = await enforceTestimonialLimit(id);
       if (blocked) return blocked;
     }
+    let consentId: string | null = null;
     const result = await db.transaction(async (tx) => {
       const [submission] = await tx.update(submissions).set({ status: parsed.data.status })
         .where(and(eq(submissions.id, submissionId), eq(submissions.formId, formId), eq(submissions.status, "pending"))).returning();
@@ -41,14 +43,20 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       }).returning();
       // Carry the customer's AI-video consent over to the testimonial, with the wording version they saw
       if (submission.type === "text" && submission.aiVideoConsentAt && submission.aiVideoConsentVersion) {
-        await tx.insert(testimonialConsents).values({
+        const [consent] = await tx.insert(testimonialConsents).values({
           testimonialId: testimonial.id, spaceId: id, kind: "ai_video", source: "collect_form",
           textVersion: submission.aiVideoConsentVersion, submissionId: submission.id, grantedAt: submission.aiVideoConsentAt,
-        });
+        }).returning({ id: testimonialConsents.id });
+        consentId = consent.id;
       }
       return { submission, testimonial };
     });
     if (!result) return apiError(400, "BAD_REQUEST", "Submission has already been reviewed or was not found");
+    // Tell the customer what they agreed to and how to withdraw. Sent after the approval is saved; never blocks it.
+    if (consentId && result.submission.customerEmail) {
+      const [space] = await db.select({ name: spaces.name }).from(spaces).where(eq(spaces.id, id));
+      void sendConsentReceipt({ consentId, to: result.submission.customerEmail, name: result.submission.customerName, spaceName: space?.name ?? form.title });
+    }
     if (parsed.data.status === "approved" && result.submission) {
       dispatchWebhookEvent({
         event: "submission.approved",

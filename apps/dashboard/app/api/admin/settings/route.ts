@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { adminSettings } from "@/lib/db/schema";
 import { getActivePaymentProviderName } from "@/lib/payments";
-import { isPlatformAdmin } from "@/lib/auth/platform-admin";
+import { isPlatformAdminFresh } from "@/lib/auth/platform-admin-server";
 import { logAdminAction } from "@/lib/admin/audit";
 import {
   unauthorized,
@@ -27,7 +27,7 @@ export async function GET() {
       return unauthorized("Unauthorized");
     }
 
-    if (!isPlatformAdmin(session.user)) {
+    if (!(await isPlatformAdminFresh(session.user))) {
       return forbidden("Forbidden: Admin access required");
     }
 
@@ -54,7 +54,7 @@ export async function PUT(request: Request) {
       return unauthorized("Unauthorized");
     }
 
-    if (!isPlatformAdmin(session.user)) {
+    if (!(await isPlatformAdminFresh(session.user))) {
       return forbidden("Forbidden: Admin access required");
     }
 

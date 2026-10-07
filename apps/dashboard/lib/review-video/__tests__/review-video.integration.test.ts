@@ -9,6 +9,8 @@ const url = process.env.TEST_DATABASE_URL;
 const run = url ? describe : describe.skip;
 
 const uploads: { key: string; size: number }[] = [];
+const deletedKeys: string[] = [];
+let failDelete = false;
 let monthlyCredits = 2;
 
 vi.mock("@/lib/storage", () => ({
@@ -16,6 +18,10 @@ vi.mock("@/lib/storage", () => ({
     upload: async (buf: Buffer, key: string) => {
       uploads.push({ key, size: buf.length });
       return `https://cdn.test/${key}`;
+    },
+    delete: async (key: string) => {
+      if (failDelete) throw new Error("bucket unreachable");
+      deletedKeys.push(key);
     },
   }),
 }));
@@ -118,6 +124,8 @@ run("review videos (postgres)", () => {
     const video = await svc.createReviewVideo(base());
     expect(video.status).toBe("queued");
     expect(video.rightsConfirmedAt).toBeTruthy();
+    // The wording the owner agreed to is recorded, so the confirmation can be matched to it later
+    expect(video.rightsWordingVersion).toBe((await import("../rights")).REVIEW_RIGHTS_VERSION);
     expect(video.reviewIds).toEqual([ids.reviews[0]]);
 
     const props = video.props as { reviews: { text: string; author: string; date: string; source: string }[]; brand: string };
@@ -190,19 +198,43 @@ run("review videos (postgres)", () => {
     await expect(svc.createReviewVideo(base())).resolves.toMatchObject({ status: "queued" });
   });
 
-  it("deleting a finished video keeps its credit used; drafts of failures are removed", async () => {
+  it("deleting a finished video keeps its credit used and deletes its file; drafts of failures are removed", async () => {
     monthlyCredits = 1;
+    deletedKeys.length = 0;
     const done = await svc.createReviewVideo(base());
-    await db.update(s.reviewVideos).set({ status: "done", outputUrl: "https://cdn.test/x.mp4" }).where(eq(s.reviewVideos.id, done.id));
+    const key = `review-videos/${ids.space}/${done.id}-abc.mp4`;
+    await db.update(s.reviewVideos).set({ status: "done", outputUrl: `https://cdn.test/${key}` }).where(eq(s.reviewVideos.id, done.id));
     expect(await svc.removeReviewVideo(done.id, ids.space)).toBe("archived");
+    expect(deletedKeys).toEqual([key]); // the public file is gone, not just the link in the database
     expect((await svc.getReviewVideoCredits(ids.user)).used).toBe(1);
     await expect(svc.createReviewVideo(base())).rejects.toMatchObject({ code: "PLAN_LIMIT" });
     expect(await svc.listReviewVideos(ids.space)).toHaveLength(0);
 
     const failed = await db.insert(s.reviewVideos).values({ spaceId: ids.space, template: "spotlight", status: "failed", props: {}, rightsConfirmedAt: new Date() }).returning();
     expect(await svc.removeReviewVideo(failed[0].id, ids.space)).toBe("removed");
+    expect(deletedKeys).toHaveLength(1); // a failed video has no file
     const queued = await db.insert(s.reviewVideos).values({ spaceId: ids.space, template: "spotlight", status: "queued", props: {}, rightsConfirmedAt: new Date() }).returning();
     await expect(svc.removeReviewVideo(queued[0].id, ids.space)).rejects.toMatchObject({ status: 400 });
+  });
+
+  it("leaves a finished video as it was when its file cannot be deleted, and succeeds on retry", async () => {
+    monthlyCredits = 5;
+    deletedKeys.length = 0;
+    const done = await svc.createReviewVideo(base());
+    const url = `https://cdn.test/review-videos/${ids.space}/${done.id}-abc.mp4`;
+    await db.update(s.reviewVideos).set({ status: "done", outputUrl: url }).where(eq(s.reviewVideos.id, done.id));
+
+    failDelete = true;
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(svc.removeReviewVideo(done.id, ids.space)).rejects.toMatchObject({ status: 502 });
+    err.mockRestore();
+    failDelete = false;
+    const [untouched] = await db.select().from(s.reviewVideos).where(eq(s.reviewVideos.id, done.id));
+    expect(untouched.deletedAt).toBeNull();
+    expect(untouched.outputUrl).toBe(url);
+
+    expect(await svc.removeReviewVideo(done.id, ids.space)).toBe("archived");
+    expect(deletedKeys).toHaveLength(1);
   });
 
   it("renders a real MP4 with Remotion, uploads it, and marks the video done", async () => {

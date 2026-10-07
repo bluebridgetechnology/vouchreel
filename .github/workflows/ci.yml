@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Lets a branch without a pull request be checked by hand
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -50,3 +52,152 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # The unit job above runs with the database mocked. This one runs the same tests against a real
+  # Postgres (the *.integration.test.ts files skip themselves without TEST_DATABASE_URL), including
+  # the real Remotion render, and the Playwright smoke tests for /admin on a production build.
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      # An S3-compatible server for the storage adapter tests
+      moto:
+        image: motoserver/moto:latest
+        ports:
+          - 5555:5000
+    env:
+      PGPASSWORD: postgres
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vouchreel_test
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vouchreel_test
+      E2E_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vouchreel_e2e
+      # An S3-compatible server (moto) for the storage adapter tests
+      S3_TEST_ENDPOINT: http://127.0.0.1:5555
+      BETTER_AUTH_SECRET: ci-only-secret-0123456789abcdef0123456789abcdef
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install FFmpeg and fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core
+
+      - run: npm ci
+
+      - name: Wait for the S3-compatible server
+        run: for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:5555 && exit 0; sleep 1; done; echo "moto did not start"; exit 1
+
+      - name: Create and migrate the databases
+        run: |
+          psql -h localhost -U postgres -c "CREATE DATABASE vouchreel_test"
+          psql -h localhost -U postgres -c "CREATE DATABASE vouchreel_e2e"
+          # Straight through the workspace: turbo only passes the variables its config lists, and not these ones
+          npm run db:migrate -w @vouchreel/dashboard
+          DATABASE_URL="$E2E_DATABASE_URL" npm run db:migrate -w @vouchreel/dashboard
+
+      - name: Unit and integration tests against Postgres
+        run: |
+          npm test -w @vouchreel/dashboard
+          npm test -w @vouchreel/video
+
+      - name: Real-render test (Remotion + Chromium)
+        run: npm run test:render -w @vouchreel/video
+
+      - name: Install the Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+        working-directory: apps/dashboard
+
+      - name: Build for the browser tests
+        run: npm run build:e2e -w @vouchreel/dashboard
+        env:
+          DATABASE_URL: ${{ env.E2E_DATABASE_URL }}
+
+      # The suite reseeds the database on every run, so each browser gets a clean start
+      - name: Browser smoke tests (/admin) in Chromium
+        run: npm run test:e2e -w @vouchreel/dashboard
+      - name: Browser smoke tests (/admin) in Firefox
+        run: E2E_BROWSER=firefox npm run test:e2e -w @vouchreel/dashboard
+      - name: Browser smoke tests (/admin) in WebKit
+        run: E2E_BROWSER=webkit npm run test:e2e -w @vouchreel/dashboard
+
+      - name: Keep the Playwright report when it fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: apps/dashboard/e2e/.results
+          if-no-files-found: ignore
+
+  # Builds the real video-worker image (Debian, Chromium libraries, fonts, pre-built compositions),
+  # then proves it works: it renders a frame, and as a worker it reports a working Chromium.
+  video-worker-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: postgres
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run db:migrate -w @vouchreel/dashboard
+
+      - name: Build the video-worker image
+        run: docker build --target video-worker -t vouchreel-video-worker .
+
+      - name: The image can render a frame
+        run: |
+          docker run --rm --entrypoint sh vouchreel-video-worker -c '
+            cd /repo/packages/video &&
+            npx tsx scripts/preview.ts --template=minimal --aspect=9:16 --times=3 &&
+            test -s out/minimal-9x16-t3.png'
+
+      - name: As a worker it reports in with a working Chromium
+        run: |
+          docker run -d --name vw --network host \
+            -e DATABASE_URL="$DATABASE_URL" \
+            vouchreel-video-worker
+          for i in $(seq 1 30); do
+            row=$(psql -h localhost -U postgres -tAc "select capabilities->>'chromium' from worker_heartbeats where kind = 'video-worker' limit 1")
+            [ -n "$row" ] && break
+            sleep 2
+          done
+          echo "chromium: $row"
+          docker logs vw
+          [ "$row" = "ok" ]
+          docker stop vw
+          stopped=$(psql -h localhost -U postgres -tAc "select count(*) from worker_heartbeats where kind = 'video-worker' and stopped_at is not null")
+          echo "marked stopped: $stopped"
+          [ "$stopped" = "1" ]

@@ -40,6 +40,16 @@ export const NOTIFICATION_CATALOG = {
     description: "A review video could not be created. The credit is not used.",
     defaults: { inApp: true, email: false },
   },
+  "video.removed": {
+    label: "Video removed by our team",
+    description: "A video you made was taken down by a platform administrator. The message says why.",
+    defaults: { inApp: true, email: true },
+  },
+  "consent.withdrawn": {
+    label: "AI video consent withdrawn",
+    description: "A customer withdrew their agreement to AI video. Videos made under it were removed and no new one can be made.",
+    defaults: { inApp: true, email: true },
+  },
   "webhook.failing": {
     label: "Webhook deliveries failing",
     description: "A webhook endpoint exhausted its retries.",

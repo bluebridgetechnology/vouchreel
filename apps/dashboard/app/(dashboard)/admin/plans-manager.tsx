@@ -215,10 +215,10 @@ export function PlansManager({ plans }: { plans: AdminPlan[] }) {
           <TableRow>
             <TableHead>Plan</TableHead>
             <TableHead>Price</TableHead>
-            <TableHead>Spaces</TableHead>
-            <TableHead>Testimonials</TableHead>
-            <TableHead>Subscribers</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead className="hidden md:table-cell">Spaces</TableHead>
+            <TableHead className="hidden md:table-cell">Testimonials</TableHead>
+            <TableHead className="hidden md:table-cell">Subscribers</TableHead>
+            <TableHead className="hidden md:table-cell">Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -228,15 +228,18 @@ export function PlansManager({ plans }: { plans: AdminPlan[] }) {
               <TableCell>
                 <div className="font-medium">{plan.name}</div>
                 {plan.badge && <Badge variant="brand">{plan.badge}</Badge>}
+                <div className="mt-1 text-xs text-text-muted md:hidden">
+                  {plan.isActive ? "Active" : "Archived"} · {plan.subscriberCount} subscribers
+                </div>
               </TableCell>
               <TableCell className="tabular-nums">
                 ${dollars(plan.price)}
                 <span className="text-xs text-text-muted"> / {plan.interval}</span>
               </TableCell>
-              <TableCell className="tabular-nums">{limitLabel(plan.limits.maxSpaces)}</TableCell>
-              <TableCell className="tabular-nums">{limitLabel(plan.limits.maxTestimonialsPerSpace)}</TableCell>
-              <TableCell className="tabular-nums">{plan.subscriberCount}</TableCell>
-              <TableCell>
+              <TableCell className="hidden tabular-nums md:table-cell">{limitLabel(plan.limits.maxSpaces)}</TableCell>
+              <TableCell className="hidden tabular-nums md:table-cell">{limitLabel(plan.limits.maxTestimonialsPerSpace)}</TableCell>
+              <TableCell className="hidden tabular-nums md:table-cell">{plan.subscriberCount}</TableCell>
+              <TableCell className="hidden md:table-cell">
                 <Badge variant={plan.isActive ? "success" : "neutral"}>{plan.isActive ? "Active" : "Archived"}</Badge>
               </TableCell>
               <TableCell>

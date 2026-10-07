@@ -3,9 +3,10 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
+  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl as awsGetSignedUrl } from "@aws-sdk/s3-request-presigner";
-import type { StorageAdapter, UploadOptions } from "./types";
+import type { StorageAdapter, StoredFile, UploadOptions } from "./types";
 
 /**
  * S3-compatible storage adapter.
@@ -77,6 +78,19 @@ export class S3Adapter implements StorageAdapter {
         Key: key,
       })
     );
+  }
+
+  async *list(prefix: string): AsyncIterable<StoredFile> {
+    let token: string | undefined;
+    do {
+      const page = await this.client.send(
+        new ListObjectsV2Command({ Bucket: this.bucket, Prefix: prefix, ContinuationToken: token })
+      );
+      for (const object of page.Contents ?? []) {
+        if (object.Key) yield { key: object.Key, size: object.Size ?? 0, lastModified: object.LastModified ?? new Date(0) };
+      }
+      token = page.IsTruncated ? page.NextContinuationToken : undefined;
+    } while (token);
   }
 
   async getSignedUrl(key: string, expiresIn = 3600): Promise<string> {

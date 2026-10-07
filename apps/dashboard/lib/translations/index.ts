@@ -11,8 +11,16 @@ export * from "./manager";
 
 /**
  * Returns the configured translation provider based on available environment variables
- * or explicit provider name. Falls back to MockTranslationProvider when no keys are provided.
+ * or explicit provider name. Without a key the mock provider ("[ES] text") is only used outside
+ * production, or when TRANSLATION_ALLOW_MOCK=1: customers must never be shown fake translations.
  */
+export class TranslationNotConfiguredError extends Error {
+  constructor() {
+    super("Translation is not configured: set DEEPL_API_KEY or GOOGLE_TRANSLATE_API_KEY.");
+    this.name = "TranslationNotConfiguredError";
+  }
+}
+
 export function getTranslationProvider(providerName?: string): TranslationProvider {
   if (providerName === "mock") {
     return new MockTranslationProvider();
@@ -32,5 +40,8 @@ export function getTranslationProvider(providerName?: string): TranslationProvid
     return new GoogleTranslateProvider();
   }
 
+  if (process.env.NODE_ENV === "production" && process.env.TRANSLATION_ALLOW_MOCK !== "1") {
+    throw new TranslationNotConfiguredError();
+  }
   return new MockTranslationProvider();
 }

@@ -393,7 +393,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
               id="delete-testimonial-desc"
               className="mt-2 text-xs text-text-muted"
             >
-              Are you sure you want to delete this testimonial? It will no longer be displayed in your website widget.
+              This permanently deletes the testimonial and its video files, including any social exports and AI videos made from it. It cannot be undone. To hide it from your widget without deleting it, use Disable instead.
             </p>
             {deletingTestimonial.title && (
               <p className="mt-2 rounded-control bg-surface-sunken p-2 font-medium text-xs text-text">

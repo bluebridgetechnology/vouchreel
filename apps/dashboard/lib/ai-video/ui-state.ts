@@ -15,6 +15,9 @@ export interface AiVideoView {
   durationSeconds: number | null;
   error: string | null;
   createdAt: string;
+  /** Set when a platform administrator took the video down; its file is gone. */
+  moderatedAt?: string | null;
+  moderationReason?: string | null;
   diff?: DiffToken[] | null;
 }
 

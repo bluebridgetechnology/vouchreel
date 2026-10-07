@@ -1,3 +1,4 @@
+import { queueFileCleanup } from "@/lib/storage/cleanup";
 import { randomUUID } from "crypto";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
@@ -79,6 +80,9 @@ export async function transcodeSubmission(submissionId: string) {
       .update(submissions)
       .set({ videoUrl, thumbnailUrl, processingStatus: "done", processingError: null })
       .where(eq(submissions.id, submissionId));
+
+    // The transcoded copy replaced the raw upload, which nothing points at any more: delete it
+    await queueFileCleanup([submission.videoUrl]).catch((error) => console.error(`Could not queue cleanup of the raw upload of ${submissionId}:`, error));
   } catch (error) {
     console.error(`Failed to transcode submission ${submissionId}:`, error);
     const reason = friendlyMediaError(error);

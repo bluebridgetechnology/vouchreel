@@ -4,6 +4,7 @@ import { PATCH, DELETE } from "../[id]/route";
 import { getSession } from "@/lib/auth/session";
 
 vi.mock("@/lib/auth/session", () => ({ getSession: vi.fn() }));
+vi.mock("@/lib/auth/platform-admin-server", () => ({ isPlatformAdminFresh: async (u: { isPlatformAdmin?: boolean } | null) => u?.isPlatformAdmin === true }));
 
 const inserted = vi.fn();
 const insertResult = vi.fn();

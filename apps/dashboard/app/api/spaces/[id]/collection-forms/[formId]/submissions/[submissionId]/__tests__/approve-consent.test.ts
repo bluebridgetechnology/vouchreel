@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const consentInsert = vi.fn();
+const receipt = vi.fn();
 let submissionRow: Record<string, unknown>;
 
 vi.mock("@/lib/auth/session", () => ({ getSession: async () => ({ user: { id: "owner-1" } }) }));
 vi.mock("@/lib/payments/enforce", () => ({ enforceTestimonialLimit: async () => null }));
+vi.mock("@/lib/ai-video/consent-withdrawal", () => ({ sendConsentReceipt: (...a: unknown[]) => receipt(...a) }));
 vi.mock("@/lib/webhooks/dispatch", () => ({ dispatchWebhookEvent: vi.fn(() => Promise.resolve()) }));
 
 vi.mock("@/lib/db", () => {
@@ -26,7 +28,7 @@ vi.mock("@/lib/db", () => {
       values: (v: unknown) => {
         if (table.__name === "testimonialConsents") {
           consentInsert(v);
-          return Promise.resolve();
+          return { returning: () => Promise.resolve([{ id: "consent-1" }]) };
         }
         return { returning: () => Promise.resolve([{ id: "t-1", ...(v as object) }]) };
       },
@@ -54,15 +56,30 @@ const approve = () =>
   PATCH(new Request("http://localhost", { method: "PATCH", body: JSON.stringify({ status: "approved" }) }), ctx);
 
 describe("approving a submission carries AI video consent to the testimonial", () => {
-  beforeEach(() => consentInsert.mockClear());
+  beforeEach(() => {
+    consentInsert.mockClear();
+    receipt.mockClear();
+  });
 
   it("creates a consent row with the wording version and timestamp the customer agreed to", async () => {
     const grantedAt = new Date("2026-10-01T10:00:00Z");
-    submissionRow = { id: "sub-1", type: "text", text: "Great", customerName: "Ada", aiVideoConsentAt: grantedAt, aiVideoConsentVersion: "2026-10-v1" };
+    submissionRow = { id: "sub-1", type: "text", text: "Great", customerName: "Ada", customerEmail: "ada@example.test", aiVideoConsentAt: grantedAt, aiVideoConsentVersion: "2026-10-v1" };
     expect((await approve()).status).toBe(200);
     expect(consentInsert).toHaveBeenCalledWith(
       expect.objectContaining({ testimonialId: "t-1", spaceId: "space-1", source: "collect_form", textVersion: "2026-10-v1", submissionId: "sub-1", grantedAt })
     );
+  });
+
+  it("emails the customer a receipt with the link to withdraw, only when they consented", async () => {
+    submissionRow = { id: "sub-1", type: "text", text: "Great", customerName: "Ada", customerEmail: "ada@example.test", aiVideoConsentAt: new Date(), aiVideoConsentVersion: "2026-10-v1" };
+    await approve();
+    expect(receipt).toHaveBeenCalledTimes(1);
+    expect(receipt).toHaveBeenCalledWith(expect.objectContaining({ consentId: "consent-1", to: "ada@example.test", name: "Ada" }));
+
+    receipt.mockClear();
+    submissionRow = { id: "sub-1", type: "text", text: "Great", customerName: "Ada", customerEmail: "ada@example.test", aiVideoConsentAt: null, aiVideoConsentVersion: null };
+    await approve();
+    expect(receipt).not.toHaveBeenCalled();
   });
 
   it("creates no consent row when the customer did not consent", async () => {

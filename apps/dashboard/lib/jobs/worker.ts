@@ -1,11 +1,14 @@
 import { randomUUID } from "crypto";
 import { claimJob, completeJob, failJob, reclaimStaleJobs, type ClaimFilter, type Job } from "./queue";
 import { getJobFailureHandler, getJobHandler, registerBuiltInHandlers } from "./handlers";
+import { startHeartbeat, type HeartbeatOptions } from "./heartbeat";
 
 export interface RunOptions extends ClaimFilter {
   workerId?: string;
   /** Max jobs processed in parallel. */
   concurrency?: number;
+  /** Report liveness to the admin area while running (long-running workers only). */
+  heartbeat?: Pick<HeartbeatOptions, "kind" | "capabilities">;
 }
 
 /** Runs one claimed job to completion, recording success or failure. */
@@ -69,9 +72,13 @@ export async function runWorker(signal: AbortSignal, options: RunOptions = {}): 
   const concurrency = Math.max(1, options.concurrency ?? Number(process.env.WORKER_CONCURRENCY ?? 2));
   const pollMs = Number(process.env.WORKER_POLL_MS ?? 2000);
   let lastReclaim = 0;
+  // An admin's restart request ends the loop the same way a shutdown signal does
+  const restart = new AbortController();
+  const stop = AbortSignal.any([signal, restart.signal]);
+  const heartbeat = options.heartbeat ? startHeartbeat({ workerId, concurrency, ...options.heartbeat, onRestartRequested: () => restart.abort() }) : null;
 
   console.log(`[worker] ${workerId} started (concurrency ${concurrency})`);
-  while (!signal.aborted) {
+  while (!stop.aborted) {
     if (Date.now() - lastReclaim > 60_000) {
       lastReclaim = Date.now();
       try {
@@ -84,13 +91,14 @@ export async function runWorker(signal: AbortSignal, options: RunOptions = {}): 
     let processed = 0;
     try {
       processed = await drainQueue({ workerId, concurrency, only: options.only, except: options.except });
+      heartbeat?.recordProcessed(processed);
     } catch (error) {
       console.error("[worker] poll failed:", error);
     }
     if (processed === 0) {
       await new Promise<void>((resolve) => {
         const t = setTimeout(resolve, pollMs);
-        signal.addEventListener(
+        stop.addEventListener(
           "abort",
           () => {
             clearTimeout(t);
@@ -101,5 +109,6 @@ export async function runWorker(signal: AbortSignal, options: RunOptions = {}): 
       });
     }
   }
+  await heartbeat?.stop();
   console.log(`[worker] ${workerId} stopped`);
 }

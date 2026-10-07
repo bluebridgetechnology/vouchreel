@@ -44,7 +44,8 @@ export interface ReviewVideoProps {
 }
 
 export const SOURCE_LABELS: Record<ReviewSource, string> = {
-  google: "Google Reviews",
+  /** Reviews come from the Google Places API, whose attribution rule (as last read, not confirmed against the policy page) is the Google Maps logo or the text "Google Maps". See docs/gaps-register.md P3. */
+  google: "Google Maps",
   trustpilot: "Trustpilot",
 };
 

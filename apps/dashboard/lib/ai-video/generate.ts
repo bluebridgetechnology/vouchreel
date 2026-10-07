@@ -14,6 +14,7 @@ import { AiVideoError } from "./errors";
 import { AI_VIDEO_TEMPLATES, getTemplate, type AiVideoAspect } from "./templates";
 import { VOICES, getVoice, isTtsConfigured } from "./tts";
 import { proposeTrim, validateTrim } from "./trim";
+import { deleteVideoFile } from "@/lib/storage/video-files";
 
 export interface CreateDraftInput {
   spaceId: string;
@@ -174,11 +175,11 @@ export async function approveDraft(input: ApproveInput) {
 
 /**
  * Owner deletes a video. A finished video is archived rather than removed, otherwise deleting
- * it would hand the credit back. Drafts and failed videos used no credit and are removed.
+ * it would hand the credit back, but its stored file is deleted so the public link stops working. Drafts and failed videos used no credit and are removed.
  */
 export async function removeVideo(videoId: string, spaceId: string): Promise<"removed" | "archived"> {
   const [video] = await db
-    .select({ status: generatedVideos.status, deletedAt: generatedVideos.deletedAt })
+    .select({ status: generatedVideos.status, deletedAt: generatedVideos.deletedAt, outputUrl: generatedVideos.outputUrl })
     .from(generatedVideos)
     .where(and(eq(generatedVideos.id, videoId), eq(generatedVideos.spaceId, spaceId)));
   if (!video || video.deletedAt) throw new AiVideoError(404, "NOT_FOUND", "Video not found");
@@ -186,6 +187,13 @@ export async function removeVideo(videoId: string, spaceId: string): Promise<"re
     throw new AiVideoError(400, "BAD_REQUEST", "This video is being created. Wait for it to finish.");
   }
   if (video.status === "done") {
+    // The file is public, so deleting the video must delete it too. If storage fails nothing changes and the owner can retry.
+    try {
+      await deleteVideoFile(video.outputUrl, "ai");
+    } catch (error) {
+      console.error(`[ai-video] could not delete the file of video ${videoId}:`, error);
+      throw new AiVideoError(502, "INTERNAL_ERROR", "We could not delete the video file just now. Nothing was changed; please try again.");
+    }
     await db.update(generatedVideos).set({ deletedAt: new Date(), outputUrl: null }).where(eq(generatedVideos.id, videoId));
     return "archived";
   }

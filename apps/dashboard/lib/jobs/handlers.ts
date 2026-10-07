@@ -24,6 +24,8 @@ export const JOB_TYPES = {
   aiVideo: "ai_video",
   /** Rendered by the video worker only (needs Chromium); see lib/jobs/main-video.ts. */
   reviewVideo: "review_video",
+  /** Deletes stored files after the rows that owned them were deleted; see lib/storage/cleanup.ts. */
+  fileCleanup: "file_cleanup",
 } as const;
 
 let registered = false;
@@ -37,6 +39,12 @@ export async function registerBuiltInHandlers(): Promise<void> {
     const exportId = payload.exportId;
     if (typeof exportId !== "string") throw new Error("social_export job missing exportId");
     await renderSocialExport(exportId);
+  });
+  const { runFileCleanup } = await import("@/lib/storage/cleanup");
+  registerJobHandler(JOB_TYPES.fileCleanup, async (payload) => {
+    const keys = payload.keys;
+    if (!Array.isArray(keys) || !keys.every((k) => typeof k === "string")) throw new Error("file_cleanup job missing keys");
+    await runFileCleanup(keys as string[]);
   });
   const { registerAiVideoHandler } = await import("@/lib/ai-video/render");
   registerAiVideoHandler();

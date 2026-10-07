@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { eq, and } from "drizzle-orm";
 import { withApiKeyAuth, apiV1Options } from "@/lib/api/v1-handler";
 import { db } from "@/lib/db";
+import { deleteTestimonialPermanently } from "@/lib/spaces/delete";
 import { testimonials } from "@/lib/db/schema";
 import { updateTestimonialV1Schema } from "@/lib/validations/v1-api";
 import { apiError, notFound, validationError } from "@/lib/api/errors";
@@ -123,15 +124,7 @@ export const DELETE = withApiKeyAuth<RouteParams>(
     }
 
     try {
-      const [deleted] = await db
-        .delete(testimonials)
-        .where(
-          and(
-            eq(testimonials.id, params.id),
-            eq(testimonials.spaceId, apiKey.spaceId)
-          )
-        )
-        .returning();
+      const deleted = await deleteTestimonialPermanently(apiKey.spaceId, params.id);
 
       if (!deleted) {
         return notFound("Testimonial not found");

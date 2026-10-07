@@ -175,6 +175,25 @@ export function AiVideoModal({ spaceId, testimonial, onClose }: Props) {
     await load();
   }
 
+  async function withdrawConsentForCustomer() {
+    const ok = await confirm({
+      title: "Record that the customer withdrew consent?",
+      description:
+        "Every AI video made from this testimonial is removed and none can be made again without a new agreement. This cannot be undone.",
+      confirmLabel: "Withdraw consent",
+      tone: "danger",
+    });
+    if (!ok) return;
+    const res = await fetch(`${listUrl}/consent`, { method: "DELETE" });
+    if (!res.ok) {
+      notify.error(await readError(res, "Could not record the withdrawal."));
+      return;
+    }
+    setActiveId(null);
+    notify.success("Consent withdrawn. Their videos were removed.");
+    await load();
+  }
+
   async function copyLink(url: string) {
     try {
       await navigator.clipboard.writeText(url);
@@ -429,6 +448,18 @@ export function AiVideoModal({ spaceId, testimonial, onClose }: Props) {
                 </section>
               )}
 
+              {/* ---------- Taken down by our team ---------- */}
+              {active?.status === "done" && !active.outputUrl && active.moderatedAt && (
+                <Notice icon="danger-triangle" title="This video was removed by our team">
+                  {active.moderationReason ?? "It broke our rules."} The file is gone and cannot be restored. Your credit is not refunded.
+                  <span className="mt-3 flex gap-2">
+                    <Button type="button" variant="ghost-danger" size="sm" onClick={() => void remove(active)}>
+                      Delete
+                    </Button>
+                  </span>
+                </Notice>
+              )}
+
               {/* ---------- Failed ---------- */}
               {active?.status === "failed" && (
                 <Notice icon="danger-triangle" title="This video could not be created">
@@ -474,12 +505,22 @@ export function AiVideoModal({ spaceId, testimonial, onClose }: Props) {
                             </span>
                             <span className="block text-text-muted">{new Date(v.createdAt).toLocaleString()}</span>
                           </span>
-                          <Badge variant={STATUS_BADGE[v.status]}>{STATUS_LABELS[v.status]}</Badge>
+                          {v.moderatedAt ? <Badge variant="neutral">Removed</Badge> : <Badge variant={STATUS_BADGE[v.status]}>{STATUS_LABELS[v.status]}</Badge>}
                         </button>
                       </li>
                     ))}
                   </ul>
                 </section>
+              )}
+
+              {data.consent && (
+                <p className="border-t pt-4 text-xs text-text-muted">
+                  The customer agreed to AI video. Their confirmation email has a link to withdraw. If they told you directly instead,{" "}
+                  <button type="button" onClick={() => void withdrawConsentForCustomer()} className={buttonVariants({ variant: "link", size: "bare" })}>
+                    record that they withdrew consent
+                  </button>
+                  .
+                </p>
               )}
             </>
           )}

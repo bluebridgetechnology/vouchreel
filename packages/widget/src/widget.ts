@@ -1093,7 +1093,7 @@ export class VouchreelWidget {
       review.provider === "google" ? "vr-badge-google" : "vr-badge-trustpilot"
     }`;
     badge.textContent =
-      review.provider === "google" ? "Google Reviews" : "Trustpilot Verified";
+      review.provider === "google" ? "Google Maps" : "Trustpilot Verified";
     header.appendChild(badge);
 
     body.appendChild(header);

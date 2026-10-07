@@ -36,6 +36,23 @@ describe("LocalAdapter (development storage)", () => {
     await expect(adapter.delete("a/b.txt")).resolves.toBeUndefined();
   });
 
+  it("lists the files under a prefix, with their size and age, through nested folders", async () => {
+    const adapter = new LocalAdapter();
+    await adapter.upload(Buffer.from("12345"), "ai-videos/s1/t1/a.mp4");
+    await adapter.upload(Buffer.from("123"), "ai-videos/s1/t2/b.mp4");
+    await adapter.upload(Buffer.from("1"), "review-videos/s1/c.mp4");
+    const listed = async (prefix: string) => {
+      const out = [];
+      for await (const f of adapter.list(prefix)) out.push(f);
+      return out.sort((a, b) => a.key.localeCompare(b.key));
+    };
+    const ai = await listed("ai-videos/");
+    expect(ai.map((f) => [f.key, f.size])).toEqual([["ai-videos/s1/t1/a.mp4", 5], ["ai-videos/s1/t2/b.mp4", 3]]);
+    expect(Math.abs(ai[0].lastModified.getTime() - Date.now())).toBeLessThan(60_000);
+    expect((await listed("ai-videos/s1/t2/")).map((f) => f.key)).toEqual(["ai-videos/s1/t2/b.mp4"]);
+    expect(await listed("social-exports/")).toEqual([]); // a prefix with nothing under it
+  });
+
   it("refuses keys that would escape the storage root", async () => {
     const adapter = new LocalAdapter();
     await expect(adapter.upload(Buffer.from("x"), "../outside.txt")).rejects.toThrow(/Invalid storage key/);

@@ -10,5 +10,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // Playwright specs (npm run test:e2e) are not unit tests
+    exclude: ["**/node_modules/**", "**/.next/**", "e2e/**"],
   },
 });

@@ -38,6 +38,9 @@ export interface ReviewVideoView {
   error: string | null;
   createdAt: string;
   reviewIds: string[];
+  /** Set when a platform administrator took the video down; its file is gone. */
+  moderatedAt?: string | null;
+  moderationReason?: string | null;
 }
 
 export const STATUS_LABELS: Record<ReviewVideoStatus, string> = {

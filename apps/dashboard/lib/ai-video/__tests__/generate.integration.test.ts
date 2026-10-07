@@ -9,6 +9,8 @@ const url = process.env.TEST_DATABASE_URL;
 const run = url ? describe : describe.skip;
 
 const uploads: { key: string; size: number }[] = [];
+const deletedKeys: string[] = [];
+let failDelete = false;
 let monthlyCredits = 2;
 
 vi.mock("@/lib/storage", () => ({
@@ -16,6 +18,10 @@ vi.mock("@/lib/storage", () => ({
     upload: async (buf: Buffer, key: string) => {
       uploads.push({ key, size: buf.length });
       return `https://cdn.test/${key}`;
+    },
+    delete: async (key: string) => {
+      if (failDelete) throw new Error("bucket unreachable");
+      deletedKeys.push(key);
     },
   }),
 }));
@@ -164,25 +170,51 @@ run("AI video generate flow (postgres)", () => {
     await expect(gen.approveDraft({ videoId: second.id, spaceId: ids.space })).resolves.toMatchObject({ status: "queued" });
   });
 
-  it("deleting a finished video keeps its credit used, but removes drafts and failed ones", async () => {
+  it("deleting a finished video keeps its credit used, deletes its file, and removes drafts and failed ones", async () => {
     const eq = (await import("drizzle-orm")).eq;
+    deletedKeys.length = 0;
     const done = (await draft()).video;
     await gen.approveDraft({ videoId: done.id, spaceId: ids.space });
-    await db.update(s.generatedVideos).set({ status: "done", outputUrl: "https://cdn.test/x.mp4" }).where(eq(s.generatedVideos.id, done.id));
+    const key = `ai-videos/${ids.space}/${done.testimonialId}/${done.id}-abc.mp4`;
+    await db.update(s.generatedVideos).set({ status: "done", outputUrl: `https://cdn.test/${key}` }).where(eq(s.generatedVideos.id, done.id));
     expect(await gen.removeVideo(done.id, ids.space)).toBe("archived");
+    expect(deletedKeys).toEqual([key]); // the public file is gone, not just the link in the database
     const [row] = await db.select().from(s.generatedVideos).where(eq(s.generatedVideos.id, done.id));
     expect(row.deletedAt).toBeTruthy();
     expect(row.outputUrl).toBeNull();
     expect((await credits.getAiVideoCredits(ids.user)).used).toBe(1);
     await expect(gen.removeVideo(done.id, ids.space)).rejects.toMatchObject({ status: 404 });
+    expect(deletedKeys).toHaveLength(1); // the second attempt did not touch storage
 
     const unused = (await draft()).video;
     expect(await gen.removeVideo(unused.id, ids.space)).toBe("removed");
     expect(await db.select().from(s.generatedVideos).where(eq(s.generatedVideos.id, unused.id))).toHaveLength(0);
+    expect(deletedKeys).toHaveLength(1); // drafts have no file
 
     const inFlight = (await draft()).video;
     await gen.approveDraft({ videoId: inFlight.id, spaceId: ids.space });
     await expect(gen.removeVideo(inFlight.id, ids.space)).rejects.toMatchObject({ status: 400 });
+  });
+
+  it("leaves a finished video as it was when its file cannot be deleted, and succeeds on retry", async () => {
+    const eq = (await import("drizzle-orm")).eq;
+    deletedKeys.length = 0;
+    const done = (await draft()).video;
+    await gen.approveDraft({ videoId: done.id, spaceId: ids.space });
+    const url = `https://cdn.test/ai-videos/${ids.space}/${done.testimonialId}/${done.id}-abc.mp4`;
+    await db.update(s.generatedVideos).set({ status: "done", outputUrl: url }).where(eq(s.generatedVideos.id, done.id));
+
+    failDelete = true;
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(gen.removeVideo(done.id, ids.space)).rejects.toMatchObject({ status: 502 });
+    err.mockRestore();
+    failDelete = false;
+    const [untouched] = await db.select().from(s.generatedVideos).where(eq(s.generatedVideos.id, done.id));
+    expect(untouched.deletedAt).toBeNull();
+    expect(untouched.outputUrl).toBe(url); // still there to retry against
+
+    expect(await gen.removeVideo(done.id, ids.space)).toBe("archived");
+    expect(deletedKeys).toHaveLength(1);
   });
 
   it("only counts approvals from this calendar month", async () => {

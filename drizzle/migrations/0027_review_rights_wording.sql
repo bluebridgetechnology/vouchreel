@@ -1,0 +1,1 @@
+ALTER TABLE "review_videos" ADD COLUMN "rights_wording_version" text;

@@ -13,6 +13,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { notify } from "@/lib/notify";
+import { useConfirm } from "@/components/ui/confirm";
 
 interface SocialPageProps {
   params: Promise<{ id: string }>;
@@ -60,6 +61,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const confirm = useConfirm();
   const [exports, setExports] = useState<SpaceExportItem[]>([]);
   const [loadingExports, setLoadingExports] = useState(false);
 
@@ -93,6 +95,25 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function deleteExport(item: SpaceExportItem) {
+    const ok = await confirm({
+      title: "Delete this export?",
+      description: "The video file is deleted and any link to it stops working.",
+      confirmLabel: "Delete export",
+      tone: "danger",
+    });
+    if (!ok) return;
+    try {
+      const res = await fetch(`/api/spaces/${spaceId}/social-exports/${item.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error?.message || "Could not delete the export");
+      notify.success("Export deleted.");
+      setExports((current) => current.filter((e) => e.id !== item.id));
+    } catch (err) {
+      notify.error(err instanceof Error ? err.message : "Could not delete the export");
     }
   }
 
@@ -546,6 +567,11 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                       </svg>
                       Download MP4
                     </a>
+                  )}
+                  {item.status !== "pending" && item.status !== "processing" && (
+                    <Button type="button" variant="ghost-danger" size="sm" onClick={() => void deleteExport(item)}>
+                      Delete
+                    </Button>
                   )}
                 </div>
               </div>

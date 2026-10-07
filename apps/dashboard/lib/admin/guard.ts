@@ -1,7 +1,7 @@
 import type { NextResponse } from "next/server";
 import { forbidden, unauthorized } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
-import { isPlatformAdmin } from "@/lib/auth/platform-admin";
+import { isPlatformAdminFresh } from "@/lib/auth/platform-admin-server";
 
 type AdminSession = NonNullable<Awaited<ReturnType<typeof getSession>>>;
 
@@ -15,7 +15,7 @@ export async function requirePlatformAdminApi(): Promise<
 > {
   const session = await getSession();
   if (!session?.user) return { ok: false, response: unauthorized("Unauthorized") };
-  if (!isPlatformAdmin(session.user)) {
+  if (!(await isPlatformAdminFresh(session.user))) {
     return { ok: false, response: forbidden("Forbidden: Admin access required") };
   }
   return { ok: true, session };

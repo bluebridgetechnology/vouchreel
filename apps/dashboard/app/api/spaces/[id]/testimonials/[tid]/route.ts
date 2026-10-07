@@ -7,6 +7,7 @@ import { testimonials } from "@/lib/db/schema";
 import { updateTestimonialSchema } from "@/lib/validations/testimonials";
 import { dispatchWebhookEvent } from "@/lib/webhooks/dispatch";
 import { verifySpaceAccess, TeamRole } from "@/lib/auth/permissions";
+import { deleteTestimonialPermanently } from "@/lib/spaces/delete";
 
 interface RouteParams {
   params: Promise<{ id: string; tid: string }>;
@@ -131,7 +132,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
 /**
  * DELETE /api/spaces/[id]/testimonials/[tid]
- * Soft-delete testimonial (sets isActive = false). Allows owner or editor.
+ * Permanently deletes the testimonial and, through a queued cleanup job, the files it owns: its
+ * video, thumbnail and clip, and its social exports' and AI videos' files. Allows owner or editor.
+ * Hiding without deleting is the PATCH `isActive` toggle ("Disable").
  */
 export async function DELETE(request: Request, { params }: RouteParams) {
   const session = await getSession();
@@ -146,16 +149,8 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   }
 
   try {
-    // Soft delete per spec: set isActive = false
-    await db
-      .update(testimonials)
-      .set({ isActive: false })
-      .where(
-        and(
-          eq(testimonials.id, tid),
-          eq(testimonials.spaceId, id)
-        )
-      );
+    const deleted = await deleteTestimonialPermanently(id, tid);
+    if (!deleted) return notFound("Testimonial not found");
 
     // Dispatch webhook event (non-blocking)
     dispatchWebhookEvent({
@@ -166,7 +161,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     return NextResponse.json({ success: true, id: tid });
   } catch (error) {
-    console.error("Failed to soft-delete testimonial:", error);
+    console.error("Failed to delete testimonial:", error);
     return apiError(500, "INTERNAL_ERROR", "Failed to delete testimonial");
   }
 }

@@ -3,6 +3,7 @@ import { eq, count } from "drizzle-orm";
 import { apiError, unauthorized } from "@/lib/api/errors";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
+import { deleteSpace } from "@/lib/spaces/delete";
 import { spaces, testimonials } from "@/lib/db/schema";
 import { updateSpaceSchema } from "@/lib/validations/spaces";
 import { verifySpaceAccess } from "@/lib/auth/permissions";
@@ -116,7 +117,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       return authCheck.errorResponse;
     }
 
-    await db.delete(spaces).where(eq(spaces.id, id));
+    await deleteSpace(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

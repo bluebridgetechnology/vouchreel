@@ -184,6 +184,10 @@ export const user = pgTable("user", {
   /** Legacy, unused for authorization. Platform access is `isPlatformAdmin`. */
   role: text("role").default("owner"),
   isPlatformAdmin: boolean("is_platform_admin").default(false).notNull(),
+  /** A platform admin suspended this account: it cannot sign in, and open sessions stop working. */
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  /** Shown to the person on a refused sign-in. */
+  suspendedReason: text("suspended_reason"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -414,10 +418,25 @@ export const subscriptions = pgTable("subscriptions", {
   providerCustomerId: text("provider_customer_id"),
   providerSubscriptionId: text("provider_subscription_id"),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  /** Time of the newest provider event applied to this row, so a late older event cannot undo a newer one. */
+  lastEventAt: timestamp("last_event_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
 });
+
+/**
+ * Payment webhook events already handled, so a provider re-sending an event (they retry) is applied once.
+ */
+export const webhookEvents = pgTable(
+  "webhook_events",
+  {
+    provider: text("provider").notNull(),
+    eventId: text("event_id").notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex("webhook_events_provider_event_idx").on(table.provider, table.eventId), index("webhook_events_received_idx").on(table.receivedAt)]
+);
 
 /**
  * Admin settings — key-value store for global admin configuration
@@ -1169,12 +1188,20 @@ export const generatedVideos = pgTable(
     error: text("error"),
     /** Owner deleted a finished video. The row stays so the credit it used is still counted. */
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    /** A platform admin took this video down: its file is deleted and its URL cleared. Irreversible. */
+    moderatedAt: timestamp("moderated_at", { withTimezone: true }),
+    moderatedBy: text("moderated_by").references(() => user.id, { onDelete: "set null" }),
+    /** Shown to the owner. */
+    moderationReason: text("moderation_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
   },
   (table) => [
     index("generated_videos_testimonial_idx").on(table.testimonialId, table.createdAt),
     index("generated_videos_space_created_idx").on(table.spaceId, table.createdAt),
+    // Admin Usage (by month) and Moderation (newest first) read across all spaces
+    index("generated_videos_trim_approved_idx").on(table.trimApprovedAt),
+    index("generated_videos_created_idx").on(table.createdAt),
   ]
 );
 
@@ -1198,6 +1225,8 @@ export const reviewVideos = pgTable(
     reviewIds: jsonb("review_ids").$type<string[]>().default([]).notNull(),
     /** The owner confirmed they may use these reviews in marketing. Required to create a video. */
     rightsConfirmedAt: timestamp("rights_confirmed_at", { withTimezone: true }).notNull(),
+    /** Which wording of the rights statement the owner saw (lib/review-video/rights.ts). Null on videos made before it was recorded. */
+    rightsWordingVersion: text("rights_wording_version"),
     creditsUsed: integer("credits_used").default(1).notNull(),
     jobId: uuid("job_id").references(() => jobs.id, { onDelete: "set null" }),
     outputUrl: text("output_url"),
@@ -1206,10 +1235,18 @@ export const reviewVideos = pgTable(
     error: text("error"),
     /** Owner deleted a finished video; the row stays so its credit is still counted. */
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    /** A platform admin took this video down: its file is deleted and its URL cleared. Irreversible. */
+    moderatedAt: timestamp("moderated_at", { withTimezone: true }),
+    moderatedBy: text("moderated_by").references(() => user.id, { onDelete: "set null" }),
+    /** Shown to the owner. */
+    moderationReason: text("moderation_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
   },
-  (table) => [index("review_videos_space_created_idx").on(table.spaceId, table.createdAt)]
+  (table) => [
+    index("review_videos_space_created_idx").on(table.spaceId, table.createdAt),
+    index("review_videos_created_idx").on(table.createdAt),
+  ]
 );
 
 /**
@@ -1238,3 +1275,71 @@ export const brandKits = pgTable("brand_kits", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+/**
+ * One row per job-worker process, refreshed every few seconds while it runs. The admin System
+ * tab reads it to show whether workers are alive. Rows are best-effort telemetry: a missing row
+ * means "never seen", not "not running".
+ */
+export const workerHeartbeats = pgTable(
+  "worker_heartbeats",
+  {
+    workerId: text("worker_id").primaryKey(),
+    /** worker = social exports and AI video; video-worker = review videos (needs Chromium). */
+    kind: text("kind").$type<"worker" | "video-worker">().notNull(),
+    hostname: text("hostname"),
+    pid: integer("pid"),
+    concurrency: integer("concurrency").default(1).notNull(),
+    /** Jobs this process has claimed since it started. */
+    jobsProcessed: integer("jobs_processed").default(0).notNull(),
+    /** What the process found on start-up, e.g. { ffmpeg: "7.1", chromium: "ok" }. */
+    capabilities: jsonb("capabilities").$type<Record<string, string>>().default({}).notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).defaultNow().notNull(),
+    /** Set on a clean shutdown. */
+    stoppedAt: timestamp("stopped_at", { withTimezone: true }),
+    /** A platform admin asked this process to finish its jobs and exit; its supervisor restarts it. Ignored if older than this process's start. */
+    restartRequestedAt: timestamp("restart_requested_at", { withTimezone: true }),
+  },
+  (table) => [index("worker_heartbeats_last_seen_idx").on(table.lastSeenAt)]
+);
+
+/**
+ * Last known state of each thing the platform alerts admins about (for example "worker:video-worker"),
+ * so one outage sends one email, not one every few minutes.
+ */
+export const adminAlertState = pgTable("admin_alert_state", {
+  key: text("key").primaryKey(),
+  /** "ok", "warning" or "critical" as of the last check. */
+  severity: text("severity").notNull(),
+  /** When it entered this severity. */
+  since: timestamp("since", { withTimezone: true }).notNull(),
+  /** The last time an email went out for it. */
+  lastNotifiedAt: timestamp("last_notified_at", { withTimezone: true }),
+  /** Whether that email was about a problem (so a recovery email is owed). */
+  problemNotified: boolean("problem_notified").default(false).notNull(),
+});
+
+
+/**
+ * Extra (or fewer) video credits a platform admin gave one account for one calendar month, on top
+ * of the plan's allowance. Append-only: a correction is another row.
+ */
+export const creditAdjustments = pgTable(
+  "credit_adjustments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<"review" | "ai">().notNull(),
+    /** Positive adds credits, negative removes them. */
+    amount: integer("amount").notNull(),
+    /** The UTC calendar month it applies to, "YYYY-MM". */
+    month: text("month").notNull(),
+    reason: text("reason").notNull(),
+    actorId: text("actor_id").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("credit_adjustments_user_month_idx").on(table.userId, table.month)]
+);

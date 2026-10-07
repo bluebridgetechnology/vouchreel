@@ -215,7 +215,7 @@ export function LivePreview({
                         authorName: "Alex Morgan",
                         rating: 5,
                         text: "Vouchreel transformed our landing page social proof. Conversions increased by 38% in our first month!",
-                        provider: "Google Reviews",
+                        provider: "Google Maps",
                         date: "2 days ago",
                       })
                     }
@@ -339,7 +339,7 @@ export function LivePreview({
                         authorName: "Alex Morgan",
                         rating: 5,
                         text: "Vouchreel transformed our landing page social proof. Highly recommend!",
-                        provider: "Google Reviews",
+                        provider: "Google Maps",
                         date: "2 days ago",
                       })
                     }
@@ -435,7 +435,7 @@ export function LivePreview({
                           authorName: "Alex Morgan",
                           rating: 5,
                           text: "Top-tier social proof tool. The video plus text blends seamlessly.",
-                          provider: "Google Reviews",
+                          provider: "Google Maps",
                           date: "2 days ago",
                         })
                       }

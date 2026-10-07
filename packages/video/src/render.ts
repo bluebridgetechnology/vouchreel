@@ -2,7 +2,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundle } from "@remotion/bundler";
-import { renderMedia, renderStill, selectComposition, type ChromiumOptions } from "@remotion/renderer";
+import { openBrowser, renderMedia, renderStill, selectComposition, type ChromiumOptions } from "@remotion/renderer";
 import { compositionId, validateProps, type Aspect, type ReviewVideoProps } from "./registry";
 
 /**
@@ -130,3 +130,21 @@ export async function renderReviewStill(options: Omit<RenderOptions, "onProgress
 
 /** Video length for the given content, without rendering (the same maths the composition uses). */
 export { durationInFrames } from "./registry";
+
+/**
+ * Starts and closes the browser the renderer will use, so a worker can tell at start-up (and the
+ * admin area can show) whether renders can work at all. Does not bundle or render anything.
+ */
+export async function checkBrowser(): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const browser = await openBrowser("chrome", {
+      ...browserOptions(),
+      logLevel: "error",
+    });
+    await browser.close({ silent: true });
+    return { ok: true };
+  } catch (error) {
+    // First line only: Remotion's launch errors are long and include troubleshooting links
+    return { ok: false, error: (error instanceof Error ? error.message : String(error)).split("\n")[0].slice(0, 300) };
+  }
+}

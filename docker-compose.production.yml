@@ -108,6 +108,7 @@ services:
         tick=0
         while true; do
           curl -fsS -H "Authorization: Bearer $$CRON_SECRET" http://app:3000/api/cron/process-webhooks > /dev/null || echo "process-webhooks failed"
+          curl -fsS -H "Authorization: Bearer $$CRON_SECRET" http://app:3000/api/cron/check-workers > /dev/null || echo "check-workers failed"
           if [ $$((tick % 12)) -eq 0 ]; then
             curl -fsS -H "Authorization: Bearer $$CRON_SECRET" http://app:3000/api/cron/sync-reviews > /dev/null || echo "sync-reviews failed"
           fi

@@ -15,6 +15,36 @@ Node render service the video worker uses.
 
 Each template renders in `9:16` and `16:9`. Video length comes from the text (see `registry.ts`).
 
+## Colours, styles and the `theme` prop
+
+Templates never hard-code colours. They call `derivePalette(brand, { style, secondary })` (`src/lib/palette.ts`),
+which builds every colour a template needs from the customer's brand colour:
+
+- **Keep the brand colour.** A light brand colour stays light and gets dark text; a dark one stays dark with
+  light text. A colour is only nudged when no text colour can be read on it, and by the smallest amount that works.
+- **Text is at least 4.5:1 (WCAG AA)** against the worst point of the background gradient. Accent colours are
+  adjusted for the surface they sit on (white card, dark card), never the other way round.
+- `secondary` is an optional second colour used as the far end of the gradient (colour styles only).
+
+Six background styles are available on every template (`BACKGROUND_STYLES` / `STYLES` in `src/types.ts` and
+`src/registry.ts`, drawn by `components/Backdrop.tsx`):
+
+| style | Look |
+| --- | --- |
+| `gradient` | Brand colour deepening into a richer shade |
+| `solid` | One flat brand colour with soft shapes |
+| `aurora` | Blurred glows of the colour drifting around |
+| `dots` | Subtle dot pattern over the colour |
+| `light` | Paper tinted with the colour |
+| `dark` | Near-black with a glow of the colour |
+
+Each template has a `defaultStyle` (`minimal` is `light`, `dark-card` is `dark`, the rest `gradient`).
+`ReviewVideoProps` takes an optional `theme: { style?, secondary? }`; with no `style` the template's default is
+used (`effectiveStyle()` in `registry.ts` returns what will actually render).
+
+In the dashboard the defaults come from the brand kit (`videoStyle`, `videoSecondaryColor`) and can be overridden
+per video with `style` / `secondaryColor` on create.
+
 ## Rules the templates follow
 
 - **Reviews are verbatim.** Templates never shorten, reword or reorder review text. A review that
@@ -38,7 +68,8 @@ src/registry.ts        catalogue, validation, durations. Browser-safe: no Remoti
 src/types.ts           ReviewVideoProps and friends
 src/templates/*.tsx    one component per template; templates/index.ts maps id -> component
 src/components/        shared building blocks (stars, word reveal, avatar, badge, layout helpers)
-src/lib/               colour helpers, font loading
+src/lib/               colour helpers, palette derivation (palette.ts), font loading
+src/player.tsx         browser preview (Remotion Player), exported as @vouchreel/video/player
 src/Root.tsx           registers every template x shape as a Remotion composition
 src/render.ts          Node-only render service (bundle once, renderMedia / renderStill)
 src/sample.ts          made-up reviews for previews and tests (never shown to customers)
@@ -52,7 +83,7 @@ scripts/bundle.ts      pre-build the compositions (used by the Docker image)
 2. Write the component in `src/templates/` (use `components/primitives.tsx`; design for a 1080px short side
    and multiply by `u` from `useLayout()`).
 3. Register it in `src/templates/index.ts` and add sample props in `src/sample.ts`.
-4. Add a 360x640 preview to `apps/dashboard/public/video-previews/<id>.jpg`.
+4. Add a 360x640 preview to `apps/dashboard/public/video-previews/<id>.jpg` (see "Regenerating template thumbnails").
 
 `src/__tests__/registry.test.ts` fails if a template has no component, or the sample content does not validate.
 
@@ -63,7 +94,37 @@ npm run studio -w @vouchreel/video     # Remotion Studio: live preview with samp
 npm run preview -w @vouchreel/video -- --template=stack --aspect=9:16 --times=3,12 --video
 ```
 
-Stills and videos are written to `packages/video/out/` (git-ignored).
+Add `--style=aurora` (or `--style=all`), `--brand=#0a7d5a`, `--secondary=#1d4ed8` or `--source=trustpilot` to
+preview a theme. Stills and videos are written to `packages/video/out/` (git-ignored).
+
+On a machine where Remotion cannot download its own browser (or when running as root), point it at a
+headless Chrome and disable the sandbox: `REMOTION_BROWSER_EXECUTABLE=/path/to/headless_shell VIDEO_CHROMIUM_NO_SANDBOX=1`.
+Recent full Chrome builds refuse Remotion's headless mode; use the `chrome-headless-shell` binary.
+
+### Regenerating template thumbnails
+
+The template picker shows `apps/dashboard/public/video-previews/<id>.jpg` (360x640). Regenerate them whenever
+a template or the palette changes, from a frame where the text has finished revealing (`rating-spotlight`: the
+rating intro, around 2.6 s):
+
+```bash
+npm run preview -w @vouchreel/video -- --template=minimal --aspect=9:16 --times=9.5
+ffmpeg -i packages/video/out/minimal-9x16-t9.5.png -vf scale=360:640:flags=lanczos -q:v 3 apps/dashboard/public/video-previews/minimal.jpg
+```
+
+Frames used for the current thumbnails: spotlight, minimal and dark-card 9.5 s, stack 9 s, rating-spotlight 2.6 s.
+
+### Tests
+
+`npm test -w @vouchreel/video` runs the unit tests. `npm run test:render -w @vouchreel/video` additionally renders
+the aurora, dots and light styles in real Chromium (slow; skipped by default, not run in CI).
+
+## Live preview in the dashboard
+
+`@vouchreel/video/player` exports `ReviewVideoPreview`, the real composition rendered live by Remotion's `Player`,
+so the Brand page and the create dialog show exactly what the render produces. It needs the fonts served from a
+public URL (`fontBaseUrl`, the dashboard uses `/video-fonts`, files in `apps/dashboard/public/video-fonts`). It is
+browser-only: the server-side renderer never imports it.
 
 ## Rendering in production
 
