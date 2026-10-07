@@ -68,6 +68,20 @@ run("worker heartbeats and admin worker health (postgres)", () => {
     await again.stop();
   });
 
+  it("a clean stop is never overwritten by a beat that was still in flight", async () => {
+    // A very short interval keeps a timer beat running when stop() is called; before beats were
+    // serialised, the slower of the two writes won and a stopped worker showed as running
+    for (let i = 0; i < 40; i++) {
+      const id = `it-race-${i}`;
+      const hb = heartbeat.startHeartbeat({ workerId: id, kind: "worker", concurrency: 1, intervalMs: 1 });
+      await new Promise((r) => setTimeout(r, i % 7));
+      await hb.stop();
+      await new Promise((r) => setTimeout(r, 30)); // let any stray write land
+      const [row] = await db.select().from(s.workerHeartbeats).where(eq(s.workerHeartbeats.workerId, id));
+      expect(row.stoppedAt, `worker ${id} should read as stopped`).not.toBeNull();
+    }
+  });
+
   it("lists workers with their status and hides ones not seen for a day", async () => {
     await beat("a", "worker", ago(5_000));
     await beat("b", "video-worker", ago(10 * 60_000));

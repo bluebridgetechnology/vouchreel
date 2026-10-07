@@ -37,6 +37,14 @@ export function startHeartbeat(options: HeartbeatOptions): Heartbeat {
   let processed = 0;
   let failing = false;
   let restartAsked = false;
+  let stopping = false;
+  // One beat at a time, in order. Two writes in flight can land in either order, and a slow
+  // ordinary beat finishing after the final one would show a stopped worker as running.
+  let queue: Promise<void> = Promise.resolve();
+  const schedule = (stopped: boolean) => {
+    queue = queue.then(() => (stopping && !stopped ? undefined : beat(stopped)));
+    return queue;
+  };
 
   async function beat(stopped = false) {
     try {
@@ -72,12 +80,12 @@ export function startHeartbeat(options: HeartbeatOptions): Heartbeat {
     }
   }
 
-  void beat();
+  void schedule(false);
   void db
     .delete(workerHeartbeats)
     .where(lt(workerHeartbeats.lastSeenAt, new Date(Date.now() - PRUNE_AFTER_MS)))
     .catch(() => {});
-  const timer = setInterval(() => void beat(), options.intervalMs ?? HEARTBEAT_INTERVAL_MS);
+  const timer = setInterval(() => void schedule(false), options.intervalMs ?? HEARTBEAT_INTERVAL_MS);
   timer.unref();
 
   return {
@@ -86,7 +94,8 @@ export function startHeartbeat(options: HeartbeatOptions): Heartbeat {
     },
     async stop() {
       clearInterval(timer);
-      await beat(true);
+      stopping = true;
+      await schedule(true);
     },
   };
 }
