@@ -221,6 +221,7 @@ jobs:
           GLITCHTIP_SECRET_KEY=ci-glitchtip-secret-0123456789abcdef
           GLITCHTIP_DB_PASSWORD=ci
           GRAFANA_ADMIN_PASSWORD=ci-admin
+          CRON_SECRET=ci-cron
           ENV
       - name: The compose files are valid together
         run: $COMPOSE --env-file .env.production config -q
