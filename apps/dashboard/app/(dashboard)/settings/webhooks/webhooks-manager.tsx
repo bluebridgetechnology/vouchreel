@@ -17,6 +17,7 @@ interface WebhookItem {
   id: string;
   url: string;
   events: string[];
+  format: "json" | "slack";
   isActive: boolean;
   createdAt: string;
 }
@@ -58,6 +59,8 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
     "testimonial.created",
     "submission.received",
   ]);
+  const [format, setFormat] = useState<"json" | "slack">("json");
+  const [testingId, setTestingId] = useState<string | null>(null);
   const [createdSecret, setCreatedSecret] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -119,6 +122,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
         body: JSON.stringify({
           url: url.trim(),
           events: selectedEvents,
+          format,
         }),
       });
 
@@ -135,6 +139,21 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
       setError(err instanceof Error ? err.message : "Error creating webhook");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTestWebhook = async (webhookId: string) => {
+    setTestingId(webhookId);
+    try {
+      const res = await fetch(`/api/spaces/${selectedSpaceId}/webhooks/${webhookId}/test`, { method: "POST" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error?.message || "Could not send the test message");
+      if (data.ok) notify.success("Test message sent. Check the receiving end.");
+      else notify.error(data.status ? `The endpoint answered ${data.status}${data.detail ? `: ${data.detail}` : ""}` : `Could not reach the endpoint: ${data.detail}`);
+    } catch (err) {
+      notify.fromError(err, "Could not send the test message");
+    } finally {
+      setTestingId(null);
     }
   };
 
@@ -271,6 +290,16 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
             </div>
 
             <div>
+              <label htmlFor="webhook-format" className="block text-xs font-medium text-text-muted mb-1">
+                Message format
+              </label>
+              <select id="webhook-format" value={format} onChange={(e) => setFormat(e.target.value as "json" | "slack")} className={cn(inputClass, "w-full text-sm")}>
+                <option value="json">JSON (signed, for your own server, Zapier or Make)</option>
+                <option value="slack">Slack message (paste a Slack incoming webhook URL)</option>
+              </select>
+            </div>
+
+            <div>
               <label className="block text-xs font-medium text-text-muted mb-2">
                 Events to Send
               </label>
@@ -335,6 +364,9 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
                 <tr key={w.id} className="hover:bg-surface-sunken/30 transition-colors">
                   <td className="px-4 py-3 font-mono text-xs max-w-xs truncate">
                     {w.url}
+                    {w.format === "slack" && (
+                      <span className="ml-2 inline-flex items-center rounded-pill bg-info-soft px-2 py-0.5 font-sans text-2xs font-medium text-info-foreground">Slack</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-xs">
                     <div className="flex flex-wrap gap-1">
@@ -360,6 +392,13 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right space-x-3">
+                    <button
+                      onClick={() => handleTestWebhook(w.id)}
+                      disabled={testingId === w.id}
+                      className={cn(buttonVariants({ variant: "link", size: "bare" }), "text-xs")}
+                    >
+                      {testingId === w.id ? "Sending…" : "Send test"}
+                    </button>
                     <button
                       onClick={() => {
                         setInspectingWebhookId(w.id);

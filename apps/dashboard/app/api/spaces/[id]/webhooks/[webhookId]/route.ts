@@ -49,6 +49,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         id: webhookEndpoints.id,
         url: webhookEndpoints.url,
         events: webhookEndpoints.events,
+        format: webhookEndpoints.format,
         isActive: webhookEndpoints.isActive,
         createdAt: webhookEndpoints.createdAt,
       })
@@ -114,6 +115,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         id: webhookEndpoints.id,
         url: webhookEndpoints.url,
         events: webhookEndpoints.events,
+        format: webhookEndpoints.format,
         isActive: webhookEndpoints.isActive,
         createdAt: webhookEndpoints.createdAt,
       });

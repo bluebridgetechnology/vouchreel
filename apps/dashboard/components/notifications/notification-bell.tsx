@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
 import { notify } from "@/lib/notify";
 import { timeAgo } from "@/lib/time-ago";
@@ -152,10 +152,17 @@ export function NotificationBell({ className, align = "end" }: { className?: str
           )}
         </div>
 
-        <div className="border-t px-4 py-2.5">
-          <Link href="/settings/notifications" className="text-xs text-text-muted hover:text-text">
-            Notification settings
-          </Link>
+        <div className="flex items-center justify-between border-t px-4 py-2.5">
+          <DropdownMenuItem asChild className="h-auto p-0">
+            <Link href="/notifications" className="text-xs font-medium text-text hover:underline">
+              View all
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="h-auto p-0">
+            <Link href="/settings/notifications" className="text-xs text-text-muted hover:text-text">
+              Notification settings
+            </Link>
+          </DropdownMenuItem>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

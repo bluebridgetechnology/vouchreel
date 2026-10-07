@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { attemptDelivery } from "../deliver";
+import { attemptDelivery, sendTestMessage } from "../deliver";
 import { notifySpaceOwner } from "@/lib/notifications/service";
 
 vi.mock("@/lib/notifications/service", () => ({ notifySpaceOwner: vi.fn() }));
@@ -178,5 +178,57 @@ describe("Webhook Delivery Executor", () => {
       "space-1",
       expect.objectContaining({ type: "webhook.failing", dedupeKey: "webhook-failing:ep-1" })
     );
+  });
+
+  describe("formats", () => {
+    const okFetch = () => {
+      const f = vi.fn().mockResolvedValue({ ok: true, status: 200, text: () => Promise.resolve("ok") });
+      vi.stubGlobal("fetch", f);
+      mockDbSelect.mockReturnValue({ from: () => ({ where: () => Promise.resolve([{ count: 0 }]) }) });
+      mockDbUpdate.mockReturnValue({ set: vi.fn(() => ({ where: vi.fn(() => Promise.resolve()) })) });
+      return f;
+    };
+
+    it("the default format is unchanged: the signed JSON envelope with event, data and timestamp", async () => {
+      const f = okFetch();
+      await attemptDelivery("d1", "https://example.com/hook", "secret", "testimonial.created", { testimonial: { customerName: "Ada" } });
+      const body = JSON.parse(f.mock.calls[0][1].body);
+      expect(Object.keys(body).sort()).toEqual(["data", "event", "timestamp"]);
+      expect(body.event).toBe("testimonial.created");
+    });
+
+    it("the slack format sends only a text message, still signed, still no redirects", async () => {
+      const f = okFetch();
+      await attemptDelivery("d2", "https://hooks.slack.com/services/x", "secret", "testimonial.created", { testimonial: { customerName: "Ada", quote: "Great" } }, { format: "slack", spaceName: "Acme" });
+      const init = f.mock.calls[0][1];
+      const body = JSON.parse(init.body);
+      expect(Object.keys(body)).toEqual(["text"]);
+      expect(body.text).toContain("Ada");
+      expect(body.text).toContain("Acme");
+      expect(init.headers["X-Vouchreel-Signature"]).toMatch(/^sha256=[0-9a-f]{64}$/);
+      expect(init.redirect).toBe("manual");
+    });
+
+    it("sends a test message in the chosen format and reports what the endpoint answered", async () => {
+      const f = vi.fn().mockResolvedValue({ ok: true, status: 200, text: () => Promise.resolve("ok") });
+      vi.stubGlobal("fetch", f);
+      expect(await sendTestMessage("https://hooks.slack.com/x", "secret", "slack", "Acme")).toMatchObject({ ok: true, status: 200 });
+      expect(JSON.parse(f.mock.calls[0][1].body).text).toMatch(/test message/i);
+      await sendTestMessage("https://example.com/x", "secret", "json", "Acme");
+      expect(JSON.parse(f.mock.calls[1][1].body).event).toBe("webhook.test");
+
+      f.mockResolvedValueOnce({ ok: false, status: 404, text: () => Promise.resolve("no_service") });
+      expect(await sendTestMessage("https://hooks.slack.com/x", "secret", "slack", "Acme")).toEqual({ ok: false, status: 404, detail: "no_service" });
+    });
+
+    it("never sends a test message to an internal address", async () => {
+      const f = vi.fn();
+      vi.stubGlobal("fetch", f);
+      assertPublicUrl.mockRejectedValueOnce(new Error("The hostname resolves to an internal or private address."));
+      const result = await sendTestMessage("https://rebind.example.com/x", "secret", "json", "Acme");
+      expect(f).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ ok: false, status: null });
+      expect(result.detail).toMatch(/internal/);
+    });
   });
 });

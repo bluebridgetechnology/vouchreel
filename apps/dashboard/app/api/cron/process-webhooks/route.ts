@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq, and, lte } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { webhookDeliveries, webhookEndpoints } from "@/lib/db/schema";
+import { webhookDeliveries, webhookEndpoints, spaces } from "@/lib/db/schema";
 import { attemptDelivery } from "@/lib/webhooks/deliver";
 import { authorizeCron } from "@/lib/security/cron-auth";
 import { log } from "@/lib/log";
@@ -29,12 +29,15 @@ export async function GET(request: Request) {
         payload: webhookDeliveries.payload,
         url: webhookEndpoints.url,
         secret: webhookEndpoints.secret,
+        format: webhookEndpoints.format,
+        spaceName: spaces.name,
       })
       .from(webhookDeliveries)
       .innerJoin(
         webhookEndpoints,
         eq(webhookDeliveries.endpointId, webhookEndpoints.id)
       )
+      .innerJoin(spaces, eq(webhookEndpoints.spaceId, spaces.id))
       .where(
         and(
           eq(webhookDeliveries.status, "retrying"),
@@ -51,7 +54,8 @@ export async function GET(request: Request) {
           item.url,
           item.secret,
           item.event,
-          item.payload
+          item.payload,
+          { format: item.format, spaceName: item.spaceName }
         )
       )
     );
