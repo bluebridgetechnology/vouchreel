@@ -9,6 +9,8 @@ Classes: **Fix** (code or tests I can change and prove here), **CI** (proved by 
 **Decision** (needs a product or legal choice from you first), **External** (needs something outside this
 repo: network access, an account, real data), **Feature** (a separate piece of work from the old backlog).
 
+The open features (C3, B1-B3, B6-B9, B11, B14, B15, B17) are planned in `docs/plan-2026-10-07-feature-backlog.md`.
+
 Last full check: GitHub Actions run 37480868676, commit aa7a833, all three jobs green.
 
 ## A. Stored files that outlive what they belong to
