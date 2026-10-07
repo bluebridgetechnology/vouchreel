@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { applyBrandKitToTheme, contrastBetween, describeFont, type BrandKitValues } from "../theme";
+import { applyBrandKitToTheme, collectBrandFromKit, contrastBetween, describeFont, type BrandKitValues } from "../theme";
 import { brandKitSchema, normalizeHex } from "@/lib/validations/brand-kit";
 import { valuesToStore } from "../service";
 
@@ -156,5 +156,27 @@ describe("video style defaults", () => {
 
   it("no style stored means null (template default), not a made-up value", () => {
     expect(valuesToStore(brandKitSchema.parse(base))).toMatchObject({ videoStyle: null, videoSecondaryColor: null });
+  });
+});
+
+describe("collectBrandFromKit", () => {
+  it("does nothing without a kit or a form colour", () => {
+    expect(collectBrandFromKit(null, null)).toEqual({ accentColor: null, textColor: null, borderRadius: null });
+  });
+
+  it("uses the kit's colour, text colour and radius when the form has no colour of its own", () => {
+    expect(collectBrandFromKit(undefined, kit({ primaryColor: "#112233", accentColor: "#ffffff", borderRadius: 12 }))).toEqual({
+      accentColor: "#112233",
+      textColor: "#ffffff",
+      borderRadius: 12,
+    });
+  });
+
+  it("a colour chosen on the form wins over the kit, and the kit's text colour is not used with it", () => {
+    expect(collectBrandFromKit("#ffee00", kit({ accentColor: "#ffffff" }))).toMatchObject({ accentColor: "#ffee00", textColor: null });
+  });
+
+  it("falls back (null) when the kit's text colour is unreadable on its colour", () => {
+    expect(collectBrandFromKit(undefined, kit({ primaryColor: "#ffee00", accentColor: "#ffffff" })).textColor).toBeNull();
   });
 });

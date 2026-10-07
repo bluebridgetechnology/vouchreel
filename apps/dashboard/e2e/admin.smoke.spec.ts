@@ -733,6 +733,43 @@ test.describe("platform admin", () => {
     await context.close();
   });
 
+  test("brand kit: the collect form wears the space's colours and has no axe violations", async ({ browser, baseURL }) => {
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    let spaceId: string | undefined;
+    try {
+      const { rows: [owner] } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [USERS.customer.email]);
+      const { rows: [space] } = await pool.query(`INSERT INTO spaces (name, owner_id, embed_key) VALUES ('E2E Brand Space', $1, 'e2e-brand') RETURNING id`, [owner.id]);
+      spaceId = space.id;
+      await pool.query(`INSERT INTO collection_forms (space_id, title, prompt_text, slug) VALUES ($1, 'E2E Branded', 'Say a few words', 'e2e-branded')`, [spaceId]);
+      // Dark navy with white text and rounded corners; a yellow form-level colour is tried afterwards
+      await pool.query(`INSERT INTO brand_kits (space_id, primary_color, accent_color, border_radius) VALUES ($1, '#123456', '#ffffff', 20)`, [spaceId]);
+
+      await open(page, "/collect/e2e-branded");
+      const submit = page.getByRole("button", { name: "Submit testimonial" });
+      await expect(submit).toBeVisible();
+      const style = await submit.evaluate((el) => {
+        const s = getComputedStyle(el);
+        return { bg: s.backgroundColor, fg: s.color, radius: s.borderTopLeftRadius };
+      });
+      expect(style).toEqual({ bg: "rgb(18, 52, 86)", fg: "rgb(255, 255, 255)", radius: "20px" });
+
+      const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+      expect(violations.map((v) => `${v.id}: ${v.nodes[0].target.join(" ")}`)).toEqual([]);
+
+      // A colour set on the form itself wins over the kit
+      await pool.query(`UPDATE collection_forms SET branding = '{"accentColor":"#ffee00"}' WHERE slug = 'e2e-branded'`);
+      await open(page, "/collect/e2e-branded");
+      await expect(submit).toBeVisible();
+      expect(await submit.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(255, 238, 0)");
+    } finally {
+      if (spaceId) await pool.query(`DELETE FROM spaces WHERE id = $1`, [spaceId]); // forms and kit go with it
+      await pool.end();
+      await context.close();
+    }
+  });
+
   test("content security policy: a fresh nonce on every page, and the main pages break none of it", async ({ browser, baseURL }) => {
     const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
     const page = await context.newPage();
