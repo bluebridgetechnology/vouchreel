@@ -756,7 +756,13 @@ test.describe("platform admin", () => {
 
     // The open session stops working at once, and signing in again is refused with the reason's wording
     expect((await member.get("/api/spaces")).status()).toBe(401);
-    const refused = await (await playwright.request.newContext({ baseURL: base })).post("/api/auth/sign-in/email", { headers: { origin: base }, data: { email: USERS.member.email, password: PASSWORD } });
+    // (the sign-in rate limit answers 429 when attempts come close together: wait and ask again)
+    const refusing = await playwright.request.newContext({ baseURL: base });
+    let refused = await refusing.post("/api/auth/sign-in/email", { headers: { origin: base }, data: { email: USERS.member.email, password: PASSWORD } });
+    for (let attempt = 1; refused.status() === 429 && attempt <= 5; attempt++) {
+      await new Promise((r) => setTimeout(r, 4000));
+      refused = await refusing.post("/api/auth/sign-in/email", { headers: { origin: base }, data: { email: USERS.member.email, password: PASSWORD } });
+    }
     expect(refused.status()).toBe(403);
     expect(await refused.text()).toContain("suspended");
 
