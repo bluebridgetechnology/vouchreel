@@ -898,6 +898,49 @@ test.describe("platform admin", () => {
     }
   });
 
+  test("widget page: the live preview draws each layout, its cards open the pop-ups, and the phone view works", async ({ browser, baseURL }) => {
+    test.setTimeout(120_000);
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+    // The preview's sample photos come from an outside image host; the test should not depend on it
+    await page.route(/images\.unsplash\.com/, (route) => route.abort());
+    const spaces = await (await context.request.get("/api/spaces")).json();
+    const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    try {
+      for (const [template, heading] of [["wall-of-love", "Wall of Love Preview"], ["carousel", "Carousel Preview"], ["masonry", "Masonry Grid Preview"]] as const) {
+        await pool.query(`INSERT INTO widget_configs (space_id, template) VALUES ($1, $2) ON CONFLICT (space_id) DO UPDATE SET template = $2`, [space.id, template]);
+        await open(page, `/spaces/${space.id}/widget`);
+        const preview = page.getByText("Live Widget Preview").locator("xpath=ancestor::div[contains(@class,'space-y-3')][1]");
+        await expect(preview.getByText(heading)).toBeVisible();
+
+        // A video card opens the video pop-up, which closes again
+        await preview.getByRole("button").filter({ hasText: /Sarah|David/ }).first().dispatchEvent("click"); // (the mock cards are small buttons whose content overlaps their neighbours, so click this one directly)
+        await expect(preview.getByText("Get Started Like Sarah")).toBeVisible();
+        await preview.getByRole("button", { name: "Close preview modal" }).click();
+        await expect(preview.getByText("Get Started Like Sarah")).toHaveCount(0);
+
+        // A review card opens the review pop-up with that review's provider and author
+        await preview.getByRole("button").filter({ hasText: /Google|Trustpilot/ }).first().dispatchEvent("click");
+        const closeReview = preview.getByRole("button", { name: "Close review modal" });
+        await expect(closeReview).toBeVisible();
+        await expect(preview.getByText(/Google Maps|Trustpilot/).first()).toBeVisible();
+        await closeReview.click();
+        await expect(closeReview).toHaveCount(0);
+
+        // The phone view is a narrower frame with the same content
+        await preview.getByRole("button", { name: "Mobile", exact: true }).click();
+        await expect(preview.getByText(heading)).toBeVisible();
+        await preview.getByRole("button", { name: "Desktop", exact: true }).click();
+      }
+    } finally {
+      await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
+      await pool.end();
+      await context.close();
+    }
+  });
+
   test("content security policy: a fresh nonce on every page, and the main pages break none of it", async ({ browser, baseURL }) => {
     const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
     const page = await context.newPage();

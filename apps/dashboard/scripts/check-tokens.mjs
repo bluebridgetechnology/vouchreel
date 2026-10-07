@@ -58,6 +58,7 @@ function* walk(dir) {
 const CONTROL_ALLOW = [
   /components[\/]ui[\/]/,
   /components[\/]widget[\/]live-preview\.tsx$/,
+  /components[\/]widget[\/]preview[\/]/,
   /components[\/]theme-toggle\.tsx$/,
   /app[\/]design[\/]/,
 ];
