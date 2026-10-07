@@ -184,6 +184,10 @@ export const user = pgTable("user", {
   /** Legacy, unused for authorization. Platform access is `isPlatformAdmin`. */
   role: text("role").default("owner"),
   isPlatformAdmin: boolean("is_platform_admin").default(false).notNull(),
+  /** A platform admin suspended this account: it cannot sign in, and open sessions stop working. */
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  /** Shown to the person on a refused sign-in. */
+  suspendedReason: text("suspended_reason"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
@@ -1296,4 +1300,28 @@ export const workerHeartbeats = pgTable(
     stoppedAt: timestamp("stopped_at", { withTimezone: true }),
   },
   (table) => [index("worker_heartbeats_last_seen_idx").on(table.lastSeenAt)]
+);
+
+
+/**
+ * Extra (or fewer) video credits a platform admin gave one account for one calendar month, on top
+ * of the plan's allowance. Append-only: a correction is another row.
+ */
+export const creditAdjustments = pgTable(
+  "credit_adjustments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<"review" | "ai">().notNull(),
+    /** Positive adds credits, negative removes them. */
+    amount: integer("amount").notNull(),
+    /** The UTC calendar month it applies to, "YYYY-MM". */
+    month: text("month").notNull(),
+    reason: text("reason").notNull(),
+    actorId: text("actor_id").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index("credit_adjustments_user_month_idx").on(table.userId, table.month)]
 );

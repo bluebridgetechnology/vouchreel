@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { getSubscriptionLimits } from "@/lib/payments/subscription";
 import { clampedPage } from "@/lib/admin/paging";
+import { adjustmentsFor, applyAdjustment } from "@/lib/admin/credit-adjustments";
 import { startOfMonthUtc } from "@/lib/ai-video/credits";
 
 /**
@@ -138,10 +139,18 @@ async function usageReportAt(monthText: string | undefined, page: number, pageSi
   type Row = Omit<UsageAccount, "reviewLimit" | "aiLimit">;
   const rows = rowsResult.rows as unknown as Row[];
   // Limits come from the same resolver that gates creation, so free-tier and legacy plans match
+  // Plus any credits an admin added or took away for this month
+  const ids = rows.map((r) => r.ownerId);
+  const reviewAdj = await adjustmentsFor(ids, "review", from);
+  const aiAdj = await adjustmentsFor(ids, "ai", from);
   const accounts = await Promise.all(
     rows.map(async (r): Promise<UsageAccount> => {
       const limits = await getSubscriptionLimits(r.ownerId);
-      return { ...r, reviewLimit: limits.reviewVideoCredits, aiLimit: limits.aiVideoCredits };
+      return {
+        ...r,
+        reviewLimit: applyAdjustment(limits.reviewVideoCredits, reviewAdj.get(r.ownerId) ?? 0),
+        aiLimit: applyAdjustment(limits.aiVideoCredits, aiAdj.get(r.ownerId) ?? 0),
+      };
     })
   );
 

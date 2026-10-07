@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { notify } from "@/lib/notify";
 import { timeAgo } from "@/lib/time-ago";
 import type { AdminUserRow } from "@/lib/admin/queries";
+import type { AdjustmentRow } from "@/lib/admin/credit-adjustments";
 
 export interface PlanOption {
   id: string;
@@ -42,18 +44,68 @@ export function UsersManager({ users, plans, currentUserId, q, page, pageSize, t
   const [planValue, setPlanValue] = useState(NONE);
   const [admin, setAdmin] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [suspended, setSuspended] = useState(false);
+  const [suspendReason, setSuspendReason] = useState("");
+  const [adjustments, setAdjustments] = useState<AdjustmentRow[]>([]);
+  const [creditKind, setCreditKind] = useState<"review" | "ai">("review");
+  const [creditAmount, setCreditAmount] = useState("");
+  const [creditReason, setCreditReason] = useState("");
+  const [crediting, setCrediting] = useState(false);
 
   function open(u: AdminUserRow) {
     setEditing(u);
     setPlanValue(u.planId ?? NONE);
     setAdmin(u.isPlatformAdmin);
+    setSuspended(!!u.suspendedAt);
+    setSuspendReason(u.suspendedReason ?? "");
+    setCreditAmount("");
+    setCreditReason("");
+    setAdjustments([]);
+  }
+
+  async function loadAdjustments(userId: string) {
+    const res = await fetch(`/api/admin/users/${userId}/credits`);
+    if (!res.ok) return;
+    const data = (await res.json()) as { adjustments: (Omit<AdjustmentRow, "createdAt"> & { createdAt: string })[] };
+    setAdjustments(data.adjustments.map((a) => ({ ...a, createdAt: new Date(a.createdAt) })));
+  }
+
+  useEffect(() => {
+    if (editing) void loadAdjustments(editing.id);
+  }, [editing]);
+
+  async function applyCredits() {
+    if (!editing) return;
+    const amount = Number(creditAmount);
+    setCrediting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${editing.id}/credits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: creditKind, amount, reason: creditReason }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error?.message || "Could not adjust credits");
+      notify.success("Credits adjusted for this month.");
+      setCreditAmount("");
+      setCreditReason("");
+      await loadAdjustments(editing.id);
+    } catch (err) {
+      notify.error(err instanceof Error ? err.message : "Could not adjust credits");
+    } finally {
+      setCrediting(false);
+    }
   }
 
   async function save() {
     if (!editing) return;
-    const body: { planId?: string | null; isPlatformAdmin?: boolean } = {};
+    const body: { planId?: string | null; isPlatformAdmin?: boolean; suspended?: boolean; suspendedReason?: string } = {};
     if (!editing.billedByProvider && planValue !== (editing.planId ?? NONE)) body.planId = planValue === NONE ? null : planValue;
     if (admin !== editing.isPlatformAdmin) body.isPlatformAdmin = admin;
+    if (suspended !== !!editing.suspendedAt) {
+      body.suspended = suspended;
+      if (suspended) body.suspendedReason = suspendReason;
+    }
     if (Object.keys(body).length === 0) {
       setEditing(null);
       return;
@@ -100,6 +152,7 @@ export function UsersManager({ users, plans, currentUserId, q, page, pageSize, t
                 <div className="flex items-center gap-2 font-medium">
                   {u.name}
                   {u.isPlatformAdmin && <Badge variant="brand">Admin</Badge>}
+                  {u.suspendedAt && <Badge variant="danger">Suspended</Badge>}
                 </div>
                 <div className="max-w-[11rem] truncate text-xs text-text-muted sm:max-w-none" title={u.email}>{u.email}</div>
                 <div className="text-xs text-text-muted sm:hidden">{u.planName ?? "Free"}{u.subscriptionProvider === "manual" ? " (granted)" : ""} · {u.spaceCount} spaces · joined {timeAgo(u.createdAt)}</div>
@@ -193,6 +246,63 @@ export function UsersManager({ users, plans, currentUserId, q, page, pageSize, t
               >
                 <Switch id="user-admin" checked={admin} onCheckedChange={setAdmin} disabled={isSelf} />
               </Field>
+              <Field
+                label="Suspended"
+                htmlFor="user-suspended"
+                hint={
+                  isSelf
+                    ? "You cannot suspend your own account."
+                    : editing.isPlatformAdmin
+                      ? "Remove this person's admin access first."
+                      : "They cannot sign in and any open session stops working. Their data and public widgets are left as they are."
+                }
+              >
+                <Switch id="user-suspended" checked={suspended} onCheckedChange={setSuspended} disabled={isSelf || editing.isPlatformAdmin} />
+              </Field>
+              {suspended && (
+                <Field label="Reason" htmlFor="user-suspend-reason" hint="Shown to them when they try to sign in.">
+                  <Input id="user-suspend-reason" value={suspendReason} maxLength={300} onChange={(e) => setSuspendReason(e.target.value)} />
+                </Field>
+              )}
+              <fieldset className="space-y-3 rounded-card border p-4">
+                <legend className="px-2 text-sm font-medium">Video credits this month</legend>
+                <p className="text-xs text-text-muted">Adds to (or, with a minus, takes from) the plan's allowance for this calendar month only.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Credits for" htmlFor="credit-kind">
+                    <Select value={creditKind} onValueChange={(v) => setCreditKind(v as "review" | "ai")}>
+                      <SelectTrigger id="credit-kind">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="review">Review videos</SelectItem>
+                        <SelectItem value="ai">AI videos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Amount" htmlFor="credit-amount" hint="Whole number, e.g. 5 or -2">
+                    <Input id="credit-amount" type="number" step="1" value={creditAmount} onChange={(e) => setCreditAmount(e.target.value)} />
+                  </Field>
+                </div>
+                <Field label="Reason" htmlFor="credit-reason">
+                  <Input id="credit-reason" value={creditReason} maxLength={300} onChange={(e) => setCreditReason(e.target.value)} />
+                </Field>
+                <Button type="button" variant="outline" size="sm" onClick={applyCredits} loading={crediting} disabled={!creditAmount || !creditReason.trim()}>
+                  Apply credits
+                </Button>
+                {adjustments.length > 0 && (
+                  <ul className="space-y-1 text-xs text-text-muted" aria-label="Adjustments this month">
+                    {adjustments.map((a) => (
+                      <li key={a.id}>
+                        <span className="font-medium text-text">
+                          {a.amount > 0 ? "+" : ""}
+                          {a.amount} {a.kind === "ai" ? "AI" : "review"}
+                        </span>{" "}
+                        {a.reason} ({a.actorEmail ?? "unknown"}, {timeAgo(a.createdAt)})
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </fieldset>
             </div>
           )}
           <DialogFooter>

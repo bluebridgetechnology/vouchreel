@@ -144,7 +144,7 @@ test.describe("platform admin", () => {
 
     // Promote another user to platform admin
     await row(page, USERS.promote.email).getByRole("button", { name: "Manage" }).click();
-    await page.getByRole("switch").click();
+    await page.getByRole("switch", { name: "Platform admin" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Save changes" }).click();
     await expect(row(page, USERS.promote.email)).toContainText("Admin");
 
@@ -156,7 +156,8 @@ test.describe("platform admin", () => {
 
     // You cannot change your own admin access
     await row(page, USERS.admin.email).getByRole("button", { name: "Manage" }).click();
-    await expect(page.getByRole("switch")).toBeDisabled();
+    await expect(page.getByRole("switch", { name: "Platform admin" })).toBeDisabled();
+    await expect(page.getByRole("switch", { name: "Suspended" })).toBeDisabled();
     await expect(page.getByRole("dialog").getByText("You cannot change your own admin access.")).toBeVisible();
   });
 
@@ -504,6 +505,56 @@ test.describe("platform admin", () => {
     await page.getByRole("button", { name: "Save Provider Configuration" }).click();
     await expect(page.getByText(saved).nth(0)).toBeVisible();
     await provider(/Stripe/);
+  });
+
+  test("users: suspend an account (open session dies, sign-in refused with the reason), restore it, and adjust credits", async ({ page, playwright, baseURL }) => {
+    const base = baseURL!;
+    const member = await playwright.request.newContext({ baseURL: base });
+    await signIn(member, base, USERS.member.email);
+    expect((await member.get("/api/spaces")).status()).toBe(200);
+
+    await open(page, `/admin?tab=users&q=${encodeURIComponent(USERS.member.email)}`);
+    await row(page, USERS.member.email).getByRole("button", { name: "Manage" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("switch", { name: "Suspended" }).click();
+    // A reason is required
+    await dialog.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText(/Give a reason/).first()).toBeVisible();
+    await dialog.getByLabel("Reason", { exact: true }).first().fill("Chargeback abuse");
+    await dialog.getByRole("button", { name: "Save changes" }).click();
+    await expect(row(page, USERS.member.email)).toContainText("Suspended");
+
+    // The open session stops working at once, and signing in again is refused with the reason's wording
+    expect((await member.get("/api/spaces")).status()).toBe(401);
+    const refused = await (await playwright.request.newContext({ baseURL: base })).post("/api/auth/sign-in/email", { headers: { origin: base }, data: { email: USERS.member.email, password: PASSWORD } });
+    expect(refused.status()).toBe(403);
+    expect(await refused.text()).toContain("suspended");
+
+    // Restore, and they can sign in again
+    await row(page, USERS.member.email).getByRole("button", { name: "Manage" }).click();
+    await page.getByRole("dialog").getByRole("switch", { name: "Suspended" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Save changes" }).click();
+    await expect(row(page, USERS.member.email)).not.toContainText("Suspended");
+    const again = await playwright.request.newContext({ baseURL: base });
+    await signIn(again, base, USERS.member.email);
+    expect((await again.get("/api/spaces")).status()).toBe(200);
+
+    // Credits: add five review video credits for this month, with a reason
+    await row(page, USERS.member.email).getByRole("button", { name: "Manage" }).click();
+    const credits = page.getByRole("dialog");
+    await credits.getByLabel("Amount").fill("5");
+    await credits.getByLabel("Reason", { exact: true }).last().fill("Goodwill after an outage");
+    await credits.getByRole("button", { name: "Apply credits" }).click();
+    await expect(page.getByText("Credits adjusted for this month.")).toBeVisible();
+    await expect(credits.getByRole("list", { name: "Adjustments this month" })).toContainText("+5 review");
+    await expect(credits.getByRole("list", { name: "Adjustments this month" })).toContainText("Goodwill after an outage");
+
+    // All of it is in the audit log
+    await open(page, "/admin?tab=audit&q=e2e-member");
+    await expect(page.getByText(/Suspended e2e-member@example.test/)).toBeVisible();
+    await expect(page.getByText(/Restored e2e-member@example.test/)).toBeVisible();
+    await expect(page.getByText(/Added 5 review video credits for e2e-member@example.test/)).toBeVisible();
+    await Promise.all([member.dispose(), again.dispose()]);
   });
 
   test("accessibility: no axe violations on any tab", async ({ page }) => {

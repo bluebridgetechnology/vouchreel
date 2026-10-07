@@ -1,8 +1,10 @@
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../db";
 import { sendEmail } from "../email/transport";
 import { renderEmail } from "../email/templates";
+import { SUSPENDED_MESSAGE, getSuspension } from "./suspended";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -41,6 +43,19 @@ export const auth = betterAuth({
         required: false,
         defaultValue: false,
         input: false,
+      },
+    },
+  },
+
+  // A suspended account cannot sign in (an open session is cut off in getSession)
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (newSession) => {
+          const { suspended } = await getSuspension(newSession.userId);
+          if (suspended) throw new APIError("FORBIDDEN", { message: SUSPENDED_MESSAGE });
+          return { data: newSession };
+        },
       },
     },
   },

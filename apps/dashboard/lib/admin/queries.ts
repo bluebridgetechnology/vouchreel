@@ -8,6 +8,9 @@ export interface AdminUserRow {
   name: string;
   email: string;
   isPlatformAdmin: boolean;
+  /** When an admin suspended the account, if they did. */
+  suspendedAt: Date | null;
+  suspendedReason: string | null;
   createdAt: Date;
   planId: string | null;
   planName: string | null;
@@ -45,6 +48,8 @@ async function listAdminUsersAt(q: string | undefined, page: number, pageSize: n
       name: user.name,
       email: user.email,
       isPlatformAdmin: user.isPlatformAdmin,
+      suspendedAt: user.suspendedAt,
+      suspendedReason: user.suspendedReason,
       createdAt: user.createdAt,
     })
     .from(user)

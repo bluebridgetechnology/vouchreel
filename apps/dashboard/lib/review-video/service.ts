@@ -1,4 +1,5 @@
 import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
+import { adjustmentFor, applyAdjustment } from "@/lib/admin/credit-adjustments";
 import { REVIEW_RIGHTS_VERSION } from "./rights";
 import { db } from "@/lib/db";
 import { reviewSources, reviewVideos, reviews, socialExportSettings, spaces } from "@/lib/db/schema";
@@ -67,7 +68,7 @@ export async function getReviewVideoCredits(ownerId: string, executor: Executor 
       )
     );
   const used = row?.used ?? 0;
-  const limit = limits.reviewVideoCredits;
+  const limit = applyAdjustment(limits.reviewVideoCredits, await adjustmentFor(ownerId, "review", now));
   return { limit, used, remaining: Math.max(0, limit - used) };
 }
 

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getSuspension } from "@/lib/auth/suspended";
 
 /**
  * Get the current session on the server side.
@@ -10,6 +11,8 @@ export async function getSession() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+  // A suspended account has no session, even with a valid cookie
+  if (session?.user && (await getSuspension(session.user.id)).suspended) return null;
   return session;
 }
 

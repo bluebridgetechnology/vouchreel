@@ -8,6 +8,8 @@ vi.mock("@/lib/auth/platform-admin-server", () => ({ isPlatformAdminFresh: async
 const update = vi.fn();
 const audit = vi.fn();
 vi.mock("@/lib/admin/users", () => ({ updateAdminUser: (...a: unknown[]) => update(...a) }));
+const suspend = vi.fn();
+vi.mock("@/lib/admin/suspension", () => ({ setSuspended: (...a: unknown[]) => suspend(...a) }));
 vi.mock("@/lib/admin/audit", () => ({ logAdminAction: (...a: unknown[]) => audit(...a) }));
 
 const admin = { user: { id: "admin-1", email: "a@x.test", isPlatformAdmin: true } };
@@ -20,6 +22,7 @@ describe("PATCH /api/admin/users/:id", () => {
     vi.mocked(getSession).mockReset();
     update.mockReset();
     audit.mockReset();
+    suspend.mockReset();
   });
 
   it("rejects anonymous users and ordinary accounts without touching anything", async () => {
@@ -65,6 +68,36 @@ describe("PATCH /api/admin/users/:id", () => {
       update.mockResolvedValueOnce({ ok: false, reason, message: reason });
       expect((await PATCH(patch({ planId: null }), params)).status).toBe(400);
     }
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it("suspends with a reason, audits it, and does not touch plan or admin", async () => {
+    vi.mocked(getSession).mockResolvedValue(admin as never);
+    suspend.mockResolvedValue({ ok: true, email: "b@x.test", changed: true });
+    const res = await PATCH(patch({ suspended: true, suspendedReason: "Abuse" }), params);
+    expect(res.status).toBe(200);
+    expect(suspend).toHaveBeenCalledWith("admin-1", "user-2", true, "Abuse");
+    expect(update).not.toHaveBeenCalled();
+    expect(audit).toHaveBeenCalledWith(expect.objectContaining({ action: "user.suspended", summary: "Suspended b@x.test", entityId: "user-2" }));
+  });
+
+  it("restores without a reason, and writes no audit entry when nothing changed", async () => {
+    vi.mocked(getSession).mockResolvedValue(admin as never);
+    suspend.mockResolvedValue({ ok: true, email: "b@x.test", changed: true });
+    await PATCH(patch({ suspended: false }), params);
+    expect(audit).toHaveBeenCalledWith(expect.objectContaining({ action: "user.restored" }));
+    audit.mockReset();
+    suspend.mockResolvedValue({ ok: true, email: "b@x.test", changed: false });
+    expect((await PATCH(patch({ suspended: false }), params)).status).toBe(200);
+    expect(audit).not.toHaveBeenCalled();
+  });
+
+  it("turns the suspension rules into 400 and 404", async () => {
+    vi.mocked(getSession).mockResolvedValue(admin as never);
+    suspend.mockResolvedValue({ ok: false, reason: "admin", message: "Remove admin first" });
+    expect((await PATCH(patch({ suspended: true, suspendedReason: "x" }), params)).status).toBe(400);
+    suspend.mockResolvedValue({ ok: false, reason: "not_found", message: "User not found." });
+    expect((await PATCH(patch({ suspended: true, suspendedReason: "x" }), params)).status).toBe(404);
     expect(audit).not.toHaveBeenCalled();
   });
 });

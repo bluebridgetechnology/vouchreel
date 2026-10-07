@@ -197,6 +197,13 @@
       "when": 1791362401586,
       "tag": "0027_review_rights_wording",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791362492762,
+      "tag": "0028_user_suspension_credit_adjustments",
+      "breakpoints": true
     }
   ]
 }
