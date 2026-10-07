@@ -733,6 +733,44 @@ test.describe("platform admin", () => {
     await context.close();
   });
 
+  test("content security policy: a fresh nonce on every page, and the main pages break none of it", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    // Record every violation the browser sees, from the start of each page
+    await page.addInitScript(() => {
+      (window as unknown as { __csp: string[] }).__csp = [];
+      document.addEventListener("securitypolicyviolation", (e) => (window as unknown as { __csp: string[] }).__csp.push(`${e.effectiveDirective} ${e.blockedURI} ${e.sourceFile ?? ""}:${e.lineNumber}`));
+    });
+    const violations = async () => page.evaluate(() => (window as unknown as { __csp: string[] }).__csp);
+
+    const nonces = new Set<string>();
+    for (const path of ["/", "/pricing", "/login", "/signup", "/forgot-password", "/collect/e2e-collect"]) {
+      const response = await page.goto(path);
+      const policy = response!.headers()["content-security-policy-report-only"] ?? response!.headers()["content-security-policy"] ?? "";
+      const nonce = /'nonce-([^']+)'/.exec(policy)?.[1];
+      expect(nonce, `${path} has a policy with a nonce`).toBeTruthy();
+      nonces.add(nonce!);
+      expect(policy).toContain("report-uri /api/csp-report");
+      await page.waitForLoadState("networkidle");
+      expect(await violations(), `${path} violations`).toEqual([]);
+    }
+    expect(nonces.size).toBe(6); // a new nonce for every request
+
+    // The API is not a page: no policy there
+    const api = await context.request.get("/api/health");
+    expect(api.headers()["content-security-policy-report-only"]).toBeUndefined();
+    expect(api.headers()["content-security-policy"] ?? "").not.toContain("nonce-");
+
+    // Signed in: the dashboard and the pages added most recently
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    for (const path of ["/dashboard", "/settings", "/settings/security", "/notifications", "/settings/webhooks"]) {
+      await page.goto(path);
+      await page.waitForLoadState("networkidle");
+      expect(await violations(), `${path} violations`).toEqual([]);
+    }
+    await context.close();
+  });
+
   test("audit log: the actions above are recorded, and filters and paging work", async ({ page }) => {
     await open(page, "/admin?tab=audit&type=user");
     await expect(page.getByText(`Changed plan for ${USERS.customer.email}`)).toBeVisible();
