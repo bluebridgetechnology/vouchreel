@@ -238,6 +238,14 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
           </p>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+        <a
+          href={`/api/spaces/${spaceId}/consents/export`}
+          download
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          Consent records (CSV)
+        </a>
         <button
           type="button"
           onClick={openAddDialog}
@@ -248,6 +256,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
           </svg>
           Add Testimonial
         </button>
+        </div>
       </div>
 
       {error && (

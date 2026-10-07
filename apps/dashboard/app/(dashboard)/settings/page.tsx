@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth/session";
 import { hasPassword } from "@/lib/account/deletion";
 import { DeleteAccountCard } from "./delete-account-card";
 import { DataExportCard } from "./data-export-card";
+import { AuthorRemovalCard } from "./author-removal-card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -124,6 +125,7 @@ export default async function SettingsPage() {
         </div>
 
         <DataExportCard />
+        <AuthorRemovalCard />
         <DeleteAccountCard needsPassword={needsPassword} />
       </div>
     </div>
