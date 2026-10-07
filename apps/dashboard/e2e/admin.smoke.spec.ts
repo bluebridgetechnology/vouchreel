@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import pg from "pg";
 import AxeBuilder from "@axe-core/playwright";
-import { ADMIN_STATE, CONSENT_FILE, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, REASON_TEXT, STORAGE_ORIGIN, USERS } from "./seed";
+import { ADMIN_STATE, CONSENT_FILE, E2E_AUTH_SECRET, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, REASON_TEXT, STORAGE_ORIGIN, USERS } from "./seed";
 
 /** Smoke tests for the platform-admin area (/admin). Tests run in order and share seeded rows. */
 test.describe.configure({ mode: "serial" });
@@ -457,6 +457,42 @@ test.describe("platform admin", () => {
     for (const r of own.reviews.filter((r: { provider: string }) => r.provider === "own")) {
       expect((await context.request.delete(`/api/spaces/${space.id}/reviews/${r.id}`, { headers: { origin: baseURL! } })).ok()).toBe(true);
     }
+    await context.close();
+  });
+
+  test("email verification: a new account cannot sign in until its email link is used", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    const email = `e2e-verify-${Date.now()}@example.test`;
+
+    await open(page, "/signup");
+    await page.getByLabel("Full name").fill("E2E Verify");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Password").fill(PASSWORD);
+    await page.getByRole("button", { name: /create account/i }).click();
+    await expect(page.getByRole("heading", { name: /Check your email/ })).toBeVisible();
+
+    // Signing in is refused until the link has been used
+    // (the sign-in rate limit answers 429 when attempts come close together: wait and ask again)
+    const attempt = async () => {
+      for (let i = 0; i < 6; i++) {
+        const res = await context.request.post("/api/auth/sign-in/email", { headers: { origin: baseURL! }, data: { email, password: PASSWORD } });
+        if (res.status() !== 429) return res;
+        await new Promise((r) => setTimeout(r, 4000));
+      }
+      throw new Error("kept being rate limited");
+    };
+    expect((await attempt()).status()).toBe(403);
+
+    // The link in the email carries a token signed with the server's secret; make the same one
+    const { createEmailVerificationToken } = await import("better-auth/api");
+    const token = await createEmailVerificationToken(E2E_AUTH_SECRET, email, undefined, 3600);
+    const verified = await context.request.get(`/api/auth/verify-email?token=${encodeURIComponent(token)}`, { maxRedirects: 0 });
+    expect(verified.status(), verified.headers().location).toBeLessThan(400);
+    expect(verified.headers().location ?? "").not.toMatch(/error/i);
+
+    const ok = await attempt();
+    expect(ok.status(), await ok.text()).toBe(200);
     await context.close();
   });
 

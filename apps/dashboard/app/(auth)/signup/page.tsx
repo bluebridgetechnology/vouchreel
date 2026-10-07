@@ -19,6 +19,7 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [checkEmail, setCheckEmail] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,6 +35,9 @@ export default function SignupPage() {
 
       if (result.error) {
         setError(result.error.message || "Could not create account");
+      } else if (result.data && !result.data.token) {
+        // No session was created: the account has to be confirmed from the email first
+        setCheckEmail(true);
       } else {
         router.push("/dashboard");
         router.refresh();
@@ -43,6 +47,29 @@ export default function SignupPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (checkEmail) {
+    return (
+      <div className="space-y-7">
+        <div className="space-y-2 text-center">
+          <h1 className="text-4xl font-medium">
+            Check your <Em>email</Em>
+          </h1>
+          <p className="text-sm text-text-muted">
+            We sent a link to <span className="font-medium text-text">{email}</span>. Open it to finish creating your account, then sign in.
+          </p>
+        </div>
+        <Card padding="lg">
+          <p className="text-center text-sm text-text-muted">
+            Nothing arrived? Check your spam folder, or try signing in: we will send a fresh link.{" "}
+            <Link href="/login" className="font-medium text-text underline">
+              Go to sign in
+            </Link>
+          </p>
+        </Card>
+      </div>
+    );
   }
 
   return (

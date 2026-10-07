@@ -23,7 +23,8 @@
     "icons:build": "node scripts/build-icons.mjs",
     "build:e2e": "NEXT_PUBLIC_APP_URL=http://localhost:3101 next build",
     "test:e2e": "playwright test",
-    "storage:prune": "tsx --env-file-if-exists=.env scripts/prune-orphans.ts"
+    "storage:prune": "tsx --env-file-if-exists=.env scripts/prune-orphans.ts",
+    "auth:verify-existing": "tsx --env-file-if-exists=.env scripts/verify-existing-users.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1131.0",

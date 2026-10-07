@@ -6,6 +6,13 @@ import { sendEmail } from "../email/transport";
 import { renderEmail } from "../email/templates";
 import { SUSPENDED_MESSAGE, getSuspension } from "./suspended";
 
+/**
+ * New accounts must confirm their email before they can sign in. Off until the email provider is
+ * known to deliver (RESEND_API_KEY) and the accounts that already exist have been marked verified
+ * (`npm run auth:verify-existing`). See docs/deployment.md.
+ */
+export const REQUIRE_EMAIL_VERIFICATION = process.env.REQUIRE_EMAIL_VERIFICATION === "true";
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -14,6 +21,7 @@ export const auth = betterAuth({
   // Email + password authentication
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: REQUIRE_EMAIL_VERIFICATION,
     resetPasswordTokenExpiresIn: 60 * 60, // 1 hour
     sendResetPassword: async ({ user, url }) => {
       const { html, text } = renderEmail({
@@ -24,6 +32,23 @@ export const auth = betterAuth({
       });
       // Not awaited by Better Auth's response path timing-wise: failures are logged, never thrown to the caller
       await sendEmail({ to: user.email, subject: "Reset your Vouchreel password", text, html });
+    },
+  },
+
+  emailVerification: {
+    // A sign-in attempt by someone who has not confirmed sends a fresh link (covers a lost or expired email)
+    sendOnSignUp: REQUIRE_EMAIL_VERIFICATION,
+    sendOnSignIn: REQUIRE_EMAIL_VERIFICATION,
+    autoSignInAfterVerification: true,
+    expiresIn: 60 * 60 * 24, // 24 hours
+    sendVerificationEmail: async ({ user, url }) => {
+      const { html, text } = renderEmail({
+        title: "Confirm your email address",
+        body: "Welcome to Vouchreel. Confirm your email address to finish creating your account. This link expires in 24 hours. If you did not sign up, you can ignore this email.",
+        cta: { label: "Confirm my email", url },
+        footer: "For your security, never forward this email.",
+      });
+      await sendEmail({ to: user.email, subject: "Confirm your Vouchreel email address", text, html });
     },
   },
 

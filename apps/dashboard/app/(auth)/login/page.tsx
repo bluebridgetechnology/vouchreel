@@ -31,7 +31,11 @@ export default function LoginPage() {
       });
 
       if (result.error) {
-        setError(result.error.message || "Invalid email or password");
+        setError(
+          result.error.code === "EMAIL_NOT_VERIFIED"
+            ? "Please confirm your email address first. We just sent you a fresh link."
+            : result.error.message || "Invalid email or password"
+        );
       } else {
         router.push("/dashboard");
         router.refresh();

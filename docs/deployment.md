@@ -14,6 +14,7 @@ The database is Postgres. Migrations live in `drizzle/` at the repo root and are
 - [Local development](#local-development)
 - [Environment variables](#environment-variables)
 - [VPS deployment (Docker Compose)](#vps-deployment-docker-compose)
+- [Email verification](#email-verification)
 - [Self-hosted observability](#self-hosted-observability)
 - [Vercel deployment](#vercel-deployment)
 - [Widget CDN deployment](#widget-cdn-deployment)
@@ -132,6 +133,18 @@ The `migrate` service re-runs on every `up`, applying only new migrations. To re
 - **Backups:** back up the `pgdata` volume (e.g. `pg_dump` on a cron) — it is a named volume and survives container recreation, but not `docker compose down -v`.
 
 ---
+
+## Email verification
+
+New accounts can be required to confirm their email address before they can sign in. It is off by default.
+
+1. Make sure email is delivered: set `RESEND_API_KEY` and `EMAIL_FROM`, and check that the password reset email arrives.
+2. Mark everyone who already has an account as verified, so they are not locked out:
+   `npm run auth:verify-existing -w @vouchreel/dashboard` (shows the count), then add `-- --apply`.
+3. Set `REQUIRE_EMAIL_VERIFICATION=true` and restart the app.
+
+From then on a new sign-up sees "Check your email", and signing in before using the link is refused and sends a
+fresh link (valid 24 hours). People who sign in with Google are verified by Google.
 
 ## Self-hosted observability
 
