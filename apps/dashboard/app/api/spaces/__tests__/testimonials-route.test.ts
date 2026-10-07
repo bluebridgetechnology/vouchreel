@@ -17,6 +17,9 @@ vi.mock("@/lib/auth/session", () => ({
   getSession: vi.fn(),
 }));
 
+const permanentDelete = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/spaces/delete", () => ({ deleteTestimonialPermanently: permanentDelete }));
+
 vi.mock("@/lib/db", () => ({
   db: {
     select: vi.fn(),
@@ -262,7 +265,7 @@ describe("Testimonial API Routes", () => {
   });
 
   describe("DELETE /api/spaces/[id]/testimonials/[tid]", () => {
-    it("soft-deletes testimonial by setting isActive to false", async () => {
+    it("deletes the testimonial for good (rows and files), no longer just switching it off", async () => {
       (getSession as any).mockResolvedValue({
         user: { id: "user-1", email: "user@test.com" },
       });
@@ -288,12 +291,7 @@ describe("Testimonial API Routes", () => {
         };
       });
 
-      const setMock = vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue(undefined),
-      });
-      (db.update as any).mockReturnValue({
-        set: setMock,
-      });
+      permanentDelete.mockResolvedValue({ id: "t-1" });
 
       const res = await deleteTestimonial(new Request("http://localhost", { method: "DELETE" }), {
         params: Promise.resolve({ id: "space-1", tid: "t-1" }),
@@ -302,7 +300,8 @@ describe("Testimonial API Routes", () => {
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.success).toBe(true);
-      expect(setMock).toHaveBeenCalledWith({ isActive: false });
+      expect(permanentDelete).toHaveBeenCalledWith("space-1", "t-1");
+      expect(db.update).not.toHaveBeenCalled();
     });
   });
 
