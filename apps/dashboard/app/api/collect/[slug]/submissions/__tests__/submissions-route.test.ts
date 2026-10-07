@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "../route";
 import { rateLimit, resetRateLimits } from "@/lib/rate-limit";
 
+const FORM_ID = "11111111-2222-3333-4444-555555555555";
+let alreadyUsed = false;
+const checkVideo = vi.hoisted(() => vi.fn());
 const upload = vi.fn(async () => "https://cdn.test/video.mp4");
 let collectModes: "both" | "video" | "text" = "both";
 const insertValues = vi.fn();
@@ -9,7 +12,9 @@ const insertValues = vi.fn();
 vi.mock("@/lib/db", () => ({
   db: {
     select: () => ({
-      from: () => ({ where: () => Promise.resolve([{ id: "form-1", spaceId: "space-1", collectModes }]) }),
+      from: () => ({
+        where: () => Object.assign(Promise.resolve([{ id: FORM_ID, spaceId: "space-1", collectModes }]), { limit: () => Promise.resolve(alreadyUsed ? [{ id: "other-sub" }] : []) }),
+      }),
     }),
     insert: () => ({
       values: (v: unknown) => {
@@ -20,6 +25,7 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 vi.mock("@/lib/storage", () => ({ getStorage: () => ({ upload }) }));
+vi.mock("@/lib/collect/direct-upload", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/collect/direct-upload")>()), checkUploadedVideo: checkVideo }));
 vi.mock("@/lib/transcode", () => ({ queueTranscode: vi.fn() }));
 vi.mock("@/lib/webhooks/dispatch", () => ({ dispatchWebhookEvent: vi.fn(() => Promise.resolve()) }));
 vi.mock("@/lib/notifications/service", () => ({ notifySpaceOwner: vi.fn() }));
@@ -45,6 +51,7 @@ describe("POST /api/collect/[slug]/submissions", () => {
     vi.clearAllMocks();
     resetRateLimits();
     collectModes = "both";
+    alreadyUsed = false;
   });
 
   it("accepts a real MP4 and stores it", async () => {
@@ -138,5 +145,47 @@ describe("POST /api/collect/[slug]/submissions", () => {
     const blocked = await POST(request(form({ ...base, text: "eleven" }), { "x-forwarded-for": "9.9.9.9, 203.0.113.9" }), ctx);
     expect(blocked.status).toBe(429);
     expect(await rateLimit("unrelated")).toMatchObject({ success: true });
+  });
+
+  describe("a video uploaded straight to storage", () => {
+    const key = `uploads/pending/${FORM_ID}/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.mp4`;
+    const url = `https://cdn.test/${key}`;
+
+    it("is accepted by its key once storage has been checked, without the file passing through", async () => {
+      checkVideo.mockResolvedValue({ ok: true, url, size: 5000 });
+      const res = await POST(request(form({ ...base, uploadKey: key, durationSeconds: "12" })), ctx);
+      expect(res.status).toBe(201);
+      expect(checkVideo).toHaveBeenCalledWith(expect.anything(), FORM_ID, key);
+      expect(upload).not.toHaveBeenCalled();
+      expect(insertValues).toHaveBeenCalledWith(expect.objectContaining({ type: "video", videoUrl: url, processingStatus: "pending" }));
+    });
+
+    it("is refused, with the reason, when storage does not hold a valid video under that key", async () => {
+      checkVideo.mockResolvedValue({ ok: false, message: "We did not receive your video. Please upload it again." });
+      const res = await POST(request(form({ ...base, uploadKey: key })), ctx);
+      expect(res.status).toBe(400);
+      expect((await res.json()).error.message).toMatch(/did not receive/);
+      expect(insertValues).not.toHaveBeenCalled();
+    });
+
+    it("cannot be used by a second submission", async () => {
+      checkVideo.mockResolvedValue({ ok: true, url, size: 5000 });
+      alreadyUsed = true;
+      const res = await POST(request(form({ ...base, uploadKey: key })), ctx);
+      expect(res.status).toBe(400);
+      expect(insertValues).not.toHaveBeenCalled();
+    });
+
+    it("cannot be sent together with written text (exactly one testimonial)", async () => {
+      checkVideo.mockResolvedValue({ ok: true, url, size: 5000 });
+      const res = await POST(request(form({ ...base, uploadKey: key, text: "also this" })), ctx);
+      expect(res.status).toBe(400);
+    });
+
+    it("is refused on a form that only accepts written testimonials", async () => {
+      collectModes = "text";
+      checkVideo.mockResolvedValue({ ok: true, url, size: 5000 });
+      expect((await POST(request(form({ ...base, uploadKey: key })), ctx)).status).toBe(400);
+    });
   });
 });

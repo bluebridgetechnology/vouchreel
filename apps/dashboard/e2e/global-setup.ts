@@ -75,6 +75,8 @@ export default async function globalSetup(config: FullConfig) {
     const fileUrl = (key: string) => `${STORAGE_ORIGIN}/${STORAGE_BUCKET}/${key}`;
     const { rows: [owner] } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [USERS.customer.email]);
     const { rows: [space] } = await pool.query(`INSERT INTO spaces (name, owner_id, embed_key) VALUES ('E2E Moderation Space', $1, 'e2e-moderation') RETURNING id`, [owner.id]);
+    // A public collection form, for the direct-upload test
+    await pool.query(`INSERT INTO collection_forms (space_id, title, prompt_text, slug) VALUES ($1, 'E2E Collect', 'Tell us how it went', 'e2e-collect')`, [space.id]);
     // An inbox of 25 (the first ten unread) and a Slack-format webhook whose address cannot be reached
     await pool.query(
       `INSERT INTO notifications (user_id, type, title, body, read_at, created_at)
