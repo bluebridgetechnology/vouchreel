@@ -15,6 +15,7 @@ The database is Postgres. Migrations live in `drizzle/` at the repo root and are
 - [Environment variables](#environment-variables)
 - [VPS deployment (Docker Compose)](#vps-deployment-docker-compose)
 - [Email verification](#email-verification)
+- [Content Security Policy](#content-security-policy)
 - [Direct video uploads (S3 and R2)](#direct-video-uploads-s3-and-r2)
 - [Sending notifications to Slack](#sending-notifications-to-slack)
 - [Two-factor sign-in](#two-factor-sign-in)
@@ -148,6 +149,22 @@ New accounts can be required to confirm their email address before they can sign
 
 From then on a new sign-up sees "Check your email", and signing in before using the link is refused and sends a
 fresh link (valid 24 hours). People who sign in with Google are verified by Google.
+
+## Content Security Policy
+
+Every page is sent with a Content Security Policy built around a fresh random value (a nonce) made for that request by `proxy.ts`: only scripts carrying it run, so a script injected into a page does nothing. It is rolled out in stages with `CSP_MODE`:
+
+| `CSP_MODE` | What happens |
+|---|---|
+| `report-only` (default) | The policy is sent as `Content-Security-Policy-Report-Only`. Nothing is blocked; each violation is posted to `/api/csp-report` and written to the log as `[csp] violation` with the directive, what was blocked, and the page (query strings removed). |
+| `enforce` | The same policy is sent as `Content-Security-Policy` and violations are blocked. |
+| `off` | No policy is sent. Use it to rule the policy out when debugging. |
+
+**Roll-out:** leave it on `report-only` for at least a week of real traffic, search your logs (or Grafana/Loki, if you run the observability stack) for `[csp] violation`, fix or allow what shows up, then set `CSP_MODE=enforce`. Things only real use will show: browser extensions (noise, safe to ignore), the in-browser camera recorder, the video preview player, and embeds from sources not listed in `lib/security/csp.ts`.
+
+What the policy allows: scripts with the nonce; inline styles (the toast library and React style attributes need them, and styles cannot run code); images and videos from any HTTPS host (your customers' logos and your storage/CDN); connections to this site and your S3/R2 bucket (direct video uploads); frames from YouTube and Vimeo. It forbids plugins, changing `<base>`, and form posts to other sites. Who may embed the collection form is unchanged (`next.config.ts`).
+
+**Cost:** a nonce means pages are built per request instead of served from a build-time copy. Marketing pages have no data to fetch, so the extra work is small, but it is real; `CSP_MODE=off` removes it.
 
 ## Direct video uploads (S3 and R2)
 

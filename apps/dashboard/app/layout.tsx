@@ -1,4 +1,5 @@
 import "./globals.css";
+import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { fontSans, fontMono } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -33,11 +34,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // The nonce made for this request by proxy.ts, for the one inline script we ship (the theme). This makes pages
+  // render per request, which a nonce requires; CSP_MODE=off in the environment switches the policy off.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       lang="en"
@@ -45,7 +49,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>
-        <ThemeProvider>
+        <ThemeProvider nonce={nonce}>
           <TooltipProvider delayDuration={200}>
             <ConfirmProvider>{children}</ConfirmProvider>
           </TooltipProvider>
