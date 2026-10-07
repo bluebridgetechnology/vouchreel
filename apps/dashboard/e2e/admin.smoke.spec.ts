@@ -35,14 +35,14 @@ async function createConfirmedAccount(context: { post: (url: string, options: { 
   if (verified.status() >= 400) throw new Error(`Confirming ${email} failed with ${verified.status()}`);
 }
 
-/** Navigates, and tries again when the app's own redirect or refresh interrupts the navigation (seen in Firefox and WebKit). */
+/** Navigates, and tries again when the app's own redirect or refresh interrupts the navigation, or Firefox fails one outright (seen in Firefox and WebKit). */
 async function open(page: Page, url: string) {
   for (let attempt = 1; ; attempt++) {
     try {
       await page.goto(url);
       return;
     } catch (error) {
-      if (attempt >= 3 || !/interrupted by another navigation|NS_BINDING_ABORTED|frame was detached/i.test(String(error))) throw error;
+      if (attempt >= 3 || !/interrupted by another navigation|NS_BINDING_ABORTED|NS_ERROR_FAILURE|frame was detached/i.test(String(error))) throw error;
       await page.waitForLoadState("load").catch(() => {});
     }
   }
@@ -838,10 +838,11 @@ test.describe("platform admin", () => {
       const webm = readFileSync(path.join(dir, "v.webm"));
       // The browser fetches the file from the storage address; serve it from here (a test-only shortcut around
       // the browser's rules for localhost to 127.0.0.1) so the widget's behaviour is what is tested
-      let fileGone = false;
-      await page.route(objectUrl, (route) =>
-        fileGone ? route.fulfill({ status: 404 }) : route.fulfill({ status: 200, body: webm, headers: { "content-type": "video/webm", "access-control-allow-origin": "*" } })
-      );
+      await page.route(objectUrl, (route) => route.fulfill({ status: 200, body: webm, headers: { "content-type": "video/webm", "access-control-allow-origin": "*" } }));
+      // Where the file used to be, once it is gone: the request fails. (A new address, so no browser can answer from what it
+      // fetched a moment ago, and a failure rather than a 404 so every browser reports it the same way.)
+      const goneUrl = `${objectUrl}-gone`;
+      await page.route(goneUrl, (route) => route.abort("failed"));
       const props = { reviews: [{ author: "Alice <b>M.</b>", rating: 5, text: "Great experience, would use again.", source: "google" }], brand: "#cf3d0b" };
       const { rows } = await pool.query(
         `INSERT INTO review_videos (space_id, template, status, props, rights_confirmed_at, output_url, duration_seconds) VALUES ($1, 'spotlight', 'done', $2, now(), $3, 1) RETURNING id`,
@@ -878,7 +879,7 @@ test.describe("platform admin", () => {
         await expect.poll(() => card.locator("video").evaluate((v: HTMLVideoElement) => v.readyState)).toBeGreaterThanOrEqual(1);
 
         // The file goes (a takedown deletes it at once) while the list still names it: the tile drops itself
-        fileGone = true;
+        await pool.query(`UPDATE review_videos SET output_url = $2 WHERE id = $1`, [videoId, goneUrl]);
         await embed();
         await expect(page.locator(".vr-blend-video-card", { hasText: "Ada" })).toHaveCount(1, { timeout: 15_000 }); // the page did load its widget
         await expect(page.locator(".vr-blend-video-card", { hasText: "Review video" })).toHaveCount(0);
