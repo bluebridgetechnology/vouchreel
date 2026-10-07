@@ -4,9 +4,11 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   ListObjectsV2Command,
+  HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl as awsGetSignedUrl } from "@aws-sdk/s3-request-presigner";
-import type { StorageAdapter, StoredFile, UploadOptions } from "./types";
+import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
+import type { PresignedUpload, StorageAdapter, StoredFile, UploadOptions } from "./types";
 
 /**
  * S3-compatible storage adapter.
@@ -16,7 +18,7 @@ import type { StorageAdapter, StoredFile, UploadOptions } from "./types";
 export class S3Adapter implements StorageAdapter {
   private client: S3Client;
   private bucket: string;
-  private publicUrl: string;
+  private publicBase: string;
 
   constructor() {
     const region = process.env.STORAGE_REGION || "us-east-1";
@@ -36,7 +38,7 @@ export class S3Adapter implements StorageAdapter {
 
     // For R2, the public URL uses the R2 public bucket domain
     // For S3, it uses the standard S3 URL format
-    this.publicUrl = endpoint
+    this.publicBase = endpoint
       ? `${endpoint}/${bucket}`
       : `https://${bucket}.s3.${region}.amazonaws.com`;
 
@@ -68,7 +70,43 @@ export class S3Adapter implements StorageAdapter {
       })
     );
 
-    return `${this.publicUrl}/${key}`;
+    return `${this.publicBase}/${key}`;
+  }
+
+  publicUrl(key: string): string {
+    return `${this.publicBase}/${key}`;
+  }
+
+  async createPresignedUpload(key: string, options: { contentType: string; maxBytes: number; expiresInSeconds?: number }): Promise<PresignedUpload> {
+    const expiresInSeconds = options.expiresInSeconds ?? 15 * 60;
+    const post = await createPresignedPost(this.client, {
+      Bucket: this.bucket,
+      Key: key,
+      Expires: expiresInSeconds,
+      Fields: { "Content-Type": options.contentType, acl: "public-read" },
+      Conditions: [
+        ["content-length-range", 1, options.maxBytes],
+        ["eq", "$Content-Type", options.contentType],
+        ["eq", "$acl", "public-read"],
+      ],
+    });
+    return { url: post.url, fields: post.fields, key, expiresInSeconds };
+  }
+
+  async head(key: string): Promise<{ size: number; contentType?: string } | null> {
+    try {
+      const out = await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: key }));
+      return { size: out.ContentLength ?? 0, contentType: out.ContentType };
+    } catch (error) {
+      const status = (error as { $metadata?: { httpStatusCode?: number }; name?: string }).$metadata?.httpStatusCode;
+      if (status === 404 || (error as { name?: string }).name === "NotFound") return null;
+      throw error;
+    }
+  }
+
+  async readStart(key: string, length: number): Promise<Uint8Array> {
+    const out = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key, Range: `bytes=0-${Math.max(0, length - 1)}` }));
+    return out.Body ? await out.Body.transformToByteArray() : new Uint8Array();
   }
 
   async delete(key: string): Promise<void> {

@@ -14,6 +14,40 @@ const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 const MAX_DURATION_SECONDS = 5 * 60;
 const RECORDER_TYPES = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm", "video/mp4"];
 
+type DirectUpload = { kind: "uploaded"; key: string } | { kind: "unavailable" } | { kind: "error"; message: string };
+
+/** Sends the video straight to storage with a presigned POST. "unavailable" means this deployment uploads through the server instead. */
+async function uploadDirect(slugValue: string, file: File, onProgress: (percent: number) => void): Promise<DirectUpload> {
+  let prepared: { direct?: boolean; url?: string; fields?: Record<string, string>; key?: string; error?: { message?: string } };
+  try {
+    const response = await fetch(`/api/collect/${slugValue}/uploads`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contentType: file.type, size: file.size }),
+    });
+    prepared = await response.json().catch(() => ({}));
+    if (!response.ok) return { kind: "error", message: prepared.error?.message || "Unable to start the upload." };
+  } catch {
+    return { kind: "error", message: "Network error. Please try again." };
+  }
+  if (!prepared.direct || !prepared.url || !prepared.fields || !prepared.key) return { kind: "unavailable" };
+
+  const body = new FormData();
+  for (const [name, value] of Object.entries(prepared.fields)) body.set(name, value);
+  body.set("file", file); // the file goes last: storage ignores fields after it
+  return new Promise<DirectUpload>((resolve) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", prepared.url as string);
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+    };
+    request.onload = () =>
+      resolve(request.status >= 200 && request.status < 300 ? { kind: "uploaded", key: prepared.key as string } : { kind: "error", message: "The upload failed. Please try again." });
+    request.onerror = () => resolve({ kind: "error", message: "The upload failed. Check your connection and try again." });
+    request.send(body);
+  });
+}
+
 type CollectionForm = {
   title: string;
   promptText: string;
@@ -157,7 +191,6 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
     payload.set("customerName", name);
     payload.set("customerEmail", email);
     if (mode === "video" && video) {
-      payload.set("video", video);
       payload.set("durationSeconds", String(recordingSeconds || 0));
     } else {
       payload.set("text", text.trim());
@@ -165,11 +198,22 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
     }
 
     try {
+      if (mode === "video" && video) {
+        // Straight to storage when this deployment can (the file never passes through our server); otherwise with the form
+        const direct = await uploadDirect(slug, video, (percent) => setProgress(percent));
+        if (direct.kind === "error") throw new Error(direct.message);
+        if (direct.kind === "uploaded") {
+          payload.set("uploadKey", direct.key);
+          setProgress(null);
+        } else {
+          payload.set("video", video);
+        }
+      }
       const request = new XMLHttpRequest();
       const result = await new Promise<{ ok: boolean; message?: string }>((resolve) => {
         request.open("POST", `/api/collect/${slug}/submissions`);
         request.upload.onprogress = (progressEvent) => {
-          if (progressEvent.lengthComputable) {
+          if (payload.has("video") && progressEvent.lengthComputable) {
             setProgress(Math.round((progressEvent.loaded / progressEvent.total) * 100));
           }
         };

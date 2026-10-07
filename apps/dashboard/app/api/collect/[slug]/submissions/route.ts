@@ -13,18 +13,12 @@ import { notifySpaceOwner } from "@/lib/notifications/service";
 import { getClientIp } from "@/lib/security/client-ip";
 import { AI_VIDEO_CONSENT_VERSION } from "@/lib/ai-video/consent";
 import { allowsText, allowsVideo } from "@/lib/collect/modes";
+import { MAX_VIDEO_BYTES, VIDEO_EXTENSIONS, checkUploadedVideo } from "@/lib/collect/direct-upload";
 import { baseMimeType, matchesDeclaredType } from "@/lib/security/video-sniff";
 import { log } from "@/lib/log";
 
 export const runtime = "nodejs";
 
-const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
-const VIDEO_EXTENSIONS: Record<string, string> = {
-  "video/mp4": "mp4",
-  "video/webm": "webm",
-  "video/quicktime": "mov",
-  "video/x-msvideo": "avi",
-};
 
 interface RouteParams {
   params: Promise<{ slug: string }>;
@@ -68,19 +62,22 @@ export async function POST(request: Request, { params }: RouteParams) {
   }
 
   const file = data.get("video");
-  const hasVideo = file instanceof File && file.size > 0;
+  // A video already uploaded straight to storage (see uploads/route.ts) arrives as its key instead of as a file
+  const uploadKey = typeof data.get("uploadKey") === "string" ? (data.get("uploadKey") as string) : "";
+  const hasVideo = (file instanceof File && file.size > 0) || Boolean(uploadKey);
   const hasText = Boolean(parsed.data.text);
   if (hasVideo === hasText) {
     return badRequest("Submit exactly one video or text testimonial");
   }
 
-  const declaredType = hasVideo ? baseMimeType(file.type) : "";
-  if (hasVideo && (!VIDEO_EXTENSIONS[declaredType] || file.size > MAX_VIDEO_BYTES)) {
+  const throughServer = hasVideo && !uploadKey && file instanceof File;
+  const declaredType = throughServer ? baseMimeType(file.type) : "";
+  if (throughServer && (!VIDEO_EXTENSIONS[declaredType] || file.size > MAX_VIDEO_BYTES)) {
     return badRequest("Video must be MP4, WebM, MOV, or AVI and no larger than 100 MB");
   }
 
   // The declared Content-Type is client-controlled: check the actual container bytes
-  if (hasVideo) {
+  if (throughServer) {
     const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
     if (!matchesDeclaredType(declaredType, head)) {
       return badRequest("That file does not look like a valid MP4, WebM, MOV, or AVI video");
@@ -100,7 +97,15 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     let videoUrl: string | null = null;
-    if (hasVideo) {
+    if (hasVideo && uploadKey) {
+      // Uploaded straight to storage: trust nothing about it until the stored object has been looked at
+      const checked = await checkUploadedVideo(getStorage(), form.id, uploadKey);
+      if (!checked.ok) return badRequest(checked.message);
+      // One upload belongs to one submission
+      const [already] = await db.select({ id: submissions.id }).from(submissions).where(eq(submissions.videoUrl, checked.url)).limit(1);
+      if (already) return badRequest("That upload was already submitted. Please upload the video again.");
+      videoUrl = checked.url;
+    } else if (hasVideo && file instanceof File) {
       const storage = getStorage();
       const extension = VIDEO_EXTENSIONS[declaredType];
       videoUrl = await storage.upload(

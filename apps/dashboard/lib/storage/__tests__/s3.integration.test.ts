@@ -54,6 +54,70 @@ run("S3 adapter against a real S3 protocol server", () => {
     expect(await body.text()).toBe("hello");
   });
 
+  describe("direct uploads", () => {
+    const mp4 = Buffer.concat([Buffer.from([0, 0, 0, 0x20]), Buffer.from("ftypisom"), Buffer.alloc(40)]);
+
+    async function post(upload: { url: string; fields: Record<string, string> }, body: Buffer, overrides: Record<string, string> = {}) {
+      const form = new FormData();
+      for (const [k, v] of Object.entries({ ...upload.fields, ...overrides })) form.set(k, v);
+      form.set("file", new Blob([new Uint8Array(body)]), "clip.mp4"); // the file goes last
+      return fetch(upload.url, { method: "POST", body: form });
+    }
+
+    it("the presigned form says which key, which type, and what size range storage will accept", async () => {
+      const key = "uploads/pending/form-1/aaaa.mp4";
+      const upload = await adapter.createPresignedUpload!(key, { contentType: "video/mp4", maxBytes: 100 * 1024 * 1024 });
+      expect(upload.key).toBe(key);
+      const policy = JSON.parse(Buffer.from(upload.fields.Policy, "base64").toString());
+      expect(policy.conditions).toEqual(
+        expect.arrayContaining([["content-length-range", 1, 100 * 1024 * 1024], ["eq", "$Content-Type", "video/mp4"], { key }, { bucket }])
+      );
+      expect(new Date(policy.expiration).getTime()).toBeGreaterThan(Date.now());
+      expect(new Date(policy.expiration).getTime()).toBeLessThan(Date.now() + 20 * 60 * 1000);
+    });
+
+    it("a browser-style POST stores the file under the key, and the app can then see its size and first bytes", async () => {
+      const key = "uploads/pending/form-1/bbbb.mp4";
+      const upload = await adapter.createPresignedUpload!(key, { contentType: "video/mp4", maxBytes: 1_000_000 });
+      const res = await post(upload, mp4);
+      expect(res.status).toBeLessThan(300);
+
+      expect(await adapter.head!(key)).toMatchObject({ size: mp4.length });
+      const start = await adapter.readStart!(key, 12);
+      expect(Buffer.from(start).toString("latin1", 4, 8)).toBe("ftyp");
+      expect(adapter.publicUrl!(key)).toBe(`${endpoint}/${bucket}/${key}`);
+      expect((await fetch(adapter.publicUrl!(key))).status).toBe(200);
+
+      const { checkUploadedVideo } = await import("@/lib/collect/direct-upload");
+      const formId = "11111111-2222-3333-4444-555555555555";
+      const real = `uploads/pending/${formId}/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.mp4`;
+      const again = await adapter.createPresignedUpload!(real, { contentType: "video/mp4", maxBytes: 1_000_000 });
+      expect((await post(again, mp4)).status).toBeLessThan(300);
+      expect(await checkUploadedVideo(adapter, formId, real)).toMatchObject({ ok: true, size: mp4.length });
+    });
+
+    it("something that is not a video uploads fine (storage only checks size and the type label) but the app refuses it afterwards", async () => {
+      const formId = "11111111-2222-3333-4444-555555555555";
+      const key = `uploads/pending/${formId}/cccccccc-bbbb-cccc-dddd-eeeeeeeeeeee.mp4`;
+      const upload = await adapter.createPresignedUpload!(key, { contentType: "video/mp4", maxBytes: 1_000_000 });
+      expect((await post(upload, Buffer.from("MZ this is a program, not a video"))).status).toBeLessThan(300);
+      const { checkUploadedVideo } = await import("@/lib/collect/direct-upload");
+      expect(await checkUploadedVideo(adapter, formId, key)).toMatchObject({ ok: false });
+    });
+
+    it("head says null for a key nothing was uploaded to", async () => {
+      expect(await adapter.head!("uploads/pending/form-1/never.mp4")).toBeNull();
+    });
+
+    it("storage itself turns away a file over the size range (when the server enforces policies)", async () => {
+      const upload = await adapter.createPresignedUpload!("uploads/pending/form-1/big.mp4", { contentType: "video/mp4", maxBytes: 20 });
+      const res = await post(upload, mp4); // 52 bytes against a 20-byte limit
+      // moto may not enforce POST policies; real S3 and R2 do. The server-side size check covers the gap either way.
+      if (res.status < 300) console.warn("[s3 test] this S3 server did not enforce the size range in the POST policy");
+      else expect([400, 403]).toContain(res.status);
+    });
+  });
+
   it("deletes a file, so its public URL stops working, and deleting it again is not an error", async () => {
     const url = await adapter.upload(Buffer.from("x"), "review-videos/sp/v-2.mp4", { public: true });
     expect((await fetch(url)).status).toBe(200);

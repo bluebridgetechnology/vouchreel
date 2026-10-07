@@ -692,6 +692,47 @@ test.describe("platform admin", () => {
     await context.close();
   });
 
+  test("direct upload: the browser sends the video straight to storage and the submission points at it", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    const posted: string[] = [];
+    page.on("request", (r) => {
+      if (r.method() === "POST") posted.push(new URL(r.url()).origin + new URL(r.url()).pathname);
+    });
+    await open(page, "/collect/e2e-collect");
+
+    // A small MP4-shaped file, chosen in the form
+    const mp4 = Buffer.concat([Buffer.from([0, 0, 0, 0x20]), Buffer.from("ftypisom"), Buffer.alloc(2048)]);
+    await page.locator('input[type="file"][accept^="video/mp4"]').setInputFiles({ name: "clip.mp4", mimeType: "video/mp4", buffer: mp4 });
+    await page.getByLabel("Your name").fill("Direct Uploader");
+    await page.getByLabel("Email address").fill("direct@example.test");
+    await page.getByRole("button", { name: "Submit testimonial" }).click();
+    await expect(page.getByText("Thank you for sharing!")).toBeVisible();
+
+    // The file went to the storage address, not through our submissions route as a file
+    expect(posted.some((u) => u.startsWith(STORAGE_ORIGIN) && u.includes(`/${"e2e-bucket"}`))).toBe(true);
+    const stored: string[] = await (await fetch(`${STORAGE_ORIGIN}/__objects`)).json();
+    const key = stored.find((k) => k.startsWith("uploads/pending/"));
+    expect(key).toBeTruthy();
+
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    try {
+      const { rows } = await pool.query(`SELECT video_url, type, status FROM submissions WHERE customer_email = 'direct@example.test'`);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].type).toBe("video");
+      expect(String(rows[0].video_url)).toContain(key!);
+    } finally {
+      await pool.end();
+    }
+
+    // A made-up key is refused by the server
+    const forged = await context.request.post("/api/collect/e2e-collect/submissions", {
+      multipart: { customerName: "Mallory", customerEmail: "m@example.test", uploadKey: "uploads/pending/00000000-0000-0000-0000-000000000000/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee.mp4" },
+    });
+    expect(forged.status()).toBe(400);
+    await context.close();
+  });
+
   test("audit log: the actions above are recorded, and filters and paging work", async ({ page }) => {
     await open(page, "/admin?tab=audit&type=user");
     await expect(page.getByText(`Changed plan for ${USERS.customer.email}`)).toBeVisible();

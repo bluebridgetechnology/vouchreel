@@ -20,6 +20,16 @@ export interface StoredFile {
   lastModified: Date;
 }
 
+/** A form the browser can POST a file to directly, without the file passing through our server. */
+export interface PresignedUpload {
+  url: string;
+  /** Form fields to send before the file, exactly as given. */
+  fields: Record<string, string>;
+  /** The key the file will have. */
+  key: string;
+  expiresInSeconds: number;
+}
+
 export interface StorageAdapter {
   /**
    * Upload a file to storage.
@@ -38,4 +48,19 @@ export interface StorageAdapter {
    * @param expiresIn - Expiry time in seconds (default: 3600)
    */
   getSignedUrl(key: string, expiresIn?: number): Promise<string>;
+
+  /**
+   * Direct-to-storage uploads (S3 and R2 only; others leave these out and uploads go through the server).
+   * A presigned POST can enforce the size range and content type, which a presigned PUT cannot.
+   */
+  createPresignedUpload?(key: string, options: { contentType: string; maxBytes: number; expiresInSeconds?: number }): Promise<PresignedUpload>;
+
+  /** Size and type of a stored object, or null when it does not exist. */
+  head?(key: string): Promise<{ size: number; contentType?: string } | null>;
+
+  /** `length` bytes from the start of a stored object (for checking what a file really is). */
+  readStart?(key: string, length: number): Promise<Uint8Array>;
+
+  /** The public URL a stored key is served at. */
+  publicUrl?(key: string): string;
 }

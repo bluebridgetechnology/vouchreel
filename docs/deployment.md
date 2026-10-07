@@ -15,6 +15,7 @@ The database is Postgres. Migrations live in `drizzle/` at the repo root and are
 - [Environment variables](#environment-variables)
 - [VPS deployment (Docker Compose)](#vps-deployment-docker-compose)
 - [Email verification](#email-verification)
+- [Direct video uploads (S3 and R2)](#direct-video-uploads-s3-and-r2)
 - [Sending notifications to Slack](#sending-notifications-to-slack)
 - [Two-factor sign-in](#two-factor-sign-in)
 - [Self-hosted observability](#self-hosted-observability)
@@ -147,6 +148,21 @@ New accounts can be required to confirm their email address before they can sign
 
 From then on a new sign-up sees "Check your email", and signing in before using the link is refused and sends a
 fresh link (valid 24 hours). People who sign in with Google are verified by Google.
+
+## Direct video uploads (S3 and R2)
+
+With `STORAGE_PROVIDER=s3` or `r2`, a customer's video goes from their browser straight to your bucket (up to 100 MB), not through the app server. The app only hands out a short-lived signed form (valid 15 minutes, for one key, one content type, 1 byte to 100 MB, public-read), then checks the stored file before a submission may use it: it exists, is not empty or over 100 MB, and its first bytes are really an MP4, WebM, MOV or AVI. With Bunny or the local adapter, uploads still go through the server as before.
+
+Two bucket settings are needed, or direct uploads fail in the browser (customers see "The upload failed"):
+
+1. **CORS**, allowing the browser to POST from your site and the collection page's origin (your `NEXT_PUBLIC_APP_URL`, and any site you embed the form in). Example for S3 (`aws s3api put-bucket-cors`):
+   ```json
+   {"CORSRules": [{"AllowedOrigins": ["https://app.example.com"], "AllowedMethods": ["POST"], "AllowedHeaders": ["*"], "ExposeHeaders": ["ETag"], "MaxAgeSeconds": 3000}]}
+   ```
+   On Cloudflare R2 put the same rules in the bucket's CORS policy (Settings, CORS Policy). If the form is embedded on other sites, add their origins too.
+2. **A lifecycle rule** that deletes objects under `uploads/pending/` after 2 days. A customer who uploads and never presses Submit leaves a file there; `npm run storage:prune` also finds those, but the rule needs no one to remember to run it.
+
+The collection form works the same for the customer; the progress bar now shows progress to the bucket.
 
 ## Sending notifications to Slack
 

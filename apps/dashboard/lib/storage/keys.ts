@@ -4,7 +4,7 @@
  */
 
 /** Every prefix the app uploads under. */
-export const FILE_PREFIXES = ["ai-videos/", "review-videos/", "social-exports/", "submissions/"] as const;
+export const FILE_PREFIXES = ["ai-videos/", "review-videos/", "social-exports/", "submissions/", "uploads/pending/"] as const;
 
 /** The key inside a public file URL, starting at the first of `prefixes` found; null if none or if it looks unsafe. */
 export function keyFromUrl(url: string | null | undefined, prefixes: readonly string[] = FILE_PREFIXES): string | null {
