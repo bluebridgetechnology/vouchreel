@@ -135,7 +135,7 @@ test.describe("platform admin", () => {
     await row(page, USERS.customer.email).getByRole("button", { name: "Manage" }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByText(USERS.customer.email)).toBeVisible();
-    await dialog.getByRole("combobox").click();
+    await dialog.getByRole("combobox", { name: "Plan" }).click();
     await page.getByRole("option", { name: new RegExp(PLAN_NAME) }).click();
     await dialog.getByRole("button", { name: "Save changes" }).click();
     await expect(page.getByText(`Updated ${USERS.customer.email}.`)).toBeVisible();
@@ -151,7 +151,7 @@ test.describe("platform admin", () => {
     // A plan billed by a payment provider cannot be changed here
     await row(page, USERS.billed.email).getByRole("button", { name: "Manage" }).click();
     await expect(page.getByRole("dialog").getByText(/Change or cancel it there/)).toBeVisible();
-    await expect(page.getByRole("dialog").getByRole("combobox")).toBeDisabled();
+    await expect(page.getByRole("dialog").getByRole("combobox", { name: "Plan" })).toBeDisabled();
     await page.getByRole("dialog").getByRole("button", { name: "Cancel" }).click();
 
     // You cannot change your own admin access
