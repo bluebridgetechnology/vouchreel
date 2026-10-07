@@ -1,4 +1,4 @@
-import { SAMPLE_PROPS, type BackgroundStyle, type ReviewVideoProps } from "@vouchreel/video";
+import { SAMPLE_PROPS, type BackgroundStyle, type ReviewVideoProps, type VideoFontId } from "@vouchreel/video";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 import type { ReviewOptionView, SourceStatsView, TemplateView } from "./ui-state";
 
@@ -16,6 +16,9 @@ export interface PreviewInput {
   /** undefined = the brand default, null = none. */
   secondary: string | null | undefined;
   brandSecondary: string | null;
+  /** This video's font; null = the brand kit's default. */
+  font?: VideoFontId | null;
+  brandFont?: VideoFontId | null;
 }
 
 export interface PreviewResult {
@@ -42,7 +45,8 @@ export function previewProps(input: PreviewInput): PreviewResult {
   const style = input.style ?? input.brandStyle ?? undefined;
   const second = input.secondary === undefined ? input.brandSecondary : input.secondary;
   const secondary = second && HEX.test(second) ? second : undefined;
-  const theme = style || secondary ? { ...(style ? { style } : {}), ...(secondary ? { secondary } : {}) } : undefined;
+  const font = input.font ?? input.brandFont ?? undefined;
+  const theme = style || secondary || font ? { ...(style ? { style } : {}), ...(secondary ? { secondary } : {}), ...(font ? { font } : {}) } : undefined;
 
   return {
     props: { reviews, brand: HEX.test(input.brand) ? input.brand : DEFAULT_BRAND_HEX, ...(aggregate ? { aggregate } : {}), ...(theme ? { theme } : {}) },

@@ -3,6 +3,7 @@ import {
   checkSelection,
   estimateSeconds,
   posterSrc,
+  fitsTemplate,
   pruneSelection,
   reviewPickState,
   shouldPoll,
@@ -24,6 +25,30 @@ const review = (id: string, fits: string[], text = "A perfectly reasonable revie
   source: "google",
   date: "March 2026",
   fits,
+});
+
+describe("a font changes what fits", () => {
+  const tmpl: TemplateView = { id: "spotlight", label: "Spotlight", description: "", reviews: { min: 1, max: 1 }, requiresAggregate: false, maxChars: 400 };
+  const medium = review("m", ["spotlight"], "x".repeat(380)); // fits Spotlight in the default font
+
+  it("uses the server's answer when no font is chosen, and works it out from the text when one is", () => {
+    expect(fitsTemplate(medium, tmpl)).toBe(true);
+    expect(fitsTemplate(medium, tmpl, "outfit")).toBe(true);
+    expect(fitsTemplate(medium, tmpl, "jetbrains-mono")).toBe(false); // that font fits at most 340
+    expect(fitsTemplate(review("s", [], "short"), tmpl, "outfit")).toBe(false); // under 12 characters
+  });
+
+  it("blocks the pick with the font's own limit, and prunes picks that no longer fit", () => {
+    expect(reviewPickState(medium, tmpl, [])).toEqual({ disabled: false, reason: null });
+    expect(reviewPickState(medium, tmpl, [], "jetbrains-mono")).toEqual({ disabled: true, reason: "Too long for Spotlight in this font (max 340 characters)" });
+    expect(pruneSelection(["m"], tmpl, [medium])).toEqual(["m"]);
+    expect(pruneSelection(["m"], tmpl, [medium], "jetbrains-mono")).toEqual([]);
+  });
+
+  it("explains a template that nothing fits in this font", () => {
+    expect(templateBlockedReason(tmpl, [], [medium], "jetbrains-mono")).toMatch(/None of your reviews/);
+    expect(templateBlockedReason(tmpl, [], [medium])).toBeNull();
+  });
 });
 
 describe("templateBlockedReason", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, use, useEffect, useRef, useState } from "react";
+import { type CSSProperties, FormEvent, use, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
@@ -54,7 +54,7 @@ type CollectionForm = {
   incentiveType: "none" | "discount" | "custom";
   incentiveValue: string | null;
   collectModes?: CollectMode;
-  branding: { accentColor?: string; logoUrl?: string | null; removeBranding?: boolean };
+  branding: { accentColor?: string; textColor?: string | null; borderRadius?: number | null; logoUrl?: string | null; removeBranding?: boolean };
 };
 
 export default function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -239,6 +239,8 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
   if (!form) return <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6 text-sm text-text-muted">{error || "Collection form not found."}</main>;
 
   const accent = form.branding.accentColor || DEFAULT_BRAND_HEX;
+  const brandStyle = { ...userAccentStyle(accent), ...(form.branding.textColor ? { "--user-accent-fg": form.branding.textColor } : {}) } as CSSProperties;
+  const radiusStyle = typeof form.branding.borderRadius === "number" ? { borderRadius: form.branding.borderRadius } : undefined;
   const modes = form.collectModes ?? "both";
   const showTabs = allowsVideo(modes) && allowsText(modes);
   if (complete) return (
@@ -253,8 +255,8 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
   );
 
   return (
-    <main className={cn("bg-surface-sunken px-4 py-10 sm:py-16", !embedded && "min-h-screen")} style={userAccentStyle(accent)}>
-      <section className="mx-auto max-w-xl rounded-card border bg-surface p-4 shadow-sm sm:p-8">
+    <main className={cn("bg-surface-sunken px-4 py-10 sm:py-16", !embedded && "min-h-screen")} style={brandStyle}>
+      <section className="mx-auto max-w-xl rounded-card border bg-surface p-4 shadow-sm sm:p-8" style={radiusStyle}>
         {form.branding.logoUrl && <img className="mb-5 h-10 max-w-48 object-contain" src={form.branding.logoUrl} alt="" />}
         <h1 className="text-2xl font-medium tracking-tight">{form.title}</h1>
         <p className="mt-3 whitespace-pre-wrap text-text-muted">{form.promptText}</p>
@@ -272,7 +274,7 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
           {mode === "text" && <label className="flex items-start gap-3 text-sm text-text-muted"><Checkbox checked={aiConsent} onCheckedChange={(value) => setAiConsent(value === true)} className="mt-0.5" /><span><span className="font-medium text-text">Optional:</span> {AI_VIDEO_CONSENT_TEXT}</span></label>}
           <div className="grid gap-4 sm:grid-cols-2"><label className="space-y-1 text-sm font-medium">Your name<input required value={name} onChange={(event) => setName(event.target.value)} maxLength={100} className={cn(inputClass, "w-full text-sm")} /></label><label className="space-y-1 text-sm font-medium">Email address<input required type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={200} className={cn(inputClass, "w-full text-sm")} /></label></div>
           {progress !== null && <div className="h-2 overflow-hidden rounded-pill bg-surface-sunken"><div className="h-full bg-(--user-accent) transition-all" style={{ width: `${progress}%` }} /></div>}
-          <button disabled={submitting} className={cn(buttonVariants({ size: "lg" }), "w-full bg-(--user-accent) text-(--user-accent-fg) hover:bg-(--user-accent) hover:opacity-90")}>{submitting ? (progress !== null ? `Uploading ${progress}%…` : "Submitting…") : "Submit testimonial"}</button>
+          <button disabled={submitting} style={radiusStyle} className={cn(buttonVariants({ size: "lg" }), "w-full bg-(--user-accent) text-(--user-accent-fg) hover:bg-(--user-accent) hover:opacity-90")}>{submitting ? (progress !== null ? `Uploading ${progress}%…` : "Submitting…") : "Submit testimonial"}</button>
         </form>
         {!form.branding?.removeBranding && (
           <div className="mt-8 text-center text-xs text-text-muted">

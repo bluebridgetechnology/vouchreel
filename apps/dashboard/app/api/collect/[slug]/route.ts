@@ -5,6 +5,8 @@ import { collectionForms, spaces, whiteLabelSettings } from "@/lib/db/schema";
 import { badRequest, internalError, notFound } from "@/lib/api/errors";
 import { canAccess } from "@/lib/auth/feature-gate";
 import { log } from "@/lib/log";
+import { getBrandKit, toValues } from "@/lib/brand-kit/service";
+import { collectBrandFromKit } from "@/lib/brand-kit/theme";
 
 interface RouteParams {
   params: Promise<{ slug: string }>;
@@ -48,6 +50,8 @@ export async function GET(_request: Request, { params }: RouteParams) {
       form.branding?.logoUrl ||
       (isWhiteLabelEntitled && wlRecord?.logoUrl ? wlRecord.logoUrl : null);
     const removeBranding = isWhiteLabelEntitled ? (wlRecord?.removeBranding ?? false) : false;
+    const kit = await getBrandKit(form.spaceId);
+    const brand = collectBrandFromKit(form.branding?.accentColor, kit ? toValues(kit) : null);
 
     return NextResponse.json({
       collectionForm: {
@@ -57,7 +61,9 @@ export async function GET(_request: Request, { params }: RouteParams) {
         incentiveValue: form.incentiveValue,
         collectModes: form.collectModes,
         branding: {
-          accentColor: form.branding?.accentColor,
+          accentColor: brand.accentColor ?? undefined,
+          textColor: brand.textColor,
+          borderRadius: brand.borderRadius,
           logoUrl: effectiveLogo,
           removeBranding,
         },

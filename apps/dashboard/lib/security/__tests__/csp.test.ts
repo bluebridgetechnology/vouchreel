@@ -22,6 +22,10 @@ describe("Content Security Policy", () => {
     expect(csp).not.toMatch(/style-src[^;]*nonce/);
   });
 
+  it("lets the preview player's silent audio (a data: URL) play", () => {
+    expect(buildCsp({ nonce: "n" })).toMatch(/media-src [^;]*data:/);
+  });
+
   it("keeps the framing rules out (next.config.ts owns frame-ancestors) and the lockdowns in", () => {
     const csp = buildCsp({ nonce: "n" });
     expect(csp).not.toContain("frame-ancestors");

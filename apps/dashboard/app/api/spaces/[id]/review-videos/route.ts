@@ -50,6 +50,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       /** The brand kit's video defaults, so the dialog can show what "use my brand style" means. */
       brandStyle: kit?.videoStyle ?? null,
       brandSecondary: kit?.videoSecondaryColor ?? null,
+      brandFont: kit?.videoFont ?? null,
     });
   } catch (error) {
     return aiVideoErrorResponse(error, "Failed to load review videos");

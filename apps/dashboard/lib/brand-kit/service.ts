@@ -31,6 +31,7 @@ export async function suggestedBrandValues(spaceId: string): Promise<BrandKitVal
     inheritTextColor: false,
     videoStyle: null,
     videoSecondaryColor: null,
+    videoFont: null,
   };
 }
 
@@ -44,6 +45,7 @@ export function toValues(kit: BrandKitRow): BrandKitValues {
     inheritTextColor: kit.inheritTextColor,
     videoStyle: kit.videoStyle,
     videoSecondaryColor: kit.videoSecondaryColor,
+    videoFont: kit.videoFont,
   };
 }
 
@@ -59,6 +61,7 @@ export function valuesToStore(input: BrandKitInput): BrandKitValues {
     videoStyle: input.videoStyle ?? null,
     // A second colour only applies to the colour styles; light and dark ignore it, so do not keep a stale one
     videoSecondaryColor: input.videoStyle === "light" || input.videoStyle === "dark" ? null : (input.videoSecondaryColor ?? null),
+    videoFont: input.videoFont ?? null,
   };
 }
 

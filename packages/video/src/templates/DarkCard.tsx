@@ -3,7 +3,7 @@ import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import { Backdrop } from "../components/Backdrop";
 import { SourceMark } from "../components/SourceMark";
 import { Avatar, Stars, WordReveal, fitFontSize, useFadeIn, useLayout, useOutro, useSpringIn } from "../components/primitives";
-import { FONT_SANS, rgba } from "../lib/theme";
+import { bodyFont, rgba } from "../lib/theme";
 import { usePalette } from "../lib/usePalette";
 import type { ReviewVideoProps } from "../types";
 
@@ -27,11 +27,11 @@ export const DarkCard: React.FC<ReviewVideoProps> = (props) => {
   const revealEnd = revealStart + review.text.split(/\s+/).length / wordsPerSecond;
   const footerIn = useFadeIn(revealEnd - 0.2, 0.6);
   const outro = useOutro(durationInFrames);
-  const fontSize = fitFontSize(review.text, portrait) * 0.86 * u;
+  const fontSize = fitFontSize(review.text, portrait, props.theme?.font) * 0.86 * u;
   const float = Math.sin(frame / 38) * 7 * u;
 
   return (
-    <AbsoluteFill style={{ fontFamily: FONT_SANS, opacity: outro }}>
+    <AbsoluteFill style={{ fontFamily: bodyFont(props.theme?.font), opacity: outro }}>
       <Backdrop palette={palette} secondary={props.theme?.secondary} />
 
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: (portrait ? 70 : 150) * u }}>

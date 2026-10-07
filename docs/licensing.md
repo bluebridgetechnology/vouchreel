@@ -31,6 +31,15 @@ terms on storing and re-displaying reviews were not checked against their curren
 reachable from the build environment), and the risk was accepted by the owner. Revisit if a platform objects, or
 before a large launch. Reviews the owner types in themselves (provider `own`) involve no third party.
 
+## Video fonts
+
+The fonts review videos can use (Outfit, Lora, Nunito, Barlow Condensed, JetBrains Mono, Caveat, plus Playfair
+Display for Minimal's quote) are under the SIL Open Font License 1.1, which allows bundling, embedding in videos
+and commercial use, and forbids selling the font files on their own. Each is installed from its `@fontsource`
+package and shipped with its licence text next to the files (`apps/dashboard/public/video-fonts/LICENSE-*.txt`);
+a test fails if a font in the list has no licence file. Videos made with them are the customer's, as the
+licence's embedding clause says. Customers cannot upload fonts, so no font of unknown licence can enter.
+
 ## Other things worth knowing
 
 - FFmpeg is called as a separate program on the server (not linked into the app). Its own licence applies to

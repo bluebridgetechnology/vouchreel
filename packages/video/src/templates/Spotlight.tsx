@@ -3,7 +3,7 @@ import { AbsoluteFill, useVideoConfig } from "remotion";
 import { Backdrop } from "../components/Backdrop";
 import { SourceMark } from "../components/SourceMark";
 import { Avatar, Stars, WordReveal, fitFontSize, useLayout, useOutro, useSpringIn } from "../components/primitives";
-import { FONT_SANS } from "../lib/theme";
+import { bodyFont } from "../lib/theme";
 import { tint } from "../lib/palette";
 import { usePalette } from "../lib/usePalette";
 import type { ReviewVideoProps } from "../types";
@@ -20,10 +20,10 @@ export const Spotlight: React.FC<ReviewVideoProps> = (props) => {
   const revealEnd = 1.2 + review.text.split(/\s+/).length / wordsPerSecond;
   const authorIn = useSpringIn(revealEnd - 0.4, { damping: 16 });
   const outro = useOutro(durationInFrames);
-  const fontSize = fitFontSize(review.text, portrait) * u;
+  const fontSize = fitFontSize(review.text, portrait, props.theme?.font) * u;
 
   return (
-    <AbsoluteFill style={{ fontFamily: FONT_SANS, opacity: outro }}>
+    <AbsoluteFill style={{ fontFamily: bodyFont(props.theme?.font), opacity: outro }}>
       <Backdrop palette={palette} secondary={props.theme?.secondary} />
 
       <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", padding: (portrait ? 90 : 160) * u }}>

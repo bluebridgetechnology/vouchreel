@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * Real Postgres (migrations applied) and, for the render test, real Remotion + Chromium.
@@ -218,6 +218,47 @@ run("review videos (postgres)", () => {
       const [done] = await db.select().from(s.reviewVideos).where(eq(s.reviewVideos.id, video.id));
       expect(done.status).toBe("done");
     }, 240_000);
+  });
+
+  describe("video fonts", () => {
+    // 380 characters: fits Spotlight in Outfit (limit 400) but not in JetBrains Mono (limit 340)
+    const MEDIUM_TEXT = ("Setup took ten minutes and support answered every question the same day. " + "We tried three other tools before this one and none of them stuck. ".repeat(5)).slice(0, 379) + ".";
+    let mediumId = "";
+    beforeAll(async () => {
+      expect(MEDIUM_TEXT.length).toBe(380);
+      const [r] = await db
+        .insert(s.reviews)
+        .values({ spaceId: ids.space, provider: "own", providerReviewId: `own:${crypto.randomUUID()}`, authorName: "Medium", rating: null, text: MEDIUM_TEXT })
+        .returning();
+      mediumId = r.id;
+    });
+    afterEach(async () => {
+      await db.delete(s.brandKits).where(eq(s.brandKits.spaceId, ids.space));
+    });
+    const themeOf = (video: { props: unknown }) => (video.props as { theme?: { font?: string } }).theme;
+
+    it("uses no font unless one is chosen, so existing videos keep their look", async () => {
+      const video = await svc.createReviewVideo(base());
+      expect(themeOf(video)).toBeUndefined();
+    });
+
+    it("uses the brand kit's font, and this video's own choice wins over it", async () => {
+      await db.insert(s.brandKits).values({ spaceId: ids.space, videoFont: "lora" });
+      expect(themeOf(await svc.createReviewVideo(base()))).toEqual({ font: "lora" });
+      expect(themeOf(await svc.createReviewVideo(base({ font: "caveat" })))).toEqual({ font: "caveat" });
+    });
+
+    it("refuses a review that fits in one font but not in another, and says what the limit is", async () => {
+      await expect(svc.createReviewVideo(base({ reviewIds: [mediumId], font: "outfit" }))).resolves.toMatchObject({ status: "queued" });
+      const refused = svc.createReviewVideo(base({ reviewIds: [mediumId], font: "jetbrains-mono" }));
+      await expect(refused).rejects.toMatchObject({ status: 422 });
+      await expect(refused).rejects.toThrow(/340 characters.*in this font/);
+    });
+
+    it("the kit's font applies the same limit", async () => {
+      await db.insert(s.brandKits).values({ spaceId: ids.space, videoFont: "jetbrains-mono" });
+      await expect(svc.createReviewVideo(base({ reviewIds: [mediumId] }))).rejects.toMatchObject({ status: 422 });
+    });
   });
 
   it("lists reviews with the templates each one fits, and the provider stats", async () => {

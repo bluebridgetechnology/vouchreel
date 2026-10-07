@@ -1,0 +1,1 @@
+ALTER TABLE "brand_kits" ADD COLUMN "video_font" text;

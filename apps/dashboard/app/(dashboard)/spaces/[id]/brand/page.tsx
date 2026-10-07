@@ -7,6 +7,7 @@ import { inputClass } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { toggleStyle } from "@/components/ui/toggle";
 import { VideoStylePicker } from "@/components/brand/video-style-picker";
+import { VideoFontPicker } from "@/components/brand/video-font-picker";
 import { VideoPreview } from "@/components/review-video/video-preview";
 import { SAMPLE_PROPS, TEMPLATES } from "@vouchreel/video";
 import { FormSkeleton, SkeletonRegion } from "@/components/ui/page-skeleton";
@@ -306,6 +307,19 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
             />
 
             <div className="space-y-2 border-t pt-4">
+              <span id="brand-video-font-label" className="text-xs font-medium text-text">
+                Video font
+              </span>
+              <p className="text-xs text-text-muted">The type used for the review text in your videos. Longer reviews fit less in wider fonts, and reviews are never shortened.</p>
+              <VideoFontPicker
+                label="Video font"
+                value={draft.videoFont}
+                onChange={(font) => set("videoFont", font)}
+                defaultOption={{ title: "Each template's own", hint: "Outfit, with an elegant serif quote in Minimal" }}
+              />
+            </div>
+
+            <div className="space-y-2 border-t pt-4">
               <label htmlFor="brand-video-second" className="text-xs font-medium text-text">
                 Second colour (optional)
               </label>
@@ -407,10 +421,11 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
                   props={{
                     ...SAMPLE_PROPS[previewTemplate],
                     brand: primaryValid ? draft.primaryColor : DEFAULT_BRAND_HEX,
-                    ...(draft.videoStyle || (draft.videoSecondaryColor && secondaryValid)
+                    ...(draft.videoStyle || draft.videoFont || (draft.videoSecondaryColor && secondaryValid)
                       ? {
                           theme: {
                             ...(draft.videoStyle ? { style: draft.videoStyle } : {}),
+                            ...(draft.videoFont ? { font: draft.videoFont } : {}),
                             ...(draft.videoSecondaryColor && secondaryValid ? { secondary: draft.videoSecondaryColor } : {}),
                           },
                         }
@@ -418,7 +433,7 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
                   }}
                 />
               </div>
-              <p className="mt-3 text-xs text-text-muted">The real template with sample text, in your colour and style. Press play to see it animate.</p>
+              <p className="mt-3 text-xs text-text-muted">The real template with sample text, in your colour, style and font. Press play to see it animate.</p>
             </div>
 
             <div className="rounded-card border bg-surface p-5 text-xs text-text-muted">

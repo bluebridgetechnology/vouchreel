@@ -3,7 +3,7 @@ import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remo
 import { Backdrop } from "../components/Backdrop";
 import { SourceMark } from "../components/SourceMark";
 import { Stars, WordReveal, clamped, fitFontSize, useFadeIn, useLayout, useOutro } from "../components/primitives";
-import { FONT_SANS, FONT_SERIF } from "../lib/theme";
+import { bodyFont, quoteFont } from "../lib/theme";
 import { tint } from "../lib/palette";
 import { usePalette } from "../lib/usePalette";
 import type { ReviewVideoProps } from "../types";
@@ -28,10 +28,10 @@ export const Minimal: React.FC<ReviewVideoProps> = (props) => {
   const authorIn = useFadeIn(revealEnd - 0.3, 0.7);
   const head = useFadeIn(0.1, 0.7);
   const outro = useOutro(durationInFrames);
-  const fontSize = fitFontSize(review.text, portrait) * 0.92 * u;
+  const fontSize = fitFontSize(review.text, portrait, props.theme?.font) * 0.92 * u;
 
   return (
-    <AbsoluteFill style={{ fontFamily: FONT_SANS, opacity: outro }}>
+    <AbsoluteFill style={{ fontFamily: bodyFont(props.theme?.font), opacity: outro }}>
       <Backdrop palette={palette} secondary={props.theme?.secondary} />
 
       <AbsoluteFill style={{ justifyContent: "center", padding: (portrait ? 110 : 190) * u }}>
@@ -48,7 +48,7 @@ export const Minimal: React.FC<ReviewVideoProps> = (props) => {
             startSeconds={revealStart}
             wordsPerSecond={wordsPerSecond}
             gap={fontSize * 0.24}
-            style={{ color: palette.text, fontSize, lineHeight: 1.32, fontFamily: FONT_SERIF, fontStyle: "italic", fontWeight: 500, letterSpacing: -0.3 }}
+            style={{ color: palette.text, fontSize, lineHeight: 1.32, ...quoteFont(props.theme?.font), fontWeight: 500, letterSpacing: -0.3 }}
           />
 
           <div style={{ marginTop: 58 * u, opacity: authorIn, transform: `translateY(${(1 - authorIn) * 24 * u}px)` }}>

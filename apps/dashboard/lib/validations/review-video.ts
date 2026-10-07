@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { BACKGROUND_STYLES } from "@vouchreel/video";
+import { BACKGROUND_STYLES, VIDEO_FONT_IDS, type VideoFontId } from "@vouchreel/video";
 
 export const createReviewVideoSchema = z.object({
   template: z.string().trim().min(1).max(40),
@@ -13,6 +13,8 @@ export const createReviewVideoSchema = z.object({
     .optional(),
   /** Background style for this video; omit to use the brand kit's default. */
   style: z.enum(BACKGROUND_STYLES).optional(),
+  /** Font for this video; omit to use the brand kit's default. */
+  font: z.enum(VIDEO_FONT_IDS as [VideoFontId, ...VideoFontId[]]).optional(),
   /** Second colour for this video; omit to use the brand kit's, null for none. */
   secondaryColor: z
     .string()

@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { renderReviewStill } from "../render";
 import { SAMPLE_PROPS } from "../sample";
+import { TEMPLATES, VIDEO_FONTS, durationInFrames, maxCharsFor, validateProps } from "../registry";
 import type { BackgroundStyle } from "../types";
 
 /**
@@ -42,4 +43,35 @@ describe.skipIf(!enabled)("render with a theme (real Chromium)", () => {
     const unique = new Set([...outputs.values()].map((b) => b.toString("base64")));
     expect(unique.size).toBe(styles.length);
   });
+});
+
+describe.skipIf(!enabled)("every font on every template (real Chromium)", () => {
+  /** The longest review the template allows in that font, cut at a word. */
+  const longest = (text: string, limit: number) => {
+    let out = text;
+    while (out.length < limit) out += ` ${text}`;
+    out = out.slice(0, limit);
+    return out.slice(0, out.lastIndexOf(" ")).replace(/[,;:]$/, "") + ".";
+  };
+
+  for (const template of TEMPLATES) {
+    const images = new Map<string, Buffer>();
+    for (const font of VIDEO_FONTS) {
+      it(`${template.id} renders in ${font.id} with the longest review it allows`, async () => {
+        const sample = SAMPLE_PROPS[template.id];
+        const text = longest(sample.reviews[0].text, maxCharsFor(template.maxChars, font.id));
+        const props = { ...sample, reviews: sample.reviews.map((r) => ({ ...r, text })), theme: { font: font.id } };
+        expect(validateProps(template.id, props)).toEqual([]);
+        const outputPath = path.join(dir, `${template.id}-${font.id}.png`);
+        await renderReviewStill({ templateId: template.id, aspect: "16:9", props, outputPath, frame: Math.round((durationInFrames(template.id, props) / 30 - 2) * 30) });
+        const bytes = readFileSync(outputPath);
+        expect(bytes.subarray(1, 4).toString()).toBe("PNG");
+        expect(bytes.length).toBeGreaterThan(10_000);
+        images.set(font.id, bytes);
+      }, 180_000);
+    }
+    it(`${template.id} looks different in every font`, () => {
+      expect(new Set([...images.values()].map((b) => b.toString("base64"))).size).toBe(VIDEO_FONTS.length);
+    });
+  }
 });

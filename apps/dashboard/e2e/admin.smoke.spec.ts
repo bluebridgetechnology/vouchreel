@@ -733,6 +733,85 @@ test.describe("platform admin", () => {
     await context.close();
   });
 
+  test("brand kit: the collect form wears the space's colours and has no axe violations", async ({ browser, baseURL }) => {
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    const page = await context.newPage();
+    let spaceId: string | undefined;
+    try {
+      const { rows: [owner] } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [USERS.customer.email]);
+      const { rows: [space] } = await pool.query(`INSERT INTO spaces (name, owner_id, embed_key) VALUES ('E2E Brand Space', $1, 'e2e-brand') RETURNING id`, [owner.id]);
+      spaceId = space.id;
+      await pool.query(`INSERT INTO collection_forms (space_id, title, prompt_text, slug) VALUES ($1, 'E2E Branded', 'Say a few words', 'e2e-branded')`, [spaceId]);
+      // Dark navy with white text and rounded corners; a yellow form-level colour is tried afterwards
+      await pool.query(`INSERT INTO brand_kits (space_id, primary_color, accent_color, border_radius) VALUES ($1, '#123456', '#ffffff', 20)`, [spaceId]);
+
+      await open(page, "/collect/e2e-branded");
+      const submit = page.getByRole("button", { name: "Submit testimonial" });
+      await expect(submit).toBeVisible();
+      const style = await submit.evaluate((el) => {
+        const s = getComputedStyle(el);
+        return { bg: s.backgroundColor, fg: s.color, radius: s.borderTopLeftRadius };
+      });
+      expect(style).toEqual({ bg: "rgb(18, 52, 86)", fg: "rgb(255, 255, 255)", radius: "20px" });
+
+      const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+      expect(violations.map((v) => `${v.id}: ${v.nodes[0].target.join(" ")}`)).toEqual([]);
+
+      // A colour set on the form itself wins over the kit
+      await pool.query(`UPDATE collection_forms SET branding = '{"accentColor":"#ffee00"}' WHERE slug = 'e2e-branded'`);
+      await open(page, "/collect/e2e-branded");
+      await expect(submit).toBeVisible();
+      expect(await submit.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(255, 238, 0)");
+    } finally {
+      if (spaceId) await pool.query(`DELETE FROM spaces WHERE id = $1`, [spaceId]); // forms and kit go with it
+      await pool.end();
+      await context.close();
+    }
+  });
+
+  test("video fonts: pick one on the Brand page, see it in the preview, and it is still there after a reload", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+    const spaces = await (await context.request.get("/api/spaces")).json();
+    const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    try {
+      await open(page, `/spaces/${space.id}/brand`);
+      const group = page.getByRole("radiogroup", { name: "Video font" });
+      await expect(group.getByRole("radio")).toHaveCount(7); // "each template's own" and the six fonts
+      await expect(group.getByRole("radio", { name: /Each template's own/ })).toHaveAttribute("aria-checked", "true");
+
+      await group.getByRole("radio", { name: /Lora/ }).click();
+      await expect(group.getByRole("radio", { name: /Lora/ })).toHaveAttribute("aria-checked", "true");
+      // The sample in the picker is drawn in the real font file, and the live preview uses it too
+      await expect.poll(() => page.evaluate(() => document.fonts.check('600 20px "Lora"'))).toBe(true);
+      await expect
+        .poll(() => page.evaluate(() => [...document.querySelectorAll("*")].filter((el) => getComputedStyle(el).fontFamily.includes("Lora")).length))
+        .toBeGreaterThan(1);
+
+      await page.getByRole("button", { name: /^Save/ }).click();
+      await expect(page.getByText("Brand settings saved.")).toBeVisible();
+      expect((await (await context.request.get(`/api/spaces/${space.id}/brand-kit`)).json()).values.videoFont).toBe("lora");
+
+      await open(page, `/spaces/${space.id}/brand`);
+      await expect(page.getByRole("radiogroup", { name: "Video font" }).getByRole("radio", { name: /Lora/ })).toHaveAttribute("aria-checked", "true");
+
+      // The wrong value is refused by the server, not just hidden by the page
+      const forged = await context.request.put(`/api/spaces/${space.id}/brand-kit`, {
+        headers: { origin: baseURL! },
+        data: { primaryColor: "#112233", fontMode: "inherit", inheritTextColor: false, videoFont: "Comic Sans" },
+      });
+      expect(forged.status()).toBe(400);
+    } finally {
+      // Leave the shared space as it was: no kit, so later tests see the defaults
+      await pool.query(`DELETE FROM brand_kits WHERE space_id = $1`, [space.id]);
+      await pool.end();
+      await context.close();
+    }
+  });
+
   test("content security policy: a fresh nonce on every page, and the main pages break none of it", async ({ browser, baseURL }) => {
     const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
     const page = await context.newPage();
@@ -763,7 +842,10 @@ test.describe("platform admin", () => {
 
     // Signed in: the dashboard and the pages added most recently
     await signIn(context.request, baseURL!, USERS.customer.email);
-    for (const path of ["/dashboard", "/settings", "/settings/security", "/notifications", "/settings/webhooks"]) {
+    const spaceList = await (await context.request.get("/api/spaces")).json();
+    const brandSpace = (spaceList.spaces ?? spaceList).find((sp: { name: string }) => sp.name === "E2E Moderation Space");
+    // The Brand page has the live video preview (Remotion's player), which needs data: media
+    for (const path of ["/dashboard", "/settings", "/settings/security", "/notifications", "/settings/webhooks", `/spaces/${brandSpace.id}/brand`]) {
       await page.goto(path);
       await page.waitForLoadState("networkidle");
       expect(await violations(), `${path} violations`).toEqual([]);

@@ -3,6 +3,8 @@
  * widget preview) and server code can share them.
  */
 
+import type { VideoFontId } from "@vouchreel/video";
+
 /** Background styles for review videos (see packages/video). */
 export type VideoStyleValue = "gradient" | "solid" | "aurora" | "dots" | "light" | "dark";
 
@@ -18,6 +20,8 @@ export interface BrandKitValues {
   videoStyle: VideoStyleValue | null;
   /** Optional second colour for review video backgrounds. */
   videoSecondaryColor: string | null;
+  /** Font for review video text; null = each template's own typography. */
+  videoFont: VideoFontId | null;
 }
 
 /**
@@ -56,6 +60,27 @@ export const DEFAULT_ACCENT_HEX = "#ffffff";
 
 /** Text on a coloured button needs at least this contrast to be comfortably readable. */
 export const MIN_BUTTON_CONTRAST = 4.5;
+
+/** What the public collect form takes from the brand kit. */
+export interface CollectBrand {
+  accentColor: string | null;
+  /** Text colour on the accent; null = let the page pick black or white. */
+  textColor: string | null;
+  borderRadius: number | null;
+}
+
+/**
+ * Collect form look. A colour chosen on the form itself wins over the kit. The kit's text colour is
+ * used only when it is readable on the accent (same rule as the widget); otherwise the page falls
+ * back to black or white. Fonts are not applied: the form is its own page, so there is no host font
+ * to inherit, and custom fonts arrive with B3.
+ */
+export function collectBrandFromKit(formAccent: string | null | undefined, kit: BrandKitValues | null): CollectBrand {
+  const accentColor = formAccent || kit?.primaryColor || null;
+  const wanted = kit?.accentColor ?? null;
+  const textColor = accentColor && wanted && !formAccent && contrastBetween(accentColor, wanted) >= MIN_BUTTON_CONTRAST ? wanted : null;
+  return { accentColor, textColor, borderRadius: kit?.borderRadius ?? null };
+}
 
 /** Human description of the font choice, for settings screens. */
 export function describeFont(kit: Pick<BrandKitValues, "fontMode" | "fontFamily">): string {

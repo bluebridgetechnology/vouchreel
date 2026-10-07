@@ -47,7 +47,8 @@ export function buildCsp(options: { nonce: string; dev?: boolean; storage?: stri
     "style-src 'self' 'unsafe-inline'",
     // Customers' logos and thumbnails, avatars and the video files live on storage and CDN hosts we cannot list
     "img-src 'self' blob: data: https:",
-    "media-src 'self' blob: https:",
+    // data: is the silent audio the Remotion preview player attaches to its video element
+    "media-src 'self' blob: data: https:",
     "font-src 'self' data:",
     `connect-src 'self'${storage ? ` ${storage}` : ""}`,
     "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
