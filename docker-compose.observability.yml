@@ -1,0 +1,138 @@
+# Optional self-hosted error tracking, logs and metrics. Nothing leaves your server.
+#
+#   GlitchTip   error tracking (Sentry-compatible; the app already speaks it through SENTRY_DSN)
+#   Loki+Alloy  logs: Alloy reads every container's stdout and ships it to Loki
+#   Prometheus  metrics: scrapes /api/metrics with METRICS_TOKEN
+#   Grafana     one place to look at logs and metrics
+#
+# Usage (third file on top of the production setup):
+#   docker compose --env-file .env.production \
+#     -f docker-compose.yml -f docker-compose.production.yml -f docker-compose.observability.yml \
+#     up -d --build
+#
+# Ports are bound to 127.0.0.1; put a reverse proxy with TLS in front to reach them from outside.
+# See docs/deployment.md ("Self-hosted observability").
+
+services:
+  # Same variables as the production file, plus the wiring to the tracker. SENTRY_DSN comes from
+  # .env.production (it exists only after GlitchTip has created the project, see the guide).
+  app:
+    environment: &obs_env
+      LOG_FORMAT: json
+      METRICS_TOKEN: ${METRICS_TOKEN:?METRICS_TOKEN must be set to use the observability stack}
+  worker:
+    environment: *obs_env
+  video-worker:
+    environment: *obs_env
+
+  glitchtip-postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: ${GLITCHTIP_DB_PASSWORD:?GLITCHTIP_DB_PASSWORD must be set}
+      POSTGRES_DB: glitchtip
+    volumes:
+      - glitchtip_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U glitchtip"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  glitchtip-migrate:
+    image: ${GLITCHTIP_IMAGE:-glitchtip/glitchtip:latest}
+    restart: 'no'
+    command: ./manage.py migrate
+    environment: &glitchtip_env
+      DATABASE_URL: postgres://glitchtip:${GLITCHTIP_DB_PASSWORD}@glitchtip-postgres:5432/glitchtip
+      SECRET_KEY: ${GLITCHTIP_SECRET_KEY:?GLITCHTIP_SECRET_KEY must be set}
+      GLITCHTIP_DOMAIN: ${GLITCHTIP_DOMAIN:-http://localhost:8001}
+      DEFAULT_FROM_EMAIL: ${GLITCHTIP_FROM_EMAIL:-glitchtip@localhost}
+      EMAIL_URL: ${GLITCHTIP_EMAIL_URL:-consolemail://}
+      ENABLE_USER_REGISTRATION: ${GLITCHTIP_ENABLE_REGISTRATION:-false}
+      ENABLE_ORGANIZATION_CREATION: "false"
+      # Error events older than this are deleted (days)
+      GLITCHTIP_MAX_EVENT_LIFE_DAYS: ${GLITCHTIP_RETENTION_DAYS:-30}
+    depends_on:
+      glitchtip-postgres:
+        condition: service_healthy
+
+  glitchtip-web:
+    image: ${GLITCHTIP_IMAGE:-glitchtip/glitchtip:latest}
+    restart: always
+    environment: *glitchtip_env
+    ports:
+      - "127.0.0.1:8001:8000"
+    depends_on:
+      glitchtip-migrate:
+        condition: service_completed_successfully
+
+  glitchtip-worker:
+    image: ${GLITCHTIP_IMAGE:-glitchtip/glitchtip:latest}
+    restart: always
+    command: ./bin/run-celery-with-beat.sh
+    environment: *glitchtip_env
+    depends_on:
+      glitchtip-migrate:
+        condition: service_completed_successfully
+
+  loki:
+    image: grafana/loki:3.2.0
+    restart: always
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./observability/loki.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+
+  # Reads the stdout of every container through the Docker socket (read-only) and ships it to Loki.
+  alloy:
+    image: grafana/alloy:v1.4.2
+    restart: always
+    command: run --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    volumes:
+      - ./observability/alloy.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    restart: always
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-30d}
+    environment:
+      METRICS_TOKEN: ${METRICS_TOKEN}
+    entrypoint:
+      - /bin/sh
+      - -c
+      # Prometheus cannot read a token from the environment, so it is written to a file first
+      - 'echo -n "$$METRICS_TOKEN" > /tmp/metrics_token && exec /bin/prometheus "$$@"'
+      - --
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    restart: always
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD must be set}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - loki
+      - prometheus
+
+volumes:
+  glitchtip_pgdata:
+  loki_data:
+  prometheus_data:
+  grafana_data:

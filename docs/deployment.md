@@ -14,6 +14,7 @@ The database is Postgres. Migrations live in `drizzle/` at the repo root and are
 - [Local development](#local-development)
 - [Environment variables](#environment-variables)
 - [VPS deployment (Docker Compose)](#vps-deployment-docker-compose)
+- [Self-hosted observability](#self-hosted-observability)
 - [Vercel deployment](#vercel-deployment)
 - [Widget CDN deployment](#widget-cdn-deployment)
 - [Troubleshooting](#troubleshooting)
@@ -131,6 +132,42 @@ The `migrate` service re-runs on every `up`, applying only new migrations. To re
 - **Backups:** back up the `pgdata` volume (e.g. `pg_dump` on a cron) — it is a named volume and survives container recreation, but not `docker compose down -v`.
 
 ---
+
+## Self-hosted observability
+
+Optional. Error tracking, logs and metrics on your own server; nothing is sent to a third party.
+
+| Piece | What it does | Address (this server only) |
+|---|---|---|
+| GlitchTip | Error tracking (Sentry-compatible) | http://127.0.0.1:8001 |
+| Loki + Alloy | Alloy reads every container's logs and stores them in Loki | (internal) |
+| Prometheus | Scrapes `/api/metrics` every 30 s | (internal) |
+| Grafana | Dashboards over logs and metrics | http://127.0.0.1:3001 |
+
+### Set up
+
+1. In `.env.production` fill `METRICS_TOKEN`, `GLITCHTIP_SECRET_KEY`, `GLITCHTIP_DB_PASSWORD`, `GRAFANA_ADMIN_PASSWORD` (use `openssl rand -hex 32`) and `GLITCHTIP_DOMAIN` (the public address you will serve GlitchTip on).
+2. Start everything with the third compose file:
+   ```bash
+   docker compose --env-file .env.production \
+     -f docker-compose.yml -f docker-compose.production.yml -f docker-compose.observability.yml \
+     up -d --build
+   ```
+3. Create the GlitchTip admin: `docker compose ... exec glitchtip-web ./manage.py createsuperuser`, sign in at port 8001, create an organization and a project, and copy the project's DSN.
+4. Put the DSN in `.env.production` as `SENTRY_DSN` and restart `app`, `worker` and `video-worker`. Without a DSN the app sends nothing.
+5. Open Grafana (port 3001, user `admin`). The "Vouchreel overview" dashboard is already there: job queue, workers, and error logs.
+
+Reach the two UIs from outside through your reverse proxy with TLS; both ports are bound to 127.0.0.1 on purpose.
+
+### What it keeps
+
+Errors: 30 days (`GLITCHTIP_RETENTION_DAYS`). Logs: 14 days (`observability/loki.yml`). Metrics: 30 days (`PROMETHEUS_RETENTION`). Everything is scrubbed in the app before it leaves (emails, tokens, and the words people wrote are removed; see `lib/observability/scrub.ts`).
+
+### Notes
+
+- Alloy needs the Docker socket (read-only) to read container logs; that is the usual trade-off of this approach.
+- Sizing: about 1 GB of memory for the whole stack at low traffic. On a small server, run it on a second machine or skip Grafana.
+- CI starts this stack, checks Grafana's datasources and dashboard, and sends a test error to GlitchTip. Not covered by CI: the app-to-GlitchTip path with a real DSN, and Alloy-to-Loki log flow.
 
 ## Vercel deployment
 
