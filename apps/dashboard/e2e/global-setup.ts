@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import pg from "pg";
-import { chromium, type FullConfig } from "@playwright/test";
+import { request, type FullConfig } from "@playwright/test";
 import { startFakeS3 } from "./fake-s3";
 import { ADMIN_STATE, AUDIT_SEED_COUNT, CONSENT_FILE, E2E_AUTH_SECRET, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, STORAGE_BUCKET, STORAGE_ORIGIN, STORAGE_PORT, USERS } from "./seed";
 
@@ -136,15 +136,15 @@ export default async function globalSetup(config: FullConfig) {
 
   // Sign the admin in once and reuse the cookies
   mkdirSync("e2e/.auth", { recursive: true });
-  const browser = await chromium.launch();
-  const context = await browser.newContext({ baseURL });
-  const res = await context.request.post("/api/auth/sign-in/email", {
+  // (An API call: no browser is started, so the job only needs the browser it is testing)
+  const api = await request.newContext({ baseURL });
+  const res = await api.post("/api/auth/sign-in/email", {
     headers: { origin: baseURL },
     data: { email: USERS.admin.email, password: PASSWORD },
   });
   if (!res.ok()) throw new Error(`Admin sign-in failed: ${res.status()}`);
-  await context.storageState({ path: ADMIN_STATE });
-  await browser.close();
+  await api.storageState({ path: ADMIN_STATE });
+  await api.dispose();
   // Keep the fake storage up for the tests; stop it when they finish
   return () => new Promise<void>((resolve) => fakeS3.close(() => resolve()));
 }
