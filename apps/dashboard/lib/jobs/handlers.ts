@@ -26,6 +26,8 @@ export const JOB_TYPES = {
   reviewVideo: "review_video",
   /** Deletes stored files after the rows that owned them were deleted; see lib/storage/cleanup.ts. */
   fileCleanup: "file_cleanup",
+  /** Builds a "download my data" zip; see lib/account/export.ts. */
+  dataExport: "data_export",
 } as const;
 
 let registered = false;
@@ -46,6 +48,15 @@ export async function registerBuiltInHandlers(): Promise<void> {
     if (!Array.isArray(keys) || !keys.every((k) => typeof k === "string")) throw new Error("file_cleanup job missing keys");
     await runFileCleanup(keys as string[]);
   });
+  const { runExport, failExport } = await import("@/lib/account/export");
+  registerJobHandler(
+    JOB_TYPES.dataExport,
+    async (payload) => {
+      if (typeof payload.exportId !== "string") throw new Error("data_export job missing exportId");
+      await runExport(payload.exportId);
+    },
+    { onFailed: async (payload, error) => { if (typeof payload.exportId === "string") await failExport(payload.exportId, error); } }
+  );
   const { registerAiVideoHandler } = await import("@/lib/ai-video/render");
   registerAiVideoHandler();
 }

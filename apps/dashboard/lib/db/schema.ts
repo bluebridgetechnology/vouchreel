@@ -11,7 +11,14 @@ import {
   pgEnum,
   index,
   uniqueIndex,
+  customType,
 } from "drizzle-orm/pg-core";
+
+const bytea = customType<{ data: Buffer; default: false }>({
+  dataType() {
+    return "bytea";
+  },
+});
 
 // ─── Enums ──────────────────────────────────────────────────────────────────
 
@@ -1362,4 +1369,27 @@ export const creditAdjustments = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [index("credit_adjustments_user_month_idx").on(table.userId, table.month)]
+);
+
+/**
+ * "Download my data" requests. The zip is kept here (not in public file storage) so it is only ever
+ * served to its owner by an authenticated route, and is deleted after a week.
+ */
+export const dataExports = pgTable(
+  "data_exports",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: text("status").$type<"queued" | "ready" | "failed">().default("queued").notNull(),
+    /** The finished zip. Null until ready, and again once expired. */
+    zip: bytea("zip"),
+    sizeBytes: integer("size_bytes"),
+    error: text("error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    readyAt: timestamp("ready_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+  },
+  (table) => [index("data_exports_user_idx").on(table.userId, table.createdAt)]
 );
