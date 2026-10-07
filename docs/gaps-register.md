@@ -43,7 +43,7 @@ Last full check: GitHub Actions run 37480868676, commit aa7a833, all three jobs 
 | S1 | A revoked platform admin keeps access until their cached session expires (up to 5 minutes) | Fix | Closed. `isPlatformAdminFresh` reads the flag from the database for the admin guard, the admin page and the settings route, so a revoked admin loses access at once. `platform-admin-server.integration.test.ts` and a browser test ("revoking admin takes effect at once", signed in with the old cookie). |
 | S2 | A real Stripe or Dodo webhook replacing a manual plan grant was never tested | Fix | Closed. `webhooks.integration.test.ts` (real Postgres; only the signature check is stubbed): an admin grants a plan by hand, a Stripe checkout event replaces it, and the admin can no longer grant over it. |
 | S3 | A manual plan grant's effect on the user's limits was only read in code | Fix | Closed. Same test: `getSubscriptionLimits` returns the granted plan's limits (42 spaces), then the Stripe plan's (7). |
-| S4 | Users tab: suspend a user, adjust credits, separate user detail page | Decision | Open |
+| S4 | Users tab: suspend a user, adjust credits, separate user detail page | Decision | Closed. In the Users tab's Manage dialog: suspend (reason required, never yourself or another admin; the person cannot sign in, their open sessions are removed at once and `getSession` returns none, so a valid cookie stops working) and restore; adjust this month's review-video or AI-video credits up or down with a reason (`credit_adjustments`, migration 0028), which the creation checks and the Usage tab both use; all audited. Decision: no separate user page, the dialog is the detail view. Suspension blocks the dashboard and API only: their public widgets and collect pages keep working. Proved by `suspension.integration.test.ts`, `credit-adjustments.integration.test.ts`, the route tests and a browser test that suspends a real signed-in session (401), is refused at sign-in (403, "suspended"), restores, adds credits and finds all three in the audit log. |
 
 ## D. Admin area quality
 
@@ -67,8 +67,8 @@ Last full check: GitHub Actions run 37480868676, commit aa7a833, all three jobs 
 | W1 | Never ran the real `video-worker` Docker image (apt and Chromium download are blocked from this sandbox) | CI | Closed by CI. GitHub Actions run 37464367356 (commit 90e3409): the real `video-worker` image built, rendered a frame, and as a worker reported a working Chromium and a clean stop. Also found and fixed two CI bugs. |
 | W2 | Video worker id is `video-worker-<pid>`: in containers every restart reuses one row, and replicas collide | Fix | Closed. The video worker id is `video-worker-<hostname>-<pid>`, so container replicas and restarts get their own rows. Not run in a container here; the CI image job still checks the row appears. |
 | W3 | The 24-hour listing and 7-day pruning of heartbeats were never run against time | Fix | Closed. `heartbeat-aging.integration.test.ts` inserts rows 20 h, 30 h, 6 d and 8 d old in Postgres: only the 24 h ones are listed, and starting a worker deletes the 8 d row and keeps the 6 d row. |
-| W4 | No alert outside the admin area when a worker goes quiet | Decision | Open |
-| W5 | Per-worker current job and restart controls | Decision | Open |
+| W4 | No alert outside the admin area when a worker goes quiet | Decision | Closed. `/api/cron/check-workers` (every 5 minutes in `vercel.json` and the production compose file) emails the platform admins when a worker kind has a problem: a critical one (video renders with no video worker, Chromium broken) at once, a warning (queue stuck with workers online, no job worker) after 15 minutes; repeats at most every 6 hours; one recovery email when it clears; suspended admins are not emailed; a failed send is retried next run (`alert-policy.test.ts`, `worker-alerts.integration.test.ts`, route test). Email only: no Slack or push. Needs `RESEND_API_KEY` to actually deliver (without it the message is logged). |
+| W5 | Per-worker current job and restart controls | Decision | Closed. The System tab shows what each worker is running now and how long, and a Restart button on running workers (audited): the worker sees the request on its next heartbeat, finishes its jobs and exits. Decision: the web app cannot start processes, so this only brings a worker back where something supervises it; the production compose file uses `restart: always`. Proved by the heartbeat and worker unit tests, the real-database tests and a browser test. Not tried against a real container. |
 
 ## F. Provider integrations (Phase 1)
 
@@ -76,9 +76,9 @@ Last full check: GitHub Actions run 37480868676, commit aa7a833, all three jobs 
 | --- | --- | --- | --- |
 | P1 | Trustpilot totals call: which API, and the response field names, are unconfirmed | External | Open (needs the Trustpilot docs or a key) |
 | P2 | Trustpilot stats parser breaks silently if the response nests differently | Fix | Closed as far as it can be without the docs. `parseTrustpilotStats` accepts the nested and the flat shape and returns null for anything else (`trustpilot-stats.test.ts`). Which shape the real API returns is still P1. |
-| P3 | Google attribution says "Google Reviews" with the G icon; Places policy text says the Google Maps logo or "Google Maps" | Decision | Open |
+| P3 | Google attribution says "Google Reviews" with the G icon; Places policy text says the Google Maps logo or "Google Maps" | Decision | Closed as a decision, wording unconfirmed. Google reviews are now labelled "Google Maps" (text) in the widget and in videos, the form the Places API attribution rule is reported to allow when the logo does not fit. I could not open the policy page (blocked from here), so this rests on search snippets; a test pins the wording so it is not changed by accident. The "G" icon next to it is still our own drawing, not Google's logo: if the policy forbids that, remove it. Confirming either needs someone to read the page (P4). |
 | P4 | Google and Trustpilot terms on storing review text and on shortening it are unread | External | Open |
-| P5 | Style picker swatches are CSS approximations | Decision | Open |
+| P5 | Style picker swatches are CSS approximations | Decision | Closed. The swatches use the same palette and blob positions as the renders. Measured by rendering the real frame for each style and drawing each swatch: mean colour distance along the edges is 8 to 17 out of 441 (under 4%), about what the cards overlapping the edge add by themselves. `npm run swatches:compare -w @vouchreel/video` repeats it. |
 | P6 | Numbers on the Usage tab checked only on made-up data | External | Open (needs production data) |
 
 ## G. Old backlog (from the 2026-10-02 audit and the 2026-10-05 handover)
@@ -91,8 +91,8 @@ them are marked Fix and are in scope here; the rest wait for your go-ahead.
 | B1 | Long-review trim for review videos | Feature | Open |
 | B2 | Collect form uses the brand kit | Feature | Open |
 | B3 | Customizable video fonts | Feature | Open |
-| B4 | Remotion licence before commercial scale | Decision | Open |
-| B5 | Widget bundle at 98.4% of its 15 KB budget | Decision | Open |
+| B4 | Remotion licence before commercial scale | Decision | Decision made, action is yours. Remotion is free for individuals and for-profit companies of up to 3 employees (and non-profits); a bigger company needs a paid Company License (remotion.pro/license), read from the installed licence file. `docs/licensing.md` explains it and a test fails if the licence text changes on upgrade (the licence says it changes in 5.0). Whether you need to buy it depends on your headcount, which I cannot know. |
+| B5 | Widget bundle at 98.4% of its 15 KB budget | Decision | Closed as a decision: keep the 15 KB budget (it is in the spec, README and AGENT.md). The build now says how many bytes are left and warns from 95% (currently 98.4%, 249 bytes), so growth is visible before the build fails. Any widget feature has to be paid for by removing something. |
 | B6 | Email verification and two-factor sign-in | Feature | Open |
 | B7 | Direct-to-storage uploads (100 MB is buffered through a Next route today) | Feature | Open |
 | B8 | Error tracking, structured logging, metrics | Feature | Open |

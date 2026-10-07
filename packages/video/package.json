@@ -16,7 +16,8 @@
     "bundle": "tsx scripts/bundle.ts",
     "test": "vitest run",
     "test:render": "VIDEO_RENDER_TESTS=1 vitest run render.integration",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "swatches:compare": "tsx scripts/compare-swatches.mts"
   },
   "dependencies": {
     "@fontsource/outfit": "5.2.8",
