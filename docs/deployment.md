@@ -332,6 +332,17 @@ Responses carry `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy
 
 CI (`.github/workflows/ci.yml`) runs lint (with the design-token, feedback and contrast guards), all tests including the real-FFmpeg ones, the widget size budget and a production build on every pull request.
 
+### Go-live checklist: things never run against the real service
+
+Development so far has been on localhost with no public address, so these have only been tested against stand-ins. Do each one on staging (a real HTTPS address) before launch, and tick it off here.
+
+- [ ] **Google sign-in for reviews, against real Google.** Create the Google Cloud project and OAuth app, request Business Profile API access, get the `business.manage` scope verified, set `GOOGLE_BUSINESS_CLIENT_ID/SECRET` and `NEXT_PUBLIC_APP_URL`, add the callback address to the OAuth app. Then connect a real business, pick a location, run a sync, disconnect. The endpoint paths and field names in `lib/reviews/google-business.ts` were written from documentation and have not been called for real; the tests use `e2e/fake-google.ts`. Until this passes, leave `GOOGLE_BUSINESS_CLIENT_ID` unset so owners only see the API-key route.
+- [ ] **Trustpilot, against the real API.** Connect with a real owner API key and run a sync; confirm the review fields and totals (register P1).
+- [ ] **Terms of Google and Trustpilot** read by someone who can decide (register P4) before adding `google` or `trustpilot` to `REVIEW_VIDEO_SOURCES`.
+- [ ] **`ENCRYPTION_KEY` set in production** (the app refuses to start without it). Back it up: losing it makes every stored provider key and Google token unreadable.
+- [ ] **Staging click-through under the enforced content policy** (`CSP_MODE=report-only` first): payment checkout, Google sign-in, the camera recorder and direct upload to the bucket.
+- [ ] **First storage prune** run against the production bucket (register F2).
+
 ---
 
 ## Widget CDN deployment

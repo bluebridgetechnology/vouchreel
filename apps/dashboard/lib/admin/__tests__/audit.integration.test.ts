@@ -96,4 +96,25 @@ run("admin audit log queries (postgres)", () => {
     expect((await q.listAuditLog({ entityType: "job", q: "cancel", from: "2026-09-01" })).total).toBe(1);
     expect(await q.listAuditEntityTypes()).toEqual(["job", "plan", "setting", "user"]);
   });
+
+  it("filters by the admin who made the entry, and lists the admins that have entries", async () => {
+    expect((await q.listAuditLog({ actorId: actor })).total).toBe(5);
+    expect((await q.listAuditLog({ actorId: "nobody" })).total).toBe(0);
+    expect((await q.listAuditLog({ actorId: actor, entityType: "job" })).total).toBe(2);
+    expect(await q.listAuditActors()).toEqual([{ id: actor, email: `${tag}@example.test` }]);
+    expect((await q.listAuditLog({ actorId: actor })).rows[0].actorId).toBe(actor);
+  });
+
+  it("exports every matching entry without paging, and says when it was cut", async () => {
+    const all = await q.listAuditForExport();
+    expect(all).toMatchObject({ total: 6, truncated: false });
+    expect(all.rows).toHaveLength(6);
+    const jobs = await q.listAuditForExport({ entityType: "job" });
+    expect(jobs.rows.map((r) => r.action)).toEqual(["job.cancel", "job.retry"]);
+  });
+
+  it("finds a user by id in the Users tab search, so an audit entry can link to them", async () => {
+    expect((await q.listAdminUsers(actor)).rows.map((u) => u.id)).toEqual([actor]);
+    expect((await q.listAdminUsers(`${actor}-no`)).total).toBe(0);
+  });
 });

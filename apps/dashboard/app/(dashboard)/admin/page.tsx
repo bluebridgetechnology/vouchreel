@@ -10,14 +10,15 @@ import { listAdminPlans } from "@/lib/admin/plans";
 import { getJobOverview, listAdminVideos } from "@/lib/admin/jobs";
 import { listModerationItems, MODERATION_PAGE_SIZE, type ModerationFilter, type ModerationKind } from "@/lib/admin/moderation";
 import { capabilityProblem, getWorkerHealth, type KindHealth, type Severity } from "@/lib/admin/workers";
-import { formatLimit, formatUsd, getUsageReport, limitState, parseMonth, shiftMonth, type LimitState } from "@/lib/admin/usage";
-import { listAdminUsers, listAuditEntityTypes, listAuditLog, type AuditFilter } from "@/lib/admin/queries";
+import { formatLimit, formatUsd, getSpaceUsage, getUsageByDay, getUsageReport, limitState, parseMonth, shiftMonth, type LimitState } from "@/lib/admin/usage";
+import { listAdminUsers, listAuditActors, listAuditEntityTypes, listAuditLog, type AuditFilter } from "@/lib/admin/queries";
+import { auditEntryLink } from "@/lib/admin/audit-links";
 import { timeAgo } from "@/lib/time-ago";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AdminPanel } from "./admin-panel";
 import { AuditTypeSelect } from "./audit-type-select";
@@ -25,6 +26,7 @@ import { FormSelect } from "./form-select";
 import { ModerationManager } from "./moderation-manager";
 import { JobsManager } from "./jobs-manager";
 import { UsersManager } from "./users-manager";
+import { UsageChart } from "./usage-chart";
 import { PlansManager } from "./plans-manager";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +48,7 @@ type TabId = (typeof TABS)[number]["id"];
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; q?: string; page?: string; type?: string; from?: string; to?: string; month?: string; kind?: string; filter?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string; page?: string; type?: string; actor?: string; from?: string; to?: string; month?: string; kind?: string; filter?: string }>;
 }) {
   const session = await requireSession();
   if (!(await isPlatformAdminFresh(session.user))) {
@@ -57,7 +59,7 @@ export default async function AdminPage({
     redirect(TWO_FACTOR_SETUP_PATH);
   }
 
-  const { tab: rawTab, q, page: rawPage, type, from, to, month, kind, filter: rawFilter } = await searchParams;
+  const { tab: rawTab, q, page: rawPage, type, actor, from, to, month, kind, filter: rawFilter } = await searchParams;
   const tab: TabId = TABS.some((t) => t.id === rawTab) ? (rawTab as TabId) : "plans";
 
   return (
@@ -93,7 +95,7 @@ export default async function AdminPage({
       {tab === "videos" && <VideosTab />}
       {tab === "usage" && <UsageTab month={month} page={Number(rawPage) || 1} />}
       {tab === "moderation" && <ModerationTab kind={kind} filter={rawFilter} q={q} page={Number(rawPage) || 1} />}
-      {tab === "audit" && <AuditTab filter={{ q, entityType: type && type !== "all" ? type : undefined, from, to }} page={Number(rawPage) || 1} />}
+      {tab === "audit" && <AuditTab filter={{ q, entityType: type && type !== "all" ? type : undefined, actorId: actor && actor !== "all" ? actor : undefined, from, to }} page={Number(rawPage) || 1} />}
       {tab === "system" && <SystemTab />}
     </div>
   );
@@ -246,6 +248,7 @@ function CreditCell({ used, limit }: { used: number; limit: number }) {
 
 async function UsageTab({ month: rawMonth, page }: { month?: string; page: number }) {
   const report = await getUsageReport(rawMonth, page);
+  const [days, bySpace] = await Promise.all([getUsageByDay(report.month), getSpaceUsage(report.accounts.map((a) => a.ownerId), report.month)]);
   const { totals } = report;
   const current = parseMonth(undefined).month;
   const href = (m: string, p = 1) => `/admin?tab=usage&month=${m}&page=${p}`;
@@ -271,7 +274,13 @@ async function UsageTab({ month: rawMonth, page }: { month?: string; page: numbe
           <h2 className="text-xl font-medium">{label}</h2>
           <p className="text-xs text-text-muted">UTC calendar month. Credits are per account; failed videos do not count.</p>
         </div>
-        <nav aria-label="Usage month" className="flex items-center gap-2 text-sm">
+        <nav aria-label="Usage month" className="flex flex-wrap items-center gap-2 text-sm">
+          <a href={`/api/admin/usage/export?month=${report.month}&scope=accounts`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+            Export accounts (CSV)
+          </a>
+          <a href={`/api/admin/usage/export?month=${report.month}&scope=spaces`} className={buttonVariants({ variant: "outline", size: "sm" })}>
+            Export by space (CSV)
+          </a>
           <Link href={href(shiftMonth(report.month, -1))} className="rounded-control border px-3 py-1.5 hover:bg-surface-sunken">
             Previous month
           </Link>
@@ -295,6 +304,12 @@ async function UsageTab({ month: rawMonth, page }: { month?: string; page: numbe
         ))}
       </div>
 
+      <Card>
+        <CardContent className="p-4">
+          <UsageChart days={days} label={label} />
+        </CardContent>
+      </Card>
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -315,6 +330,18 @@ async function UsageTab({ month: rawMonth, page }: { month?: string; page: numbe
                 <div className="max-w-[8rem] text-xs text-text-muted sm:hidden">
                   {a.planName ?? "Free"} · {formatUsd(a.aiCostCents)} AI cost · {a.failed} failed
                 </div>
+                {(bySpace.get(a.ownerId)?.length ?? 0) > 1 && (
+                  <details className="mt-1 text-xs text-text-muted">
+                    <summary className="cursor-pointer">By space ({bySpace.get(a.ownerId)!.length})</summary>
+                    <ul className="mt-1 space-y-0.5">
+                      {bySpace.get(a.ownerId)!.map((sp) => (
+                        <li key={sp.spaceId} className="[overflow-wrap:anywhere]">
+                          {sp.spaceName}: {sp.reviewCredits} review, {sp.aiCredits} AI, {formatUsd(sp.aiCostCents)} AI cost{sp.failed > 0 ? `, ${sp.failed} failed` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
               </TableCell>
               <TableCell className="hidden sm:table-cell">{a.planName ?? <span className="text-text-muted">Free</span>}</TableCell>
               <TableCell>
@@ -365,18 +392,21 @@ async function UsageTab({ month: rawMonth, page }: { month?: string; page: numbe
 }
 
 async function AuditTab({ filter, page }: { filter: AuditFilter; page: number }) {
-  const [result, types] = await Promise.all([listAuditLog(filter, page), listAuditEntityTypes()]);
+  const [result, types, actors] = await Promise.all([listAuditLog(filter, page), listAuditEntityTypes(), listAuditActors()]);
   const { rows: entries, total, pageSize } = result;
   const pages = Math.max(1, Math.ceil(total / pageSize));
-  const filtered = !!(filter.q || filter.entityType || filter.from || filter.to);
-  const href = (p: number) => {
-    const params = new URLSearchParams({ tab: "audit", page: String(p) });
+  const filtered = !!(filter.q || filter.entityType || filter.actorId || filter.from || filter.to);
+  const filterParams = () => {
+    const params = new URLSearchParams();
     if (filter.q) params.set("q", filter.q);
     if (filter.entityType) params.set("type", filter.entityType);
+    if (filter.actorId) params.set("actor", filter.actorId);
     if (filter.from) params.set("from", filter.from);
     if (filter.to) params.set("to", filter.to);
-    return `/admin?${params.toString()}`;
+    return params;
   };
+  const href = (p: number) => `/admin?${new URLSearchParams({ tab: "audit", page: String(p), ...Object.fromEntries(filterParams()) }).toString()}`;
+  const exportHref = `/api/admin/audit/export?${filterParams().toString()}`;
 
   return (
     <div className="space-y-4">
@@ -389,6 +419,10 @@ async function AuditTab({ filter, page }: { filter: AuditFilter; page: number })
         <label className="flex flex-col gap-1 text-xs text-text-muted">
           Type
           <AuditTypeSelect types={types} value={filter.entityType} />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-text-muted">
+          Admin
+          <FormSelect name="actor" label="Admin" value={filter.actorId ?? "all"} options={[{ value: "all", label: "All admins" }, ...actors.map((a) => ({ value: a.id, label: a.email }))]} />
         </label>
         <label className="flex flex-col gap-1 text-xs text-text-muted">
           From
@@ -406,6 +440,9 @@ async function AuditTab({ filter, page }: { filter: AuditFilter; page: number })
             Clear
           </Link>
         )}
+        <a href={exportHref} className={cn(buttonVariants({ variant: "outline" }), "ml-auto")}>
+          Export CSV
+        </a>
       </form>
 
       <Table>
@@ -429,6 +466,17 @@ async function AuditTab({ filter, page }: { filter: AuditFilter; page: number })
                 <div className="text-xs text-text-subtle [overflow-wrap:anywhere]">
                   {e.action}
                   {e.entityId ? ` · ${e.entityType} ${e.entityId}` : ""}
+                  {(() => {
+                    const link = auditEntryLink(e);
+                    return link ? (
+                      <>
+                        {" · "}
+                        <Link href={link.href} className="underline">
+                          {link.label}
+                        </Link>
+                      </>
+                    ) : null;
+                  })()}
                 </div>
                 {Object.keys(e.changes).length > 0 && (
                   <details className="mt-1 text-xs text-text-muted">
