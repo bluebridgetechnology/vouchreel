@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { toggleStyle } from "@/components/ui/toggle";
 import { buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface EmbedSnippetProps {
   embedKey: string;
@@ -110,7 +111,7 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
         </p>
       </div>
 
-      <div className="space-y-5 rounded-card border bg-surface p-4 sm:p-5">
+      <Card variant="flat" className="space-y-5 p-4 sm:p-5">
         {/* Code Box */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -168,7 +169,7 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
           </div>
 
           {/* Step by step list */}
-          <div className="rounded-card border bg-surface-sunken/20 p-3.5 space-y-2">
+          <Card variant="flat" className="bg-surface-sunken/20 p-3.5 space-y-2">
             <div className="flex items-center gap-1.5 text-xs font-medium text-text">
               <span>Steps for {activeGuide.name}</span>
             </div>
@@ -180,9 +181,9 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
                 </li>
               ))}
             </ol>
-          </div>
+          </Card>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

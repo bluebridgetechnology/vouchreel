@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
+import { Card } from "@/components/ui/card";
 
 interface MatchRulesEditorProps {
   value: MatchRules;
@@ -78,7 +79,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
   }
 
   return (
-    <div className="space-y-4 rounded-card border bg-surface-sunken/20 p-4">
+    <Card variant="flat" className="space-y-4 bg-surface-sunken/20 p-4">
       <div className="space-y-1">
         <span id="match-rules-label" className="block text-sm font-medium text-text">
           Contextual Page Matching Rules
@@ -89,10 +90,10 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
       </div>
 
       {/* Mode selection radio / segmented switch */}
-      <div
+      <Card
         role="group"
         aria-labelledby="match-rules-label"
-        className="grid grid-cols-2 gap-2 rounded-card border bg-surface-sunken/40 p-1"
+        variant="flat" className="grid grid-cols-2 gap-2 bg-surface-sunken/40 p-1"
       >
         <button
           type="button"
@@ -108,7 +109,7 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
         >
           Show on specific pages
         </button>
-      </div>
+      </Card>
 
       {/* Specific pages rule editor */}
       {mode === "specific" && (
@@ -255,6 +256,6 @@ export function MatchRulesEditor({ value, onChange }: MatchRulesEditorProps) {
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

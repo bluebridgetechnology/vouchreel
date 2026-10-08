@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { ModalOverlay } from "@/components/ui/modal";
 import { notify } from "@/lib/notify";
+import { Card } from "@/components/ui/card";
 
 interface SpacesViewProps {
   initialSpaces: SpaceListItem[];
@@ -181,9 +182,9 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
         /* Spaces Grid */
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {spaces.map((space) => (
-            <div
+            <Card
               key={space.id}
-              className="flex flex-col justify-between rounded-card border bg-surface p-4 sm:p-6 shadow-sm transition-shadow hover:shadow-card"
+              variant="flat" className="flex flex-col justify-between p-4 sm:p-6 shadow-sm transition-shadow hover:shadow-card"
             >
               <div className="space-y-3">
                 <div className="flex items-start justify-between gap-2">
@@ -294,7 +295,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                   Widget
                 </Link>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
@@ -302,8 +303,8 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
       {/* Rename Space Dialog Modal */}
       {editingSpace && (
         <ModalOverlay label="Rename space" onClose={() => setEditingSpace(null)}>
-          <div
-            className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float"
+          <Card
+            variant="flat" className="w-full max-w-md p-4 sm:p-6 shadow-float"
           >
             <h2 id="rename-dialog-title" className="text-lg font-medium">
               Rename Space
@@ -346,15 +347,15 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                 </Button>
               </div>
             </form>
-          </div>
+          </Card>
         </ModalOverlay>
       )}
 
       {/* Delete Space Confirmation Modal */}
       {deletingSpace && (
         <ModalOverlay label="Delete space" onClose={() => setDeletingSpace(null)}>
-          <div
-            className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float"
+          <Card
+            variant="flat" className="w-full max-w-md p-4 sm:p-6 shadow-float"
           >
             <h2 id="delete-dialog-title" className="text-lg font-medium text-danger-foreground">
               Delete Space
@@ -380,7 +381,7 @@ export function SpacesView({ initialSpaces }: SpacesViewProps) {
                 {deleteLoading ? "Deleting..." : "Delete Space"}
               </Button>
             </div>
-          </div>
+          </Card>
         </ModalOverlay>
       )}
     </div>

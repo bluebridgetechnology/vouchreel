@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
+import { Card } from "@/components/ui/card";
 
 export interface ConversionGoal {
   id: string;
@@ -86,7 +87,7 @@ export function ConversionGoalsPanel({
   }
 
   return (
-    <div className="rounded-card border bg-surface p-4">
+    <Card variant="flat" className="p-4">
       <h3 className="text-sm font-medium">Conversion Goals</h3>
       <p className="mt-1 text-xs text-text-muted">
         Track whether visitors who see your testimonials end up converting.
@@ -190,6 +191,6 @@ export function ConversionGoalsPanel({
           ))
         )}
       </div>
-    </div>
+    </Card>
   );
 }

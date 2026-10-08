@@ -37,6 +37,8 @@ import {
 } from "@/lib/review-video/ui-state";
 import { notify } from "@/lib/notify";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { cardVariants } from "@/components/ui/card";
 
 interface Loaded {
   videos: ReviewVideoView[];
@@ -211,7 +213,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
 
   return (
     <ModalOverlay label="Review videos" onClose={onClose}>
-      <div className="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-card border bg-surface shadow-float">
+      <Card variant="flat" className="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden shadow-float">
         <div className="flex items-start justify-between border-b px-6 py-4">
           <div>
             <div className="flex items-center gap-2">
@@ -261,13 +263,13 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
           {data && template && credits && tab === "create" && (
             <>
               {data.reviews.length === 0 ? (
-                <div className="flex gap-3 rounded-card border bg-surface-sunken/40 p-4 text-xs text-text-muted">
+                <Card variant="flat" className="flex gap-3 bg-surface-sunken/40 p-4 text-xs text-text-muted">
                   <Icon name="info-circle" className="mt-0.5" />
                   <p>
                     <span className="block text-sm font-medium text-text">No reviews to use yet</span>
                     Connect Google or Trustpilot on this page and sync. Reviews with text will appear here.
                   </p>
-                </div>
+                </Card>
               ) : (
                 <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_250px]">
                   <div className="min-w-0 space-y-6">
@@ -460,7 +462,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
                     </ul>
                   </fieldset>
 
-                  <label className="flex items-start gap-3 rounded-card border bg-surface-sunken/40 p-4 text-xs text-text-muted">
+                  <label className={cn(cardVariants({ variant: "flat" }), "flex items-start gap-3 bg-surface-sunken/40 p-4 text-xs text-text-muted")}>
                     <Checkbox checked={rights} onCheckedChange={(v) => setRights(v === true)} className="mt-0.5" />
                     <span>
                       <span className="font-medium text-text">{rightsText.headline}</span> {rightsText.detail}
@@ -573,7 +575,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
             </>
           )}
         </div>
-      </div>
+      </Card>
     </ModalOverlay>
   );
 }

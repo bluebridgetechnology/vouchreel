@@ -22,6 +22,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { toggleStyle } from "@/components/ui/toggle";
 import { notify } from "@/lib/notify";
 import { useConfirm } from "@/components/ui/confirm";
+import { Card } from "@/components/ui/card";
 
 interface WidgetPageProps {
   params: Promise<{ id: string }>;
@@ -302,7 +303,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           </div>
 
           {/* Sticky / In-page Save Prompt */}
-          <div className="flex items-center justify-between rounded-card border bg-surface p-4 shadow-sm">
+          <Card variant="flat" className="flex items-center justify-between p-4 shadow-sm">
             <div className="space-y-0.5">
               <span className="text-xs font-medium text-text">
                 {isDirty ? "Unsaved changes pending" : "All changes up to date"}
@@ -322,7 +323,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
             >
               {saving ? "Saving..." : "Save Changes"}
             </Button>
-          </div>
+          </Card>
 
           {/* Section 5: Embed Snippet Generator */}
           <div className={`${activeTab === "embed" ? "block" : "hidden sm:block"}`}>

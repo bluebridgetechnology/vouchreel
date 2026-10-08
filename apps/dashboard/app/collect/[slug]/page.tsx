@@ -9,6 +9,7 @@ import { allowsText, allowsVideo, type CollectMode } from "@/lib/collect/modes";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AI_VIDEO_CONSENT_TEXT } from "@/lib/ai-video/consent";
 import { FormSkeleton, SkeletonRegion } from "@/components/ui/page-skeleton";
+import { Card } from "@/components/ui/card";
 
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 const MAX_DURATION_SECONDS = 5 * 60;
@@ -245,18 +246,18 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
   const showTabs = allowsVideo(modes) && allowsText(modes);
   if (complete) return (
     <main className="mx-auto flex min-h-screen max-w-xl items-center justify-center p-6">
-      <section className="w-full rounded-card border bg-surface p-5 sm:p-8 text-center shadow-sm">
+      <Card as="section" variant="flat" className="w-full p-5 sm:p-8 text-center shadow-sm">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-pill bg-success-soft text-xl text-success-foreground">✓</div>
         <h1 className="text-2xl font-medium">Thank you for sharing!</h1>
         <p className="mt-2 text-sm text-text-muted">Your testimonial has been sent for review.</p>
         {form.incentiveType !== "none" && form.incentiveValue && <p className="mt-5 rounded-card bg-surface-sunken p-3 text-sm font-medium">{form.incentiveValue}</p>}
-      </section>
+      </Card>
     </main>
   );
 
   return (
     <main className={cn("bg-surface-sunken px-4 py-10 sm:py-16", !embedded && "min-h-screen")} style={brandStyle}>
-      <section className="mx-auto max-w-xl rounded-card border bg-surface p-4 shadow-sm sm:p-8" style={radiusStyle}>
+      <Card as="section" variant="flat" className="mx-auto max-w-xl p-4 shadow-sm sm:p-8" style={radiusStyle}>
         {form.branding.logoUrl && <img className="mb-5 h-10 max-w-48 object-contain" src={form.branding.logoUrl} alt="" />}
         <h1 className="text-2xl font-medium tracking-tight">{form.title}</h1>
         <p className="mt-3 whitespace-pre-wrap text-text-muted">{form.promptText}</p>
@@ -289,7 +290,7 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
             </a>
           </div>
         )}
-      </section>
+      </Card>
     </main>
   );
 }

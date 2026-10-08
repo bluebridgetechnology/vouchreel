@@ -3,6 +3,7 @@
 import { TriggerType } from "@/lib/validations/widget-config";
 import { cn } from "@/lib/utils";
 import { inputClass } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 interface TriggerConfigProps {
   triggerType: TriggerType;
@@ -80,7 +81,7 @@ export function TriggerConfig({
         </p>
       </div>
 
-      <div className="space-y-4 rounded-card border bg-surface p-4 sm:p-5">
+      <Card variant="flat" className="space-y-4 p-4 sm:p-5">
         {/* Trigger Selection Dropdown */}
         <div className="space-y-1.5">
           <label
@@ -243,23 +244,23 @@ export function TriggerConfig({
         )}
 
         {triggerType === "exit-intent" && (
-          <div className="flex items-center gap-2 rounded-card border border-border/80 bg-surface-sunken/20 p-3 text-xs text-text-muted">
+          <Card variant="flat" className="flex items-center gap-2 border-border/80 bg-surface-sunken/20 p-3 text-xs text-text-muted">
             <svg className="h-4 w-4 text-brand shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>No additional configuration needed. Exit intent fires automatically on mouseleave to the top browser bar.</span>
-          </div>
+          </Card>
         )}
 
         {triggerType === "returning-visitor" && (
-          <div className="flex items-center gap-2 rounded-card border border-border/80 bg-surface-sunken/20 p-3 text-xs text-text-muted">
+          <Card variant="flat" className="flex items-center gap-2 border-border/80 bg-surface-sunken/20 p-3 text-xs text-text-muted">
             <svg className="h-4 w-4 text-brand shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>No additional configuration needed. Returning visitors are recognized across sessions via local cookies.</span>
-          </div>
+          </Card>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

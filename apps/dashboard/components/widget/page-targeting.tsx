@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 interface PageTargetingProps {
   pagesIncluded: string[];
@@ -60,7 +61,7 @@ export function PageTargeting({
         </p>
       </div>
 
-      <div className="space-y-5 rounded-card border bg-surface p-4 sm:p-5">
+      <Card variant="flat" className="space-y-5 p-4 sm:p-5">
         {/* Wildcard Explanation Callout */}
         <div className="flex items-start gap-2.5 rounded-card bg-surface-sunken/40 p-3 text-xs text-text-muted">
           <svg className="h-4 w-4 shrink-0 text-brand mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,7 +208,7 @@ export function PageTargeting({
             </p>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

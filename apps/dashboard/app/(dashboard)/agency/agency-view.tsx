@@ -10,6 +10,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { ModalOverlay } from "@/components/ui/modal";
+import { Card } from "@/components/ui/card";
 
 interface AgencyViewProps {
   initialData: AgencyOverviewResult;
@@ -155,45 +156,45 @@ export function AgencyView({
 
       {/* Aggregate KPI Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="rounded-card border bg-surface p-5 shadow-sm">
+        <Card variant="flat" className="p-5 shadow-sm">
           <span className="text-xs font-medium text-text-muted">Managed Clients</span>
           <div className="mt-2 text-3xl font-medium tracking-tight text-text">
             {summary.totalSpaces}
           </div>
           <span className="text-xs text-text-muted mt-1 block">Active client spaces</span>
-        </div>
+        </Card>
 
-        <div className="rounded-card border bg-surface p-5 shadow-sm">
+        <Card variant="flat" className="p-5 shadow-sm">
           <span className="text-xs font-medium text-text-muted">Total Impressions</span>
           <div className="mt-2 text-3xl font-medium tracking-tight text-text">
             {summary.totalImpressions.toLocaleString()}
           </div>
           <span className="text-xs text-text-muted mt-1 block">Across all client widgets</span>
-        </div>
+        </Card>
 
-        <div className="rounded-card border bg-surface p-5 shadow-sm">
+        <Card variant="flat" className="p-5 shadow-sm">
           <span className="text-xs font-medium text-text-muted">Video Plays</span>
           <div className="mt-2 text-3xl font-medium tracking-tight text-text">
             {summary.totalPlays.toLocaleString()}
           </div>
           <span className="text-xs text-text-muted mt-1 block">Aggregated interactions</span>
-        </div>
+        </Card>
 
-        <div className="rounded-card border bg-surface p-5 shadow-sm">
+        <Card variant="flat" className="p-5 shadow-sm">
           <span className="text-xs font-medium text-text-muted">Conversions</span>
           <div className="mt-2 text-3xl font-medium tracking-tight text-text text-success-foreground">
             {summary.totalConversions.toLocaleString()}
           </div>
           <span className="text-xs text-text-muted mt-1 block">Attributed outcomes</span>
-        </div>
+        </Card>
 
-        <div className="rounded-card border bg-surface p-5 shadow-sm col-span-2 lg:col-span-1">
+        <Card variant="flat" className="p-5 shadow-sm col-span-2 lg:col-span-1">
           <span className="text-xs font-medium text-text-muted">Avg. Conversion Rate</span>
           <div className="mt-2 text-3xl font-medium tracking-tight text-text">
             {summary.overallConversionRate}%
           </div>
           <span className="text-xs text-text-muted mt-1 block">Global performance</span>
-        </div>
+        </Card>
       </div>
 
       {/* Search, Filter & Quick Actions Bar */}
@@ -217,7 +218,7 @@ export function AgencyView({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 rounded-card border bg-surface p-1 text-xs font-medium">
+          <Card variant="flat" className="flex items-center gap-1.5 p-1 text-xs font-medium">
             <span className="px-2 text-text-muted">Sort:</span>
             <button
               type="button"
@@ -240,7 +241,7 @@ export function AgencyView({
             >
               Name {sortBy === "name" && (sortOrder === "asc" ? "↑" : "↓")}
             </button>
-          </div>
+          </Card>
 
           <button
             type="button"
@@ -264,7 +265,7 @@ export function AgencyView({
 
       {/* Client Spaces Grid / Table */}
       {spaces.length === 0 ? (
-        <div className="rounded-card border border-dashed bg-surface p-12 text-center space-y-4">
+        <Card variant="flat" className="border-dashed p-12 text-center space-y-4">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-pill bg-surface-sunken text-text-muted text-xl">
             🏢
           </div>
@@ -281,9 +282,9 @@ export function AgencyView({
           >
             Create Client Space
           </button>
-        </div>
+        </Card>
       ) : (
-        <div className="divide-y border rounded-card bg-surface overflow-hidden shadow-sm">
+        <Card variant="flat" className="divide-y overflow-hidden shadow-sm">
           {spaces.map((sp) => (
             <div
               key={sp.id}
@@ -367,13 +368,13 @@ export function AgencyView({
               </div>
             </div>
           ))}
-        </div>
+        </Card>
       )}
 
       {/* Add Client Space Modal */}
       {showAddClientModal && (
         <ModalOverlay label="Add new client space" onClose={() => setShowAddClientModal(false)}>
-          <div className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-4">
+          <Card variant="flat" className="w-full max-w-md p-4 sm:p-6 shadow-float space-y-4">
             <h3 className="text-lg font-medium">Add New Client Space</h3>
             <p className="text-sm text-text-muted">
               Create a dedicated workspace container for your client&apos;s video testimonials and embed widget.
@@ -415,7 +416,7 @@ export function AgencyView({
                 </Button>
               </div>
             </form>
-          </div>
+          </Card>
         </ModalOverlay>
       )}
 

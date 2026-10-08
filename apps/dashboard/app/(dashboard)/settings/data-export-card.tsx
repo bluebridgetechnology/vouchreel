@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { buttonVariants, Button } from "@/components/ui/button";
 import { timeAgo } from "@/lib/time-ago";
+import { Card } from "@/components/ui/card";
 
 interface ExportState {
   id: string;
@@ -50,7 +51,7 @@ export function DataExportCard() {
   }
 
   return (
-    <div className="space-y-3 rounded-card border bg-surface p-4 sm:p-6 md:col-span-2">
+    <Card variant="flat" className="space-y-3 p-4 sm:p-6 md:col-span-2">
       <h2 className="text-base font-medium">Download your data</h2>
       <p className="text-sm text-text-muted">
         A zip with your spaces, testimonials, forms and submissions, consent records, videos, settings and notifications as JSON files. Secrets such as API key hashes are left out. One request a day.
@@ -73,6 +74,6 @@ export function DataExportCard() {
         </Button>
         {state?.status === "ready" && state.expiresAt && <span className="text-xs text-text-muted">Ready {timeAgo(new Date(state.createdAt))}; available until {new Date(state.expiresAt).toLocaleDateString()}.</span>}
       </div>
-    </div>
+    </Card>
   );
 }

@@ -7,6 +7,7 @@ import { inputClass } from "@/components/ui/input";
 import { notify } from "@/lib/notify";
 import { useConfirm } from "@/components/ui/confirm";
 import { Spinner } from "@/components/ui/spinner";
+import { Card } from "@/components/ui/card";
 
 interface SpaceOption {
   id: string;
@@ -272,7 +273,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
 
       {/* Create Webhook Form */}
       {isCreating && !createdSecret && (
-        <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm space-y-4">
+        <Card variant="flat" className="p-4 sm:p-6 shadow-sm space-y-4">
           <h3 className="font-medium text-base">Add Webhook Endpoint</h3>
           <form onSubmit={handleCreateWebhook} className="space-y-4">
             <div>
@@ -338,11 +339,11 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
               </Button>
             </div>
           </form>
-        </div>
+        </Card>
       )}
 
       {/* Webhooks Table */}
-      <div className="rounded-card border bg-surface overflow-hidden">
+      <Card variant="flat" className="overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="border-b bg-surface-sunken/50 text-xs font-medium text-text-muted">
             <tr>
@@ -420,11 +421,11 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
             )}
           </tbody>
         </table>
-      </div>
+      </Card>
 
       {/* Delivery Logs Modal / Panel */}
       {inspectingWebhookId && (
-        <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm space-y-4">
+        <Card variant="flat" className="p-4 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-base">Delivery Logs</h3>
             <button
@@ -487,7 +488,7 @@ export function WebhooksManager({ spaces }: { spaces: SpaceOption[] }) {
               </table>
             </div>
           )}
-        </div>
+        </Card>
       )}
     </div>
   );

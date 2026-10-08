@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { ModalOverlay } from "@/components/ui/modal";
+import { Card } from "@/components/ui/card";
 
 export interface TranslationItem {
   id: string;
@@ -168,7 +169,7 @@ export function TranslationsModal({
 
   return (
     <ModalOverlay label="Testimonial translations" onClose={onClose}>
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col rounded-card border bg-surface shadow-float overflow-hidden">
+      <Card variant="flat" className="flex max-h-[90vh] w-full max-w-2xl flex-col shadow-float overflow-hidden">
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div className="flex items-center gap-2">
@@ -227,7 +228,7 @@ export function TranslationsModal({
           )}
 
           {/* Source Content Preview */}
-          <div className="rounded-card border bg-surface-sunken/30 p-4 space-y-2">
+          <Card variant="flat" className="bg-surface-sunken/30 p-4 space-y-2">
             <div className="flex items-center justify-between">
               <span className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft px-2.5 py-0.5 text-2xs font-medium text-brand">
                 <span>🇺🇸</span> English [Source]
@@ -239,10 +240,10 @@ export function TranslationsModal({
             ) : (
               <p className="text-xs text-text-muted italic">No source quote text provided.</p>
             )}
-          </div>
+          </Card>
 
           {/* Action: Auto-translate New Language */}
-          <div className="rounded-card border p-4 bg-surface space-y-3">
+          <Card variant="flat" className="p-4 space-y-3">
             <h4 className="text-xs font-medium uppercase tracking-wider text-text-muted">
               Add or Refresh Translation
             </h4>
@@ -299,7 +300,7 @@ export function TranslationsModal({
             <p className="text-2xs text-text-muted">
               Translations are generated via configured translation adapters (DeepL, Google Translate, or Mock) and cached in the database for instant visitor delivery.
             </p>
-          </div>
+          </Card>
 
           {/* Cached Translations Section */}
           <div className="space-y-3">
@@ -338,7 +339,7 @@ export function TranslationsModal({
 
                 {/* Selected Translation Detail & Preview */}
                 {activeTranslation && (
-                  <div className="rounded-card border bg-surface p-4 space-y-4">
+                  <Card variant="flat" className="p-4 space-y-4">
                     <div className="flex items-center justify-between border-b pb-3">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-xs text-text uppercase">
@@ -387,7 +388,7 @@ export function TranslationsModal({
                         No subtitle cues stored for this testimonial.
                       </p>
                     )}
-                  </div>
+                  </Card>
                 )}
               </div>
             )}
@@ -404,7 +405,7 @@ export function TranslationsModal({
             Done
           </button>
         </div>
-      </div>
+      </Card>
     </ModalOverlay>
   );
 }

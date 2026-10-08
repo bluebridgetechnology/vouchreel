@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 export function ConfirmDelete({ token, state, email }: { token: string; state: "invalid" | "wrong-account" | "ready"; email: string }) {
   const [busy, setBusy] = useState(false);
@@ -11,13 +12,13 @@ export function ConfirmDelete({ token, state, email }: { token: string; state: "
 
   if (done) {
     return (
-      <div className="space-y-3 rounded-card border bg-surface p-4 sm:p-6">
+      <Card variant="flat" className="space-y-3 p-4 sm:p-6">
         <h2 className="text-base font-medium">Your account has been deleted</h2>
         <p className="text-sm text-text-muted">Your data was removed and any subscription was cancelled. Files are cleared from storage in the background.</p>
         <Link href="/" className={buttonVariants({ variant: "outline", size: "sm" })}>
           Back to the homepage
         </Link>
-      </div>
+      </Card>
     );
   }
 
@@ -48,7 +49,7 @@ export function ConfirmDelete({ token, state, email }: { token: string; state: "
   }
 
   return (
-    <div className="space-y-4 rounded-card border border-danger/30 bg-surface p-4 sm:p-6">
+    <Card variant="flat" className="space-y-4 border-danger/30 p-4 sm:p-6">
       <p className="text-sm text-text-muted">
         You are about to permanently delete <strong className="text-text">{email}</strong>: every space, testimonial, form, video, widget and setting, and your subscription is cancelled.
         <strong className="text-text"> This cannot be undone.</strong>
@@ -66,6 +67,6 @@ export function ConfirmDelete({ token, state, email }: { token: string; state: "
           Keep my account
         </Link>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -40,6 +40,9 @@ package and shipped with its licence text next to the files (`apps/dashboard/pub
 a test fails if a font in the list has no licence file. Videos made with them are the customer's, as the
 licence's embedding clause says. Customers cannot upload fonts, so no font of unknown licence can enter.
 
+The app's own fonts (Outfit, JetBrains Mono, Playfair Display Italic; same licence) are likewise shipped with the app in
+`apps/dashboard/lib/fonts/` with their licence texts, not fetched from Google at build or run time.
+
 ## Other things worth knowing
 
 - FFmpeg is called as a separate program on the server (not linked into the app). Its own licence applies to

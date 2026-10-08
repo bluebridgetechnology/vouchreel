@@ -9,6 +9,8 @@ import { toggleStyle } from "@/components/ui/toggle";
 import { ModalOverlay } from "@/components/ui/modal";
 import { notify } from "@/lib/notify";
 import { useConfirm } from "@/components/ui/confirm";
+import { Card } from "@/components/ui/card";
+import { cardVariants } from "@/components/ui/card";
 
 interface ReviewSource {
   id: string;
@@ -318,7 +320,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
 
       {ownEditing && (
         <ModalOverlay label="Add your own review" onClose={() => setOwnEditing(null)}>
-          <form onSubmit={handleSaveOwn} className="w-full max-w-md space-y-4 rounded-card border bg-surface p-4 shadow-float sm:p-6">
+          <Card onSubmit={handleSaveOwn} as="form" variant="flat" className="w-full max-w-md space-y-4 p-4 shadow-float sm:p-6">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-base font-medium text-text">{ownEditing === "new" ? "Add your own review" : "Edit review"}</h3>
               <button type="button" onClick={() => setOwnEditing(null)} className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")} aria-label="Close">
@@ -351,7 +353,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                 {ownSaving ? "Saving..." : "Save review"}
               </Button>
             </div>
-          </form>
+          </Card>
         </ModalOverlay>
       )}
 
@@ -372,7 +374,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
       {/* Connected Sources Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Google Reviews Card */}
-        <div className="rounded-card border bg-surface p-5 shadow-sm space-y-4">
+        <Card variant="flat" className="p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-control bg-info-soft text-info-foreground font-medium border border-info/30">
@@ -471,10 +473,10 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
               </button>
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Trustpilot Reviews Card */}
-        <div className="rounded-card border bg-surface p-5 shadow-sm space-y-4">
+        <Card variant="flat" className="p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-control bg-success-soft text-success-foreground font-medium border border-success/30">
@@ -558,13 +560,13 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
               </button>
             )}
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Connect Modal */}
       {connectModalProvider && (
         <ModalOverlay label="Connect review source" onClose={() => setConnectModalProvider(null)}>
-          <div className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-4">
+          <Card variant="flat" className="w-full max-w-md p-4 sm:p-6 shadow-float space-y-4">
             <div className="flex items-center justify-between border-b pb-3">
               <h3 className="text-base font-medium text-text">
                 Connect {connectModalProvider === "google" ? "Google Business" : "Trustpilot"}
@@ -674,7 +676,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                 </Button>
               </div>
             </form>
-          </div>
+          </Card>
         </ModalOverlay>
       )}
 
@@ -736,9 +738,11 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
             {filteredReviews.map((review) => (
               <div
                 key={review.id}
-                className={`flex flex-col justify-between rounded-card border bg-surface p-4 shadow-xs transition-all ${
+                className={cn(
+                  cardVariants({ variant: "flat" }),
+                  "flex flex-col justify-between p-4 shadow-xs transition-all",
                   review.isApproved ? "border-border" : "border-border/40 opacity-70 bg-surface-sunken/20"
-                }`}
+                )}
               >
                 <div className="space-y-3">
                   {/* Top Bar: Provider badge & Approval status */}

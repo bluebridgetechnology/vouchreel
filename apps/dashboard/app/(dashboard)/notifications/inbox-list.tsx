@@ -6,6 +6,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { notify } from "@/lib/notify";
 import { timeAgo } from "@/lib/time-ago";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 interface Item {
   id: string;
@@ -53,7 +54,7 @@ export function InboxList({ items, unreadCount, emptyText }: { items: Item[]; un
       {items.length === 0 ? (
         <p className="rounded-card border border-dashed p-10 text-center text-sm text-text-muted">{emptyText}</p>
       ) : (
-        <ul className="overflow-hidden rounded-card border bg-surface">
+        <Card as="ul" variant="flat" className="overflow-hidden">
           {items.map((item) => (
             <li key={item.id}>
               <button
@@ -74,7 +75,7 @@ export function InboxList({ items, unreadCount, emptyText }: { items: Item[]; un
               </button>
             </li>
           ))}
-        </ul>
+        </Card>
       )}
     </div>
   );

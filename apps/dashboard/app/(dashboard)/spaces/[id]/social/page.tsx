@@ -14,6 +14,7 @@ import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { notify } from "@/lib/notify";
 import { useConfirm } from "@/components/ui/confirm";
+import { Card } from "@/components/ui/card";
 
 interface SocialPageProps {
   params: Promise<{ id: string }>;
@@ -177,9 +178,9 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Settings Form */}
         <div className="lg:col-span-7 space-y-6">
-          <form
+          <Card
             onSubmit={handleSaveSettings}
-            className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm space-y-6"
+            as="form" variant="flat" className="p-4 sm:p-6 shadow-sm space-y-6"
           >
             <h3 className="text-base font-medium text-text">
               Branding & Export Settings
@@ -279,7 +280,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
             </div>
 
             {/* Watermark Configuration */}
-            <div className="space-y-4 rounded-card border bg-surface-sunken/20 p-4">
+            <Card variant="flat" className="space-y-4 bg-surface-sunken/20 p-4">
               <div className="space-y-2">
                 <label className="text-xs font-medium uppercase tracking-wider text-text-muted">
                   Watermark Position
@@ -347,7 +348,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                   </Link>
                 </div>
               )}
-            </div>
+            </Card>
 
             <Button
               type="submit"
@@ -356,7 +357,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
             >
               {saving ? "Saving Changes..." : "Save Export Settings"}
             </Button>
-          </form>
+          </Card>
         </div>
 
         {/* Live Interactive 9:16 Preview */}
@@ -455,7 +456,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
       </div>
 
       {/* Space Export History */}
-      <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm space-y-4">
+      <Card variant="flat" className="p-4 sm:p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-medium text-text">
@@ -490,7 +491,7 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
             tab and click <strong>Export for Social</strong>.
           </div>
         ) : (
-          <div className="divide-y overflow-hidden rounded-card border bg-surface">
+          <Card variant="flat" className="divide-y overflow-hidden">
             {exports.map((item) => (
               <div
                 key={item.id}
@@ -576,9 +577,9 @@ export default function SpaceSocialPage({ params }: SocialPageProps) {
                 </div>
               </div>
             ))}
-          </div>
+          </Card>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
