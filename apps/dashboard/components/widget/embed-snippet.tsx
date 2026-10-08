@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/card";
 
 interface EmbedSnippetProps {
   embedKey: string;
+  /** Inside the widget editor's panel: no heading of its own (the panel section has one) and no card. */
+  compact?: boolean;
 }
 
 interface PlatformGuide {
@@ -76,7 +78,7 @@ const PLATFORMS: PlatformGuide[] = [
   },
 ];
 
-export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
+export function EmbedSnippet({ embedKey, compact = false }: EmbedSnippetProps) {
   const [copied, setCopied] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState("html");
 
@@ -104,14 +106,16 @@ export function EmbedSnippet({ embedKey }: EmbedSnippetProps) {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-sm font-medium text-text">Embed on Your Website</h3>
-        <p className="text-xs text-text-muted">
-          Copy and paste this lightweight script tag onto your website to start displaying your widget.
-        </p>
-      </div>
+      {!compact && (
+        <div>
+          <h3 className="text-sm font-medium text-text">Embed on Your Website</h3>
+          <p className="text-xs text-text-muted">
+            Copy and paste this lightweight script tag onto your website to start displaying your widget.
+          </p>
+        </div>
+      )}
 
-      <Card variant="flat" className="space-y-5 p-4 sm:p-5">
+      <Card variant="flat" className={cn("space-y-5 p-4 sm:p-5", compact && "border-0 bg-transparent p-0 sm:p-0")}>
         {/* Code Box */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">

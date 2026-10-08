@@ -252,6 +252,15 @@ rules (no spaces goes to onboarding, otherwise lands on Home), checklist step de
 
 ### C1. Widget editor redesign (L)
 
+**Status (2026-10-08): built on `feat/video-themes`, not yet committed.** Migration 0038 adds `draft_config`
+and `published_at` to `widget_configs`; `PUT .../widget-config/draft` autosaves, `DELETE` discards, and the
+existing `PUT .../widget-config` now means Publish (it clears the draft). The page is a sticky top bar (status,
+undo/redo with Ctrl+Z, Discard, Publish), six numbered collapsible steps, and the real-widget preview.
+Not done from the outline below: layout cards use drawn sketches rather than live thumbnails; "which
+testimonials to show" (all, tagged, hand-picked order) is left for later, since the widget has no setting for
+it yet; the shape chips arrive with D1. The old template picker and theme editor are removed. No widget code
+changed. The updated browser test (draft, reload, undo, publish, discard) needs a CI run.
+
 **Layout (desktop)**: a three-part screen.
 
 - **Top bar**: widget name, status pill (`Draft changes` / `Published`), Undo / Redo, device switch,

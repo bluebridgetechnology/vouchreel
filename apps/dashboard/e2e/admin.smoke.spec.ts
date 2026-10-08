@@ -1020,8 +1020,36 @@ test.describe("platform admin", () => {
       }
 
       // A change in the editor reaches the frame without saving or reloading
-      await page.getByRole("button", { name: "Dark Mode" }).click();
-      await expect(page.frameLocator('iframe[title^="Widget preview"]').locator(".vr-theme-root")).toHaveClass(/vr-dark/);
+      const previewRoot = page.frameLocator('iframe[title^="Widget preview"]').locator(".vr-theme-root");
+      await page.getByRole("button", { name: /^2\s*Style/ }).click();
+      await page.getByRole("radio", { name: "Dark" }).click();
+      await expect(previewRoot).toHaveClass(/vr-dark/);
+
+      // ...is a draft: autosaved, still there after a reload, and not what visitors get until Publish
+      const live = async () => (await (await context.request.get("/api/widget/e2e-moderation")).json()).config.theme.mode;
+      await expect(page.getByRole("status").filter({ hasText: "Unpublished changes" })).toBeVisible();
+      await expect.poll(async () => (await pool.query(`SELECT draft_config FROM widget_configs WHERE space_id = $1`, [space.id])).rows[0]?.draft_config?.theme?.mode, { timeout: 10_000 }).toBe("dark");
+      expect(await live()).toBe("light");
+      await open(page, `/spaces/${space.id}/widget`);
+      await expect(previewRoot).toHaveClass(/vr-dark/, { timeout: 15_000 });
+
+      // Undo puts it back; redo again
+      await page.getByRole("button", { name: "Undo" }).click();
+      await expect(previewRoot).not.toHaveClass(/vr-dark/);
+      await page.getByRole("button", { name: "Redo" }).click();
+      await expect(previewRoot).toHaveClass(/vr-dark/);
+
+      await page.getByRole("button", { name: "Publish" }).click();
+      await expect(page.getByRole("status").filter({ hasText: "Published" })).toBeVisible();
+      await expect.poll(live).toBe("dark");
+      expect((await pool.query(`SELECT draft_config FROM widget_configs WHERE space_id = $1`, [space.id])).rows[0].draft_config).toBeNull();
+
+      // Discard goes back to the published widget
+      await page.getByRole("radio", { name: "Light" }).click();
+      await page.getByRole("button", { name: "Discard" }).click();
+      await page.getByRole("button", { name: "Discard changes" }).click();
+      await expect(previewRoot).toHaveClass(/vr-dark/);
+      await expect(page.getByRole("status").filter({ hasText: "Published" })).toBeVisible();
     } finally {
       await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
       await pool.end();

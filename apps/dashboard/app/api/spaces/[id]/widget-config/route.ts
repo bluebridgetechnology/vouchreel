@@ -68,14 +68,19 @@ export async function GET(request: Request, { params }: RouteParams) {
           ? existingConfig.pagesIncluded
           : DEFAULT_WIDGET_CONFIG.pagesIncluded;
 
+      const { draftConfig, ...live } = existingConfig;
+      const draft = draftConfig ? updateWidgetConfigSchema.safeParse(draftConfig) : null;
+
       return NextResponse.json({
         widgetConfig: {
-          ...existingConfig,
+          ...live,
           template: existingConfig.template || DEFAULT_WIDGET_CONFIG.template,
           theme,
           triggerValue,
           pagesIncluded,
         },
+        // Unpublished edits, when there are any (and still valid), for the editor to resume
+        draft: draft?.success ? { ...draft.data, theme: normalizeTheme(draft.data.theme) } : null,
         space: {
           id: space.id,
           name: space.name,
@@ -109,7 +114,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
 /**
  * PUT /api/spaces/[id]/widget-config
- * Updates the widget configuration for the specified space.
+ * Publishes a widget configuration: visitors see it from the next load. Clears any draft.
  */
 export async function PUT(request: Request, { params }: RouteParams) {
   const session = await getSession();
@@ -162,6 +167,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
           pagesIncluded: validated.data.pagesIncluded,
           pagesExcluded: validated.data.pagesExcluded,
           autoplayPreview: validated.data.autoplayPreview,
+          // Publishing makes the draft the live config, so there is nothing left unpublished
+          draftConfig: null,
+          publishedAt: new Date(),
         })
         .where(eq(widgetConfigs.id, existing.id))
         .returning();
@@ -173,6 +181,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         .values({
           spaceId: space.id,
           ...validated.data,
+          publishedAt: new Date(),
         })
         .returning();
 

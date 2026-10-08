@@ -308,15 +308,14 @@ describe("Widget Config API Routes", () => {
         triggerValue: { percentage: 60 },
       };
 
-      (db.update as any).mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValue([
-              { id: "cfg-1", spaceId: "space-1", ...updatedData },
-            ]),
-          }),
+      const set = vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([
+            { id: "cfg-1", spaceId: "space-1", ...updatedData },
+          ]),
         }),
       });
+      (db.update as any).mockReturnValue({ set });
 
       const req = new Request("http://localhost", {
         method: "PUT",
@@ -332,6 +331,36 @@ describe("Widget Config API Routes", () => {
       expect(json.widgetConfig.position).toBe("story-strip");
       expect(json.widgetConfig.theme.primaryColor).toBe("#10b981");
       expect(json.widgetConfig.triggerType).toBe("scroll-depth");
+      // Publishing clears the draft and records when it went live
+      expect(set.mock.calls[0][0]).toMatchObject({ draftConfig: null });
+      expect(set.mock.calls[0][0].publishedAt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe("GET returns the unpublished draft for the editor", () => {
+    const space = { id: "space-1", ownerId: "user-1", name: "My Space", embedKey: "emb_123" };
+    const live = { id: "cfg-1", spaceId: "space-1", template: "floating-card", position: "bottom-right", theme: {}, triggerType: "delay", triggerValue: { seconds: 5 }, pagesIncluded: ["*"], pagesExcluded: [], autoplayPreview: true, createdAt: new Date() };
+    const mock = (config: Record<string, unknown>) => {
+      (getSession as any).mockResolvedValue({ user: { id: "user-1" } });
+      let n = 0;
+      (db.select as any).mockImplementation(() => ({ from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([n++ === 0 ? space : config]) }) }));
+    };
+    const get = async () => (await getWidgetConfig(new Request("http://localhost"), { params: Promise.resolve({ id: "space-1" }) })).json();
+
+    it("with defaults filled in, and never mixed into the live config", async () => {
+      mock({ ...live, draftConfig: { ...DEFAULT_WIDGET_CONFIG, template: "carousel", theme: { primaryColor: "#123456", accentColor: "#ffffff", mode: "dark", borderRadius: 8 } } });
+      const json = await get();
+      expect(json.draft.template).toBe("carousel");
+      expect(json.draft.theme.shadow).toBe("soft");
+      expect(json.widgetConfig.template).toBe("floating-card");
+      expect(json.widgetConfig).not.toHaveProperty("draftConfig");
+    });
+
+    it("null when there is none, or when it no longer validates", async () => {
+      mock({ ...live, draftConfig: null });
+      expect((await get()).draft).toBeNull();
+      mock({ ...live, draftConfig: { template: "hexagon" } });
+      expect((await get()).draft).toBeNull();
     });
   });
 });

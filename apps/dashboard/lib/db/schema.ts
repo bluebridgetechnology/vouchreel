@@ -339,6 +339,10 @@ export const widgetConfigs = pgTable("widget_configs", {
   pagesIncluded: text("pages_included").array().default([]),
   pagesExcluded: text("pages_excluded").array().default([]),
   autoplayPreview: boolean("autoplay_preview").default(false).notNull(),
+  /** Unpublished edits from the widget editor (the whole config, as the editor's PUT takes it). Visitors never see it. */
+  draftConfig: jsonb("draft_config").$type<Record<string, unknown>>(),
+  /** When the live columns were last published from the editor; null for configs saved before drafts existed. */
+  publishedAt: timestamp("published_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

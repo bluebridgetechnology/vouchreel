@@ -1,354 +1,183 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import {
-  DEFAULT_WIDGET_CONFIG,
-  UpdateWidgetConfigInput,
-  WidgetPosition,
-  WidgetTemplate,
-  WidgetTheme,
-  TriggerType,
-} from "@/lib/validations/widget-config";
-import { TemplatePicker } from "@/components/widget/template-picker";
-import { PositionPicker } from "@/components/widget/position-picker";
-import { ThemeEditor } from "@/components/widget/theme-editor";
-import { applyBrandKitToTheme, type BrandKitValues } from "@/lib/brand-kit/theme";
-import { TriggerConfig } from "@/components/widget/trigger-config";
-import { PageTargeting } from "@/components/widget/page-targeting";
-import { LivePreview } from "@/components/widget/live-preview";
-import { EmbedSnippet } from "@/components/widget/embed-snippet";
+import { use, useCallback, useEffect, useState } from "react";
+import { applyBrandKitToTheme } from "@/lib/brand-kit/theme";
+import { layoutInfo } from "@/lib/widget-editor/layouts";
+import { normalizeTheme } from "@/lib/validations/widget-config";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { toggleStyle } from "@/components/ui/toggle";
+import { Icon } from "@/components/ui/icon";
 import { notify } from "@/lib/notify";
 import { useConfirm } from "@/components/ui/confirm";
-import { Card } from "@/components/ui/card";
+import { LivePreview } from "@/components/widget/live-preview";
+import { useWidgetEditor, type SaveState } from "@/components/widget/editor/use-widget-editor";
+import { BehaviourSection, ContentSection, EditorSection, InstallSection, LayoutSection, ShapeSection, StyleSection } from "@/components/widget/editor/sections";
 
 interface WidgetPageProps {
   params: Promise<{ id: string }>;
 }
 
+type SectionId = "layout" | "style" | "shape" | "content" | "behaviour" | "install";
+
+function StatusPill({ unpublished, saveState }: { unpublished: boolean; saveState: SaveState }) {
+  const [text, tone] =
+    saveState === "error"
+      ? ["Draft not saved", "bg-danger-soft text-danger-foreground"]
+      : saveState === "saving"
+        ? ["Saving draft…", "bg-surface-sunken text-text-muted"]
+        : unpublished
+          ? ["Unpublished changes", "bg-warning-soft text-warning-foreground"]
+          : ["Published", "bg-success-soft text-success-foreground"];
+  return (
+    <span role="status" className={cn("inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 text-2xs font-medium", tone)}>
+      {!unpublished && saveState !== "error" && <Icon name="cloud-check" size="sm" />}
+      {text}
+    </span>
+  );
+}
+
+/**
+ * The widget editor: settings on the left in steps, the real widget on the right. Every change shows at once
+ * and autosaves as a draft; visitors keep the published widget until Publish.
+ */
 export default function SpaceWidgetPage({ params }: WidgetPageProps) {
-  const confirm = useConfirm();
   const { id: spaceId } = use(params);
+  const confirm = useConfirm();
+  const editor = useWidgetEditor(spaceId);
+  const { config, update, updateTheme, undo, redo } = editor;
+  const [open, setOpen] = useState<Set<SectionId>>(() => new Set(["layout"]));
+  const toggle = (s: SectionId) =>
+    setOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return next;
+    });
 
-  // Widget config state
-  const [config, setConfig] = useState<UpdateWidgetConfigInput>(DEFAULT_WIDGET_CONFIG);
-  const [embedKey, setEmbedKey] = useState<string>("");
-
-  // UI state
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
-  // Set once the owner has saved a brand kit; it then decides colours, radius and fonts
-  const [brandKit, setBrandKit] = useState<BrandKitValues | null>(null);
-
-  // Active section tab for mobile/clean navigation
-  const [activeTab, setActiveTab] = useState<"appearance" | "triggers" | "targeting" | "embed">("appearance");
-
-  async function fetchWidgetConfig() {
-    try {
-      setLoading(true);
-      setError(null);
-
-      fetch(`/api/spaces/${spaceId}/brand-kit`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => setBrandKit(d?.saved ? d.values : null))
-        .catch(() => undefined);
-
-      const res = await fetch(`/api/spaces/${spaceId}/widget-config`);
-      if (!res.ok) {
-        throw new Error("Failed to load widget configuration");
+  // Ctrl/Cmd+Z and Shift+Ctrl/Cmd+Z (or Ctrl+Y), except while typing in a text field, which has its own undo
+  const onKey = useCallback(
+    (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("input[type=text], input:not([type]), textarea, [contenteditable=true]")) return;
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const key = e.key.toLowerCase();
+      if (key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((key === "z" && e.shiftKey) || key === "y") {
+        e.preventDefault();
+        redo();
       }
-
-      const data = await res.json();
-      if (data.widgetConfig) {
-        setConfig({
-          template: data.widgetConfig.template || DEFAULT_WIDGET_CONFIG.template,
-          position: data.widgetConfig.position || DEFAULT_WIDGET_CONFIG.position,
-          theme: data.widgetConfig.theme || DEFAULT_WIDGET_CONFIG.theme,
-          triggerType: data.widgetConfig.triggerType || DEFAULT_WIDGET_CONFIG.triggerType,
-          triggerValue: data.widgetConfig.triggerValue || DEFAULT_WIDGET_CONFIG.triggerValue,
-          pagesIncluded: data.widgetConfig.pagesIncluded || DEFAULT_WIDGET_CONFIG.pagesIncluded,
-          pagesExcluded: data.widgetConfig.pagesExcluded || DEFAULT_WIDGET_CONFIG.pagesExcluded,
-          autoplayPreview: data.widgetConfig.autoplayPreview ?? DEFAULT_WIDGET_CONFIG.autoplayPreview,
-        });
-      }
-
-      if (data.space?.embedKey) {
-        setEmbedKey(data.space.embedKey);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load widget settings");
-    } finally {
-      setLoading(false);
-    }
-  }
-
+    },
+    [undo, redo]
+  );
   useEffect(() => {
-    fetchWidgetConfig();
-  }, [spaceId]);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onKey]);
 
-  function handleTemplateChange(template: WidgetTemplate) {
-    setConfig((prev) => ({ ...prev, template }));
-    setIsDirty(true);
-  }
-
-  function handlePositionChange(position: WidgetPosition) {
-    setConfig((prev) => ({ ...prev, position }));
-    setIsDirty(true);
-  }
-
-  function handleThemeChange(theme: WidgetTheme) {
-    setConfig((prev) => ({ ...prev, theme }));
-    setIsDirty(true);
-  }
-
-  function handleTriggerChange(triggerType: TriggerType, triggerValue: Record<string, unknown>) {
-    setConfig((prev) => ({ ...prev, triggerType, triggerValue }));
-    setIsDirty(true);
-  }
-
-  function handleTargetingChange(pagesIncluded: string[], pagesExcluded: string[]) {
-    setConfig((prev) => ({ ...prev, pagesIncluded, pagesExcluded }));
-    setIsDirty(true);
-  }
-
-  function handleAutoplayChange(autoplayPreview: boolean) {
-    setConfig((prev) => ({ ...prev, autoplayPreview }));
-    setIsDirty(true);
-  }
-
-  async function handleResetDefaults() {
-    if (!(await confirm({ title: "Reset widget customisations?", description: "All appearance, trigger and targeting settings return to their defaults. Nothing is saved until you click Save.", confirmLabel: "Reset to defaults", tone: "default" }))) return;
-    setConfig(DEFAULT_WIDGET_CONFIG);
-    setIsDirty(true);
-    notify.info("Widget reset to defaults. Save to apply.");
-  }
-
-  async function handleSave() {
-    setSaving(true);
-
+  async function handlePublish() {
     try {
-      const res = await fetch(`/api/spaces/${spaceId}/widget-config`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(config),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error?.message || "Failed to update widget settings");
-      }
-
-      setIsDirty(false);
-      notify.success("Widget saved", { description: "Visitors will see the updated widget instantly." });
+      await editor.publish();
+      notify.success("Widget published", { description: "Visitors see the new widget from their next page load." });
     } catch (err) {
-      notify.fromError(err, "Failed to save widget settings");
-    } finally {
-      setSaving(false);
+      notify.fromError(err, "Failed to publish the widget");
     }
   }
 
-  if (loading) {
+  async function handleDiscard() {
+    if (!(await confirm({ title: "Discard unpublished changes?", description: "The editor goes back to the widget visitors see now. You can still undo this.", confirmLabel: "Discard changes", tone: "default" }))) return;
+    await editor.discard();
+  }
+
+  if (editor.loading) {
     return (
-      <div className="space-y-6">
-        <div className="h-8 w-48 animate-pulse rounded-control bg-surface-sunken" />
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          <div className="space-y-4 lg:col-span-7">
-            <div className="h-48 animate-pulse rounded-card border bg-surface-sunken/40" />
-            <div className="h-48 animate-pulse rounded-card border bg-surface-sunken/40" />
-          </div>
-          <div className="h-96 animate-pulse rounded-card border bg-surface-sunken/40 lg:col-span-5" />
-        </div>
+      <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+        <div className="h-[560px] animate-pulse rounded-card border bg-surface-sunken/40" />
+        <div className="h-[560px] animate-pulse rounded-card border bg-surface-sunken/40" />
       </div>
     );
   }
 
-  if (error) {
+  if (editor.error) {
     return (
       <div className="rounded-card border border-danger/20 bg-danger-soft p-6 text-center">
-        <h3 className="text-sm font-medium text-danger-foreground">Error Loading Widget Settings</h3>
-        <p className="mt-1 text-xs text-text-muted">{error}</p>
-        <button
-          onClick={() => fetchWidgetConfig()}
-          className={cn(buttonVariants({ variant: "primary", size: "sm" }), "mt-4")}
-        >
-          Try Again
+        <h3 className="text-sm font-medium text-danger-foreground">Could not load the widget</h3>
+        <p className="mt-1 text-xs text-text-muted">{editor.error}</p>
+        <button onClick={() => editor.reload()} className={cn(buttonVariants({ variant: "primary", size: "sm" }), "mt-4")}>
+          Try again
         </button>
       </div>
     );
   }
 
+  const theme = normalizeTheme(config.theme);
+  const brandManaged = Boolean(editor.brandKit);
+  const layout = layoutInfo(config.template);
+  const iconButton = cn(buttonVariants({ variant: "ghost", size: "sm" }), "px-2");
+
   return (
-    <div className="space-y-6 pb-16">
-      {/* Top Header & Save Status */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-medium tracking-tight text-text">
-              Widget Customization
-            </h2>
-            {isDirty && (
-              <span className="rounded-pill bg-warning-soft px-2 py-0.5 text-2xs font-medium text-warning-foreground border border-warning/30">
-                Unsaved changes
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-text-muted">
-            Configure how your video widget displays, responds to visitor actions, and targets pages.
-          </p>
+    <div className="space-y-4">
+      {/* Top bar: one save control for the whole editor */}
+      <div className="sticky top-0 z-20 -mx-1 flex flex-wrap items-center justify-between gap-3 rounded-card border bg-surface/95 px-3 py-2.5 shadow-xs backdrop-blur">
+        <div className="flex items-center gap-3">
+          <h2 className="text-base font-medium text-text">Widget</h2>
+          <StatusPill unpublished={editor.unpublished} saveState={editor.saveState} />
         </div>
-
-        {/* Global Save Controls */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleResetDefaults}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Reset Defaults
+        <div className="flex items-center gap-1.5">
+          <button type="button" onClick={undo} disabled={!editor.canUndo} aria-label="Undo" title="Undo (Ctrl+Z)" className={iconButton}>
+            <Icon name="undo-left" size="sm" />
           </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className={buttonVariants({ variant: "primary", size: "sm" })}
-          >
-            {saving ? (
-              <>
-                <span className="h-3 w-3 animate-spin rounded-pill border-2 border-text-on-accent border-t-transparent" />
-                <span>Saving...</span>
-              </>
-            ) : (
-              <>
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Save Changes</span>
-              </>
-            )}
+          <button type="button" onClick={redo} disabled={!editor.canRedo} aria-label="Redo" title="Redo (Ctrl+Shift+Z)" className={iconButton}>
+            <Icon name="undo-right" size="sm" />
           </button>
+          {editor.unpublished && (
+            <button type="button" onClick={handleDiscard} className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Discard
+            </button>
+          )}
+          <Button type="button" size="sm" onClick={handlePublish} disabled={!editor.unpublished || editor.publishing} loading={editor.publishing}>
+            {editor.publishing ? "Publishing…" : "Publish"}
+          </Button>
         </div>
       </div>
 
-
-
-      {/* Navigation tabs for mobile / easy jumping */}
-      <div className="flex border-b border-border sm:hidden">
-        {[
-          { id: "appearance", label: "Appearance" },
-          { id: "triggers", label: "Triggers" },
-          { id: "targeting", label: "Targeting" },
-          { id: "embed", label: "Embed Code" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id as any)}
-            className={cn("flex-1 py-2 text-center text-xs font-medium", toggleStyle("tab", activeTab === tab.id))}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Two-Column Responsive Layout */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        {/* Left Column: Settings Form */}
-        <div className="space-y-8 lg:col-span-7">
-          {/* Section 0: Template Picker */}
-          <div className={`${activeTab === "appearance" ? "block" : "hidden sm:block"}`}>
-            <TemplatePicker
-              value={config.template}
-              onChange={handleTemplateChange}
-            />
-          </div>
-
-          {/* Section 1: Position Picker */}
-          <div className={`${activeTab === "appearance" ? "block" : "hidden sm:block"}`}>
-            <PositionPicker
-              value={config.position}
-              onChange={handlePositionChange}
-            />
-          </div>
-
-          {/* Section 2: Theme Editor */}
-          <div className={`${activeTab === "appearance" ? "block" : "hidden sm:block"}`}>
-            <ThemeEditor
-              value={config.theme}
-              onChange={handleThemeChange}
-              brandManaged={Boolean(brandKit)}
-              brandHref={`/spaces/${spaceId}/brand`}
-            />
-          </div>
-
-          {/* Section 3: Trigger Configuration */}
-          <div className={`${activeTab === "triggers" ? "block" : "hidden sm:block"}`}>
-            <TriggerConfig
-              triggerType={config.triggerType}
-              triggerValue={config.triggerValue}
-              onChange={handleTriggerChange}
-            />
-          </div>
-
-          {/* Section 4: Page Targeting */}
-          <div className={`${activeTab === "targeting" ? "block" : "hidden sm:block"}`}>
-            <PageTargeting
-              pagesIncluded={config.pagesIncluded}
-              pagesExcluded={config.pagesExcluded}
-              onChange={handleTargetingChange}
-            />
-          </div>
-
-          {/* Sticky / In-page Save Prompt */}
-          <Card variant="flat" className="flex items-center justify-between p-4 shadow-sm">
-            <div className="space-y-0.5">
-              <span className="text-xs font-medium text-text">
-                {isDirty ? "Unsaved changes pending" : "All changes up to date"}
-              </span>
-              <p className="text-2xs text-text-muted">
-                {isDirty
-                  ? "Remember to save your settings to update the production widget."
-                  : "Last configuration synced with database."}
-              </p>
-            </div>
-
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              size="sm" loading={saving}
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </Card>
-
-          {/* Section 5: Embed Snippet Generator */}
-          <div className={`${activeTab === "embed" ? "block" : "hidden sm:block"}`}>
-            {embedKey ? (
-              <EmbedSnippet embedKey={embedKey} />
-            ) : (
-              <div className="h-40 animate-pulse rounded-card border bg-surface-sunken/30" />
-            )}
-          </div>
-        </div>
-
-        {/* Right Column: Live Interactive Preview */}
-        <div className="lg:col-span-5">
-          <div className="sticky top-6">
+      <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+        {/* Preview first on phones, beside the panel on wide screens */}
+        <div className="lg:order-2">
+          <div className="lg:sticky lg:top-20">
             <LivePreview
-              embedKey={embedKey || undefined}
+              embedKey={editor.embedKey || undefined}
               template={config.template}
               position={config.position}
-              theme={applyBrandKitToTheme(config.theme, brandKit)}
+              theme={applyBrandKitToTheme(theme, editor.brandKit)}
               triggerType={config.triggerType}
               triggerValue={config.triggerValue}
               autoplayPreview={config.autoplayPreview}
-              onAutoplayChange={handleAutoplayChange}
+              className="h-[min(78vh,760px)]"
             />
           </div>
+        </div>
+
+        <div className="overflow-hidden rounded-card border bg-surface lg:order-1">
+          <EditorSection step={1} title="Layout" summary={layout.name} open={open.has("layout")} onToggle={() => toggle("layout")}>
+            <LayoutSection value={config.template} onChange={(template) => update({ template })} />
+          </EditorSection>
+          <EditorSection step={2} title="Style" summary={`${theme.mode === "dark" ? "Dark" : "Light"}, ${theme.shadow} shadow${theme.glass ? ", glass" : ""}`} open={open.has("style")} onToggle={() => toggle("style")}>
+            <StyleSection theme={theme} updateTheme={updateTheme} brandManaged={brandManaged} brandHref={`/spaces/${spaceId}/brand`} />
+          </EditorSection>
+          <EditorSection step={3} title="Size and corners" summary={`${{ sm: "Small", md: "Medium", lg: "Large" }[theme.size]}, ${theme.borderRadius}px corners`} open={open.has("shape")} onToggle={() => toggle("shape")}>
+            <ShapeSection theme={theme} updateTheme={updateTheme} brandManaged={brandManaged} />
+          </EditorSection>
+          <EditorSection step={4} title="Content" summary="What each card shows" open={open.has("content")} onToggle={() => toggle("content")}>
+            <ContentSection theme={theme} updateTheme={updateTheme} template={config.template} />
+          </EditorSection>
+          <EditorSection step={5} title="Behaviour" summary="When and where it appears" open={open.has("behaviour")} onToggle={() => toggle("behaviour")}>
+            <BehaviourSection config={config} update={update} />
+          </EditorSection>
+          <EditorSection step={6} title="Install" summary="Add it to your site" open={open.has("install")} onToggle={() => toggle("install")}>
+            <InstallSection embedKey={editor.embedKey} template={config.template} />
+          </EditorSection>
         </div>
       </div>
     </div>
