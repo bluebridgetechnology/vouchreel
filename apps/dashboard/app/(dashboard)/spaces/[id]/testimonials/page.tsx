@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ModalOverlay } from "@/components/ui/modal";
 import { notify } from "@/lib/notify";
+import { Card } from "@/components/ui/card";
 
 interface TestimonialsPageProps {
   params: Promise<{ id: string }>;
@@ -391,7 +392,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
       {/* Delete Confirmation Dialog */}
       {deletingTestimonial && (
         <ModalOverlay label="Delete testimonial" onClose={() => setDeletingTestimonial(null)}>
-          <div className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float">
+          <Card variant="flat" className="w-full max-w-md p-4 sm:p-6 shadow-float">
             <h3
               id="delete-testimonial-title"
               className="text-lg font-medium text-danger-foreground"
@@ -427,7 +428,7 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
                 {deleteLoading ? "Deleting..." : "Delete Testimonial"}
               </Button>
             </div>
-          </div>
+          </Card>
         </ModalOverlay>
       )}
     </div>

@@ -3,6 +3,7 @@
 import { WidgetTemplate, WIDGET_TEMPLATES } from "@/lib/validations/widget-config";
 import { cn } from "@/lib/utils";
 import { toggleStyle } from "@/components/ui/toggle";
+import { Card } from "@/components/ui/card";
 
 interface TemplatePickerProps {
   value?: WidgetTemplate;
@@ -108,7 +109,7 @@ export function TemplatePicker({
   ];
 
   return (
-    <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-xs space-y-4">
+    <Card variant="flat" className="p-4 sm:p-6 shadow-xs space-y-4">
       <div className="space-y-1">
         <h3 className="text-base font-medium text-text">
           Display Template
@@ -175,6 +176,6 @@ export function TemplatePicker({
           );
         })}
       </div>
-    </div>
+    </Card>
   );
 }

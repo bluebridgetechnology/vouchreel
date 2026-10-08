@@ -1,6 +1,7 @@
 "use client";
 
 import { STEP_LABELS, type CompareMode, type ComparativeAnalyticsData, type FunnelStep, type SegmentComparisonData } from "./analytics-types";
+import { Card } from "@/components/ui/card";
 
 interface AnalyticsFunnelProps {
   compareMode: CompareMode;
@@ -12,7 +13,7 @@ interface AnalyticsFunnelProps {
 
 export function AnalyticsFunnel({ compareMode, funnel, maxFunnel, comparison, segmentComparison }: AnalyticsFunnelProps) {
   return (
-    <div className="rounded-card border bg-surface p-4">
+    <Card variant="flat" className="p-4">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-medium">Conversion Funnel</h3>
         {compareMode === "previous" && (
@@ -45,7 +46,7 @@ export function AnalyticsFunnel({ compareMode, funnel, maxFunnel, comparison, se
             const delta = segmentComparison.deltas.funnel[step1.step] ?? 0;
 
             return (
-              <div key={step1.step} className="rounded-card border bg-surface-sunken/20 p-3">
+              <Card key={step1.step} variant="flat" className="bg-surface-sunken/20 p-3">
                 <div className="mb-2 flex items-center justify-between text-xs">
                   <span className="font-medium text-text">
                     {STEP_LABELS[step1.step] ?? step1.step}
@@ -91,7 +92,7 @@ export function AnalyticsFunnel({ compareMode, funnel, maxFunnel, comparison, se
                     />
                   </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -174,6 +175,6 @@ export function AnalyticsFunnel({ compareMode, funnel, maxFunnel, comparison, se
           })}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

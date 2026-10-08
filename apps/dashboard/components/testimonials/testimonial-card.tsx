@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { Card, cardVariants } from "@/components/ui/card";
 
 export interface TestimonialItem {
   id: string;
@@ -74,9 +75,11 @@ export function TestimonialCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative flex flex-col gap-4 rounded-card border bg-surface p-4 shadow-sm transition-all hover:shadow-card sm:flex-row sm:items-start ${
-        !testimonial.isActive ? "opacity-75 bg-surface-sunken/20" : ""
-      }`}
+      className={cn(
+        cardVariants({ variant: "flat" }),
+        "group relative flex flex-col gap-4 p-4 shadow-sm transition-all hover:shadow-card sm:flex-row sm:items-start",
+        !testimonial.isActive && "opacity-75 bg-surface-sunken/20"
+      )}
     >
       {/* Drag Handle */}
       <button
@@ -98,7 +101,7 @@ export function TestimonialCard({
       </button>
 
       {/* Video Thumbnail */}
-      <div className="relative aspect-video w-full flex-shrink-0 overflow-hidden rounded-card border bg-surface-sunken sm:w-44">
+      <Card variant="flat" className="relative aspect-video w-full flex-shrink-0 overflow-hidden bg-surface-sunken sm:w-44">
         {testimonial.thumbnailUrl ? (
           <img
             src={testimonial.thumbnailUrl}
@@ -122,7 +125,7 @@ export function TestimonialCard({
             {formatDuration(testimonial.durationSeconds)}
           </span>
         )}
-      </div>
+      </Card>
 
       {/* Content */}
       <div className="flex flex-1 flex-col justify-between space-y-2">

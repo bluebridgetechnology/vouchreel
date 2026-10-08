@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { toggleStyle } from "@/components/ui/toggle";
 import { ModalOverlay } from "@/components/ui/modal";
+import { Card } from "@/components/ui/card";
 
 export interface SocialExportItem {
   id: string;
@@ -170,7 +171,7 @@ export function SocialExportModal({
 
   return (
     <ModalOverlay label="Export for social" onClose={onClose}>
-      <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col rounded-card border bg-surface shadow-float overflow-hidden">
+      <Card variant="flat" className="relative flex max-h-[92vh] w-full max-w-2xl flex-col shadow-float overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div>
@@ -239,7 +240,7 @@ export function SocialExportModal({
             <>
               {/* If active export is done, show preview player */}
               {activeExport && activeExport.status === "done" && activeExport.outputUrl ? (
-                <div className="rounded-card border bg-surface-sunken/40 p-5 space-y-4">
+                <Card variant="flat" className="bg-surface-sunken/40 p-5 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="inline-flex items-center rounded-pill bg-success-soft px-2.5 py-0.5 text-xs font-medium text-success-foreground">
@@ -295,10 +296,10 @@ export function SocialExportModal({
                       {copiedLink ? "Copied!" : "Copy Share Link"}
                     </button>
                   </div>
-                </div>
+                </Card>
               ) : activeExport && (activeExport.status === "pending" || activeExport.status === "processing") ? (
                 /* Processing State */
-                <div className="rounded-card border bg-surface p-5 sm:p-8 text-center space-y-4">
+                <Card variant="flat" className="p-5 sm:p-8 text-center space-y-4">
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-pill bg-brand-soft text-brand">
                     <svg className="h-7 w-7 animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -317,7 +318,7 @@ export function SocialExportModal({
                     <span className="h-2 w-2 rounded-pill bg-brand animate-pulse" />
                     Status: {activeExport.status}
                   </div>
-                </div>
+                </Card>
               ) : (
                 /* Configuration Form */
                 <>
@@ -384,7 +385,7 @@ export function SocialExportModal({
                   </div>
 
                   {/* Toggles: Captions, Branding, Watermark */}
-                  <div className="rounded-card border bg-surface-sunken/20 p-4 space-y-3">
+                  <Card variant="flat" className="bg-surface-sunken/20 p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-xs font-medium text-text">
@@ -445,7 +446,7 @@ export function SocialExportModal({
                         className="h-4 w-4 rounded-control border-border-strong text-brand focus:ring-brand disabled:opacity-50"
                       />
                     </div>
-                  </div>
+                  </Card>
 
                   {/* Submit Action */}
                   <button
@@ -476,9 +477,9 @@ export function SocialExportModal({
                 </div>
               ) : (
                 exportHistory.map((item) => (
-                  <div
+                  <Card
                     key={item.id}
-                    className="flex items-center justify-between rounded-card border bg-surface p-3.5 transition-all hover:bg-surface-sunken/40"
+                    variant="flat" className="flex items-center justify-between p-3.5 transition-all hover:bg-surface-sunken/40"
                   >
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
@@ -526,13 +527,13 @@ export function SocialExportModal({
                         </>
                       )}
                     </div>
-                  </div>
+                  </Card>
                 ))
               )}
             </div>
           )}
         </div>
-      </div>
+      </Card>
     </ModalOverlay>
   );
 }

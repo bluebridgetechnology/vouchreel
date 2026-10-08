@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { notify } from "@/lib/notify";
+import { Card } from "@/components/ui/card";
 
 type Step = "idle" | "password" | "scan" | "codes" | "disable" | "regenerate";
 
@@ -88,7 +89,7 @@ export function SecurityForm({ enabled, email }: { enabled: boolean; email: stri
   };
 
   return (
-    <div className="space-y-4 rounded-card border bg-surface p-4 sm:p-6">
+    <Card variant="flat" className="space-y-4 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-base font-medium">Two-factor sign-in</h2>
@@ -174,6 +175,6 @@ export function SecurityForm({ enabled, email }: { enabled: boolean; email: stri
           <Button onClick={() => reset()}>I have saved them</Button>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

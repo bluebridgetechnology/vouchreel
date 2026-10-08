@@ -7,6 +7,7 @@ import { inputClass } from "@/components/ui/input";
 import { notify } from "@/lib/notify";
 import { useConfirm } from "@/components/ui/confirm";
 import { Spinner } from "@/components/ui/spinner";
+import { Card } from "@/components/ui/card";
 
 interface SpaceOption {
   id: string;
@@ -192,7 +193,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
 
       {/* Creation Modal */}
       {isCreating && !createdRawKey && (
-        <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm space-y-4">
+        <Card variant="flat" className="p-4 sm:p-6 shadow-sm space-y-4">
           <h3 className="font-medium text-base">Generate New API Key</h3>
           <form onSubmit={handleCreateKey} className="space-y-4">
             <div>
@@ -225,11 +226,11 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
               </Button>
             </div>
           </form>
-        </div>
+        </Card>
       )}
 
       {/* Keys List */}
-      <div className="rounded-card border bg-surface overflow-hidden">
+      <Card variant="flat" className="overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="border-b bg-surface-sunken/50 text-xs font-medium text-text-muted">
             <tr>
@@ -275,7 +276,7 @@ export function ApiKeysManager({ spaces }: { spaces: SpaceOption[] }) {
             )}
           </tbody>
         </table>
-      </div>
+      </Card>
     </div>
   );
 }

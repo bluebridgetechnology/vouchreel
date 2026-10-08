@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { notify } from "@/lib/notify";
+import { Card } from "@/components/ui/card";
 
 export default function NewSpacePage() {
   const router = useRouter();
@@ -65,7 +66,7 @@ export default function NewSpacePage() {
         </p>
       </div>
 
-      <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
+      <Card variant="flat" className="p-4 sm:p-6 shadow-sm">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="rounded-control bg-danger-soft px-3 py-2 text-sm text-danger-foreground">
@@ -108,7 +109,7 @@ export default function NewSpacePage() {
             </Button>
           </div>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

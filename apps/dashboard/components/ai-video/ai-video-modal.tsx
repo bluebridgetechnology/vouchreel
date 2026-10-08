@@ -25,6 +25,7 @@ import { MAX_SCRIPT_WORDS, countWords } from "@/lib/ai-video/trim";
 import { notify } from "@/lib/notify";
 import { WidgetVideoSwitch } from "@/components/review-video/widget-switch";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 interface Options {
   templates: { id: string; label: string; background: string; text: string }[];
@@ -210,7 +211,7 @@ export function AiVideoModal({ spaceId, testimonial, onClose }: Props) {
 
   return (
     <ModalOverlay label="AI video" onClose={onClose}>
-      <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-card border bg-surface shadow-float">
+      <Card variant="flat" className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden shadow-float">
         <div className="flex items-start justify-between border-b px-6 py-4">
           <div>
             <div className="flex items-center gap-2">
@@ -373,14 +374,14 @@ export function AiVideoModal({ spaceId, testimonial, onClose }: Props) {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5 rounded-card border bg-surface-sunken/40 p-4">
+                  <Card variant="flat" className="space-y-1.5 bg-surface-sunken/40 p-4">
                     <p className="text-xs font-medium text-text">
                       {review.trimmed
                         ? `${review.removedWords} word${review.removedWords === 1 ? "" : "s"} left out of the customer's testimonial`
                         : "The full testimonial is used"}
                     </p>
                     <ScriptDiff tokens={review.diff} />
-                  </div>
+                  </Card>
 
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" variant="outline" size="sm" onClick={() => setScript(active.scriptTrimmed ?? active.scriptOriginal)}>
@@ -527,19 +528,19 @@ export function AiVideoModal({ spaceId, testimonial, onClose }: Props) {
             </>
           )}
         </div>
-      </div>
+      </Card>
     </ModalOverlay>
   );
 }
 
 function Notice({ icon, title, children }: { icon: "info-circle" | "shield-check" | "danger-triangle"; title: string; children?: React.ReactNode }) {
   return (
-    <div className="flex gap-3 rounded-card border bg-surface-sunken/40 p-4">
+    <Card variant="flat" className="flex gap-3 bg-surface-sunken/40 p-4">
       <Icon name={icon} className="mt-0.5 text-text-muted" />
       <div className="space-y-1 text-xs text-text-muted">
         <p className="text-sm font-medium text-text">{title}</p>
         <div>{children}</div>
       </div>
-    </div>
+    </Card>
   );
 }

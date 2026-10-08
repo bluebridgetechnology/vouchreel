@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import type { PerTestimonialStats, SortKey } from "./analytics-types";
+import { Card } from "@/components/ui/card";
 
 interface AnalyticsTableProps {
   rows: PerTestimonialStats[];
@@ -14,7 +15,7 @@ interface AnalyticsTableProps {
 
 export function AnalyticsTable({ rows, sortedRows, sortKey, sortAsc, onSort }: AnalyticsTableProps) {
   return (
-    <div className="rounded-card border bg-surface p-4">
+    <Card variant="flat" className="p-4">
       <h3 className="mb-4 text-sm font-medium">Per-Testimonial Performance</h3>
       {rows.length === 0 ? (
         <p className="py-8 text-center text-xs text-text-muted">
@@ -95,6 +96,6 @@ export function AnalyticsTable({ rows, sortedRows, sortKey, sortAsc, onSort }: A
           </table>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

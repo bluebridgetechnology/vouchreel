@@ -6,6 +6,7 @@ import { DataExportCard } from "./data-export-card";
 import { AuthorRemovalCard } from "./author-removal-card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,7 @@ export default async function SettingsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* User Card */}
-        <div className="rounded-card border bg-surface p-4 sm:p-6 space-y-3">
+        <Card variant="flat" className="p-4 sm:p-6 space-y-3">
           <h2 className="text-base font-medium">User Profile</h2>
           <div className="text-sm space-y-1">
             <p className="text-text-muted">
@@ -71,10 +72,10 @@ export default async function SettingsPage() {
               Email: <span className="text-text font-medium">{session.user.email}</span>
             </p>
           </div>
-        </div>
+        </Card>
 
         {/* Team Collaboration Card */}
-        <div className="rounded-card border bg-surface p-4 sm:p-6 space-y-3">
+        <Card variant="flat" className="p-4 sm:p-6 space-y-3">
           <h2 className="text-base font-medium">Team Collaboration</h2>
           <p className="text-sm text-text-muted">
             Invite editors and viewers to collaborate on spaces, testimonials, and widgets.
@@ -87,10 +88,10 @@ export default async function SettingsPage() {
               Manage Team Members
             </Link>
           </div>
-        </div>
+        </Card>
 
         {/* Notifications Card */}
-        <div className="rounded-card border bg-surface p-4 sm:p-6 space-y-3 md:col-span-2">
+        <Card variant="flat" className="p-4 sm:p-6 space-y-3 md:col-span-2">
           <h2 className="text-base font-medium">Notifications</h2>
           <p className="text-sm text-text-muted">
             Choose which events appear in your inbox and which are emailed to you.
@@ -100,10 +101,10 @@ export default async function SettingsPage() {
               Notification settings
             </Link>
           </div>
-        </div>
+        </Card>
 
                 {/* Developer Integrations Card */}
-        <div className="rounded-card border bg-surface p-4 sm:p-6 space-y-3 md:col-span-2">
+        <Card variant="flat" className="p-4 sm:p-6 space-y-3 md:col-span-2">
           <h2 className="text-base font-medium">Developer & API</h2>
           <p className="text-sm text-text-muted">
             Connect Vouchreel to Shopify, WordPress, Zapier, or your own custom backend services.
@@ -122,7 +123,7 @@ export default async function SettingsPage() {
               Webhooks
             </Link>
           </div>
-        </div>
+        </Card>
 
         <DataExportCard />
         <AuthorRemovalCard />

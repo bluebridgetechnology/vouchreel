@@ -8,6 +8,7 @@ import { toggleStyle } from "@/components/ui/toggle";
 import { ModalOverlay } from "@/components/ui/modal";
 import { VariantEditor } from "./variant-editor";
 import type { ExperimentFormData, ExperimentType } from "./experiment-form";
+import { Card } from "@/components/ui/card";
 
 interface CreateExperimentDialogProps {
   formData: ExperimentFormData;
@@ -21,7 +22,7 @@ interface CreateExperimentDialogProps {
 export function CreateExperimentDialog({ formData, setFormData, actionLoading, onTypeChange, onCreate, onClose }: CreateExperimentDialogProps) {
   return (
     <ModalOverlay label="Create experiment" onClose={onClose}>
-      <div className="w-full max-w-xl rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-6 animate-in fade-in zoom-in-95 duration-150 my-8">
+      <Card variant="flat" className="w-full max-w-xl p-4 sm:p-6 shadow-float space-y-6 animate-in fade-in zoom-in-95 duration-150 my-8">
         <div className="flex items-center justify-between border-b pb-4">
           <div>
             <h3 className="text-lg font-medium text-text">Create New Experiment</h3>
@@ -75,7 +76,7 @@ export function CreateExperimentDialog({ formData, setFormData, actionLoading, o
           </div>
 
           {/* Traffic Split */}
-          <div className="space-y-2 rounded-card border bg-surface-sunken/20 p-4">
+          <Card variant="flat" className="space-y-2 bg-surface-sunken/20 p-4">
             <div className="flex items-center justify-between text-xs">
               <span className="font-medium uppercase tracking-wider text-text-muted">
                 Traffic Split
@@ -107,7 +108,7 @@ export function CreateExperimentDialog({ formData, setFormData, actionLoading, o
                 </button>
               ))}
             </div>
-          </div>
+          </Card>
 
           {/* Variant Configurations */}
           <div className="space-y-4 pt-1">
@@ -144,7 +145,7 @@ export function CreateExperimentDialog({ formData, setFormData, actionLoading, o
             {actionLoading ? "Creating..." : "Create & Start Now"}
           </Button>
         </div>
-      </div>
+      </Card>
     </ModalOverlay>
   );
 }

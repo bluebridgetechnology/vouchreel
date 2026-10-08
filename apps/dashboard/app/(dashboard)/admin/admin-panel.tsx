@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { notify } from "@/lib/notify";
+import { Card } from "@/components/ui/card";
 
 interface AdminPanelProps {
   initialProvider: "stripe" | "dodo";
@@ -60,7 +61,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
     <div className="space-y-8 max-w-3xl">
 
       {/* Payment Provider Selection */}
-      <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
+      <Card variant="flat" className="p-4 sm:p-6 shadow-sm">
         <h2 className="text-xl font-medium">Active Payment Provider</h2>
         <p className="mt-1 text-sm text-text-muted">
           Choose which payment processor is used for newly created checkout sessions.
@@ -136,10 +137,10 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
             {saving ? "Saving changes..." : "Save Provider Configuration"}
           </Button>
         </div>
-      </div>
+      </Card>
 
       {/* Webhook Endpoints Info */}
-      <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm space-y-4">
+      <Card variant="flat" className="p-4 sm:p-6 shadow-sm space-y-4">
         <div>
           <h2 className="text-xl font-medium">Registered Webhook Endpoints</h2>
           <p className="mt-1 text-sm text-text-muted">
@@ -149,7 +150,7 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
         </div>
 
         {/* Stripe Webhook */}
-        <div className="space-y-2 rounded-card border p-4 bg-surface-sunken/40">
+        <Card variant="flat" className="space-y-2 p-4 bg-surface-sunken/40">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Stripe Webhook URL</span>
             <button
@@ -169,10 +170,10 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
             <code className="text-xs font-mono">customer.subscription.deleted</code>,{" "}
             <code className="text-xs font-mono">invoice.payment_failed</code>.
           </p>
-        </div>
+        </Card>
 
         {/* Dodo Webhook */}
-        <div className="space-y-2 rounded-card border p-4 bg-surface-sunken/40">
+        <Card variant="flat" className="space-y-2 p-4 bg-surface-sunken/40">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Dodo Payments Webhook URL</span>
             <button
@@ -193,8 +194,8 @@ export function AdminPanel({ initialProvider, appUrl }: AdminPanelProps) {
             <code className="text-xs font-mono">subscription.cancelled</code>,{" "}
             <code className="text-xs font-mono">subscription.past_due</code>.
           </p>
-        </div>
-      </div>
+        </Card>
+      </Card>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { WIDGET_POSITIONS, WIDGET_TEMPLATES, TRIGGER_TYPES } from "@/lib/validat
 import { cn } from "@/lib/utils";
 import { inputClass } from "@/components/ui/input";
 import type { ExperimentFormData } from "./experiment-form";
+import { cardVariants } from "@/components/ui/card";
 
 /** What differs between the control (A) and the test variant (B) editors. */
 const SLOTS = {
@@ -46,7 +47,7 @@ export function VariantEditor({ slot, formData, onChange }: VariantEditorProps) 
   const setConfig = (next: Record<string, unknown>) => onChange({ ...formData, [s.configKey]: next });
 
   return (
-    <div className={`rounded-card border p-3.5 space-y-3 bg-surface${s.extraClass}`}>
+    <div className={cn(cardVariants({ variant: "flat" }), "p-3.5 space-y-3", s.extraClass)}>
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-text">{s.title}</span>
         <span className={s.trafficClass}>{traffic}% Traffic</span>

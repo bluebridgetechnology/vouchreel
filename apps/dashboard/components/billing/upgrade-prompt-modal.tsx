@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { ModalOverlay } from "@/components/ui/modal";
+import { Card } from "@/components/ui/card";
 
 interface UpgradePromptModalProps {
   feature?:
@@ -71,7 +72,7 @@ export function UpgradePromptModal({
 
   return (
     <ModalOverlay label="Upgrade your plan" onClose={onClose}>
-      <div className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-5 text-text">
+      <Card variant="flat" className="w-full max-w-md p-4 sm:p-6 shadow-float space-y-5 text-text">
         <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-2 rounded-pill bg-brand-soft px-3 py-1 text-xs font-medium text-brand">
             ✨ {details.targetPlan} Feature
@@ -94,7 +95,7 @@ export function UpgradePromptModal({
           </p>
         </div>
 
-        <div className="rounded-card border bg-surface-sunken/30 p-4 space-y-2 text-xs">
+        <Card variant="flat" className="bg-surface-sunken/30 p-4 space-y-2 text-xs">
           <div className="font-medium text-text">What you will unlock:</div>
           <ul className="space-y-1 text-text-muted">
             <li>✓ Multi-seat team members & roles (Editor / Viewer)</li>
@@ -102,7 +103,7 @@ export function UpgradePromptModal({
             <li>✓ Custom CNAME domain for collection links</li>
             <li>✓ Unlimited client spaces & testimonials</li>
           </ul>
-        </div>
+        </Card>
 
         <div className="flex items-center justify-end gap-3 pt-2">
           <button
@@ -119,7 +120,7 @@ export function UpgradePromptModal({
             Upgrade Plan
           </Link>
         </div>
-      </div>
+      </Card>
     </ModalOverlay>
   );
 }

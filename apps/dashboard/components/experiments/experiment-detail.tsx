@@ -3,6 +3,8 @@
 import type { ExperimentWithStats } from "@/lib/experiments/queries";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { cardVariants } from "@/components/ui/card";
 
 interface ExperimentDetailProps {
   selectedExp: ExperimentWithStats;
@@ -66,7 +68,7 @@ export function ExperimentDetail({ selectedExp, actionLoading, onBack, onStatusC
       </div>
 
       {/* Experiment Title & Header Card */}
-      <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
+      <Card variant="flat" className="p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -116,7 +118,7 @@ export function ExperimentDetail({ selectedExp, actionLoading, onBack, onStatusC
             </div>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Statistical Significance Banner */}
       {(() => {
@@ -191,9 +193,11 @@ export function ExperimentDetail({ selectedExp, actionLoading, onBack, onStatusC
           return (
             <div
               key={variant.id}
-              className={`rounded-card border bg-surface p-6 shadow-sm space-y-5 transition-all ${
-                isWinner ? "border-brand ring-2 ring-brand/30" : ""
-              }`}
+              className={cn(
+                cardVariants({ variant: "flat" }),
+                "p-6 shadow-sm space-y-5 transition-all",
+                isWinner && "border-brand ring-2 ring-brand/30"
+              )}
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -256,14 +260,14 @@ export function ExperimentDetail({ selectedExp, actionLoading, onBack, onStatusC
               </div>
 
               {/* Configuration Inspector */}
-              <div className="space-y-1.5 text-xs border rounded-card p-3 bg-surface">
+              <Card variant="flat" className="space-y-1.5 text-xs p-3">
                 <span className="text-2xs font-medium uppercase tracking-wider text-text-muted">
                   Variant Configuration
                 </span>
                 <pre className="font-mono text-2xs text-text-muted overflow-x-auto whitespace-pre-wrap">
                   {JSON.stringify(variant.config, null, 2)}
                 </pre>
-              </div>
+              </Card>
 
               {/* Detailed metrics breakdown */}
               <div className="grid grid-cols-4 gap-2 pt-2 border-t text-center">

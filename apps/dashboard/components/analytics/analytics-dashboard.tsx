@@ -18,6 +18,7 @@ import { AnalyticsToolbar } from "./analytics-toolbar";
 import { AnalyticsFunnel } from "./analytics-funnel";
 import { AnalyticsTable } from "./analytics-table";
 import { OverviewCards } from "./stat-cards";
+import { Card } from "@/components/ui/card";
 
 export type { ComparativeAnalyticsData, FunnelStep, OverviewStats, PerTestimonialStats, SegmentComparisonData } from "./analytics-types";
 
@@ -360,7 +361,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
           />
 
           {/* Time-series chart */}
-          <div className="rounded-card border bg-surface p-4">
+          <Card variant="flat" className="p-4">
             <h3 className="mb-4 text-sm font-medium">Impressions & Plays Over Time</h3>
             {points.length === 0 ? (
               <p className="py-16 text-center text-xs text-text-muted">
@@ -369,7 +370,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
             ) : (
               <TimeSeriesChart points={points} />
             )}
-          </div>
+          </Card>
 
           <AnalyticsFunnel
             compareMode={compareMode}

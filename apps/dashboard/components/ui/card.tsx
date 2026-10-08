@@ -23,10 +23,16 @@ export const cardVariants = cva("text-text", {
   defaultVariants: { variant: "default", padding: "none", interactive: false },
 });
 
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof cardVariants> {}
+/** Elements a card can be, when the page structure calls for more than a div (a labelled section, a form, a list). */
+export type CardTag = "div" | "section" | "article" | "aside" | "form" | "ul";
 
-export function Card({ className, variant, padding, interactive, ...props }: CardProps) {
-  return <div className={cn(cardVariants({ variant, padding, interactive }), className)} {...props} />;
+export interface CardProps extends React.HTMLAttributes<HTMLElement>, VariantProps<typeof cardVariants> {
+  as?: CardTag;
+}
+
+export function Card({ as: Tag = "div", className, variant, padding, interactive, ...props }: CardProps) {
+  const Element: React.ElementType = Tag;
+  return <Element className={cn(cardVariants({ variant, padding, interactive }), className)} {...props} />;
 }
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return <div className={cn("space-y-1 p-4 pb-0 sm:p-6 sm:pb-0", className)} {...props} />;

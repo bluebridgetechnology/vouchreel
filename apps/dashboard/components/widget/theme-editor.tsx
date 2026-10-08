@@ -6,6 +6,7 @@ import { ACCENT_COLOR_PRESETS, PRIMARY_COLOR_PRESETS } from "@/lib/widget-preset
 import { cn } from "@/lib/utils";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
+import { Card } from "@/components/ui/card";
 
 interface ThemeEditorProps {
   value: WidgetTheme;
@@ -72,7 +73,7 @@ export function ThemeEditor({ value, onChange, brandManaged = false, brandHref }
         </div>
       )}
 
-      <div className="space-y-5 rounded-card border bg-surface p-4 sm:p-5">
+      <Card variant="flat" className="space-y-5 p-4 sm:p-5">
         {/* Colors Row */}
         <div className={cn("grid grid-cols-1 gap-6 sm:grid-cols-2", brandManaged && "hidden")}>
           {/* Primary Color */}
@@ -250,7 +251,7 @@ export function ThemeEditor({ value, onChange, brandManaged = false, brandHref }
             </div>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

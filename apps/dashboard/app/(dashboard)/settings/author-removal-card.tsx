@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 export function AuthorRemovalCard() {
   const [email, setEmail] = useState("");
@@ -34,7 +35,7 @@ export function AuthorRemovalCard() {
   }
 
   return (
-    <div className="space-y-3 rounded-card border bg-surface p-4 sm:p-6 md:col-span-2">
+    <Card variant="flat" className="space-y-3 p-4 sm:p-6 md:col-span-2">
       <h2 className="text-base font-medium">Remove a customer&apos;s data</h2>
       <p className="text-sm text-text-muted">
         When someone who gave you a testimonial asks to be forgotten, enter the email they used on your collection form. We find their submissions and the testimonials and videos made from them, and delete them. Testimonials you typed in by hand have no email and must be deleted from the Testimonials page.
@@ -74,6 +75,6 @@ export function AuthorRemovalCard() {
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

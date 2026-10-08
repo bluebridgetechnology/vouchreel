@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { notify } from "@/lib/notify";
+import { Card } from "@/components/ui/card";
 
 /**
  * "Show in my widget" for a finished video. Off until the owner turns it on. Turning a video off, deleting it,
@@ -41,7 +42,7 @@ export function WidgetVideoSwitch({
   }
 
   return (
-    <div className="flex items-start justify-between gap-4 rounded-card border bg-surface-sunken p-3 text-left">
+    <Card variant="flat" className="flex items-start justify-between gap-4 bg-surface-sunken p-3 text-left">
       <div className="text-xs">
         <label htmlFor={id} className="font-medium text-text">
           Show in my widget
@@ -51,6 +52,6 @@ export function WidgetVideoSwitch({
         </p>
       </div>
       <Switch id={id} checked={checked} disabled={pending} onCheckedChange={(next) => void change(next)} />
-    </div>
+    </Card>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import type { CompareMode, OverviewStats, SegmentComparisonData } from "./analytics-types";
+import { Card } from "@/components/ui/card";
 
 export function StatCard({
   label,
@@ -16,7 +17,7 @@ export function StatCard({
   trend: string | null;
 }) {
   return (
-    <div className="rounded-card border bg-surface p-4">
+    <Card variant="flat" className="p-4">
       <p className="text-xs text-text-muted">{label}</p>
       <div className="mt-1 flex items-baseline gap-2">
         <p className="text-2xl font-medium">{value.toLocaleString()}</p>
@@ -36,7 +37,7 @@ export function StatCard({
         )}
       </div>
       {sub && <p className="mt-0.5 text-2xs text-text-muted">{sub}</p>}
-    </div>
+    </Card>
   );
 }
 
@@ -56,7 +57,7 @@ export function SegmentStatCard({
   name2: string;
 }) {
   return (
-    <div className="rounded-card border bg-surface p-4">
+    <Card variant="flat" className="p-4">
       <div className="flex items-center justify-between">
         <p className="text-xs text-text-muted">{label}</p>
         <span
@@ -80,7 +81,7 @@ export function SegmentStatCard({
           <p className="text-base font-medium text-chart-3">{val2.toLocaleString()}</p>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 

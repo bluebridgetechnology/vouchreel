@@ -15,6 +15,7 @@ import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 import { DEFAULT_ACCENT_HEX, MIN_BUTTON_CONTRAST, contrastBetween, type BrandKitValues } from "@/lib/brand-kit/theme";
 import { notify } from "@/lib/notify";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 const FONT_NAME = /^[A-Za-z0-9][A-Za-z0-9 _-]{0,39}$/;
 const HEX = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
@@ -135,7 +136,7 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="space-y-6 lg:col-span-3">
           {/* Colours */}
-          <section className="space-y-5 rounded-card border bg-surface p-5" aria-labelledby="brand-colours">
+          <Card as="section" variant="flat" className="space-y-5 p-5" aria-labelledby="brand-colours">
             <h3 id="brand-colours" className="text-sm font-medium text-text">
               Colours
             </h3>
@@ -223,10 +224,10 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
                 <span>Pill</span>
               </div>
             </div>
-          </section>
+          </Card>
 
           {/* Typography */}
-          <section className="space-y-4 rounded-card border bg-surface p-5" aria-labelledby="brand-fonts">
+          <Card as="section" variant="flat" className="space-y-4 p-5" aria-labelledby="brand-fonts">
             <div>
               <h3 id="brand-fonts" className="text-sm font-medium text-text">
                 Fonts
@@ -283,10 +284,10 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
               </div>
               <Switch id="brand-text-colour" checked={draft.inheritTextColor} onCheckedChange={(v) => set("inheritTextColor", v)} aria-label="Use my site's text colour" />
             </div>
-          </section>
+          </Card>
 
           {/* Review videos */}
-          <section className="space-y-4 rounded-card border bg-surface p-5" aria-labelledby="brand-video">
+          <Card as="section" variant="flat" className="space-y-4 p-5" aria-labelledby="brand-video">
             <div>
               <h3 id="brand-video" className="text-sm font-medium text-text">
                 Review videos
@@ -350,7 +351,7 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
                   : "The far end of the gradient and one of the aurora glows. Leave empty to use a deeper shade of your primary colour."}
               </p>
             </div>
-          </section>
+          </Card>
 
           <div className="flex items-center gap-3">
             <Button type="button" onClick={save} loading={saving} disabled={!canSave}>
@@ -367,7 +368,7 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
         {/* Preview + where it applies */}
         <aside className="space-y-4 lg:col-span-2">
           <div className="sticky top-6 space-y-4">
-            <div className="rounded-card border bg-surface-sunken/50 p-5">
+            <Card variant="flat" className="bg-surface-sunken/50 p-5">
               <p className="mb-3 text-xs font-medium text-text">Preview</p>
               <div
                 className="border bg-surface p-4 shadow-sm"
@@ -396,9 +397,9 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
                     ? "A custom font only shows here if the dashboard has it too. On your site it uses your font."
                     : "The widget uses Vouchreel's default font."}
               </p>
-            </div>
+            </Card>
 
-            <div className="rounded-card border bg-surface-sunken/50 p-5">
+            <Card variant="flat" className="bg-surface-sunken/50 p-5">
               <p className="mb-3 text-xs font-medium text-text">Video preview</p>
               <div role="radiogroup" aria-label="Preview template" className="mb-3 flex flex-wrap gap-1.5">
                 {TEMPLATES.map((t) => (
@@ -434,9 +435,9 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
                 />
               </div>
               <p className="mt-3 text-xs text-text-muted">The real template with sample text, in your colour, style and font. Press play to see it animate.</p>
-            </div>
+            </Card>
 
-            <div className="rounded-card border bg-surface p-5 text-xs text-text-muted">
+            <Card variant="flat" className="p-5 text-xs text-text-muted">
               <p className="mb-2 text-xs font-medium text-text">Where this applies</p>
               <ul className="space-y-1.5">
                 <li>
@@ -449,7 +450,7 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
                   <span className="font-medium text-text">Light or dark mode</span> stays in the Widget tab.
                 </li>
               </ul>
-            </div>
+            </Card>
           </div>
         </aside>
       </div>

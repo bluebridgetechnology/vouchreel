@@ -10,6 +10,8 @@
 //   radius    legacy radius classes (rounded, rounded-md/lg/xl/2xl/full/sm/xs)
 //   legacy    shadcn alias names (bg-card, text-foreground, text-muted-foreground, bg-primary ...)
 //   feedback  alert(), confirm(), window.confirm(): use notify.* (lib/notify.ts) and useConfirm()
+//   card      hand-built card markup (rounded-card + border + bg-surface on one element): use <Card>
+//             or cardVariants() from components/ui/card
 //   control   hand-rolled <button>/<input>/<select>/<textarea> (use buttonVariants, toggleStyle,
 //             Switch, inputClass / textareaClass or the components in components/ui)
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -62,6 +64,13 @@ const CONTROL_ALLOW = [
   /components[\/]theme-toggle\.tsx$/,
   /app[\/]design[\/]/,
 ];
+// A card drawn by hand: radius, border and a surface background in one class list. Skeleton blocks
+// (animate-pulse) are placeholders, not cards.
+const RAW_CARD = (line) =>
+  /(?<![\w-])rounded-card(?![\w-])/.test(line) &&
+  /(?<![\w-])border(?![\w-])/.test(line) &&
+  /(?<![\w-])bg-surface(?:-sunken)?(?:\/\d+)?(?![\w-])/.test(line) &&
+  !/animate-pulse/.test(line);
 const OK_CONTROL = /buttonVariants|toggleStyle|inputClass|textareaClass|--user-accent|<Switch|type="(?:checkbox|radio|file|range|color|hidden)"/;
 
 function tagEnd(src, start) {
@@ -79,7 +88,7 @@ function tagEnd(src, start) {
   return -1;
 }
 
-const totals = { ...Object.fromEntries(Object.keys(rules).map((k) => [k, 0])), control: 0, feedback: 0 };
+const totals = { ...Object.fromEntries(Object.keys(rules).map((k) => [k, 0])), control: 0, feedback: 0, card: 0 };
 const byFile = new Map();
 const lines = [];
 
@@ -106,6 +115,11 @@ for (const base of ["app", "components"]) {
       source.split("\n").forEach((line, i) => {
         const code = line.trim();
         if (code.startsWith("//") || code.startsWith("*")) return;
+        if (!CONTROL_ALLOW.some((r) => r.test(rel.split(sep).join("/"))) && RAW_CARD(line)) {
+          totals.card++;
+          byFile.set(rel, (byFile.get(rel) ?? 0) + 1);
+          if (LIST) lines.push(`${rel}:${i + 1} [card] hand-built card, use <Card> or cardVariants(): ${code.slice(0, 100)}`);
+        }
         if (/(?<![\w.])(?:window\.)?(?:alert|confirm)\(/.test(line) && !/await confirm\(/.test(line)) {
           totals.feedback++;
           byFile.set(rel, (byFile.get(rel) ?? 0) + 1);

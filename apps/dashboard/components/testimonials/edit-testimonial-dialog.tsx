@@ -9,6 +9,7 @@ import { inputClass, textareaClass } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { ModalOverlay } from "@/components/ui/modal";
 import { notify } from "@/lib/notify";
+import { Card } from "@/components/ui/card";
 
 interface EditTestimonialDialogProps {
   spaceId: string;
@@ -108,8 +109,8 @@ export function EditTestimonialDialog({
 
   return (
     <ModalOverlay label="Edit testimonial" onClose={onClose}>
-      <div
-        className="relative my-8 w-full max-w-2xl rounded-card border bg-surface p-4 sm:p-6 shadow-float"
+      <Card
+        variant="flat" className="relative my-8 w-full max-w-2xl p-4 sm:p-6 shadow-float"
       >
         {/* Close Button */}
         <button
@@ -139,7 +140,7 @@ export function EditTestimonialDialog({
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           {/* Active status switch */}
-          <div className="flex items-center justify-between rounded-card border bg-surface-sunken/30 p-3">
+          <Card variant="flat" className="flex items-center justify-between bg-surface-sunken/30 p-3">
             <div>
               <span className="text-xs font-medium text-text">Active Status</span>
               <p className="text-2xs text-text-muted">
@@ -147,7 +148,7 @@ export function EditTestimonialDialog({
               </p>
             </div>
             <Switch checked={isActive} onCheckedChange={setIsActive} aria-label="Active status" />
-          </div>
+          </Card>
 
           {/* Title */}
           <div className="space-y-1.5">
@@ -294,7 +295,7 @@ export function EditTestimonialDialog({
             </Button>
           </div>
         </form>
-      </div>
+      </Card>
     </ModalOverlay>
   );
 }

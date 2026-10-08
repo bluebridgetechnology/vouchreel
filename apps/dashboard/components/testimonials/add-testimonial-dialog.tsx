@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
 import { ModalOverlay } from "@/components/ui/modal";
 import { notify } from "@/lib/notify";
+import { Card } from "@/components/ui/card";
 
 interface AddTestimonialDialogProps {
   spaceId: string;
@@ -147,8 +148,8 @@ export function AddTestimonialDialog({
 
   return (
     <ModalOverlay label="Add testimonial" onClose={onClose}>
-      <div
-        className="relative my-8 w-full max-w-2xl rounded-card border bg-surface p-4 sm:p-6 shadow-float"
+      <Card
+        variant="flat" className="relative my-8 w-full max-w-2xl p-4 sm:p-6 shadow-float"
       >
         {/* Close Button */}
         <button
@@ -221,7 +222,7 @@ export function AddTestimonialDialog({
 
           {/* Video Preview Card */}
           {(thumbnailUrl || title || fetchingOembed) && (
-            <div className="flex flex-col gap-3 rounded-card border bg-surface-sunken/30 p-3 sm:flex-row sm:items-center">
+            <Card variant="flat" className="flex flex-col gap-3 bg-surface-sunken/30 p-3 sm:flex-row sm:items-center">
               {thumbnailUrl && (
                 <div className="relative aspect-video w-36 flex-shrink-0 overflow-hidden rounded-control border bg-scrim">
                   <img
@@ -254,7 +255,7 @@ export function AddTestimonialDialog({
                   Detected platform: <span className="font-medium capitalize text-text">{platform || "video"}</span>
                 </p>
               </div>
-            </div>
+            </Card>
           )}
 
           {/* Customer Name & Company */}
@@ -388,7 +389,7 @@ export function AddTestimonialDialog({
             </Button>
           </div>
         </form>
-      </div>
+      </Card>
     </ModalOverlay>
   );
 }

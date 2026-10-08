@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { RANGE_OPTIONS, type CompareMode, type PerTestimonialStats } from "./analytics-types";
+import { Card } from "@/components/ui/card";
 
 interface AnalyticsToolbarProps {
   spaceId: string;
@@ -107,7 +108,7 @@ export function AnalyticsToolbar({
     </div>
   
     {/* Filter and Comparison Bar */}
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border bg-surface p-3 shadow-xs">
+    <Card variant="flat" className="flex flex-wrap items-center justify-between gap-3 p-3 shadow-xs">
       <div className="flex flex-wrap items-center gap-2">
         <span className="flex items-center gap-1 text-2xs font-medium text-text-muted">
           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,7 +209,7 @@ export function AnalyticsToolbar({
           </button>
         </div>
       </div>
-    </div>
+    </Card>
     </>
   );
 }

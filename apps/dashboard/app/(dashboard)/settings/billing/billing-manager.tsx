@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface BillingManagerProps {
   planName: string;
@@ -71,7 +72,7 @@ export function BillingManager({
       )}
 
       {/* Subscription Card */}
-      <div className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
+      <Card variant="flat" className="p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b">
           <div>
             <div className="flex items-center gap-3">
@@ -166,7 +167,7 @@ export function BillingManager({
             </ul>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

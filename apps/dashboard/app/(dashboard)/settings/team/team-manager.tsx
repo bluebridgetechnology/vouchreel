@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { ModalOverlay } from "@/components/ui/modal";
 import { notify } from "@/lib/notify";
+import { Card } from "@/components/ui/card";
 
 export interface TeamMember {
   id: string;
@@ -219,7 +220,7 @@ export function TeamManager({
       )}
 
       {/* Invite Form */}
-      <section className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
+      <Card as="section" variant="flat" className="p-4 sm:p-6 shadow-sm">
         <h2 className="text-lg font-medium tracking-tight">Invite New Member</h2>
         <p className="text-sm text-text-muted mt-1">
           Send an invitation magic link to give collaborators access to your spaces.
@@ -283,10 +284,10 @@ export function TeamManager({
             {inviting ? "Sending…" : "Send Invite"}
           </Button>
         </form>
-      </section>
+      </Card>
 
       {/* Team Members List */}
-      <section className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
+      <Card as="section" variant="flat" className="p-4 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-medium tracking-tight">Active Members</h2>
@@ -357,11 +358,11 @@ export function TeamManager({
             );
           })}
         </div>
-      </section>
+      </Card>
 
       {/* Pending Invites List */}
       {invites.length > 0 && (
-        <section className="rounded-card border bg-surface p-4 sm:p-6 shadow-sm">
+        <Card as="section" variant="flat" className="p-4 sm:p-6 shadow-sm">
           <div className="mb-4">
             <h2 className="text-lg font-medium tracking-tight">Pending Invitations</h2>
             <p className="text-sm text-text-muted">
@@ -406,13 +407,13 @@ export function TeamManager({
               );
             })}
           </div>
-        </section>
+        </Card>
       )}
 
       {/* Confirmation Modal for Member Removal */}
       {memberToRemove && (
         <ModalOverlay label="Remove team member" onClose={() => setMemberToRemove(null)}>
-          <div className="w-full max-w-md rounded-card border bg-surface p-4 sm:p-6 shadow-float space-y-4">
+          <Card variant="flat" className="w-full max-w-md p-4 sm:p-6 shadow-float space-y-4">
             <h3 className="text-lg font-medium">Remove Team Member</h3>
             <p className="text-sm text-text-muted">
               Are you sure you want to remove <strong>{memberToRemove.name || memberToRemove.email}</strong> from your team? They will immediately lose access to your spaces.
@@ -434,7 +435,7 @@ export function TeamManager({
                 {removing ? "Removing…" : "Remove Member"}
               </Button>
             </div>
-          </div>
+          </Card>
         </ModalOverlay>
       )}
 

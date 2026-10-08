@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 export function DeleteAccountCard({ needsPassword }: { needsPassword: boolean }) {
   const [open, setOpen] = useState(false);
@@ -33,7 +34,7 @@ export function DeleteAccountCard({ needsPassword }: { needsPassword: boolean })
   }
 
   return (
-    <div className="space-y-3 rounded-card border border-danger/30 bg-surface p-4 sm:p-6 md:col-span-2">
+    <Card variant="flat" className="space-y-3 border-danger/30 p-4 sm:p-6 md:col-span-2">
       <h2 className="text-base font-medium">Delete account</h2>
       <p className="text-sm text-text-muted">Permanently deletes your account and everything in it. We email you a link to confirm. You can also download your data first (see below).</p>
       {sent ? (
@@ -64,6 +65,6 @@ export function DeleteAccountCard({ needsPassword }: { needsPassword: boolean })
           </div>
         </form>
       )}
-    </div>
+    </Card>
   );
 }
