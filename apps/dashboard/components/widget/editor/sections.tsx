@@ -14,6 +14,7 @@ import { PageTargeting } from "../page-targeting";
 import { EmbedSnippet } from "../embed-snippet";
 import { ColorControl, Segmented, SliderControl, SwitchRow } from "./controls";
 import { AUTO_BORDER_PREVIEW, WIDGET_MODE_COLOURS } from "@/lib/widget-editor/mode-colours";
+import { applyPreset, matchingPreset, STYLE_PRESETS, type StylePreset } from "@/lib/widget-editor/presets";
 
 type Theme = Required<WidgetTheme>;
 type UpdateTheme = (patch: Partial<WidgetTheme>, key?: string) => void;
@@ -146,10 +147,87 @@ function ContrastWarning({ a, b, what }: { a: string | null; b: string | null; w
   );
 }
 
-export function StyleSection({ theme, updateTheme, brandManaged, brandHref }: { theme: Theme; updateTheme: UpdateTheme; brandManaged: boolean; brandHref?: string }) {
+const SHADOW_CLASS = { none: "", soft: "shadow-sm", strong: "shadow-float" } as const;
+
+/** A tiny card in the preset's look, with the owner's own brand colour on the play button. */
+function PresetSwatch({ preset, primaryColor }: { preset: StylePreset; primaryColor: string }) {
+  const t = preset.theme;
+  const mode = WIDGET_MODE_COLOURS[t.mode];
+  const text = t.textColor ?? mode.text;
+  return (
+    <span className={cn("relative flex h-14 w-full items-center justify-center overflow-hidden rounded-control", t.glass ? "bg-gradient-to-br from-tint-pink to-tint-lime" : "bg-surface-sunken")} aria-hidden>
+      <span
+        className={cn("flex w-4/5 items-center gap-1.5 p-1.5", SHADOW_CLASS[t.shadow], t.glass && "backdrop-blur")}
+        style={{
+          background: t.glass ? `color-mix(in srgb, ${t.background ?? mode.background} 70%, transparent)` : (t.background ?? mode.background),
+          border: t.borderWidth ? `${t.borderWidth}px solid ${t.borderColor ?? AUTO_BORDER_PREVIEW[t.mode]}` : "none",
+          borderRadius: Math.min(t.borderRadius, 14),
+        }}
+      >
+        <span className="size-4 shrink-0" style={{ background: primaryColor, borderRadius: t.playButtonStyle === "solid" ? 3 : 999 }} />
+        <span className="flex flex-1 flex-col gap-1">
+          <span className="h-1 w-3/4 rounded-pill opacity-80" style={{ background: text }} />
+          <span className="h-1 w-1/2 rounded-pill opacity-40" style={{ background: text }} />
+        </span>
+      </span>
+    </span>
+  );
+}
+
+function PresetPicker({ theme, updateTheme, lastPresetId, onPreset }: { theme: Theme; updateTheme: UpdateTheme; lastPresetId: string | null; onPreset: (id: string) => void }) {
+  const active = matchingPreset(theme);
+  const last = STYLE_PRESETS.find((p) => p.id === lastPresetId);
+  const label = active ? active.name : last ? `${last.name} (edited)` : "Custom";
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-text">Start from a look</span>
+        <span className="text-2xs text-text-muted">{label}</span>
+      </div>
+      <div role="radiogroup" aria-label="Looks" className="grid grid-cols-3 gap-2">
+        {STYLE_PRESETS.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            role="radio"
+            aria-checked={active?.id === p.id}
+            title={p.description}
+            onClick={() => {
+              updateTheme(applyPreset(theme, p));
+              onPreset(p.id);
+            }}
+            className={cn("space-y-1 rounded-card border p-1.5 text-left transition-colors", toggleStyle("choice", active?.id === p.id))}
+          >
+            <PresetSwatch preset={p} primaryColor={theme.primaryColor} />
+            <span className="block truncate px-0.5 text-2xs font-medium text-text">{p.name}</span>
+          </button>
+        ))}
+      </div>
+      <p className="text-2xs text-text-muted">A look changes surfaces, corners and motion. Your brand colours stay.</p>
+    </div>
+  );
+}
+
+export function StyleSection({
+  theme,
+  updateTheme,
+  brandManaged,
+  brandHref,
+  lastPresetId = null,
+  onPreset = () => {},
+}: {
+  theme: Theme;
+  updateTheme: UpdateTheme;
+  brandManaged: boolean;
+  brandHref?: string;
+  lastPresetId?: string | null;
+  onPreset?: (id: string) => void;
+}) {
   const mode = WIDGET_MODE_COLOURS[theme.mode];
   return (
     <>
+      <PresetPicker theme={theme} updateTheme={updateTheme} lastPresetId={lastPresetId} onPreset={onPreset} />
+      <div className="h-px bg-border" />
       <Segmented label="Mode" value={theme.mode} options={[{ value: "light", label: "Light" }, { value: "dark", label: "Dark" }]} onChange={(mode) => updateTheme({ mode })} />
       {brandManaged ? (
         <BrandNote href={brandHref} />

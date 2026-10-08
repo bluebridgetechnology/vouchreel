@@ -1050,6 +1050,13 @@ test.describe("platform admin", () => {
       await page.getByRole("button", { name: "Discard changes" }).click();
       await expect(previewRoot).toHaveClass(/vr-dark/);
       await expect(page.getByRole("status").filter({ hasText: "Published" })).toBeVisible();
+
+      // A look sets several options at once, and the label notices a tweak afterwards
+      await page.getByRole("radio", { name: "Outline" }).click();
+      await expect(previewRoot).toHaveClass(/vr-shadow-none/);
+      await expect(previewRoot).not.toHaveClass(/vr-dark/);
+      await page.getByRole("radio", { name: "Strong" }).click();
+      await expect(page.getByText("Outline (edited)")).toBeVisible();
     } finally {
       await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
       await pool.end();

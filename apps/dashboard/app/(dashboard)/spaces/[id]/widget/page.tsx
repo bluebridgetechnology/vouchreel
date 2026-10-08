@@ -3,6 +3,7 @@
 import { use, useCallback, useEffect, useState } from "react";
 import { applyBrandKitToTheme } from "@/lib/brand-kit/theme";
 import { layoutInfo } from "@/lib/widget-editor/layouts";
+import { matchingPreset } from "@/lib/widget-editor/presets";
 import { normalizeTheme } from "@/lib/validations/widget-config";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -46,6 +47,8 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
   const editor = useWidgetEditor(spaceId);
   const { config, update, updateTheme, undo, redo } = editor;
   const [open, setOpen] = useState<Set<SectionId>>(() => new Set(["layout"]));
+  // The last look picked this session, so the editor can say "Glass (edited)" after a tweak
+  const [lastPresetId, setLastPresetId] = useState<string | null>(null);
   const toggle = (s: SectionId) =>
     setOpen((prev) => {
       const next = new Set(prev);
@@ -163,8 +166,8 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           <EditorSection step={1} title="Layout" summary={layout.name} open={open.has("layout")} onToggle={() => toggle("layout")}>
             <LayoutSection value={config.template} onChange={(template) => update({ template })} />
           </EditorSection>
-          <EditorSection step={2} title="Style" summary={`${theme.mode === "dark" ? "Dark" : "Light"}, ${theme.shadow} shadow${theme.glass ? ", glass" : ""}`} open={open.has("style")} onToggle={() => toggle("style")}>
-            <StyleSection theme={theme} updateTheme={updateTheme} brandManaged={brandManaged} brandHref={`/spaces/${spaceId}/brand`} />
+          <EditorSection step={2} title="Style" summary={matchingPreset(theme)?.name ?? `${theme.mode === "dark" ? "Dark" : "Light"}, ${theme.shadow} shadow${theme.glass ? ", glass" : ""}`} open={open.has("style")} onToggle={() => toggle("style")}>
+            <StyleSection theme={theme} updateTheme={updateTheme} brandManaged={brandManaged} brandHref={`/spaces/${spaceId}/brand`} lastPresetId={lastPresetId} onPreset={setLastPresetId} />
           </EditorSection>
           <EditorSection step={3} title="Size and corners" summary={`${{ sm: "Small", md: "Medium", lg: "Large" }[theme.size]}, ${theme.borderRadius}px corners`} open={open.has("shape")} onToggle={() => toggle("shape")}>
             <ShapeSection theme={theme} updateTheme={updateTheme} brandManaged={brandManaged} />

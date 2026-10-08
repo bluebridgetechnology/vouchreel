@@ -292,6 +292,11 @@ discard restores; unit tests for undo/redo; axe check on the editor page.
 
 ### C2. Style presets (S)
 
+**Status (2026-10-08): built, not yet committed.** Six looks in `lib/widget-editor/presets.ts` (Minimal, Soft,
+Bold, Glass, Dark cinema, Outline) at the top of the Style step. A look sets surfaces, corners, depth and motion
+only, never the brand colours, so there is no separate "Brand" look. "Reel" waits for vertical shapes (D1).
+Tests check each look is valid, normalizes to itself, has readable text, and differs from the others.
+
 Six to eight curated presets, each a full style object: for example **Minimal**, **Bold**, **Glass**,
 **Dark cinema**, **Soft**, **Brand** (built from the saved brand kit), **Reel** (vertical shape, glass, autoplay).
 One click applies, then any field can be fine-tuned; the preset name shows "(edited)" once changed.
