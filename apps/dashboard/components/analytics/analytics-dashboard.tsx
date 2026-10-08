@@ -4,10 +4,22 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type { TimeSeriesPoint } from "./time-series-chart";
 import { ConversionGoalsPanel, ConversionGoal } from "./conversion-goals-panel";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
-import { inputClass } from "@/components/ui/input";
-import { toggleStyle } from "@/components/ui/toggle";
+import {
+  rangeFor,
+  type ComparativeAnalyticsData,
+  type CompareMode,
+  type FunnelStep,
+  type OverviewStats,
+  type PerTestimonialStats,
+  type SegmentComparisonData,
+  type SortKey,
+} from "./analytics-types";
+import { AnalyticsToolbar } from "./analytics-toolbar";
+import { AnalyticsFunnel } from "./analytics-funnel";
+import { AnalyticsTable } from "./analytics-table";
+import { OverviewCards } from "./stat-cards";
+
+export type { ComparativeAnalyticsData, FunnelStep, OverviewStats, PerTestimonialStats, SegmentComparisonData } from "./analytics-types";
 
 const TimeSeriesChart = dynamic(
   () => import("./time-series-chart").then((m) => m.TimeSeriesChart),
@@ -19,111 +31,6 @@ const TimeSeriesChart = dynamic(
   }
 );
 
-export interface OverviewStats {
-  impressions: number;
-  plays: number;
-  clicks: number;
-  conversions: number;
-}
-
-export interface FunnelStep {
-  step: string;
-  count: number;
-  dropOffPercent: number | null;
-  conversionFromPrevious: number | null;
-}
-
-export interface PerTestimonialStats {
-  testimonialId: string;
-  title: string | null;
-  customerName: string | null;
-  thumbnailUrl: string | null;
-  isActive: boolean | null;
-  impressions: number;
-  plays: number;
-  clicks: number;
-  conversions: number;
-}
-
-export interface ComparativeAnalyticsData {
-  current: {
-    stats: OverviewStats;
-    funnel: FunnelStep[];
-    playRate: number | null;
-    conversionRate: number | null;
-  };
-  previous: {
-    stats: OverviewStats;
-    funnel: FunnelStep[];
-    playRate: number | null;
-    conversionRate: number | null;
-  };
-  deltas: {
-    impressions: number;
-    plays: number;
-    clicks: number;
-    conversions: number;
-    playRate: number | null;
-    conversionRate: number | null;
-    funnel: Record<string, number>;
-  };
-}
-
-export interface SegmentComparisonData {
-  segment1: {
-    filter: Record<string, unknown>;
-    stats: OverviewStats;
-    funnel: FunnelStep[];
-    playRate: number | null;
-    conversionRate: number | null;
-  };
-  segment2: {
-    filter: Record<string, unknown>;
-    stats: OverviewStats;
-    funnel: FunnelStep[];
-    playRate: number | null;
-    conversionRate: number | null;
-  };
-  deltas: {
-    impressions: number;
-    plays: number;
-    clicks: number;
-    conversions: number;
-    playRate: number | null;
-    conversionRate: number | null;
-    funnel: Record<string, number>;
-  };
-}
-
-type SortKey =
-  | "title"
-  | "impressions"
-  | "plays"
-  | "clicks"
-  | "conversions";
-
-type CompareMode = "none" | "previous" | "segments";
-
-const RANGE_OPTIONS = [
-  { label: "7d", days: 7 },
-  { label: "30d", days: 30 },
-  { label: "90d", days: 90 },
-] as const;
-
-const STEP_LABELS: Record<string, string> = {
-  impression: "Impressions",
-  play: "Plays",
-  click: "Clicks",
-  convert: "Conversions",
-};
-
-function rangeFor(days: number): { startDate: string; endDate: string } {
-  const end = new Date();
-  const start = new Date(end);
-  start.setDate(start.getDate() - days);
-  const fmt = (d: Date) => d.toISOString().slice(0, 10);
-  return { startDate: fmt(start), endDate: fmt(end) };
-}
 
 export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
   const [days, setDays] = useState<number>(30);
@@ -356,181 +263,31 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
     currentRange
   )}`;
 
+
   return (
     <div className="space-y-6">
-      {/* Top action & date header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-xs text-text-muted">
-            Track impressions, video plays, click-throughs, and conversions with multi-dimensional segmentation.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Date range picker buttons */}
-          <div className="flex gap-1 rounded-control border p-0.5">
-            {RANGE_OPTIONS.map((opt) => (
-              <button
-                key={opt.label}
-                onClick={() => handleRangeChange(opt.days)}
-                disabled={loading}
-                className={cn("rounded-control px-2.5 py-1 text-xs font-medium transition-colors", toggleStyle("solid", days === opt.days))}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Export buttons */}
-          <a
-            href={exportCsvUrl}
-            download={`vouchreel-analytics-${spaceId}.csv`}
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-            title="Export raw analytics data to CSV"
-          >
-            <svg
-              className="h-3.5 w-3.5 text-text-muted"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            Export CSV
-          </a>
-
-          <a
-            href={exportPdfUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonVariants({ variant: "primary", size: "sm" })}
-            title="Download executive summary PDF report"
-          >
-            <svg
-              className="h-3.5 w-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-              />
-            </svg>
-            Download PDF Report
-          </a>
-        </div>
-      </div>
-
-      {/* Filter and Comparison Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border bg-surface p-3 shadow-xs">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1 text-2xs font-medium text-text-muted">
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-              />
-            </svg>
-            Filters:
-          </span>
-
-          {/* Testimonial Filter */}
-          <select
-            value={selectedTestimonial}
-            onChange={(e) => setSelectedTestimonial(e.target.value)}
-            className={cn(inputClass, "h-8 text-xs")}
-          >
-            <option value="">All Testimonials</option>
-            {rows.map((row) => (
-              <option key={row.testimonialId} value={row.testimonialId}>
-                {row.customerName || row.title || "Untitled Testimonial"}
-              </option>
-            ))}
-          </select>
-
-          {/* Device Filter */}
-          <select
-            value={selectedDevice}
-            onChange={(e) => setSelectedDevice(e.target.value)}
-            className={cn(inputClass, "h-8 text-xs")}
-          >
-            <option value="">All Devices</option>
-            <option value="desktop">Desktop</option>
-            <option value="mobile">Mobile</option>
-          </select>
-
-          {/* Traffic Source Filter */}
-          <select
-            value={selectedTrafficSource}
-            onChange={(e) => setSelectedTrafficSource(e.target.value)}
-            className={cn(inputClass, "h-8 text-xs")}
-          >
-            <option value="">All Traffic Sources</option>
-            <option value="direct">Direct</option>
-            {filterOptions.trafficSources
-              .filter((src) => src !== "direct")
-              .map((src) => (
-                <option key={src} value={src}>
-                  {src}
-                </option>
-              ))}
-          </select>
-
-          {/* Page URL Search */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Filter by Page URL..."
-              value={searchPageUrl}
-              onChange={(e) => setSearchPageUrl(e.target.value)}
-              className={cn(inputClass, "h-8 w-44 text-xs")}
-            />
-          </div>
-
-          {hasActiveFilters && (
-            <button
-              onClick={handleResetFilters}
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Reset Filters
-            </button>
-          )}
-        </div>
-
-        {/* Compare Toggle */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-2xs font-medium text-text-muted">Compare:</span>
-          <div className="inline-flex rounded-control border p-0.5">
-            <button
-              onClick={() => setCompareMode("none")}
-              className={cn("rounded-control px-2 py-0.5 text-xs font-medium transition-colors", toggleStyle("solid", compareMode === "none"))}
-            >
-              Off
-            </button>
-            <button
-              onClick={() => setCompareMode("previous")}
-              className={cn("rounded-control px-2 py-0.5 text-xs font-medium transition-colors", toggleStyle("solid", compareMode === "previous"))}
-            >
-              Previous Period
-            </button>
-            <button
-              onClick={() => setCompareMode("segments")}
-              className={cn("rounded-control px-2 py-0.5 text-xs font-medium transition-colors", toggleStyle("solid", compareMode === "segments"))}
-            >
-              Mobile vs Desktop
-            </button>
-          </div>
-        </div>
-      </div>
+      <AnalyticsToolbar
+        spaceId={spaceId}
+        days={days}
+        loading={loading}
+        exportCsvUrl={exportCsvUrl}
+        exportPdfUrl={exportPdfUrl}
+        rows={rows}
+        trafficSources={filterOptions.trafficSources}
+        selectedTestimonial={selectedTestimonial}
+        selectedDevice={selectedDevice}
+        selectedTrafficSource={selectedTrafficSource}
+        searchPageUrl={searchPageUrl}
+        hasActiveFilters={hasActiveFilters}
+        compareMode={compareMode}
+        onRangeChange={handleRangeChange}
+        setSelectedTestimonial={setSelectedTestimonial}
+        setSelectedDevice={setSelectedDevice}
+        setSelectedTrafficSource={setSelectedTrafficSource}
+        setSearchPageUrl={setSearchPageUrl}
+        setCompareMode={setCompareMode}
+        onResetFilters={handleResetFilters}
+      />
 
       {error && (
         <div className="rounded-control bg-danger-soft p-4 text-xs text-danger-foreground">{error}</div>
@@ -592,72 +349,15 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
             </div>
           )}
 
-          {/* Overview Cards: Normal or Comparative */}
-          {compareMode === "segments" && segmentComparison ? (
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <SegmentStatCard
-                label="Impressions"
-                val1={segmentComparison.segment1.stats.impressions}
-                val2={segmentComparison.segment2.stats.impressions}
-                delta={segmentComparison.deltas.impressions}
-                name1="Mobile"
-                name2="Desktop"
-              />
-              <SegmentStatCard
-                label="Plays"
-                val1={segmentComparison.segment1.stats.plays}
-                val2={segmentComparison.segment2.stats.plays}
-                delta={segmentComparison.deltas.plays}
-                name1="Mobile"
-                name2="Desktop"
-              />
-              <SegmentStatCard
-                label="Clicks"
-                val1={segmentComparison.segment1.stats.clicks}
-                val2={segmentComparison.segment2.stats.clicks}
-                delta={segmentComparison.deltas.clicks}
-                name1="Mobile"
-                name2="Desktop"
-              />
-              <SegmentStatCard
-                label="Conversions"
-                val1={segmentComparison.segment1.stats.conversions}
-                val2={segmentComparison.segment2.stats.conversions}
-                delta={segmentComparison.deltas.conversions}
-                name1="Mobile"
-                name2="Desktop"
-              />
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <StatCard
-                label="Impressions"
-                value={stats?.impressions ?? 0}
-                prevValue={compareMode === "previous" ? prevStats?.impressions : undefined}
-                trend={trend(stats?.impressions, prevStats?.impressions)}
-              />
-              <StatCard
-                label="Plays"
-                value={stats?.plays ?? 0}
-                prevValue={compareMode === "previous" ? prevStats?.plays : undefined}
-                sub={playRate !== null ? `${playRate}% play rate` : undefined}
-                trend={trend(stats?.plays, prevStats?.plays)}
-              />
-              <StatCard
-                label="Clicks"
-                value={stats?.clicks ?? 0}
-                prevValue={compareMode === "previous" ? prevStats?.clicks : undefined}
-                trend={trend(stats?.clicks, prevStats?.clicks)}
-              />
-              <StatCard
-                label="Conversions"
-                value={stats?.conversions ?? 0}
-                prevValue={compareMode === "previous" ? prevStats?.conversions : undefined}
-                sub={conversionRate !== null ? `${conversionRate}% conversion rate` : undefined}
-                trend={trend(stats?.conversions, prevStats?.conversions)}
-              />
-            </div>
-          )}
+          <OverviewCards
+            compareMode={compareMode}
+            stats={stats}
+            prevStats={prevStats}
+            segmentComparison={segmentComparison}
+            playRate={playRate}
+            conversionRate={conversionRate}
+            trend={trend}
+          />
 
           {/* Time-series chart */}
           <div className="rounded-card border bg-surface p-4">
@@ -671,254 +371,15 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
             )}
           </div>
 
-          {/* Funnel: Single or Comparative */}
-          <div className="rounded-card border bg-surface p-4">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-medium">Conversion Funnel</h3>
-              {compareMode === "previous" && (
-                <div className="flex items-center gap-3 text-2xs text-text-muted">
-                  <span className="flex items-center gap-1">
-                    <span className="inline-block h-2 w-2 rounded-control bg-brand" /> Current Period
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="inline-block h-2 w-2 rounded-control bg-text-muted/40" /> Previous Period
-                  </span>
-                </div>
-              )}
-              {compareMode === "segments" && (
-                <div className="flex items-center gap-3 text-2xs text-text-muted">
-                  <span className="flex items-center gap-1">
-                    <span className="inline-block h-2 w-2 rounded-control bg-brand" /> Mobile
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="inline-block h-2 w-2 rounded-control bg-chart-3" /> Desktop
-                  </span>
-                </div>
-              )}
-            </div>
+          <AnalyticsFunnel
+            compareMode={compareMode}
+            funnel={funnel}
+            maxFunnel={maxFunnel}
+            comparison={comparison}
+            segmentComparison={segmentComparison}
+          />
 
-            {compareMode === "segments" && segmentComparison ? (
-              <div className="space-y-4">
-                {segmentComparison.segment1.funnel.map((step1, i) => {
-                  const step2 = segmentComparison.segment2.funnel[i] || { count: 0, dropOffPercent: null };
-                  const maxStep = Math.max(step1.count, step2.count, 1);
-                  const delta = segmentComparison.deltas.funnel[step1.step] ?? 0;
-
-                  return (
-                    <div key={step1.step} className="rounded-card border bg-surface-sunken/20 p-3">
-                      <div className="mb-2 flex items-center justify-between text-xs">
-                        <span className="font-medium text-text">
-                          {STEP_LABELS[step1.step] ?? step1.step}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`rounded-control px-1.5 py-0.5 text-2xs font-medium ${
-                              delta >= 0
-                                ? "bg-success-soft text-success-foreground"
-                                : "bg-danger-soft text-danger-foreground"
-                            }`}
-                          >
-                            {delta >= 0 ? "+" : ""}
-                            {delta}% (Mobile vs Desktop)
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Mobile bar */}
-                      <div className="mb-1.5">
-                        <div className="mb-0.5 flex justify-between text-2xs text-text-muted">
-                          <span>Mobile</span>
-                          <span>{step1.count.toLocaleString()}</span>
-                        </div>
-                        <div className="h-4 w-full overflow-hidden rounded-control bg-surface-sunken">
-                          <div
-                            className="h-full rounded-control bg-brand transition-all"
-                            style={{ width: `${Math.max((step1.count / maxStep) * 100, step1.count > 0 ? 5 : 0)}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Desktop bar */}
-                      <div>
-                        <div className="mb-0.5 flex justify-between text-2xs text-text-muted">
-                          <span>Desktop</span>
-                          <span>{step2.count.toLocaleString()}</span>
-                        </div>
-                        <div className="h-4 w-full overflow-hidden rounded-control bg-surface-sunken">
-                          <div
-                            className="h-full rounded-control bg-chart-3 transition-all"
-                            style={{ width: `${Math.max((step2.count / maxStep) * 100, step2.count > 0 ? 5 : 0)}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {funnel.map((step, i) => {
-                  const prevStepCount =
-                    compareMode === "previous" && comparison
-                      ? comparison.previous.funnel[i]?.count ?? 0
-                      : null;
-
-                  const delta =
-                    compareMode === "previous" && comparison
-                      ? comparison.deltas.funnel[step.step] ?? null
-                      : null;
-
-                  return (
-                    <div key={step.step}>
-                      <div className="mb-1 flex items-center justify-between text-xs">
-                        <span className="font-medium">{STEP_LABELS[step.step] ?? step.step}</span>
-                        <div className="flex items-center gap-2 text-text-muted">
-                          <span>{step.count.toLocaleString()}</span>
-                          {prevStepCount !== null && (
-                            <span className="text-2xs text-text-muted">
-                              (Prev: {prevStepCount.toLocaleString()})
-                            </span>
-                          )}
-                          {delta !== null && (
-                            <span
-                              className={`rounded-control px-1.5 py-0.2 text-2xs font-medium ${
-                                delta >= 0
-                                  ? "bg-success-soft text-success-foreground"
-                                  : "bg-danger-soft text-danger-foreground"
-                              }`}
-                            >
-                              {delta >= 0 ? "+" : ""}
-                              {delta}%
-                            </span>
-                          )}
-                          {step.conversionFromPrevious !== null && i > 0 && (
-                            <span> · {step.conversionFromPrevious}% from prev</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="h-5 w-full overflow-hidden rounded-control bg-surface-sunken">
-                          <div
-                            className="flex h-full items-center justify-end rounded-control bg-brand pr-2 text-2xs font-medium text-text-on-accent transition-all"
-                            style={{
-                              width: `${Math.max(
-                                (step.count / maxFunnel) * 100,
-                                step.count > 0 ? 8 : 0
-                              )}%`,
-                            }}
-                          />
-                        </div>
-                        {prevStepCount !== null && (
-                          <div className="h-2 w-full overflow-hidden rounded-control bg-surface-sunken/60">
-                            <div
-                              className="h-full rounded-control bg-text-muted/40 transition-all"
-                              style={{
-                                width: `${Math.max(
-                                  (prevStepCount / maxFunnel) * 100,
-                                  prevStepCount > 0 ? 8 : 0
-                                )}%`,
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      {step.dropOffPercent !== null && i > 0 && (
-                        <p className="mt-0.5 text-right text-2xs text-text-muted">
-                          −{step.dropOffPercent}% drop-off
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Per-testimonial table */}
-          <div className="rounded-card border bg-surface p-4">
-            <h3 className="mb-4 text-sm font-medium">Per-Testimonial Performance</h3>
-            {rows.length === 0 ? (
-              <p className="py-8 text-center text-xs text-text-muted">
-                No testimonials match the active filter.
-              </p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b text-text-muted">
-                      {(
-                        [
-                          ["title", "Testimonial"],
-                          ["impressions", "Impressions"],
-                          ["plays", "Plays"],
-                          ["clicks", "Clicks"],
-                          ["conversions", "Conversions"],
-                        ] as Array<[SortKey, string]>
-                      ).map(([key, label]) => (
-                        <th key={key} className="px-2 py-2 font-medium">
-                          <button
-                            onClick={() => handleSort(key)}
-                            className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "gap-1 hover:no-underline")}
-                          >
-                            {label}
-                            {sortKey === key && <span>{sortAsc ? "▲" : "▼"}</span>}
-                          </button>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedRows.map((row) => (
-                      <tr key={row.testimonialId} className="border-b last:border-0">
-                        <td className="px-2 py-2.5">
-                          <div className="flex items-center gap-2">
-                            {row.thumbnailUrl ? (
-                              <img
-                                src={row.thumbnailUrl}
-                                alt=""
-                                className="h-8 w-12 rounded-control object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-8 w-12 items-center justify-center rounded-control bg-surface-sunken text-text-muted">
-                                <svg
-                                  className="h-3.5 w-3.5"
-                                  fill="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path d="M8 5v14l11-7z" />
-                                </svg>
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="truncate font-medium">
-                                {row.customerName || row.title || "Untitled testimonial"}
-                              </p>
-                              {row.isActive === false && (
-                                <p className="text-2xs text-text-muted">Inactive</p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-2 py-2.5">{row.impressions.toLocaleString()}</td>
-                        <td className="px-2 py-2.5">
-                          {row.plays.toLocaleString()}
-                          {row.impressions > 0 && (
-                            <span className="ml-1 text-2xs text-text-muted">
-                              ({Math.round((row.plays / row.impressions) * 100)}%)
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-2 py-2.5">{row.clicks.toLocaleString()}</td>
-                        <td className="px-2 py-2.5">{row.conversions.toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          <AnalyticsTable rows={rows} sortedRows={sortedRows} sortKey={sortKey} sortAsc={sortAsc} onSort={handleSort} />
 
           {/* Conversion goals */}
           <ConversionGoalsPanel
@@ -928,88 +389,6 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
           />
         </>
       )}
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  prevValue,
-  sub,
-  trend,
-}: {
-  label: string;
-  value: number;
-  prevValue?: number;
-  sub?: string;
-  trend: string | null;
-}) {
-  return (
-    <div className="rounded-card border bg-surface p-4">
-      <p className="text-xs text-text-muted">{label}</p>
-      <div className="mt-1 flex items-baseline gap-2">
-        <p className="text-2xl font-medium">{value.toLocaleString()}</p>
-        {prevValue !== undefined && (
-          <span className="text-xs text-text-muted">
-            vs {prevValue.toLocaleString()}
-          </span>
-        )}
-        {trend && (
-          <span
-            className={`text-2xs font-medium ${
-              trend.startsWith("-") ? "text-danger-foreground" : "text-success-foreground"
-            }`}
-          >
-            {trend}
-          </span>
-        )}
-      </div>
-      {sub && <p className="mt-0.5 text-2xs text-text-muted">{sub}</p>}
-    </div>
-  );
-}
-
-function SegmentStatCard({
-  label,
-  val1,
-  val2,
-  delta,
-  name1,
-  name2,
-}: {
-  label: string;
-  val1: number;
-  val2: number;
-  delta: number;
-  name1: string;
-  name2: string;
-}) {
-  return (
-    <div className="rounded-card border bg-surface p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-text-muted">{label}</p>
-        <span
-          className={`rounded-control px-1.5 py-0.5 text-2xs font-medium ${
-            delta >= 0
-              ? "bg-success-soft text-success-foreground"
-              : "bg-danger-soft text-danger-foreground"
-          }`}
-        >
-          {delta >= 0 ? "+" : ""}
-          {delta}%
-        </span>
-      </div>
-      <div className="mt-2 grid grid-cols-2 gap-2 border-t pt-2 text-xs">
-        <div>
-          <p className="text-2xs text-text-muted">{name1}</p>
-          <p className="text-base font-medium text-brand">{val1.toLocaleString()}</p>
-        </div>
-        <div>
-          <p className="text-2xs text-text-muted">{name2}</p>
-          <p className="text-base font-medium text-chart-3">{val2.toLocaleString()}</p>
-        </div>
-      </div>
     </div>
   );
 }
