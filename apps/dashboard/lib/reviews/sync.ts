@@ -95,6 +95,7 @@ export async function syncReviewSource(
           authorPhotoUrl: review.authorPhotoUrl,
           rating: review.rating,
           text: review.text,
+          textFetchedAt: new Date(),
           reviewDate: review.reviewDate,
         })
         .where(eq(reviews.id, existing.id));
@@ -109,6 +110,7 @@ export async function syncReviewSource(
         authorPhotoUrl: review.authorPhotoUrl,
         rating: review.rating,
         text: review.text,
+        textFetchedAt: new Date(),
         reviewDate: review.reviewDate,
         isApproved: true,
       });

@@ -576,6 +576,12 @@ export const reviews = pgTable("reviews", {
   // Null only for owner-supplied reviews (provider "own")
   rating: integer("rating"),
   text: text("text"),
+  /**
+   * When `text` was last fetched from the provider. Third-party review text is only kept for a limited time
+   * (REVIEW_TEXT_RETENTION_DAYS): the hourly sync refreshes it for reviews the provider still returns, and the
+   * purge in lib/reviews/retention.ts removes it once it is older. Null for owner-supplied reviews (their own text).
+   */
+  textFetchedAt: timestamp("text_fetched_at", { withTimezone: true }),
   /** Owner-supplied reviews: the page the review came from (https), shown as its domain */
   linkUrl: text("link_url"),
   reviewDate: timestamp("review_date", { withTimezone: true }),

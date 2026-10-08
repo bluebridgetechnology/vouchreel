@@ -253,6 +253,13 @@
       "when": 1791407648861,
       "tag": "0035_videos_show_in_widget",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1791452352337,
+      "tag": "0036_reviews_text_fetched_at",
+      "breakpoints": true
     }
   ]
 }
