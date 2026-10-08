@@ -95,7 +95,7 @@ describe("applying a widget theme", () => {
     expect(r.classes.size).toBe(0);
   });
 
-  it("every class it can add has a rule in some stylesheet (shape rules arrive with the shape work)", () => {
+  it("every class it can add has a rule in some stylesheet", () => {
     const sheets = [
       readFileSync(new URL("../styles.css", import.meta.url), "utf8"),
       ...readdirSync(new URL("../layouts/", import.meta.url))
@@ -120,6 +120,12 @@ describe("applying a widget theme", () => {
       "vr-enter-none",
       "vr-enter-fade",
       "vr-enter-pop",
+      "vr-shape-circle",
+      "vr-shape-square",
+      "vr-shape-rounded",
+      "vr-shape-landscape",
+      "vr-shape-portrait",
+      "vr-shape-vertical",
     ];
     for (const cls of expected) expect(sheets, cls).toContain(`.${cls}`);
   });

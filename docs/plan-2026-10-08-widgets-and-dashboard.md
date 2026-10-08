@@ -311,6 +311,14 @@ until someone asks (see section 5).
 
 ### D1. Shapes (M)
 
+**Status (2026-10-08): built, not yet committed.** Six shapes (circle, square, rounded, wide 16:9, portrait 4:5,
+reel 9:16) as CSS on the classes A2 already sets. The core paid 82 bytes gzip for the floating card's shapes
+(1,058 bytes left); grid cards and the story strip carry theirs in their own chunks. Changes from the table
+below: the floating card offers all six (a reel-shaped corner card is the "vertical like a reel" request), the
+story strip also offers reel tiles, and the letterbox "fit" option is left out. Tall shapes make narrower cards
+in carousels and grids, still scaled by the size option. The editor shows only the shapes a layout offers, its
+own look first as "Default" (stored as null), and drops an unsupported shape when the layout changes.
+
 Implement the six shapes from A2 as CSS on the shared card (`aspect-ratio`, `border-radius`, `object-fit`), with a
 compatibility table so the editor only offers what works:
 

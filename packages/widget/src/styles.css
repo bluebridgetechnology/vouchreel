@@ -670,6 +670,35 @@
   display: none;
 }
 
+/* Shapes of the floating card's picture; null keeps the rounded square. Grid cards and the
+   story strip style their own in their layout files. */
+.vr-shape-circle .vr-thumb-wrapper {
+  border-radius: 50%;
+}
+
+.vr-shape-square .vr-thumb-wrapper {
+  border-radius: 0;
+}
+
+.vr-shape-rounded .vr-thumb-wrapper {
+  border-radius: 16px;
+}
+
+.vr-shape-landscape .vr-thumb-wrapper {
+  width: 80px;
+  height: 45px;
+}
+
+.vr-shape-portrait .vr-thumb-wrapper {
+  width: 48px;
+  height: 60px;
+}
+
+.vr-shape-vertical .vr-thumb-wrapper {
+  width: 44px;
+  height: 78px;
+}
+
 .vr-play-solid .vr-play-badge {
   width: 32px;
   border-radius: calc(var(--vr-radius) / 2);

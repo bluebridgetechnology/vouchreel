@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import type { UpdateWidgetConfigInput, WidgetTemplate, WidgetTheme } from "@/lib/validations/widget-config";
-import { LAYOUTS, layoutInfo } from "@/lib/widget-editor/layouts";
+import { LAYOUTS, layoutInfo, type WidgetShape } from "@/lib/widget-editor/layouts";
 import { contrastBetween, MIN_BUTTON_CONTRAST } from "@/lib/brand-kit/theme";
 import { ACCENT_COLOR_PRESETS, PRIMARY_COLOR_PRESETS } from "@/lib/widget-presets";
 import { cn } from "@/lib/utils";
@@ -251,9 +251,52 @@ export function StyleSection({
   );
 }
 
-export function ShapeSection({ theme, updateTheme, brandManaged }: { theme: Theme; updateTheme: UpdateTheme; brandManaged: boolean }) {
+export const SHAPE_LABELS: Record<WidgetShape, string> = {
+  circle: "Circle",
+  square: "Square",
+  rounded: "Rounded",
+  landscape: "Wide",
+  portrait: "Portrait",
+  vertical: "Reel",
+};
+
+/** The outline of each shape, drawn small so the choice is visual. */
+const SHAPE_SKETCH: Record<WidgetShape, string> = {
+  circle: "size-5 rounded-pill",
+  square: "size-5 rounded-none",
+  rounded: "size-5 rounded-[6px]",
+  landscape: "h-4 w-7 rounded-[2px]",
+  portrait: "h-6 w-5 rounded-[2px]",
+  vertical: "h-7 w-4 rounded-[3px]",
+};
+
+export function ShapeSection({ theme, updateTheme, brandManaged, template }: { theme: Theme; updateTheme: UpdateTheme; brandManaged: boolean; template: WidgetTemplate }) {
+  const shapes = layoutInfo(template).shapes;
+  // The layout's own look is stored as null ("Default"), so it follows the layout if that changes
+  const current = theme.shape ?? shapes[0];
   return (
     <>
+      <div className="space-y-1.5">
+        <span className="block text-xs font-medium text-text">Shape of each video</span>
+        <div role="radiogroup" aria-label="Shape" className="grid grid-cols-3 gap-2">
+          {shapes.map((shape, i) => (
+            <button
+              key={shape}
+              type="button"
+              role="radio"
+              aria-checked={current === shape}
+              onClick={() => updateTheme({ shape: i === 0 ? null : shape })}
+              className={cn("flex flex-col items-center gap-1.5 rounded-card border px-2 py-2.5 text-2xs font-medium transition-colors", toggleStyle("choice", current === shape))}
+            >
+              <span className="flex h-7 items-center" aria-hidden>
+                <span className={cn("border-2 border-current bg-brand-soft text-brand", SHAPE_SKETCH[shape])} />
+              </span>
+              {SHAPE_LABELS[shape]}
+              {i === 0 && <span className="-mt-1 text-3xs font-normal text-text-muted">Default</span>}
+            </button>
+          ))}
+        </div>
+      </div>
       <Segmented label="Size" value={theme.size} options={[{ value: "sm", label: "Small" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }]} onChange={(size) => updateTheme({ size })} />
       {brandManaged ? (
         <p className="text-2xs text-text-muted">Corner radius comes from your Brand settings.</p>

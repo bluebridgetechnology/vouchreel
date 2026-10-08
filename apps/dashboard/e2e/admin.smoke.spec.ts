@@ -1057,6 +1057,11 @@ test.describe("platform admin", () => {
       await expect(previewRoot).not.toHaveClass(/vr-dark/);
       await page.getByRole("radio", { name: "Strong" }).click();
       await expect(page.getByText("Outline (edited)")).toBeVisible();
+
+      // Shapes: the layout's own look is "Default"; a reel shape reaches the preview
+      await page.getByRole("button", { name: /^3\s*Shape and size/ }).click();
+      await page.getByRole("radio", { name: /Reel/ }).click();
+      await expect(previewRoot).toHaveClass(/vr-shape-vertical/);
     } finally {
       await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
       await pool.end();

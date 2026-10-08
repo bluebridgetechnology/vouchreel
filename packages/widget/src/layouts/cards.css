@@ -98,3 +98,46 @@
   font-size: 11px;
   color: var(--vr-text-muted);
 }
+
+/* Shapes (the theme's shape class on the root); no class keeps 16:9 */
+.vr-shape-square .vr-card-video-thumb,
+.vr-shape-rounded .vr-card-video-thumb,
+.vr-shape-circle .vr-card-video-thumb {
+  padding-top: 100%;
+}
+
+.vr-shape-portrait .vr-card-video-thumb {
+  padding-top: 125%;
+}
+
+.vr-shape-vertical .vr-card-video-thumb {
+  padding-top: 177.78%;
+}
+
+.vr-shape-square .vr-card-video-thumb {
+  border-radius: 0;
+}
+
+.vr-shape-rounded .vr-card-video-thumb {
+  border-radius: 24px;
+}
+
+.vr-shape-circle .vr-card-video-thumb {
+  border-radius: 50%;
+}
+
+/* Tall pictures make narrower cards, still scaled by the size option */
+.vr-shape-portrait,
+.vr-shape-vertical {
+  --vr-card-w: 220px;
+}
+
+.vr-shape-portrait.vr-size-sm,
+.vr-shape-vertical.vr-size-sm {
+  --vr-card-w: 180px;
+}
+
+.vr-shape-portrait.vr-size-lg,
+.vr-shape-vertical.vr-size-lg {
+  --vr-card-w: 260px;
+}

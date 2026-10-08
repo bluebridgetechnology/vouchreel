@@ -63,3 +63,23 @@
   font-size: 9px;
   border: 1.5px solid var(--vr-bg);
 }
+
+/* Shapes: circles by default; rounded squares, or tall reel-style tiles */
+.vr-shape-rounded .vr-story-item,
+.vr-shape-rounded .vr-story-item img {
+  border-radius: 14px;
+}
+
+.vr-shape-vertical .vr-strip-wrapper {
+  border-radius: 20px;
+}
+
+.vr-shape-vertical .vr-story-item {
+  width: 44px;
+  height: 72px;
+  border-radius: 12px;
+}
+
+.vr-shape-vertical .vr-story-item img {
+  border-radius: 9px;
+}

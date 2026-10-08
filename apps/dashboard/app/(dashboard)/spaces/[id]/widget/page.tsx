@@ -2,7 +2,7 @@
 
 import { use, useCallback, useEffect, useState } from "react";
 import { applyBrandKitToTheme } from "@/lib/brand-kit/theme";
-import { layoutInfo } from "@/lib/widget-editor/layouts";
+import { layoutInfo, shapeForLayout } from "@/lib/widget-editor/layouts";
 import { matchingPreset } from "@/lib/widget-editor/presets";
 import { normalizeTheme } from "@/lib/validations/widget-config";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ import { notify } from "@/lib/notify";
 import { useConfirm } from "@/components/ui/confirm";
 import { LivePreview } from "@/components/widget/live-preview";
 import { useWidgetEditor, type SaveState } from "@/components/widget/editor/use-widget-editor";
-import { BehaviourSection, ContentSection, EditorSection, InstallSection, LayoutSection, ShapeSection, StyleSection } from "@/components/widget/editor/sections";
+import { BehaviourSection, ContentSection, EditorSection, InstallSection, LayoutSection, SHAPE_LABELS, ShapeSection, StyleSection } from "@/components/widget/editor/sections";
 
 interface WidgetPageProps {
   params: Promise<{ id: string }>;
@@ -164,13 +164,13 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
 
         <div className="overflow-hidden rounded-card border bg-surface lg:order-1">
           <EditorSection step={1} title="Layout" summary={layout.name} open={open.has("layout")} onToggle={() => toggle("layout")}>
-            <LayoutSection value={config.template} onChange={(template) => update({ template })} />
+            <LayoutSection value={config.template} onChange={(template) => update({ template, theme: { ...config.theme, shape: shapeForLayout(theme.shape, template) } })} />
           </EditorSection>
           <EditorSection step={2} title="Style" summary={matchingPreset(theme)?.name ?? `${theme.mode === "dark" ? "Dark" : "Light"}, ${theme.shadow} shadow${theme.glass ? ", glass" : ""}`} open={open.has("style")} onToggle={() => toggle("style")}>
             <StyleSection theme={theme} updateTheme={updateTheme} brandManaged={brandManaged} brandHref={`/spaces/${spaceId}/brand`} lastPresetId={lastPresetId} onPreset={setLastPresetId} />
           </EditorSection>
-          <EditorSection step={3} title="Size and corners" summary={`${{ sm: "Small", md: "Medium", lg: "Large" }[theme.size]}, ${theme.borderRadius}px corners`} open={open.has("shape")} onToggle={() => toggle("shape")}>
-            <ShapeSection theme={theme} updateTheme={updateTheme} brandManaged={brandManaged} />
+          <EditorSection step={3} title="Shape and size" summary={`${theme.shape ? SHAPE_LABELS[theme.shape] : "Default shape"}, ${{ sm: "small", md: "medium", lg: "large" }[theme.size]}`} open={open.has("shape")} onToggle={() => toggle("shape")}>
+            <ShapeSection theme={theme} updateTheme={updateTheme} brandManaged={brandManaged} template={config.template} />
           </EditorSection>
           <EditorSection step={4} title="Content" summary="What each card shows" open={open.has("content")} onToggle={() => toggle("content")}>
             <ContentSection theme={theme} updateTheme={updateTheme} template={config.template} />
