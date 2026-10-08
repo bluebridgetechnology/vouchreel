@@ -467,7 +467,8 @@ test.describe("platform admin", () => {
     await form.getByLabel("Name", { exact: true }).fill("Long Winded");
     await form.getByLabel("Review", { exact: true }).fill(longReview);
     await form.getByRole("button", { name: "Save review" }).click();
-    await expect(page.getByText("Review added")).toBeVisible();
+    // (the first review's "Review added" notice can still be on screen, so wait for the new card instead)
+    await expect(page.getByText("Long Winded").first()).toBeVisible();
 
     // The video picker offers it, and picking it switches the confirmation to the wording for your own reviews
     await page.getByRole("button", { name: "Create review video" }).click();
