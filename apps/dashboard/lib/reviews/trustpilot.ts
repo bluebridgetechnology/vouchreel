@@ -53,11 +53,10 @@ export async function findTrustpilotBusinessUnit({
   domain: string;
   apiKey?: string;
 }): Promise<TrustpilotBusinessUnit> {
-  const key = apiKey || process.env.TRUSTPILOT_API_KEY;
+  // The owner's own key: the platform holds no Trustpilot key of its own
+  const key = apiKey;
   if (!key) {
-    throw new Error(
-      "Trustpilot API Key is required. Please provide an API key in credentials or configure TRUSTPILOT_API_KEY."
-    );
+    throw new Error("This Trustpilot source has no API key. Reconnect it and add your own Trustpilot API key.");
   }
 
   // Clean domain name: strip protocol and trailing slashes
@@ -104,11 +103,10 @@ export async function fetchTrustpilotReviews({
   total?: number;
   reviews: NormalizedReview[];
 }> {
-  const key = apiKey || process.env.TRUSTPILOT_API_KEY;
+  // The owner's own key: the platform holds no Trustpilot key of its own
+  const key = apiKey;
   if (!key) {
-    throw new Error(
-      "Trustpilot API Key is required. Please provide an API key in credentials or configure TRUSTPILOT_API_KEY."
-    );
+    throw new Error("This Trustpilot source has no API key. Reconnect it and add your own Trustpilot API key.");
   }
 
   if (!businessUnitId) {
@@ -179,7 +177,7 @@ export async function fetchTrustpilotStats({
   businessUnitId: string;
   apiKey?: string;
 }): Promise<ProviderStats | null> {
-  const key = apiKey || process.env.TRUSTPILOT_API_KEY;
+  const key = apiKey; // the owner's own key, never a platform one
   if (!key || !businessUnitId) return null;
   const response = await fetch(`https://api.trustpilot.com/v1/business-units/${encodeURIComponent(businessUnitId)}`, {
     headers: { apikey: key, Accept: "application/json" },

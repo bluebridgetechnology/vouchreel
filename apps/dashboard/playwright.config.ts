@@ -42,6 +42,8 @@ export default defineConfig({
       DATABASE_URL: process.env.E2E_DATABASE_URL ?? "",
       BETTER_AUTH_SECRET: E2E_AUTH_SECRET,
       BETTER_AUTH_URL: baseURL,
+      // Stored review-source credentials need their own key in production mode (which `next start` is)
+      ENCRYPTION_KEY: "e2e-only-encryption-key-0123456789abcdef",
       // New accounts have to confirm their email (the seed marks its people confirmed)
       REQUIRE_EMAIL_VERIFICATION: "true",
       // The seeded admins have no authenticator app; the rule itself is covered by unit tests

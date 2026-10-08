@@ -135,7 +135,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
 
   async function handleConnect(e: React.FormEvent) {
     e.preventDefault();
-    if (!connectModalProvider || !providerBusinessId.trim()) return;
+    if (!connectModalProvider || !providerBusinessId.trim() || !apiKey.trim()) return;
 
     try {
       setConnecting(true);
@@ -147,7 +147,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
         body: JSON.stringify({
           provider: connectModalProvider,
           providerBusinessId: providerBusinessId.trim(),
-          apiKey: apiKey.trim() || undefined,
+          apiKey: apiKey.trim(),
           syncNow: true,
         }),
       });
@@ -607,17 +607,18 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
 
                   <div className="space-y-1.5">
                     <label className="font-medium text-text">
-                      Google Places API Key (Optional)
+                      Your Google Places API key <span className="text-danger-foreground">*</span>
                     </label>
                     <input
                       type="password"
-                      placeholder="AIzaSy... (uses server key if left blank)"
+                      required
+                      placeholder="AIzaSy..."
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
                       className={cn(inputClass, "w-full text-xs font-mono")}
                     />
                     <p className="text-2xs text-text-muted">
-                      Stored securely encrypted using AES-256-GCM.
+                      Create it in your own Google Cloud project (enable the Places API). Google bills your project, not ours, and shows up to 5 reviews this way. Stored encrypted; you can remove it at any time by disconnecting.
                     </p>
                   </div>
                 </>
@@ -643,17 +644,18 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
 
                   <div className="space-y-1.5">
                     <label className="font-medium text-text">
-                      Trustpilot API Key (Optional)
+                      Your Trustpilot API key <span className="text-danger-foreground">*</span>
                     </label>
                     <input
                       type="password"
-                      placeholder="Enter Trustpilot API key (if required)"
+                      required
+                      placeholder="Paste your Trustpilot API key"
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
                       className={cn(inputClass, "w-full text-xs font-mono")}
                     />
                     <p className="text-2xs text-text-muted">
-                      Stored securely encrypted using AES-256-GCM.
+                      Find it in your Trustpilot business account under Integrations, Developers, APIs (it needs a plan with API access). Stored encrypted; you can remove it at any time by disconnecting.
                     </p>
                   </div>
                 </>

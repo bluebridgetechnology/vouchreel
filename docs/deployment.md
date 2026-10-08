@@ -62,6 +62,7 @@ All variables are listed in `.env.example` (development) and `.env.production.ex
 | --- | --- | --- |
 | `DATABASE_URL` | no | Runtime only. Under `docker-compose.production.yml` compose constructs it from `POSTGRES_*` — do not set it manually there. |
 | `BETTER_AUTH_SECRET` | no | Required. Fresh random value per environment (`openssl rand -base64 32`). |
+| `ENCRYPTION_KEY` | no | **Required in production** (the app logs an error at start without it, and connecting a review source fails). Protects the API keys owners give for Google and Trustpilot. `openssl rand -hex 32`. Keep it apart from `BETTER_AUTH_SECRET`; if it is ever changed, stored keys become unreadable and owners reconnect their sources. |
 | `BETTER_AUTH_URL` | no | Public origin, e.g. `https://vouchreel.com`. |
 | `NEXT_PUBLIC_APP_URL` | **yes** | Baked into the client bundle at build time. Must be set correctly *before* `docker build` / Vercel build. |
 | `NEXT_PUBLIC_WIDGET_URL` | **yes** | Base URL used in embed snippets. Empty = serve the widget from the dashboard itself. |
@@ -89,7 +90,7 @@ Everything the app needs — Postgres, migrations, and the dashboard — runs fr
 ```bash
 git clone <repo-url> && cd vouchreel
 cp .env.production.example .env.production
-# Edit .env.production: fill POSTGRES_PASSWORD, BETTER_AUTH_SECRET,
+# Edit .env.production: fill POSTGRES_PASSWORD, BETTER_AUTH_SECRET, ENCRYPTION_KEY,
 # BETTER_AUTH_URL, NEXT_PUBLIC_APP_URL, and any provider keys.
 ```
 
