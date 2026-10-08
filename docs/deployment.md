@@ -62,6 +62,7 @@ All variables are listed in `.env.example` (development) and `.env.production.ex
 | --- | --- | --- |
 | `DATABASE_URL` | no | Runtime only. Under `docker-compose.production.yml` compose constructs it from `POSTGRES_*` — do not set it manually there. |
 | `BETTER_AUTH_SECRET` | no | Required. Fresh random value per environment (`openssl rand -base64 32`). |
+| `ENCRYPTION_KEY` | no | **Required in production** (the app logs an error at start without it, and connecting a review source fails). Protects the API keys owners give for Google and Trustpilot. `openssl rand -hex 32`. Keep it apart from `BETTER_AUTH_SECRET`; if it is ever changed, stored keys become unreadable and owners reconnect their sources. |
 | `BETTER_AUTH_URL` | no | Public origin, e.g. `https://vouchreel.com`. |
 | `NEXT_PUBLIC_APP_URL` | **yes** | Baked into the client bundle at build time. Must be set correctly *before* `docker build` / Vercel build. |
 | `NEXT_PUBLIC_WIDGET_URL` | **yes** | Base URL used in embed snippets. Empty = serve the widget from the dashboard itself. |
@@ -89,7 +90,7 @@ Everything the app needs — Postgres, migrations, and the dashboard — runs fr
 ```bash
 git clone <repo-url> && cd vouchreel
 cp .env.production.example .env.production
-# Edit .env.production: fill POSTGRES_PASSWORD, BETTER_AUTH_SECRET,
+# Edit .env.production: fill POSTGRES_PASSWORD, BETTER_AUTH_SECRET, ENCRYPTION_KEY,
 # BETTER_AUTH_URL, NEXT_PUBLIC_APP_URL, and any provider keys.
 ```
 
@@ -152,19 +153,35 @@ fresh link (valid 24 hours). People who sign in with Google are verified by Goog
 
 ## Content Security Policy
 
-Every page is sent with a Content Security Policy built around a fresh random value (a nonce) made for that request by `proxy.ts`: only scripts carrying it run, so a script injected into a page does nothing. It is rolled out in stages with `CSP_MODE`:
+Every page is sent with a Content Security Policy built around a fresh random value (a nonce) made for that request by `proxy.ts`: only scripts carrying it run, so a script injected into a page does nothing. It is enforced by default; `CSP_MODE` switches stages:
 
 | `CSP_MODE` | What happens |
 |---|---|
-| `report-only` (default) | The policy is sent as `Content-Security-Policy-Report-Only`. Nothing is blocked; each violation is posted to `/api/csp-report` and written to the log as `[csp] violation` with the directive, what was blocked, and the page (query strings removed). |
-| `enforce` | The same policy is sent as `Content-Security-Policy` and violations are blocked. |
+| `report-only` | The policy is sent as `Content-Security-Policy-Report-Only`. Nothing is blocked; each violation is posted to `/api/csp-report` and written to the log as `[csp] violation` with the directive, what was blocked, and the page (query strings removed). |
+| `enforce` (default) | The policy is sent as `Content-Security-Policy` and violations are blocked. |
 | `off` | No policy is sent. Use it to rule the policy out when debugging. |
 
-**Roll-out:** leave it on `report-only` for at least a week of real traffic, search your logs (or Grafana/Loki, if you run the observability stack) for `[csp] violation`, fix or allow what shows up, then set `CSP_MODE=enforce`. Things only real use will show: browser extensions (noise, safe to ignore), the in-browser camera recorder, the video preview player, and embeds from sources not listed in `lib/security/csp.ts`.
+**Before launch:** the policy is enforced by default, and the browser tests crawl the public pages and every signed-in page (dashboard, settings, billing, each tab of a space, admin) with it on and fail on any violation. What tests cannot reach is the real third-party flows: the payment checkout redirect, Google sign-in, the browser camera recorder, and direct uploads to your bucket. On a staging copy, set `CSP_MODE=report-only`, click through each once, search the logs for `[csp] violation` (or Grafana/Loki, if you run the observability stack), allow what is legitimate in `lib/security/csp.ts`, then leave it on `enforce`. Browser extensions show up as noise and are safe to ignore. If a page ever breaks in production, `CSP_MODE=report-only` stops blocking at once, with no code change.
 
 What the policy allows: scripts with the nonce; inline styles (the toast library and React style attributes need them, and styles cannot run code); images and videos from any HTTPS host (your customers' logos and your storage/CDN); connections to this site and your S3/R2 bucket (direct video uploads); frames from YouTube and Vimeo. It forbids plugins, changing `<base>`, and form posts to other sites. Who may embed the collection form is unchanged (`next.config.ts`).
 
 **Cost:** a nonce means pages are built per request instead of served from a build-time copy. Marketing pages have no data to fetch, so the extra work is small, but it is real; `CSP_MODE=off` removes it.
+
+## Google sign-in for review sources
+
+Owners can connect their Google Business Profile by signing in with Google instead of pasting an API key. The platform registers **one OAuth app** (a client id and secret, not a billed API key); each owner then authorises it for their own business, and we read their reviews with that access. With sign-in all reviews come back, with Google's own rating and count; the API-key route stays as the fallback and returns at most 5.
+
+Set it up once. The steps follow Google's documentation from memory and have not been run against the real service, so check Google's current names and requirements as you go:
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), create a project and enable the Business Profile APIs: *My Business Account Management API*, *My Business Business Information API* and the reviews API (*Google My Business API*, v4).
+2. Request access to the Business Profile APIs for that project (Google reviews each request; it can take days).
+3. Configure the OAuth consent screen (external). The app asks for one scope, `https://www.googleapis.com/auth/business.manage`, which Google treats as sensitive, so it needs verification: a privacy policy URL, a homepage, and a short video of the flow. The scope can also edit a profile; the app only ever reads reviews, and the consent screen text and your privacy policy should say so.
+4. Create an OAuth client of type *Web application*. Add the authorised redirect URI `https://YOUR-APP/api/reviews/google/callback` (exactly, including `https`).
+5. Put the client id and secret in `GOOGLE_BUSINESS_CLIENT_ID` and `GOOGLE_BUSINESS_CLIENT_SECRET`, make sure `NEXT_PUBLIC_APP_URL` is the public address, and restart.
+
+Use a client of its own, not the one for "Sign in with Google" on the login page, because the review scope needs its own consent screen and verification.
+
+How it behaves: the owner clicks *Connect with Google* on the Reviews page, approves access, then picks which business location to use. Only the refresh token is kept, encrypted with `ENCRYPTION_KEY`; short-lived access tokens are fetched when needed and never stored. If the owner withdraws access at Google (or the grant expires), the source shows what happened and the owner connects again. *Disconnect* tells Google to forget the access and deletes the source, its token and its imported reviews. `GOOGLE_OAUTH_TEST_ORIGIN` points the app at a stand-in Google and exists only for the browser tests; never set it in production.
 
 ## Direct video uploads (S3 and R2)
 
@@ -294,6 +311,9 @@ Run this once before the first deploy of each release that contains new migratio
 
 | Setting | Why it matters |
 | --- | --- |
+| `GOOGLE_BUSINESS_CLIENT_ID`, `GOOGLE_BUSINESS_CLIENT_SECRET` | no | Turns on "Connect with Google" for review sources: the OAuth app you register once (see *Google sign-in for review sources* below). Unset, owners can only paste their own Places API key. Needs `NEXT_PUBLIC_APP_URL` set to the public address. |
+| `REVIEW_VIDEO_SOURCES` | Which reviews a video may be made from: `google`, `trustpilot`, `own`, comma-separated. **Unset means `own` only** (reviews the owner typed in); Google and Trustpilot are off until you list them, because their terms on displaying and altering reviews are unchecked (register P4). The picker shows why a review cannot be used, and the API refuses with 403. |
+| `REVIEW_TEXT_RETENTION_DAYS` | Days to keep review text fetched from Google or Trustpilot (default 30; 0 keeps it). The hourly `/api/cron/sync-reviews` refreshes text the providers still return, then removes text older than this. The review row (author, rating, date) stays; videos already made keep the words they showed. Owner-typed reviews are never purged. Run `db:migrate` first (migration 0036). |
 | `CRON_SECRET` | **Required in production.** `/api/cron/process-webhooks` and `/api/cron/sync-reviews` refuse to run (503) without it. Vercel Cron sends it automatically (`vercel.json` schedules both jobs); the VPS compose file runs a `scheduler` service that calls them every 5 minutes / hourly. Generate with `openssl rand -hex 32`. |
 | `SENTRY_DSN` | Optional. Turns on error tracking for the web app and both workers. Any Sentry-compatible server works (hosted Sentry, GlitchTip). Unset = nothing is sent anywhere. Every event is scrubbed first: email addresses, tokens, cookies, request bodies and the words customers wrote are removed; only the account id is kept. `SENTRY_ENVIRONMENT` (default `NODE_ENV`) and `SENTRY_RELEASE` (for example the git commit) label the events. |
 | `LOG_LEVEL`, `LOG_FORMAT` | `LOG_LEVEL` is `debug`, `info` (default), `warn`, `error` or `silent`. `LOG_FORMAT` is `json` (default in production, one line per event) or `text`. Logs are scrubbed the same way as error events. |

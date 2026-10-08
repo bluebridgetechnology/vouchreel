@@ -15,6 +15,7 @@ import { E2E_AUTH_SECRET } from "./e2e/seed";
  */
 const PORT = Number(process.env.E2E_PORT ?? 3101);
 const STORAGE_PORT = Number(process.env.E2E_STORAGE_PORT ?? 3199);
+const GOOGLE_PORT = Number(process.env.E2E_GOOGLE_PORT ?? 3198);
 const baseURL = `http://localhost:${PORT}`;
 /** The suite shares seeded rows, so run it once per browser: E2E_BROWSER=firefox npm run test:e2e */
 const BROWSER = (process.env.E2E_BROWSER ?? "chromium") as "chromium" | "firefox" | "webkit";
@@ -42,12 +43,18 @@ export default defineConfig({
       DATABASE_URL: process.env.E2E_DATABASE_URL ?? "",
       BETTER_AUTH_SECRET: E2E_AUTH_SECRET,
       BETTER_AUTH_URL: baseURL,
+      // Stored review-source credentials need their own key in production mode (which `next start` is)
+      ENCRYPTION_KEY: "e2e-only-encryption-key-0123456789abcdef",
       // New accounts have to confirm their email (the seed marks its people confirmed)
       REQUIRE_EMAIL_VERIFICATION: "true",
       // The seeded admins have no authenticator app; the rule itself is covered by unit tests
       REQUIRE_ADMIN_2FA: "false",
       NEXT_PUBLIC_APP_URL: baseURL,
       // Takedowns delete files through the real S3 client; e2e/fake-s3.ts answers it
+      // "Connect with Google" talks to e2e/fake-google.ts instead of Google
+      GOOGLE_BUSINESS_CLIENT_ID: "e2e-google-client",
+      GOOGLE_BUSINESS_CLIENT_SECRET: "e2e-google-secret",
+      GOOGLE_OAUTH_TEST_ORIGIN: `http://127.0.0.1:${GOOGLE_PORT}`,
       STORAGE_PROVIDER: "r2",
       STORAGE_ENDPOINT: `http://127.0.0.1:${STORAGE_PORT}`,
       STORAGE_BUCKET: "e2e-bucket",

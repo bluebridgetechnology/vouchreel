@@ -4,6 +4,8 @@ import { forbidden, internalError, notFound, unauthorized } from "@/lib/api/erro
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, reviewSources } from "@/lib/db/schema";
+import { decryptCredentials } from "@/lib/reviews/crypto";
+import { revokeToken } from "@/lib/reviews/google-oauth";
 import { log } from "@/lib/log";
 
 interface RouteParams {
@@ -37,7 +39,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     }
 
     const [source] = await db
-      .select({ id: reviewSources.id })
+      .select({ id: reviewSources.id, authKind: reviewSources.authKind, credentials: reviewSources.credentials })
       .from(reviewSources)
       .where(
         and(eq(reviewSources.id, sourceId), eq(reviewSources.spaceId, spaceId))
@@ -47,6 +49,15 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       return notFound("Review source not found");
     }
 
+    // Signed in with Google: tell Google to forget the access first (best effort; disconnecting never waits on Google)
+    if (source.authKind === "oauth") {
+      try {
+        const refreshToken = String(decryptCredentials(source.credentials).refreshToken ?? "");
+        if (refreshToken) await revokeToken(refreshToken);
+      } catch (err) {
+        log.warn("Could not revoke the Google access while disconnecting:", err);
+      }
+    }
     await db.delete(reviewSources).where(eq(reviewSources.id, sourceId));
 
     return NextResponse.json({ success: true });

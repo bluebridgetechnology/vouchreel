@@ -2,16 +2,16 @@
  * The Content Security Policy sent with every page, built per request around a fresh nonce: scripts run
  * only if they carry it (or were loaded by one that does), so an injected <script> is inert.
  *
- * It is rolled out in stages (CSP_MODE): "report-only" (the default) sends the policy as
- * Content-Security-Policy-Report-Only, so a violation is reported to /api/csp-report but nothing is
- * blocked; "enforce" blocks; "off" sends nothing. The frame rules (who may embed what) stay in
+ * CSP_MODE picks the stage: "enforce" (the default) blocks what the policy forbids; "report-only" sends
+ * the policy as Content-Security-Policy-Report-Only, so a violation is reported to /api/csp-report but nothing
+ * is blocked (use it to find out what a change would break); "off" sends nothing. The frame rules (who may embed what) stay in
  * next.config.ts, unchanged.
  */
 
 export type CspMode = "off" | "report-only" | "enforce";
 
 export function cspMode(value = process.env.CSP_MODE): CspMode {
-  return value === "enforce" || value === "off" ? value : "report-only";
+  return value === "report-only" || value === "off" ? value : "enforce";
 }
 
 export function cspHeaderName(mode: CspMode): "Content-Security-Policy" | "Content-Security-Policy-Report-Only" {

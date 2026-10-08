@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { reviewSources, reviews } from "@/lib/db/schema";
 import { decryptCredentials } from "./crypto";
 import { fetchGoogleReviews, NormalizedReview } from "./google";
+import { fetchBusinessReviews } from "./google-business";
+import { GoogleAuthError, googleOAuthConfig, refreshAccessToken } from "./google-oauth";
 import { fetchTrustpilotReviews, fetchTrustpilotStats } from "./trustpilot";
 import { log } from "@/lib/log";
 
@@ -54,7 +56,26 @@ export async function syncReviewSource(
   /** Provider-reported overall rating and count; stays null when the provider does not give it. */
   let stats: { rating: number; total: number } | null = null;
 
-  if (source.provider === "google") {
+  if (source.provider === "google" && source.authKind === "oauth") {
+    // The owner signed in with Google: read their Business Profile with a fresh access token
+    const config = googleOAuthConfig();
+    if (!config) throw new Error("Google sign-in is not set up on this installation, so this source cannot sync.");
+    if (source.providerBusinessId.startsWith("pending:")) throw new Error("Choose which Google business location to use.");
+    try {
+      const accessToken = await refreshAccessToken(config, String(credentials.refreshToken ?? ""));
+      const res = await fetchBusinessReviews(source.providerBusinessId, accessToken);
+      fetchedReviews = res.reviews;
+      if (typeof res.rating === "number" && typeof res.totalReviews === "number" && res.totalReviews > 0) {
+        stats = { rating: res.rating, total: res.totalReviews };
+      }
+    } catch (err) {
+      if (err instanceof GoogleAuthError && err.kind === "revoked") {
+        // The owner withdrew access (or it expired): say so on the source instead of failing silently every hour
+        await db.update(reviewSources).set({ lastError: err.message }).where(eq(reviewSources.id, source.id));
+      }
+      throw err;
+    }
+  } else if (source.provider === "google") {
     const apiKey = credentials.apiKey as string | undefined;
     const placeId = source.providerBusinessId;
     const res = await fetchGoogleReviews({ placeId, apiKey });
@@ -95,6 +116,7 @@ export async function syncReviewSource(
           authorPhotoUrl: review.authorPhotoUrl,
           rating: review.rating,
           text: review.text,
+          textFetchedAt: new Date(),
           reviewDate: review.reviewDate,
         })
         .where(eq(reviews.id, existing.id));
@@ -109,6 +131,7 @@ export async function syncReviewSource(
         authorPhotoUrl: review.authorPhotoUrl,
         rating: review.rating,
         text: review.text,
+        textFetchedAt: new Date(),
         reviewDate: review.reviewDate,
         isApproved: true,
       });
@@ -121,6 +144,7 @@ export async function syncReviewSource(
     .update(reviewSources)
     .set({
       lastSyncAt: now,
+      lastError: null,
       ...(stats ? { ratingAverage: stats.rating, ratingTotal: stats.total } : {}),
     })
     .where(eq(reviewSources.id, source.id));

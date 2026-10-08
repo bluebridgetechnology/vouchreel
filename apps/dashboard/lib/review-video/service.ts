@@ -1,6 +1,7 @@
 import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { adjustmentFor, applyAdjustment } from "@/lib/admin/credit-adjustments";
 import { rightsVersionFor } from "./rights";
+import { sourceBlockedReason } from "./sources";
 import { linkDomain } from "@/lib/reviews/own";
 import { db } from "@/lib/db";
 import { reviewSources, reviewVideos, reviews, socialExportSettings, spaces } from "@/lib/db/schema";
@@ -90,6 +91,8 @@ export interface ReviewOption {
   date: string | null;
   /** Template ids this review can be shown in without shortening it. */
   fits: string[];
+  /** Set when videos cannot be made from this kind of review right now (REVIEW_VIDEO_SOURCES); the reason to show. */
+  videoBlocked: string | null;
 }
 
 export interface SourceStats {
@@ -118,6 +121,7 @@ export async function listReviewOptions(spaceId: string): Promise<{ reviews: Rev
       link: r.provider === "own" ? (linkDomain(r.linkUrl) ?? null) : null,
       date: formatReviewMonth(r.reviewDate) ?? null,
       fits: TEMPLATES.filter((t) => reviewFits(t, { text: r.text! })).map((t) => t.id),
+      videoBlocked: sourceBlockedReason(r.provider),
     }));
 
   const sources = await db.select().from(reviewSources).where(eq(reviewSources.spaceId, spaceId));
@@ -189,6 +193,10 @@ export async function createReviewVideo(input: CreateReviewVideoInput) {
   if (rows.length !== ids.length) throw new AiVideoError(404, "NOT_FOUND", "One or more reviews were not found.");
   const byId = new Map(rows.map((r) => [r.id, r]));
   const ordered = ids.map((id) => byId.get(id)!);
+  for (const row of ordered) {
+    const blocked = sourceBlockedReason(row.provider);
+    if (blocked) throw new AiVideoError(403, "FORBIDDEN", blocked);
+  }
 
   const [space] = await db.select({ ownerId: spaces.ownerId }).from(spaces).where(eq(spaces.id, input.spaceId));
   if (!space) throw new AiVideoError(404, "NOT_FOUND", "Space not found");

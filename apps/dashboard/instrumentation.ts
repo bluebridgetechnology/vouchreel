@@ -4,6 +4,15 @@ export async function register() {
   // Error tracking: does nothing unless SENTRY_DSN is set
   const { initObservability } = await import("@/lib/observability/sentry");
   initObservability("web");
+  if (process.env.NODE_ENV === "production" && !process.env.ENCRYPTION_KEY) {
+    console.error(
+      "[startup] ENCRYPTION_KEY is not set: connecting a Google or Trustpilot review source will fail until it is " +
+        "(generate one with: openssl rand -hex 32)."
+    );
+  }
+  if (process.env.NODE_ENV === "production" && process.env.GOOGLE_OAUTH_TEST_ORIGIN) {
+    console.warn("[startup] GOOGLE_OAUTH_TEST_ORIGIN is set: Google calls go to " + process.env.GOOGLE_OAUTH_TEST_ORIGIN + ". It is for the browser tests only.");
+  }
   const { getFfmpegStatus } = await import("@/lib/media/ffmpeg");
   const status = await getFfmpegStatus(true);
   if (!status.available) {

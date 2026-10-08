@@ -45,11 +45,10 @@ export async function fetchGoogleReviews({
   totalReviews?: number;
   reviews: NormalizedReview[];
 }> {
-  const key = apiKey || process.env.GOOGLE_PLACES_API_KEY;
+  // The owner's own key: the platform holds no Google key of its own
+  const key = apiKey;
   if (!key) {
-    throw new Error(
-      "Google Places API Key is required. Please provide an API key in credentials or configure GOOGLE_PLACES_API_KEY."
-    );
+    throw new Error("This Google source has no API key. Reconnect it and add your own Google Places API key.");
   }
 
   if (!placeId) {

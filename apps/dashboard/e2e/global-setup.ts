@@ -3,7 +3,8 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import pg from "pg";
 import { request, type FullConfig } from "@playwright/test";
 import { startFakeS3 } from "./fake-s3";
-import { ADMIN_STATE, AUDIT_SEED_COUNT, CONSENT_FILE, E2E_AUTH_SECRET, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, STORAGE_BUCKET, STORAGE_ORIGIN, STORAGE_PORT, USERS } from "./seed";
+import { startFakeGoogle } from "./fake-google";
+import { ADMIN_STATE, AUDIT_SEED_COUNT, CONSENT_FILE, E2E_AUTH_SECRET, FAILED_JOB_ERROR, GOOGLE_CLIENT, GOOGLE_PORT, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, STORAGE_BUCKET, STORAGE_ORIGIN, STORAGE_PORT, USERS } from "./seed";
 
 /**
  * Runs after the web server is up. Recreates the rows the tests rely on (users, a plan, jobs,
@@ -11,6 +12,7 @@ import { ADMIN_STATE, AUDIT_SEED_COUNT, CONSENT_FILE, E2E_AUTH_SECRET, FAILED_JO
  */
 export default async function globalSetup(config: FullConfig) {
   const fakeS3 = await startFakeS3(STORAGE_PORT, STORAGE_BUCKET);
+  const fakeGoogle = await startFakeGoogle(GOOGLE_PORT, GOOGLE_CLIENT);
   const dbUrl = process.env.E2E_DATABASE_URL;
   if (!dbUrl) throw new Error("Set E2E_DATABASE_URL to a throwaway Postgres (see playwright.config.ts).");
   const dbName = new URL(dbUrl).pathname.replace(/^\//, "");
@@ -146,5 +148,8 @@ export default async function globalSetup(config: FullConfig) {
   await api.storageState({ path: ADMIN_STATE });
   await api.dispose();
   // Keep the fake storage up for the tests; stop it when they finish
-  return () => new Promise<void>((resolve) => fakeS3.close(() => resolve()));
+  return async () => {
+    await new Promise<void>((resolve) => fakeGoogle.close(() => resolve()));
+    await new Promise<void>((resolve) => fakeS3.close(() => resolve()));
+  };
 }
