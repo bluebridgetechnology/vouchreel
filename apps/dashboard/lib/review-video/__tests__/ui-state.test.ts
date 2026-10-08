@@ -158,3 +158,21 @@ describe("posterSrc", () => {
     expect(posterSrc("https://cdn.test/v.mp4", 3)).toBe("https://cdn.test/v.mp4#t=2");
   });
 });
+
+describe("reviews whose source is switched off", () => {
+  const off = "Videos from Google reviews are not switched on yet. You can add a review of your own instead.";
+  const blocked = { ...review("g", ["spotlight"]), videoBlocked: off };
+  const own: ReviewOptionView = { ...review("o", ["spotlight"], "Written by the owner, on their own site."), source: "own", videoBlocked: null };
+
+  it("cannot be picked, and says why", () => {
+    expect(reviewPickState(blocked, single, [])).toEqual({ disabled: true, reason: off });
+    expect(reviewPickState(own, single, [])).toMatchObject({ disabled: false });
+    expect(usableInTemplate(blocked, single)).toBe(false);
+  });
+
+  it("is dropped from a pick, and a template with nothing else to use explains the switch", () => {
+    expect(pruneSelection(["g", "o"], stack, [blocked, own])).toEqual(["o"]);
+    expect(templateBlockedReason(single, [], [blocked])).toBe(off);
+    expect(templateBlockedReason(single, [], [blocked, own])).toBeNull();
+  });
+});

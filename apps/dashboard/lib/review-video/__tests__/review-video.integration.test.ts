@@ -187,6 +187,47 @@ run("review videos (postgres)", () => {
     expect(reviews[1].shortenedFrom).toBeUndefined();
   });
 
+  describe("the per-source switch", () => {
+    const before = process.env.REVIEW_VIDEO_SOURCES;
+    afterEach(() => {
+      if (before === undefined) delete process.env.REVIEW_VIDEO_SOURCES;
+      else process.env.REVIEW_VIDEO_SOURCES = before;
+    });
+
+    it("refuses a video from a Google review while only your own reviews are switched on, and queues nothing", async () => {
+      delete process.env.REVIEW_VIDEO_SOURCES; // the default: own only
+      const refused = svc.createReviewVideo(base());
+      await expect(refused).rejects.toMatchObject({ status: 403 });
+      await expect(refused).rejects.toThrow(/Google reviews are not switched on yet/);
+      expect(await db.select().from(s.reviewVideos)).toHaveLength(0);
+      expect(await db.select().from(s.jobs)).toHaveLength(0);
+    });
+
+    it("still makes a video from a review the owner typed in", async () => {
+      delete process.env.REVIEW_VIDEO_SOURCES;
+      const [own] = await db
+        .insert(s.reviews)
+        .values({ spaceId: ids.space, provider: "own", providerReviewId: `own:${crypto.randomUUID()}`, authorName: "Own Voice", rating: null, text: "Written by the owner, from their own site." })
+        .returning();
+      await expect(svc.createReviewVideo(base({ reviewIds: [own.id] }))).resolves.toMatchObject({ status: "queued" });
+    });
+
+    it("one Google review in a stack blocks the whole stack", async () => {
+      process.env.REVIEW_VIDEO_SOURCES = "trustpilot,own";
+      await expect(svc.createReviewVideo(base({ template: "stack", reviewIds: [ids.reviews[3], ids.reviews[1], ids.reviews[2]] }))).rejects.toMatchObject({ status: 403 });
+    });
+
+    it("tells the picker which reviews are blocked, and why", async () => {
+      delete process.env.REVIEW_VIDEO_SOURCES;
+      const { reviews } = await svc.listReviewOptions(ids.space);
+      const google = reviews.find((r) => r.author === "Reviewer 1")!;
+      expect(google.videoBlocked).toMatch(/Google reviews are not switched on yet/);
+      process.env.REVIEW_VIDEO_SOURCES = "google,own";
+      const again = await svc.listReviewOptions(ids.space);
+      expect(again.reviews.find((r) => r.author === "Reviewer 1")!.videoBlocked).toBeNull();
+    });
+  });
+
   it("keeps the order the owner picked for a stack", async () => {
     const order = [ids.reviews[3], ids.reviews[1], ids.reviews[2]];
     const video = await svc.createReviewVideo(base({ template: "stack", reviewIds: order }));

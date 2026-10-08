@@ -10,6 +10,8 @@ export interface ReviewOptionView {
   link?: string | null;
   date: string | null;
   fits: string[];
+  /** Set when videos cannot be made from this kind of review right now; the reason to show. */
+  videoBlocked?: string | null;
 }
 
 export interface SourceStatsView {
@@ -68,7 +70,8 @@ export function fitsTemplate(review: Pick<ReviewOptionView, "text" | "fits">, te
 }
 
 /** Whether a review can go into a video with this template: it fits whole, or its source allows cutting it down. */
-export function usableInTemplate(review: Pick<ReviewOptionView, "text" | "fits" | "source">, template: Pick<TemplateView, "id" | "maxChars">, font?: VideoFontId | null): boolean {
+export function usableInTemplate(review: Pick<ReviewOptionView, "text" | "fits" | "source" | "videoBlocked">, template: Pick<TemplateView, "id" | "maxChars">, font?: VideoFontId | null): boolean {
+  if (review.videoBlocked) return false;
   if (review.text.trim().length < MIN_REVIEW_CHARS) return false;
   return fitsTemplate(review, template, font) || SHORTENABLE_SOURCES[review.source];
 }
@@ -84,6 +87,7 @@ export function templateBlockedReason(template: TemplateView, stats: SourceStats
   if (template.requiresAggregate && stats.length === 0) {
     return "Needs your overall rating and review count. It appears after your next review sync.";
   }
+  if (reviews.length > 0 && reviews.every((r) => r.videoBlocked)) return reviews[0].videoBlocked ?? null;
   if (!reviews.some((r) => usableInTemplate(r, template, font))) return `None of your reviews can be used with this template (a review needs at least ${MIN_REVIEW_CHARS} characters).`;
   if (reviews.filter((r) => usableInTemplate(r, template, font)).length < template.reviews.min) {
     return `Needs at least ${template.reviews.min} suitable reviews.`;
@@ -100,6 +104,7 @@ export function reviewPickState(
 ): { disabled: boolean; reason: string | null; shortened?: boolean } {
   const limit = maxCharsFor(template.maxChars, font);
   const shortened = usableInTemplate(review, template, font) && !fitsTemplate(review, template, font);
+  if (review.videoBlocked) return { disabled: true, reason: review.videoBlocked };
   if (selected.includes(review.id)) return { disabled: false, reason: shortened ? `Shortened to ${limit} characters, ending with …` : null, shortened };
   if (!usableInTemplate(review, template, font)) {
     return {
