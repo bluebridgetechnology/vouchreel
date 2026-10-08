@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import pg from "pg";
 import AxeBuilder from "@axe-core/playwright";
-import { ADMIN_STATE, CONSENT_FILE, E2E_AUTH_SECRET, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, REASON_TEXT, STORAGE_ORIGIN, USERS } from "./seed";
+import { ADMIN_STATE, GOOGLE_ORIGIN, CONSENT_FILE, E2E_AUTH_SECRET, AUDIT_SEED_COUNT, FAILED_JOB_ERROR, FAILED_JOB_TYPE, PASSWORD, PLAN_NAME, QUEUED_JOB_TYPE, REASON_TEXT, STORAGE_ORIGIN, USERS } from "./seed";
 
 /** Smoke tests for the platform-admin area (/admin). Tests run in order and share seeded rows. */
 test.describe.configure({ mode: "serial" });
@@ -510,6 +510,61 @@ test.describe("platform admin", () => {
       expect((await context.request.delete(`/api/spaces/${space.id}/reviews/${r.id}`, { headers: { origin: baseURL! } })).ok()).toBe(true);
     }
     await context.close();
+  });
+
+  test("Google reviews: sign in with Google, choose a location, read its reviews, and disconnect (against a stand-in for Google)", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+    const spaces = await (await context.request.get("/api/spaces")).json();
+    const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    const google = async (path: string, init?: RequestInit) => (await fetch(`${GOOGLE_ORIGIN}${path}`, init)).json();
+    await pool.query(`DELETE FROM review_sources WHERE space_id = $1 AND provider = 'google'`, [space.id]);
+    try {
+      await open(page, `/spaces/${space.id}/reviews`);
+      const connectButton = page.getByRole("button", { name: "Connect Google Business" });
+
+      // Saying no at Google's consent screen connects nothing and says so
+      await google("/__deny?on=1", { method: "POST" });
+      await connectButton.click();
+      await page.getByRole("button", { name: "Connect with Google" }).click();
+      await expect(page.getByText("You did not allow access, so nothing was connected.")).toBeVisible();
+      await expect(connectButton).toBeVisible();
+      expect((await pool.query(`SELECT 1 FROM review_sources WHERE space_id = $1 AND provider = 'google'`, [space.id])).rowCount).toBe(0);
+      await google("/__deny?on=0", { method: "POST" });
+
+      // Saying yes: back from Google, pick the business
+      await connectButton.click();
+      await page.getByRole("button", { name: "Connect with Google" }).click();
+      const picker = page.getByRole("dialog", { name: "Choose your Google business location" });
+      await expect(picker).toBeVisible();
+      await expect(page).toHaveURL(new RegExp(`/spaces/${space.id}/reviews$`)); // the sign-in parameters are not left in the address
+      await expect(picker.getByRole("button", { name: /E2E Bar/ })).toBeVisible();
+      await picker.getByRole("button", { name: /E2E Cafe/ }).click();
+
+      // Connected: the card names the business, and its reviews are listed (a translated one in the reviewer's own words)
+      await expect(page.getByText("Connected E2E Cafe and synced its reviews.")).toBeVisible();
+      await expect(page.getByText("Google Business Profile", { exact: true })).toBeVisible();
+      await expect(page.getByText("Gwen Googler")).toBeVisible();
+      await expect(page.getByText("Un endroit charmant")).toBeVisible();
+      await expect(page.getByText(/Lovely place/)).toHaveCount(0);
+      const stored = await pool.query(`SELECT auth_kind, provider_business_id, display_name, rating_total, credentials::text AS credentials FROM review_sources WHERE space_id = $1 AND provider = 'google'`, [space.id]);
+      expect(stored.rows[0]).toMatchObject({ auth_kind: "oauth", provider_business_id: "accounts/111/locations/222", display_name: "E2E Cafe", rating_total: 2 });
+      expect(stored.rows[0].credentials).not.toContain("fake-refresh-token"); // the refresh token is stored encrypted
+
+      // Disconnecting withdraws the access at Google and removes the source and its reviews
+      await page.getByRole("button", { name: "Disconnect" }).first().click();
+      await page.getByRole("button", { name: "Disconnect", exact: true }).last().click();
+      await expect(page.getByRole("button", { name: "Connect Google Business" })).toBeVisible();
+      await expect(page.getByText("Gwen Googler")).toHaveCount(0);
+      expect((await google("/__state")).revoked).toContain("fake-refresh-token");
+    } finally {
+      await google("/__deny?on=0", { method: "POST" }).catch(() => {});
+      await pool.query(`DELETE FROM review_sources WHERE space_id = $1 AND provider = 'google'`, [space.id]);
+      await pool.end();
+      await context.close();
+    }
   });
 
   test("email verification: a new account cannot sign in until its email link is used", async ({ browser, baseURL }) => {

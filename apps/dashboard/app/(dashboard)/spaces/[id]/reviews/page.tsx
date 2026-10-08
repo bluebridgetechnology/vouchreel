@@ -18,8 +18,26 @@ interface ReviewSource {
   providerBusinessId: string;
   lastSyncAt: string | null;
   isActive: boolean;
+  authKind: "api_key" | "oauth";
+  displayName: string | null;
+  lastError: string | null;
   createdAt: string;
 }
+
+interface GoogleLocation {
+  id: string;
+  title: string;
+  address: string | null;
+}
+
+const GOOGLE_ERRORS: Record<string, string> = {
+  denied: "You did not allow access, so nothing was connected.",
+  revoked: "Google access was withdrawn or has expired. Connect Google again.",
+  already_connected: "This space already has a Google source. Disconnect it first, then connect again.",
+  not_configured: "Signing in with Google is not set up on this installation.",
+  invalid: "That sign-in could not be verified (it may have expired). Please try again.",
+  failed: "Google sign-in did not complete. Please try again.",
+};
 
 interface ReviewItem {
   id: string;
@@ -49,6 +67,13 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
   const [videoOpen, setVideoOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sources, setSources] = useState<ReviewSource[]>([]);
+  const [googleOAuthAvailable, setGoogleOAuthAvailable] = useState(false);
+  const [googleStarting, setGoogleStarting] = useState(false);
+  // Choosing which Google business location to read, after signing in
+  const [locationSourceId, setLocationSourceId] = useState<string | null>(null);
+  const [locations, setLocations] = useState<GoogleLocation[] | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [choosingLocation, setChoosingLocation] = useState<string | null>(null);
   const [reviewsList, setReviewsList] = useState<ReviewItem[]>([]);
 
   // Filter state
@@ -121,6 +146,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
       }
       const data = await res.json();
       setSources(data.sources || []);
+      setGoogleOAuthAvailable(Boolean(data.googleOAuthAvailable));
       setReviewsList(data.reviews || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error loading reviews");
@@ -132,6 +158,70 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
   useEffect(() => {
     loadData();
   }, [spaceId]);
+
+  // Coming back from Google: ?google=choose&source=... (pick a location) or ?google=error&reason=...
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get("google");
+    if (!result) return;
+    window.history.replaceState(null, "", window.location.pathname);
+    if (result === "choose" && params.get("source")) {
+      openLocationPicker(params.get("source")!);
+    } else if (result === "error") {
+      notify.error(GOOGLE_ERRORS[params.get("reason") ?? ""] ?? GOOGLE_ERRORS.failed);
+    }
+  }, []);
+
+  async function handleConnectGoogle() {
+    try {
+      setGoogleStarting(true);
+      setConnectError(null);
+      const res = await fetch(`/api/spaces/${spaceId}/reviews/google/connect`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || "Could not start the Google sign-in");
+      window.location.assign(data.url);
+    } catch (err) {
+      setConnectError(err instanceof Error ? err.message : "Could not start the Google sign-in");
+      setGoogleStarting(false);
+    }
+  }
+
+  async function openLocationPicker(sourceId: string) {
+    setLocationSourceId(sourceId);
+    setLocations(null);
+    setLocationError(null);
+    try {
+      const res = await fetch(`/api/spaces/${spaceId}/reviews/sources/${sourceId}/google-locations`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || "Could not load your Google locations");
+      setLocations(data.locations || []);
+    } catch (err) {
+      setLocationError(err instanceof Error ? err.message : "Could not load your Google locations");
+    }
+  }
+
+  async function handleChooseLocation(location: GoogleLocation) {
+    if (!locationSourceId) return;
+    try {
+      setChoosingLocation(location.id);
+      setLocationError(null);
+      const res = await fetch(`/api/spaces/${spaceId}/reviews/sources/${locationSourceId}/google-location`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locationId: location.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || "Could not save the location");
+      setLocationSourceId(null);
+      setSyncMessage(data.syncError ? `Connected, but the first sync had a notice: ${data.syncError}` : `Connected ${location.title} and synced its reviews.`);
+      setTimeout(() => setSyncMessage(null), 5000);
+      await loadData();
+    } catch (err) {
+      setLocationError(err instanceof Error ? err.message : "Could not save the location");
+    } finally {
+      setChoosingLocation(null);
+    }
+  }
 
   async function handleConnect(e: React.FormEvent) {
     e.preventDefault();
@@ -399,15 +489,21 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
               </div>
               <div>
                 <h3 className="font-medium text-text text-sm">Google Reviews</h3>
-                <p className="text-xs text-text-muted">Google Places API</p>
+                <p className="text-xs text-text-muted">{googleSource?.authKind === "oauth" ? "Google Business Profile" : googleOAuthAvailable ? "Google Business Profile or Places API" : "Google Places API"}</p>
               </div>
             </div>
 
             {googleSource ? (
-              <span className="inline-flex items-center gap-1 rounded-pill bg-success-soft px-2 py-0.5 text-xs font-medium text-success-foreground">
-                <span className="h-1.5 w-1.5 rounded-pill bg-success" />
-                Connected
-              </span>
+              googleSource.providerBusinessId.startsWith("pending:") ? (
+                <span className="rounded-pill bg-warning-soft px-2 py-0.5 text-xs font-medium text-warning-foreground">Choose a location</span>
+              ) : googleSource.lastError ? (
+                <span className="rounded-pill bg-danger-soft px-2 py-0.5 text-xs font-medium text-danger-foreground">Needs attention</span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-pill bg-success-soft px-2 py-0.5 text-xs font-medium text-success-foreground">
+                  <span className="h-1.5 w-1.5 rounded-pill bg-success" />
+                  Connected
+                </span>
+              )
             ) : (
               <span className="rounded-pill bg-surface-sunken px-2 py-0.5 text-xs font-medium text-text-muted">
                 Not Connected
@@ -416,15 +512,21 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
           </div>
 
           <div className="rounded-card bg-surface-sunken/40 p-3 text-xs text-text-muted space-y-1">
-            <p>
-              <strong>Note:</strong> The official Google Places API caps review retrieval
-              to the ~5 most helpful/recent reviews for your place listing.
-            </p>
-            {googleSource && (
-              <p className="font-mono text-2xs truncate">
-                Place ID: {googleSource.providerBusinessId}
+            {googleSource?.authKind === "oauth" ? (
+              <p>
+                You signed in with Google, so all of this business&apos;s reviews are read, and the rating and count are Google&apos;s own.
+              </p>
+            ) : (
+              <p>
+                <strong>Note:</strong> With your own Places API key, Google returns only the ~5 most helpful/recent reviews for your place listing.
               </p>
             )}
+            {googleSource && !googleSource.providerBusinessId.startsWith("pending:") && (
+              <p className={cn("text-2xs truncate", googleSource.authKind === "oauth" ? "" : "font-mono")}>
+                {googleSource.authKind === "oauth" ? (googleSource.displayName ?? googleSource.providerBusinessId) : `Place ID: ${googleSource.providerBusinessId}`}
+              </p>
+            )}
+            {googleSource?.lastError && <p className="text-danger-foreground">{googleSource.lastError}</p>}
             {googleSource?.lastSyncAt && (
               <p className="text-2xs">
                 Last synced: {new Date(googleSource.lastSyncAt).toLocaleString()}
@@ -433,7 +535,16 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
           </div>
 
           <div className="flex items-center gap-2 pt-1">
-            {googleSource ? (
+            {googleSource?.providerBusinessId.startsWith("pending:") ? (
+              <>
+                <button type="button" onClick={() => openLocationPicker(googleSource.id)} className={buttonVariants({ variant: "primary", size: "sm" })}>
+                  Choose location
+                </button>
+                <button type="button" onClick={() => handleDisconnectSource(googleSource.id)} className={buttonVariants({ variant: "outline-danger", size: "sm" })}>
+                  Cancel
+                </button>
+              </>
+            ) : googleSource ? (
               <>
                 <button
                   type="button"
@@ -563,6 +674,45 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
         </Card>
       </div>
 
+      {/* Choose the Google business location, after signing in */}
+      {locationSourceId && (
+        <ModalOverlay label="Choose your Google business location" onClose={() => setLocationSourceId(null)}>
+          <Card variant="flat" className="w-full max-w-md p-4 sm:p-6 shadow-float space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-base font-medium text-text">Which business?</h3>
+              <button onClick={() => setLocationSourceId(null)} className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-sm")}>
+                ✕
+              </button>
+            </div>
+            {locationError && (
+              <div className="rounded-card border border-danger/30 bg-danger-soft p-3 text-xs text-danger-foreground">{locationError}</div>
+            )}
+            {!locations && !locationError && <p className="text-xs text-text-muted">Loading your locations…</p>}
+            {locations && locations.length === 0 && (
+              <p className="text-xs text-text-muted">This Google account manages no business locations. Sign in with the account that owns your Business Profile.</p>
+            )}
+            {locations && locations.length > 0 && (
+              <ul className="max-h-72 divide-y overflow-y-auto rounded-card border">
+                {locations.map((location) => (
+                  <li key={location.id}>
+                    <button
+                      type="button"
+                      disabled={choosingLocation !== null}
+                      onClick={() => handleChooseLocation(location)}
+                      className={cn(buttonVariants({ variant: "ghost", size: "bare" }), "w-full flex-col items-start gap-0.5 rounded-none px-3 py-3 text-left text-xs")}
+                    >
+                      <span className="font-medium text-text">{location.title}</span>
+                      {location.address && <span className="text-text-muted">{location.address}</span>}
+                      {choosingLocation === location.id && <span className="text-text-muted">Connecting…</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </ModalOverlay>
+      )}
+
       {/* Connect Modal */}
       {connectModalProvider && (
         <ModalOverlay label="Connect review source" onClose={() => setConnectModalProvider(null)}>
@@ -582,6 +732,18 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
             {connectError && (
               <div className="rounded-card border border-danger/30 bg-danger-soft p-3 text-xs text-danger-foreground">
                 {connectError}
+              </div>
+            )}
+
+            {connectModalProvider === "google" && googleOAuthAvailable && (
+              <div className="space-y-2 text-xs">
+                <Button type="button" onClick={handleConnectGoogle} loading={googleStarting} className="w-full">
+                  Connect with Google
+                </Button>
+                <p className="text-2xs text-text-muted">
+                  Sign in with the Google account that manages your business. We read your reviews only; we never post or change anything, and you can disconnect (which also withdraws our access at Google) at any time.
+                </p>
+                <p className="border-t pt-3 text-center text-2xs text-text-muted">or use your own Google Places API key (up to 5 reviews)</p>
               </div>
             )}
 

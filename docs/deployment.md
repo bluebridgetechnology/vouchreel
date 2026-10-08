@@ -167,6 +167,22 @@ What the policy allows: scripts with the nonce; inline styles (the toast library
 
 **Cost:** a nonce means pages are built per request instead of served from a build-time copy. Marketing pages have no data to fetch, so the extra work is small, but it is real; `CSP_MODE=off` removes it.
 
+## Google sign-in for review sources
+
+Owners can connect their Google Business Profile by signing in with Google instead of pasting an API key. The platform registers **one OAuth app** (a client id and secret, not a billed API key); each owner then authorises it for their own business, and we read their reviews with that access. With sign-in all reviews come back, with Google's own rating and count; the API-key route stays as the fallback and returns at most 5.
+
+Set it up once. The steps follow Google's documentation from memory and have not been run against the real service, so check Google's current names and requirements as you go:
+
+1. In [Google Cloud Console](https://console.cloud.google.com/), create a project and enable the Business Profile APIs: *My Business Account Management API*, *My Business Business Information API* and the reviews API (*Google My Business API*, v4).
+2. Request access to the Business Profile APIs for that project (Google reviews each request; it can take days).
+3. Configure the OAuth consent screen (external). The app asks for one scope, `https://www.googleapis.com/auth/business.manage`, which Google treats as sensitive, so it needs verification: a privacy policy URL, a homepage, and a short video of the flow. The scope can also edit a profile; the app only ever reads reviews, and the consent screen text and your privacy policy should say so.
+4. Create an OAuth client of type *Web application*. Add the authorised redirect URI `https://YOUR-APP/api/reviews/google/callback` (exactly, including `https`).
+5. Put the client id and secret in `GOOGLE_BUSINESS_CLIENT_ID` and `GOOGLE_BUSINESS_CLIENT_SECRET`, make sure `NEXT_PUBLIC_APP_URL` is the public address, and restart.
+
+Use a client of its own, not the one for "Sign in with Google" on the login page, because the review scope needs its own consent screen and verification.
+
+How it behaves: the owner clicks *Connect with Google* on the Reviews page, approves access, then picks which business location to use. Only the refresh token is kept, encrypted with `ENCRYPTION_KEY`; short-lived access tokens are fetched when needed and never stored. If the owner withdraws access at Google (or the grant expires), the source shows what happened and the owner connects again. *Disconnect* tells Google to forget the access and deletes the source, its token and its imported reviews. `GOOGLE_OAUTH_TEST_ORIGIN` points the app at a stand-in Google and exists only for the browser tests; never set it in production.
+
 ## Direct video uploads (S3 and R2)
 
 With `STORAGE_PROVIDER=s3` or `r2`, a customer's video goes from their browser straight to your bucket (up to 100 MB), not through the app server. The app only hands out a short-lived signed form (valid 15 minutes, for one key, one content type, 1 byte to 100 MB, public-read), then checks the stored file before a submission may use it: it exists, is not empty or over 100 MB, and its first bytes are really an MP4, WebM, MOV or AVI. With Bunny or the local adapter, uploads still go through the server as before.
@@ -295,6 +311,7 @@ Run this once before the first deploy of each release that contains new migratio
 
 | Setting | Why it matters |
 | --- | --- |
+| `GOOGLE_BUSINESS_CLIENT_ID`, `GOOGLE_BUSINESS_CLIENT_SECRET` | no | Turns on "Connect with Google" for review sources: the OAuth app you register once (see *Google sign-in for review sources* below). Unset, owners can only paste their own Places API key. Needs `NEXT_PUBLIC_APP_URL` set to the public address. |
 | `REVIEW_VIDEO_SOURCES` | Which reviews a video may be made from: `google`, `trustpilot`, `own`, comma-separated. **Unset means `own` only** (reviews the owner typed in); Google and Trustpilot are off until you list them, because their terms on displaying and altering reviews are unchecked (register P4). The picker shows why a review cannot be used, and the API refuses with 403. |
 | `REVIEW_TEXT_RETENTION_DAYS` | Days to keep review text fetched from Google or Trustpilot (default 30; 0 keeps it). The hourly `/api/cron/sync-reviews` refreshes text the providers still return, then removes text older than this. The review row (author, rating, date) stays; videos already made keep the words they showed. Owner-typed reviews are never purged. Run `db:migrate` first (migration 0036). |
 | `CRON_SECRET` | **Required in production.** `/api/cron/process-webhooks` and `/api/cron/sync-reviews` refuse to run (503) without it. Vercel Cron sends it automatically (`vercel.json` schedules both jobs); the VPS compose file runs a `scheduler` service that calls them every 5 minutes / hourly. Generate with `openssl rand -hex 32`. |

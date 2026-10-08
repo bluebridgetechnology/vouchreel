@@ -10,6 +10,9 @@ export async function register() {
         "(generate one with: openssl rand -hex 32)."
     );
   }
+  if (process.env.NODE_ENV === "production" && process.env.GOOGLE_OAUTH_TEST_ORIGIN) {
+    console.warn("[startup] GOOGLE_OAUTH_TEST_ORIGIN is set: Google calls go to " + process.env.GOOGLE_OAUTH_TEST_ORIGIN + ". It is for the browser tests only.");
+  }
   const { getFfmpegStatus } = await import("@/lib/media/ffmpeg");
   const status = await getFfmpegStatus(true);
   if (!status.available) {

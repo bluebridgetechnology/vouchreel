@@ -15,6 +15,10 @@ export const AUDIT_SEED_COUNT = 60;
 export const ADMIN_STATE = "e2e/.auth/admin.json";
 
 export const STORAGE_PORT = Number(process.env.E2E_STORAGE_PORT ?? 3199);
+/** The stand-in for Google (e2e/fake-google.ts) and the OAuth app credentials the server is started with. */
+export const GOOGLE_PORT = Number(process.env.E2E_GOOGLE_PORT ?? 3198);
+export const GOOGLE_ORIGIN = `http://127.0.0.1:${GOOGLE_PORT}`;
+export const GOOGLE_CLIENT = { id: "e2e-google-client", secret: "e2e-google-secret" };
 export const STORAGE_BUCKET = "e2e-bucket";
 export const STORAGE_ORIGIN = `http://127.0.0.1:${STORAGE_PORT}`;
 export const REASON_TEXT = "Customer asked us to remove it";

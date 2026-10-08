@@ -81,6 +81,17 @@ export async function POST(request: Request, { params }: RouteParams) {
         )
       );
 
+    // One Google source per space: a different one (for example a Google sign-in) has to be disconnected first
+    if (provider === "google") {
+      const others = await db
+        .select({ id: reviewSources.id, providerBusinessId: reviewSources.providerBusinessId })
+        .from(reviewSources)
+        .where(and(eq(reviewSources.spaceId, spaceId), eq(reviewSources.provider, "google")));
+      if (others.some((o) => o.providerBusinessId !== providerBusinessId)) {
+        return badRequest("This space already has a Google source. Disconnect it before connecting another.");
+      }
+    }
+
     let sourceId: string;
     let savedSource;
 
@@ -89,6 +100,8 @@ export async function POST(request: Request, { params }: RouteParams) {
         .update(reviewSources)
         .set({
           credentials: encryptedCreds,
+          authKind: "api_key",
+          lastError: null,
           isActive: true,
         })
         .where(eq(reviewSources.id, existing.id))
@@ -104,6 +117,7 @@ export async function POST(request: Request, { params }: RouteParams) {
           provider,
           providerBusinessId,
           credentials: encryptedCreds,
+          authKind: "api_key",
           isActive: true,
         })
         .returning();

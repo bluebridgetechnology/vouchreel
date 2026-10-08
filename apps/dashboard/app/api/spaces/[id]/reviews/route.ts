@@ -4,6 +4,7 @@ import { unauthorized, forbidden, notFound, internalError } from "@/lib/api/erro
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { spaces, reviews, reviewSources } from "@/lib/db/schema";
+import { googleOAuthConfig } from "@/lib/reviews/google-oauth";
 import { log } from "@/lib/log";
 
 interface RouteParams {
@@ -49,6 +50,9 @@ export async function GET(request: Request, { params }: RouteParams) {
         providerBusinessId: reviewSources.providerBusinessId,
         lastSyncAt: reviewSources.lastSyncAt,
         isActive: reviewSources.isActive,
+        authKind: reviewSources.authKind,
+        displayName: reviewSources.displayName,
+        lastError: reviewSources.lastError,
         createdAt: reviewSources.createdAt,
       })
       .from(reviewSources)
@@ -57,6 +61,8 @@ export async function GET(request: Request, { params }: RouteParams) {
     return NextResponse.json({
       reviews: spaceReviews,
       sources,
+      // Whether this installation lets owners sign in with Google (its OAuth app is set up)
+      googleOAuthAvailable: googleOAuthConfig() !== null,
     });
   } catch (error) {
     log.error("Failed to list reviews:", error);

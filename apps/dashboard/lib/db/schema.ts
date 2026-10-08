@@ -553,6 +553,12 @@ export const reviewSources = pgTable("review_sources", {
   ratingAverage: real("rating_average"),
   ratingTotal: integer("rating_total"),
   isActive: boolean("is_active").default(true).notNull(),
+  /** How the owner authorised access: their own API key, or signing in with the provider (OAuth). */
+  authKind: text("auth_kind").$type<"api_key" | "oauth">().default("api_key").notNull(),
+  /** Shown to the owner: the business or location name when the provider gave one. */
+  displayName: text("display_name"),
+  /** Why the last sync failed, when it did (for example Google access was withdrawn); cleared by a good sync. */
+  lastError: text("last_error"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
