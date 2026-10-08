@@ -14,8 +14,10 @@ import { getSubscriptionLimits } from "@/lib/payments/subscription";
 import {
   TEMPLATES,
   getTemplate,
+  reviewForTemplate,
   reviewFits,
   validateProps,
+  type TemplateInfo,
   type Aspect,
   type BackgroundStyle,
   type ReviewVideoProps,
@@ -29,7 +31,8 @@ import { log } from "@/lib/log";
 /**
  * Review videos: styled videos made from reviews imported from Google or Trustpilot.
  * Rules this module enforces:
- *  - review text is used verbatim (templates never shorten or reword it);
+ *  - review text is used verbatim; one too long for the template is cut to its limit at a whole word and ends
+ *    with an ellipsis (never reworded). The full length is kept on the video, the review itself is untouched;
  *  - the owner must confirm they may use the reviews in marketing;
  *  - the exact rendered content is stored with the video.
  */
@@ -148,16 +151,24 @@ export function buildProps(
   rows: { authorName: string; rating: number | null; text: string | null; reviewDate: Date | null; provider: "google" | "trustpilot" | "own"; linkUrl?: string | null }[],
   brand: string,
   aggregate?: VideoAggregate,
-  theme?: VideoTheme
+  theme?: VideoTheme,
+  /** The template the video uses. Given, a review over its limit (in the chosen font) is cut to fit. */
+  template?: TemplateInfo
 ): ReviewVideoProps {
-  const items: VideoReview[] = rows.map((r) => ({
-    author: r.authorName.trim(),
-    rating: r.rating,
-    text: (r.text ?? "").trim(), // verbatim: only surrounding whitespace is removed
-    date: formatReviewMonth(r.reviewDate),
-    source: r.provider,
-    ...(r.provider === "own" && linkDomain(r.linkUrl) ? { link: linkDomain(r.linkUrl) } : {}),
-  }));
+  const items: VideoReview[] = rows.map((r) => {
+    const full = (r.text ?? "").trim(); // verbatim: only surrounding whitespace is removed
+    const shown = template ? reviewForTemplate(template, { text: full, source: r.provider }, theme?.font) : null;
+    return {
+      author: r.authorName.trim(),
+      rating: r.rating,
+      text: shown ? shown.text : full,
+      ...(shown?.shortened ? { shortenedFrom: shown.originalLength } : {}),
+      date: formatReviewMonth(r.reviewDate),
+      source: r.provider,
+      ...(r.provider === "own" && linkDomain(r.linkUrl) ? { link: linkDomain(r.linkUrl) } : {}),
+
+    };
+  });
   return { reviews: items, brand, ...(aggregate ? { aggregate } : {}), ...(theme && (theme.style || theme.secondary || theme.font) ? { theme } : {}) };
 }
 
@@ -208,7 +219,7 @@ export async function createReviewVideo(input: CreateReviewVideoInput) {
   const style = input.style ?? kit?.videoStyle ?? undefined;
   const secondary = input.secondaryColor === undefined ? (kit?.videoSecondaryColor ?? undefined) : (input.secondaryColor ?? undefined);
   const font = input.font ?? kit?.videoFont ?? undefined;
-  const props = buildProps(ordered, brand, aggregate, { ...(style ? { style } : {}), ...(secondary ? { secondary } : {}), ...(font ? { font } : {}) });
+  const props = buildProps(ordered, brand, aggregate, { ...(style ? { style } : {}), ...(secondary ? { secondary } : {}), ...(font ? { font } : {}) }, template);
   const problems = validateProps(template.id, props);
   if (problems.length) throw new AiVideoError(422, "VALIDATION_ERROR", problems.join(" "), { problems });
 

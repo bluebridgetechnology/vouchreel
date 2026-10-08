@@ -311,7 +311,7 @@ export default function BrandPage({ params }: { params: Promise<{ id: string }> 
               <span id="brand-video-font-label" className="text-xs font-medium text-text">
                 Video font
               </span>
-              <p className="text-xs text-text-muted">The type used for the review text in your videos. Longer reviews fit less in wider fonts, and reviews are never shortened.</p>
+              <p className="text-xs text-text-muted">The type used for the review text in your videos. Longer reviews fit less in wider fonts, and a review too long for the font is cut at a word with “…”.</p>
               <VideoFontPicker
                 label="Video font"
                 value={draft.videoFont}

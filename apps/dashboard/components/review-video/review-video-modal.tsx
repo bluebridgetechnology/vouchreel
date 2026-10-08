@@ -123,7 +123,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
     [data, selected],
   );
   const check = template ? checkSelection(template, selected, rights) : null;
-  const seconds = data && template ? estimateSeconds(template, picked, data.stats) : null;
+  const seconds = data && template ? estimateSeconds(template, picked, data.stats, effectiveFont) : null;
   const rightsText = rightsTextFor(picked.map((r) => r.source));
   const livePreview = useMemo(
     () =>
@@ -146,7 +146,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
     setFont(next);
     // A wider font fits fewer characters, so a pick that no longer fits is dropped
     const kept = pruneSelection(selected, template, data.reviews, next ?? data.brandFont);
-    if (kept.length < selected.length) notify.info("Some picked reviews are too long for that font and were removed.");
+    if (kept.length < selected.length) notify.info("Some picked reviews cannot be used with that font and were removed.");
     setSelected(kept);
   }
 
@@ -222,7 +222,7 @@ export function ReviewVideoModal({ spaceId, onClose }: { spaceId: string; onClos
               </span>
               <h3 className="text-lg font-medium text-text">Review videos</h3>
             </div>
-            <p className="mt-0.5 text-xs text-text-muted">Turn your Google and Trustpilot reviews into styled, shareable videos. Reviews are shown exactly as written.</p>
+            <p className="mt-0.5 text-xs text-text-muted">Turn your Google and Trustpilot reviews into styled, shareable videos. Reviews are shown as written (one too long for a template is cut at a word and ends with “…”).</p>
           </div>
           <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close">
             <Icon name="close" size="sm" />

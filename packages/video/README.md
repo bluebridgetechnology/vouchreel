@@ -47,8 +47,11 @@ per video with `style` / `secondaryColor` on create.
 
 ## Rules the templates follow
 
-- **Reviews are verbatim.** Templates never shorten, reword or reorder review text. A review that
-  does not fit a template is rejected (`validateProps`), not trimmed. Long text only gets a smaller font.
+- **Reviews are verbatim, or cut and marked.** Templates never reword or reorder review text. A review longer
+  than the template's limit (`maxChars`, scaled for the font) is cut by the caller with `shortenReviewText`
+  at a whole word, ends with "…", and carries `shortenedFrom` (the full length). `validateProps` still rejects
+  text over the limit, so an uncut long review never reaches a template. `SHORTENABLE_SOURCES` in
+  `src/lib/shorten.ts` switches cutting off per source: that source's long reviews are then refused as before.
 - **Attribution stays on screen:** author name, rating, source name, and the month when known.
 - **Source logos are used as supplied.** `src/assets/google-icon.svg` and `src/assets/trustpilot-logo.svg` are
   the company's official files; they are never recoloured, redrawn or stretched (`source-mark.test.ts`

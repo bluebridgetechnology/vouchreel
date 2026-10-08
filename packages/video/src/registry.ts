@@ -1,4 +1,5 @@
 import { isVideoFont, maxCharsFor } from "./lib/font-catalog";
+import { MIN_REVIEW_CHARS, SHORTENABLE_SOURCES, shortenReviewText } from "./lib/shorten";
 import { ASPECTS, BACKGROUND_STYLES, FPS, type Aspect, type BackgroundStyle, type ReviewVideoProps, type VideoReview } from "./types";
 
 export * from "./types";
@@ -35,7 +36,7 @@ export interface TemplateInfo {
   defaultStyle: BackgroundStyle;
   /** Needs provider-reported totals (rating and count) to show. */
   requiresAggregate: boolean;
-  /** Longest single review (characters) that still reads comfortably. Reviews are never trimmed. */
+  /** Longest single review (characters) that still reads comfortably. Longer ones are cut to this at a word and end with an ellipsis. */
   maxChars: number;
   /** Length of the finished video, from the content. */
   durationSeconds(props: ReviewVideoProps): number;
@@ -143,10 +144,24 @@ export const compositionId = (templateId: string, aspect: Aspect) => `${template
 
 export const dimensionsFor = (aspect: Aspect) => ASPECTS[aspect];
 
-/** Whether a review can be shown by the template, in the given font, without trimming it. */
+export { ELLIPSIS, MIN_REVIEW_CHARS, SHORTENABLE_SOURCES, shortenReviewText, type ShortenResult } from "./lib/shorten";
+
+/** The review as the video will show it: whole when it fits, otherwise cut to the limit and marked with an ellipsis. */
+export function reviewForTemplate(template: TemplateInfo, review: Pick<VideoReview, "text" | "source">, font?: string | null) {
+  const limit = maxCharsFor(template.maxChars, font);
+  return SHORTENABLE_SOURCES[review.source] ? shortenReviewText(review.text, limit) : { text: review.text.trim(), shortened: false, originalLength: review.text.trim().length };
+}
+
+/** Whether a review can be shown whole by the template, in the given font (no cut needed). */
 export function reviewFits(template: TemplateInfo, review: Pick<VideoReview, "text">, font?: string | null): boolean {
   const length = review.text.trim().length;
-  return length >= 12 && length <= maxCharsFor(template.maxChars, font);
+  return length >= MIN_REVIEW_CHARS && length <= maxCharsFor(template.maxChars, font);
+}
+
+/** Whether a review can be used at all: it fits whole, or its source allows cutting it down to the limit. */
+export function reviewUsable(template: TemplateInfo, review: Pick<VideoReview, "text" | "source">, font?: string | null): boolean {
+  if (review.text.trim().length < MIN_REVIEW_CHARS) return false;
+  return reviewFits(template, review, font) || SHORTENABLE_SOURCES[review.source];
 }
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -174,7 +189,7 @@ export function validateProps(templateId: string, props: ReviewVideoProps): stri
     if (!review.author?.trim()) problems.push(`${label} has no author.`);
     if (review.rating == null ? review.source !== "own" : !Number.isInteger(review.rating) || review.rating < 1 || review.rating > 5) problems.push(`${label} needs a rating from 1 to 5.`);
     if (!reviewFits(template, review, isVideoFont(theme?.font) ? theme?.font : undefined)) {
-      problems.push(`${label} must be between 12 and ${maxCharsFor(template.maxChars, isVideoFont(theme?.font) ? theme?.font : undefined)} characters for this template${isVideoFont(theme?.font) ? " in this font" : ""} (reviews are never shortened).`);
+      problems.push(`${label} must be between 12 and ${maxCharsFor(template.maxChars, isVideoFont(theme?.font) ? theme?.font : undefined)} characters for this template${isVideoFont(theme?.font) ? " in this font" : ""} (longer reviews are cut to the limit before they get here).`);
     }
     if (review.source !== "google" && review.source !== "trustpilot" && review.source !== "own") problems.push(`${label} has an unknown source.`);
   });

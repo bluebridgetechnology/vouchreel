@@ -5,7 +5,9 @@ describe("review video rights wording", () => {
   it("has a version and the text the owner agrees to", () => {
     expect(REVIEW_RIGHTS_VERSION).toMatch(/^\d{4}-\d{2}-v\d+$/);
     expect(REVIEW_RIGHTS_HEADLINE).toMatch(/right to use these reviews/i);
-    expect(REVIEW_RIGHTS_DETAIL).toMatch(/exactly as written/i);
+    expect(REVIEW_RIGHTS_DETAIL).toMatch(/shown as written/i);
+    expect(REVIEW_RIGHTS_DETAIL).toMatch(/cut at a word.*….*nothing is reworded/i); // the owner is told about the cut before confirming
+    expect(REVIEW_RIGHTS_VERSION).toBe("2026-10-v2"); // the wording changed, so the version did
   });
 });
 
