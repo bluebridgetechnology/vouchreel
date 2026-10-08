@@ -1220,7 +1220,9 @@ test.describe("platform admin", () => {
     }
     // The Manage button on the Users tab must be reachable too
     await open(page, "/admin?tab=users");
-    const manage = (await page.getByRole("button", { name: "Manage" }).first().boundingBox())!;
+    const manageButton = page.getByRole("button", { name: "Manage" }).first();
+    await expect(manageButton).toBeVisible(); // wait for it: a position can only be read from something that is on screen
+    const manage = (await manageButton.boundingBox())!;
     expect(manage.x + manage.width, "Manage runs past the right edge").toBeLessThanOrEqual(390);
     for (const tabName of ["users", "moderation", "videos"]) {
       await open(page, `/admin?tab=${tabName}`);

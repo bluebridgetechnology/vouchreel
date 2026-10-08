@@ -187,6 +187,8 @@ jobs:
         with:
           name: playwright-results-${{ matrix.browser }}
           path: apps/dashboard/e2e/.results
+          # .results starts with a dot, which the action skips unless told otherwise (it uploaded nothing before)
+          include-hidden-files: true
           if-no-files-found: ignore
 
   # Builds the real video-worker image (Debian, Chromium libraries, fonts, pre-built compositions),
