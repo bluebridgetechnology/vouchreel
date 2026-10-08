@@ -1,13 +1,9 @@
 import { eq, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { csvCell } from "@/lib/admin/csv";
 import { submissions, testimonialConsents, testimonials } from "@/lib/db/schema";
 
-/** One cell of CSV, quoted when needed, and defanged against spreadsheet formulas (a cell starting with = + - @ is read as a formula). */
-export function csvCell(value: unknown): string {
-  let text = value instanceof Date ? value.toISOString() : value == null ? "" : String(value);
-  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
-  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-}
+export { csvCell };
 
 const HEADER = ["testimonial_id", "customer_name", "customer_email", "kind", "source", "wording_version", "granted_at", "withdrawn_at"];
 

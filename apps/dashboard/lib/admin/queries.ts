@@ -40,7 +40,7 @@ export function listAdminUsers(q?: string, page = 1, pageSize = USERS_PAGE_SIZE)
 
 async function listAdminUsersAt(q: string | undefined, page: number, pageSize: number): Promise<AdminUserPage> {
   const term = q?.trim();
-  const where = term ? or(ilike(user.email, `%${term}%`), ilike(user.name, `%${term}%`)) : undefined;
+  const where = term ? or(ilike(user.email, `%${term}%`), ilike(user.name, `%${term}%`), eq(user.id, term)) : undefined;
   const safePage = Number.isFinite(page) && page >= 1 ? Math.floor(page) : 1;
 
   const [{ value: total }] = await db.select({ value: count() }).from(user).where(where);
@@ -117,6 +117,7 @@ export interface AuditRow {
   entityId: string | null;
   summary: string;
   changes: Record<string, unknown>;
+  actorId: string | null;
   actorEmail: string | null;
   createdAt: Date;
 }
@@ -126,6 +127,8 @@ export interface AuditFilter {
   q?: string;
   /** Exact entity type, e.g. "plan", "user", "job", "setting". */
   entityType?: string;
+  /** Only entries made by this admin (user id). */
+  actorId?: string;
   /** Inclusive UTC dates as YYYY-MM-DD. Anything else is ignored. */
   from?: string;
   to?: string;
@@ -162,6 +165,7 @@ function auditWhere(filter: AuditFilter) {
   const toExclusive = utcDay(filter.to, 1);
   return and(
     filter.entityType ? eq(adminAuditLog.entityType, filter.entityType) : undefined,
+    filter.actorId ? eq(adminAuditLog.actorId, filter.actorId) : undefined,
     term
       ? or(
           ilike(adminAuditLog.summary, `%${likeLiteral(term)}%`),
@@ -197,6 +201,7 @@ async function listAuditLogAt(filter: AuditFilter, page: number, pageSize: numbe
       entityId: adminAuditLog.entityId,
       summary: adminAuditLog.summary,
       changes: adminAuditLog.changes,
+      actorId: adminAuditLog.actorId,
       actorEmail: user.email,
       createdAt: adminAuditLog.createdAt,
     })
@@ -214,4 +219,22 @@ async function listAuditLogAt(filter: AuditFilter, page: number, pageSize: numbe
 export async function listAuditEntityTypes(): Promise<string[]> {
   const rows = await db.selectDistinct({ type: adminAuditLog.entityType }).from(adminAuditLog).orderBy(adminAuditLog.entityType);
   return rows.map((r) => r.type);
+}
+
+/** Admins who have made at least one entry, for the "who" filter. */
+export async function listAuditActors(): Promise<{ id: string; email: string }[]> {
+  return db
+    .selectDistinct({ id: user.id, email: user.email })
+    .from(adminAuditLog)
+    .innerJoin(user, eq(adminAuditLog.actorId, user.id))
+    .orderBy(user.email);
+}
+
+/** Largest number of entries one export holds; the file says when it was cut. */
+export const AUDIT_EXPORT_LIMIT = 10_000;
+
+/** Every entry matching the filter, newest first, up to the export limit. */
+export async function listAuditForExport(filter: AuditFilter = {}): Promise<{ rows: AuditRow[]; total: number; truncated: boolean }> {
+  const page = await listAuditLogAt(filter, 1, AUDIT_EXPORT_LIMIT);
+  return { rows: page.rows, total: page.total, truncated: page.total > page.rows.length };
 }

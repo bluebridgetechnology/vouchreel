@@ -1126,6 +1126,80 @@ test.describe("platform admin", () => {
     await expect(page.getByRole("link", { name: "Newer" })).toBeVisible();
   });
 
+  test("audit log: filter by admin, jump to what an entry changed, and download it; usage: chart, by-space split and downloads", async ({ page, request, baseURL }) => {
+    // The audit log: the Admin menu narrows to one admin, and a user entry opens that user
+    await open(page, "/admin?tab=audit");
+    await page.getByRole("combobox", { name: "Admin" }).click();
+    await page.getByRole("option", { name: USERS.admin.email, exact: true }).click();
+    await page.getByRole("button", { name: "Filter" }).click();
+    await expect(page).toHaveURL(/actor=/);
+    await expect(page.getByText(/Retried e2e_failed_probe job/)).toBeVisible();
+    await open(page, "/admin?tab=audit&actor=no-such-admin");
+    await expect(page.getByText("No entries match these filters.")).toBeVisible();
+
+    await open(page, "/admin?tab=audit&type=user");
+    await page.getByRole("link", { name: "Open user" }).first().click();
+    await expect(page).toHaveURL(/tab=users&q=/);
+    await expect(page.getByRole("row").filter({ hasText: /@example\.test/ })).toHaveCount(1);
+
+    // The audit log downloads with the same filters, and the download is itself recorded
+    const jobsCsv = await request.get("/api/admin/audit/export?type=job&actor=all");
+    expect(jobsCsv.status()).toBe(200);
+    expect(jobsCsv.headers()["content-type"]).toContain("text/csv");
+    expect(jobsCsv.headers()["content-disposition"]).toContain("admin-audit-log.csv");
+    const jobsText = await jobsCsv.text();
+    expect(jobsText.split("\r\n")[0]).toBe("time_utc,admin,action,entity_type,entity_id,summary,changes");
+    expect(jobsText).toContain("Retried e2e_failed_probe job");
+    expect(jobsText).not.toContain("Granted admin for");
+    await open(page, "/admin?tab=audit&q=Exported");
+    await expect(page.getByText(/Exported \d+ audit log entries/).first()).toBeVisible();
+    await open(page, "/admin?tab=audit&type=job");
+    await expect(page.getByRole("link", { name: "Export CSV" })).toHaveAttribute("href", /\/api\/admin\/audit\/export\?type=job/);
+
+    // Usage: two spaces of one account used credits this month
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    const { rows: owner } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [USERS.customer.email]);
+    const { rows: first } = await pool.query(`SELECT id FROM spaces WHERE name = 'E2E Moderation Space'`);
+    const { rows: second } = await pool.query(`INSERT INTO spaces (name, owner_id, embed_key) VALUES ('E2E Usage Space', $1, 'e2e-usage') RETURNING id`, [owner[0].id]);
+    const props = JSON.stringify({ reviews: [{ author: "A", rating: 5, text: "Great experience, would use again.", source: "own" }], brand: "#cf3d0b" });
+    try {
+      for (const spaceId of [first[0].id, second[0].id]) {
+        await pool.query(`INSERT INTO review_videos (space_id, template, status, props, rights_confirmed_at) VALUES ($1, 'spotlight', 'queued', $2, now())`, [spaceId, props]);
+      }
+      await open(page, "/admin?tab=usage");
+      // (Earlier tests leave AI videos in the month too, so the totals are checked against the page's own cards)
+      await expect(page.getByRole("img", { name: /Credits used per day in .*: \d+ in total/ })).toBeVisible();
+      await page.getByText("Show the numbers").click();
+      await expect(page.getByRole("cell", { name: new Date().toISOString().slice(0, 10) })).toBeVisible();
+      const account = page.getByRole("row").filter({ hasText: USERS.customer.email });
+      await account.getByText(/By space \(2\)/).click();
+      await expect(account.getByText(/E2E Usage Space: 1 review, 0 AI/)).toBeVisible();
+      await expect(account.getByText(/E2E Moderation Space: 1 review, \d+ AI/)).toBeVisible();
+
+      const month = new Date().toISOString().slice(0, 7);
+      await expect(page.getByRole("link", { name: "Export accounts (CSV)" })).toHaveAttribute("href", `/api/admin/usage/export?month=${month}&scope=accounts`);
+      const accounts = await request.get(`/api/admin/usage/export?month=${month}&scope=accounts`);
+      expect(accounts.status()).toBe(200);
+      expect(accounts.headers()["content-disposition"]).toContain(`usage-${month}-accounts.csv`);
+      const accountsText = await accounts.text();
+      expect(accountsText.split("\r\n")[0]).toBe("month,account_id,name,email,plan,review_credits,review_limit,ai_credits,ai_limit,ai_cost_usd,failed");
+      expect(accountsText).toContain(USERS.customer.email);
+      const spacesText = await (await request.get(`/api/admin/usage/export?month=${month}&scope=spaces`)).text();
+      expect(spacesText).toContain("E2E Usage Space");
+      expect(spacesText).toContain("E2E Moderation Space");
+      // Not for ordinary accounts
+      const ordinary = await page.context().browser()!.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+      await signIn(ordinary.request, baseURL!, USERS.member.email);
+      expect((await ordinary.request.get(`/api/admin/usage/export?month=${month}`)).status()).toBe(403);
+      expect((await ordinary.request.get("/api/admin/audit/export")).status()).toBe(403);
+      await ordinary.close();
+    } finally {
+      await pool.query(`DELETE FROM review_videos WHERE space_id = ANY($1)`, [[first[0].id, second[0].id]]);
+      await pool.query(`DELETE FROM spaces WHERE id = $1`, [second[0].id]);
+      await pool.end();
+    }
+  });
+
   test("plans & payments: edit a plan's limits, create and archive a plan, switch the payment provider", async ({ page }) => {
     await open(page, "/admin?tab=plans");
     const dialog = page.getByRole("dialog");

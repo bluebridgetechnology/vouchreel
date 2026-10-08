@@ -144,4 +144,54 @@ run("admin usage report (postgres)", () => {
     const feb = await usage.getUsageReport("2031-02");
     expect(feb.totals).toMatchObject({ reviewCredits: 1, aiCredits: 1, aiCostCents: 999 });
   });
+
+  it("lists credits per day: every day of the month, zeros included, holding credits only", async () => {
+    const days = await usage.getUsageByDay(MONTH);
+    expect(days).toHaveLength(31);
+    expect(days[0].day).toBe("2031-03-01");
+    expect(days[30].day).toBe("2031-03-31");
+    const used = days.filter((d) => d.reviewCredits + d.aiCredits > 0).map((d) => [d.day, d.reviewCredits, d.aiCredits]);
+    expect(used).toEqual([
+      ["2031-03-05", 1, 0],
+      ["2031-03-06", 1, 0],
+      ["2031-03-08", 0, 1],
+      ["2031-03-11", 1, 0],
+      ["2031-03-12", 0, 1],
+      ["2031-03-20", 1, 0],
+    ]);
+    // The days add up to the month's totals
+    expect(days.reduce((n, d) => n + d.reviewCredits, 0)).toBe(4);
+    expect(days.reduce((n, d) => n + d.aiCredits, 0)).toBe(2);
+    expect(await usage.getUsageByDay("2031-02")).toHaveLength(28);
+  });
+
+  it("splits an account's month by space, and leaves out accounts it was not asked about", async () => {
+    const map = await usage.getSpaceUsage([owners.a, owners.c], MONTH);
+    expect([...map.keys()].sort()).toEqual([owners.a, owners.c].sort());
+    const c = map.get(owners.c)!;
+    expect(c.map((x) => [x.spaceName, x.reviewCredits, x.failed])).toEqual([
+      [`${tag} 4`, 1, 0],
+      [`${tag} 3`, 0, 1],
+    ]);
+    expect(map.get(owners.a)![0]).toMatchObject({ reviewCredits: 3, aiCredits: 1, aiCostCents: 160, failed: 2 });
+    // The spaces add up to the account's row
+    const report = await usage.getUsageReport(MONTH);
+    for (const acc of report.accounts.filter((x) => x.ownerId !== owners.b)) {
+      const spaces = map.get(acc.ownerId)!;
+      expect(spaces.reduce((n, x) => n + x.reviewCredits, 0)).toBe(acc.reviewCredits);
+      expect(spaces.reduce((n, x) => n + x.failed, 0)).toBe(acc.failed);
+    }
+    expect((await usage.getSpaceUsage([], MONTH)).size).toBe(0);
+  });
+
+  it("exports the month as CSV by account and by space", async () => {
+    const byAccount = (await usage.usageCsv("accounts", MONTH)).trim().split("\r\n");
+    expect(byAccount[0]).toBe("month,account_id,name,email,plan,review_credits,review_limit,ai_credits,ai_limit,ai_cost_usd,failed");
+    expect(byAccount).toHaveLength(4);
+    const a = byAccount.find((l) => l.includes(owners.a))!;
+    expect(a).toBe(`${MONTH},${owners.a},Owner a,${owners.a}@example.test,${tag} Plan,3,3,1,2,1.60,2`);
+    const bySpace = (await usage.usageCsv("spaces", MONTH)).trim().split("\r\n");
+    expect(bySpace[0]).toBe("month,account_id,email,space_id,space_name,review_credits,ai_credits,ai_cost_usd,failed");
+    expect(bySpace).toHaveLength(1 + 4); // A has one space, B one, C two
+  });
 });

@@ -4,6 +4,7 @@ import { getSubscriptionLimits } from "@/lib/payments/subscription";
 import { clampedPage } from "@/lib/admin/paging";
 import { adjustmentsFor, applyAdjustment } from "@/lib/admin/credit-adjustments";
 import { startOfMonthUtc } from "@/lib/ai-video/credits";
+import { toCsv } from "@/lib/admin/csv";
 
 /**
  * Platform-admin view of video credit use. The counting rules mirror the ones that gate creation
@@ -70,7 +71,7 @@ function usageRows(from: Date, to: Date) {
   const f = from.toISOString();
   const t = to.toISOString();
   return sql`
-    SELECT s.owner_id,
+    SELECT s.owner_id, s.id AS space_id, rv.created_at AS at,
       CASE WHEN rv.status IN ('queued', 'rendering', 'done') THEN rv.credits_used ELSE 0 END AS review_credits,
       0 AS ai_credits,
       0 AS cost_cents,
@@ -79,7 +80,7 @@ function usageRows(from: Date, to: Date) {
     FROM review_videos rv JOIN spaces s ON s.id = rv.space_id
     WHERE rv.created_at >= ${f}::timestamptz AND rv.created_at < ${t}::timestamptz
     UNION ALL
-    SELECT s.owner_id,
+    SELECT s.owner_id, s.id, gv.trim_approved_at,
       0,
       CASE WHEN gv.status IN ('queued', 'rendering', 'done') THEN gv.credits_used ELSE 0 END,
       coalesce(gv.cost_cents, 0),
@@ -178,4 +179,81 @@ export const formatUsd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 export function shiftMonth(month: string, delta: number): string {
   const [y, m] = month.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1 + delta, 1)).toISOString().slice(0, 7);
+}
+
+export interface SpaceUsage {
+  ownerId: string;
+  spaceId: string;
+  spaceName: string;
+  reviewCredits: number;
+  aiCredits: number;
+  aiCostCents: number;
+  failed: number;
+}
+
+/** The same month's use split by space, for the given accounts. A space with no use or failures is not listed. */
+export async function getSpaceUsage(ownerIds: string[], monthText?: string, now = new Date()): Promise<Map<string, SpaceUsage[]>> {
+  const out = new Map<string, SpaceUsage[]>();
+  if (ownerIds.length === 0) return out;
+  const { from, to } = parseMonth(monthText, now);
+  const result = await db.execute(sql`
+    WITH u AS (${usageRows(from, to)})
+    SELECT u.owner_id AS "ownerId", u.space_id AS "spaceId", sp.name AS "spaceName",
+      sum(u.review_credits)::int AS "reviewCredits", sum(u.ai_credits)::int AS "aiCredits",
+      sum(u.cost_cents)::int AS "aiCostCents", sum(u.failed)::int AS "failed"
+    FROM u JOIN spaces sp ON sp.id = u.space_id
+    WHERE u.owner_id IN (${sql.join(ownerIds.map((id) => sql`${id}`), sql`, `)})
+    GROUP BY u.owner_id, u.space_id, sp.name
+    ORDER BY sum(u.review_credits) + sum(u.ai_credits) DESC, sp.name`);
+  for (const row of result.rows as unknown as SpaceUsage[]) {
+    const list = out.get(row.ownerId) ?? [];
+    list.push(row);
+    out.set(row.ownerId, list);
+  }
+  return out;
+}
+
+export interface UsageDay {
+  /** YYYY-MM-DD, UTC. */
+  day: string;
+  reviewCredits: number;
+  aiCredits: number;
+}
+
+/** Credits held per UTC day of the month, every day listed (zero when nothing happened). */
+export async function getUsageByDay(monthText?: string, now = new Date()): Promise<UsageDay[]> {
+  const { from, to } = parseMonth(monthText, now);
+  const result = await db.execute(sql`
+    WITH u AS (${usageRows(from, to)})
+    SELECT to_char(date_trunc('day', at AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS day,
+      sum(review_credits)::int AS "reviewCredits", sum(ai_credits)::int AS "aiCredits"
+    FROM u GROUP BY 1`);
+  const byDay = new Map((result.rows as unknown as UsageDay[]).map((r) => [r.day, r]));
+  const days: UsageDay[] = [];
+  for (let d = new Date(from); d < to; d = new Date(d.getTime() + 86_400_000)) {
+    const key = d.toISOString().slice(0, 10);
+    days.push(byDay.get(key) ?? { day: key, reviewCredits: 0, aiCredits: 0 });
+  }
+  return days;
+}
+
+/** The usage tables as CSV: one row per account, or one per account and space. Limits are blank when unlimited. */
+export async function usageCsv(scope: "accounts" | "spaces", monthText?: string, now = new Date()): Promise<string> {
+  const report = await getUsageReport(monthText, 1, 1_000_000, now);
+  const limit = (n: number) => (Number.isFinite(n) ? n : "");
+  const usd = (cents: number) => (cents / 100).toFixed(2);
+  if (scope === "accounts") {
+    return toCsv(
+      ["month", "account_id", "name", "email", "plan", "review_credits", "review_limit", "ai_credits", "ai_limit", "ai_cost_usd", "failed"],
+      report.accounts.map((a) => [report.month, a.ownerId, a.name, a.email, a.planName ?? "Free", a.reviewCredits, limit(a.reviewLimit), a.aiCredits, limit(a.aiLimit), usd(a.aiCostCents), a.failed])
+    );
+  }
+  const bySpace = await getSpaceUsage(report.accounts.map((a) => a.ownerId), monthText, now);
+  const rows: unknown[][] = [];
+  for (const a of report.accounts) {
+    for (const sp of bySpace.get(a.ownerId) ?? []) {
+      rows.push([report.month, a.ownerId, a.email, sp.spaceId, sp.spaceName, sp.reviewCredits, sp.aiCredits, usd(sp.aiCostCents), sp.failed]);
+    }
+  }
+  return toCsv(["month", "account_id", "email", "space_id", "space_name", "review_credits", "ai_credits", "ai_cost_usd", "failed"], rows);
 }
