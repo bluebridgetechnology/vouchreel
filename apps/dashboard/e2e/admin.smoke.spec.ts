@@ -461,12 +461,30 @@ test.describe("platform admin", () => {
     await form.getByRole("button", { name: "Save review" }).click();
     await expect(page.getByText("Priya Nair")).toBeVisible();
 
+    // A review longer than the template can show: add one of 520 characters
+    const longReview = "Our whole team uses it every single day and it has saved us hours. ".repeat(8).trim();
+    await page.getByRole("button", { name: "Add your own review" }).click();
+    await form.getByLabel("Name", { exact: true }).fill("Long Winded");
+    await form.getByLabel("Review", { exact: true }).fill(longReview);
+    await form.getByRole("button", { name: "Save review" }).click();
+    await expect(page.getByText("Review added")).toBeVisible();
+
     // The video picker offers it, and picking it switches the confirmation to the wording for your own reviews
     await page.getByRole("button", { name: "Create review video" }).click();
     const picker = page.getByRole("dialog").last();
     await picker.getByRole("button", { name: /Priya Nair/ }).click();
-    await expect(picker.getByText("Added by you")).toBeVisible();
+    await expect(picker.getByRole("button", { name: /Priya Nair/ }).getByText("Added by you")).toBeVisible();
     await expect(picker.getByText(/genuine reviews from real customers/)).toBeVisible();
+    // ... and it says up front that a cut will happen, before the owner confirms anything
+    await expect(picker.getByText(/cut at a word.*nothing is reworded/)).toBeVisible();
+
+    // The long review stays usable and says it will be shortened to the template's limit
+    const longRow = picker.getByRole("button", { name: /Long Winded/ });
+    await expect(longRow).toBeEnabled();
+    await expect(longRow).toContainText("Will be shortened to 400 characters, ending with …");
+    await longRow.click(); // a single-review template: this swaps the pick
+    await expect(longRow).toContainText("Shortened to 400 characters, ending with …");
+    await expect(picker.getByRole("button", { name: /Priya Nair/ })).not.toContainText("shortened");
     await page.keyboard.press("Escape");
 
     // Clean up so the rest of the run is unaffected

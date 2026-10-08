@@ -1,6 +1,6 @@
 import { SAMPLE_PROPS, type BackgroundStyle, type ReviewVideoProps, type VideoFontId } from "@vouchreel/video";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
-import type { ReviewOptionView, SourceStatsView, TemplateView } from "./ui-state";
+import { shownText, type ReviewOptionView, type SourceStatsView, type TemplateView } from "./ui-state";
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
@@ -36,8 +36,9 @@ export function previewProps(input: PreviewInput): PreviewResult {
   const sample = SAMPLE_PROPS[input.template.id];
   const enough = input.picked.length >= input.template.reviews.min && input.picked.length <= input.template.reviews.max;
 
+  const font = input.font ?? input.brandFont ?? undefined;
   const reviews: ReviewVideoProps["reviews"] = enough
-    ? input.picked.map((r) => ({ author: r.author, rating: r.rating, text: r.text, date: r.date ?? undefined, source: r.source, ...(r.link ? { link: r.link } : {}) }))
+    ? input.picked.map((r) => ({ author: r.author, rating: r.rating, text: shownText(r, input.template, font).text, date: r.date ?? undefined, source: r.source, ...(r.link ? { link: r.link } : {}) }))
     : (sample?.reviews ?? []);
 
   const aggregate = input.template.requiresAggregate ? (input.stats[0] ? { source: input.stats[0].source, rating: input.stats[0].rating, total: input.stats[0].total } : sample?.aggregate) : undefined;
@@ -45,7 +46,6 @@ export function previewProps(input: PreviewInput): PreviewResult {
   const style = input.style ?? input.brandStyle ?? undefined;
   const second = input.secondary === undefined ? input.brandSecondary : input.secondary;
   const secondary = second && HEX.test(second) ? second : undefined;
-  const font = input.font ?? input.brandFont ?? undefined;
   const theme = style || secondary || font ? { ...(style ? { style } : {}), ...(secondary ? { secondary } : {}), ...(font ? { font } : {}) } : undefined;
 
   return {

@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { renderReviewStill } from "../render";
 import { SAMPLE_PROPS } from "../sample";
-import { TEMPLATES, VIDEO_FONTS, durationInFrames, maxCharsFor, validateProps } from "../registry";
+import { ELLIPSIS, TEMPLATES, VIDEO_FONTS, durationInFrames, maxCharsFor, shortenReviewText, validateProps } from "../registry";
 import type { BackgroundStyle } from "../types";
 
 /**
@@ -46,18 +46,20 @@ describe.skipIf(!enabled)("render with a theme (real Chromium)", () => {
 });
 
 describe.skipIf(!enabled)("every font on every template (real Chromium)", () => {
-  /** The longest review the template allows in that font, cut at a word. */
+  /** A review far longer than the template allows, cut the way a video is made: at a word, ending with an ellipsis. */
   const longest = (text: string, limit: number) => {
     let out = text;
-    while (out.length < limit) out += ` ${text}`;
-    out = out.slice(0, limit);
-    return out.slice(0, out.lastIndexOf(" ")).replace(/[,;:]$/, "") + ".";
+    while (out.length < limit * 2) out += ` ${text}`;
+    const cut = shortenReviewText(out, limit);
+    expect(cut.shortened).toBe(true);
+    expect(cut.text.endsWith(ELLIPSIS)).toBe(true);
+    return cut.text;
   };
 
   for (const template of TEMPLATES) {
     const images = new Map<string, Buffer>();
     for (const font of VIDEO_FONTS) {
-      it(`${template.id} renders in ${font.id} with the longest review it allows`, async () => {
+      it(`${template.id} renders in ${font.id} with a long review cut to its limit`, async () => {
         const sample = SAMPLE_PROPS[template.id];
         const text = longest(sample.reviews[0].text, maxCharsFor(template.maxChars, font.id));
         const props = { ...sample, reviews: sample.reviews.map((r) => ({ ...r, text })), theme: { font: font.id } };

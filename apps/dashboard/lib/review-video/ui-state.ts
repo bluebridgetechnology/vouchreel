@@ -1,4 +1,4 @@
-import { durationInFrames, getTemplate, maxCharsFor, reviewFits, type ReviewVideoProps, type VideoFontId } from "@vouchreel/video";
+import { MIN_REVIEW_CHARS, SHORTENABLE_SOURCES, durationInFrames, getTemplate, maxCharsFor, reviewFits, shortenReviewText, type ReviewVideoProps, type VideoFontId } from "@vouchreel/video";
 
 /** Shapes the review-videos API returns (JSON), shared by the owner UI and its tests. */
 export interface ReviewOptionView {
@@ -57,14 +57,26 @@ export const isInFlight = (status: ReviewVideoStatus) => status === "queued" || 
 export const shouldPoll = (videos: Pick<ReviewVideoView, "status">[]) => videos.some((v) => isInFlight(v.status));
 
 /**
- * Whether a review fits a template in the chosen font. With no font the server's answer (`fits`) is used;
- * a wider or narrower font changes how much fits, so then it is worked out from the text with the same
- * rule. Reviews are never shortened.
+ * Whether a review fits a template whole, in the chosen font. With no font the server's answer (`fits`) is
+ * used; a wider or narrower font changes how much fits, so then it is worked out from the text with the
+ * same rule. A review that does not fit whole is cut to the limit when the video is made (see `shownText`).
  */
 export function fitsTemplate(review: Pick<ReviewOptionView, "text" | "fits">, template: Pick<TemplateView, "id" | "maxChars">, font?: VideoFontId | null): boolean {
   if (!font) return review.fits.includes(template.id);
   const length = review.text.trim().length;
-  return length >= 12 && length <= maxCharsFor(template.maxChars, font);
+  return length >= MIN_REVIEW_CHARS && length <= maxCharsFor(template.maxChars, font);
+}
+
+/** Whether a review can go into a video with this template: it fits whole, or its source allows cutting it down. */
+export function usableInTemplate(review: Pick<ReviewOptionView, "text" | "fits" | "source">, template: Pick<TemplateView, "id" | "maxChars">, font?: VideoFontId | null): boolean {
+  if (review.text.trim().length < MIN_REVIEW_CHARS) return false;
+  return fitsTemplate(review, template, font) || SHORTENABLE_SOURCES[review.source];
+}
+
+/** The text the video will show for a review: whole, or cut to the template's limit and ending with an ellipsis. */
+export function shownText(review: Pick<ReviewOptionView, "text" | "source">, template: Pick<TemplateView, "maxChars">, font?: VideoFontId | null) {
+  const limit = maxCharsFor(template.maxChars, font);
+  return SHORTENABLE_SOURCES[review.source] ? shortenReviewText(review.text, limit) : { text: review.text.trim(), shortened: false, originalLength: review.text.trim().length };
 }
 
 /** Why a template cannot be used right now, or null when it can. */
@@ -72,8 +84,8 @@ export function templateBlockedReason(template: TemplateView, stats: SourceStats
   if (template.requiresAggregate && stats.length === 0) {
     return "Needs your overall rating and review count. It appears after your next review sync.";
   }
-  if (!reviews.some((r) => fitsTemplate(r, template, font))) return "None of your reviews fit this template (reviews are never shortened).";
-  if (reviews.filter((r) => fitsTemplate(r, template, font)).length < template.reviews.min) {
+  if (!reviews.some((r) => usableInTemplate(r, template, font))) return `None of your reviews can be used with this template (a review needs at least ${MIN_REVIEW_CHARS} characters).`;
+  if (reviews.filter((r) => usableInTemplate(r, template, font)).length < template.reviews.min) {
     return `Needs at least ${template.reviews.min} suitable reviews.`;
   }
   return null;
@@ -85,16 +97,21 @@ export function reviewPickState(
   template: TemplateView,
   selected: string[],
   font?: VideoFontId | null
-): { disabled: boolean; reason: string | null } {
-  if (selected.includes(review.id)) return { disabled: false, reason: null };
-  if (!fitsTemplate(review, template, font)) {
-    return { disabled: true, reason: `Too long for ${template.label}${font ? " in this font" : ""} (max ${maxCharsFor(template.maxChars, font)} characters)` };
+): { disabled: boolean; reason: string | null; shortened?: boolean } {
+  const limit = maxCharsFor(template.maxChars, font);
+  const shortened = usableInTemplate(review, template, font) && !fitsTemplate(review, template, font);
+  if (selected.includes(review.id)) return { disabled: false, reason: shortened ? `Shortened to ${limit} characters, ending with …` : null, shortened };
+  if (!usableInTemplate(review, template, font)) {
+    return {
+      disabled: true,
+      reason: review.text.trim().length < MIN_REVIEW_CHARS ? `Too short to use (at least ${MIN_REVIEW_CHARS} characters)` : `Too long for ${template.label}${font ? " in this font" : ""} (max ${limit} characters)`,
+    };
   }
   // A single-review template swaps the pick instead of blocking
   if (template.reviews.max > 1 && selected.length >= template.reviews.max) {
     return { disabled: true, reason: `${template.label} shows at most ${template.reviews.max} reviews` };
   }
-  return { disabled: false, reason: null };
+  return { disabled: false, reason: shortened ? `Will be shortened to ${limit} characters, ending with …` : null, shortened };
 }
 
 /** New selection after clicking a review: toggles, and replaces the pick for single-review templates. */
@@ -104,11 +121,11 @@ export function toggleSelection(selected: string[], id: string, template: Templa
   return selected.length >= template.reviews.max ? selected : [...selected, id];
 }
 
-/** Keeps only picks that still fit after the template changed. */
+/** Keeps only picks that can still be used after the template or font changed. */
 export function pruneSelection(selected: string[], template: TemplateView, reviews: ReviewOptionView[], font?: VideoFontId | null): string[] {
   const valid = selected.filter((id) => {
     const review = reviews.find((r) => r.id === id);
-    return review ? fitsTemplate(review, template, font) : false;
+    return review ? usableInTemplate(review, template, font) : false;
   });
   return valid.slice(0, template.reviews.max);
 }
@@ -130,12 +147,12 @@ export function checkSelection(template: TemplateView, selected: string[], right
 }
 
 /** Rough length of the finished video, from the same maths the renderer uses. */
-export function estimateSeconds(template: TemplateView, picked: ReviewOptionView[], stats: SourceStatsView[]): number | null {
+export function estimateSeconds(template: TemplateView, picked: ReviewOptionView[], stats: SourceStatsView[], font?: VideoFontId | null): number | null {
   const info = getTemplate(template.id);
   if (!info || picked.length < template.reviews.min) return null;
   const props: ReviewVideoProps = {
     brand: "#000000",
-    reviews: picked.map((r) => ({ author: r.author, rating: r.rating, text: r.text, source: r.source, ...(r.link ? { link: r.link } : {}) })),
+    reviews: picked.map((r) => ({ author: r.author, rating: r.rating, text: shownText(r, template, font).text, source: r.source, ...(r.link ? { link: r.link } : {}) })),
     ...(stats[0] ? { aggregate: stats[0] } : {}),
   };
   return durationInFrames(template.id, props) / 30;

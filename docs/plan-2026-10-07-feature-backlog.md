@@ -225,7 +225,7 @@ The design is already written in `docs/plan-2026-10-05-remaining-work.md` (Phase
 order; show original and trimmed side by side; the owner approves and may only delete more; mark the cut with
 an ellipsis in the video; store the original and the approved text on the `review_videos` row (migration);
 the default stays verbatim.
-**Blocker:** read the Google and Trustpilot terms on shortening review text first. I could not open them from
+**Built (2026-10-08) as an automatic cut, not an approval flow** (see the register row). **Open question:** read the Google and Trustpilot terms on shortening review text. I could not open them from
 the sandbox (P4). If they forbid it, this item stops here.
 **Tests:** only an ordered subset passes validation; the API rejects reworded or reordered text; the render
 shows the ellipsis; untouched reviews are byte-for-byte as before.

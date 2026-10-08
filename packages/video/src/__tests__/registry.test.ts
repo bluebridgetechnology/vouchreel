@@ -75,9 +75,9 @@ describe("validateProps", () => {
     expect(validateProps("stack", props(6))[0]).toMatch(/3 to 5 reviews/);
   });
 
-  it("never shortens reviews: text that does not fit is rejected, not trimmed", () => {
+  it("rejects text over the limit (the caller cuts long reviews first), and text that is too short", () => {
     const tooLong = props(1, { reviews: [review({ text: "x".repeat(401) })] });
-    expect(validateProps("spotlight", tooLong).join(" ")).toMatch(/between 12 and 400 characters.*never shortened/);
+    expect(validateProps("spotlight", tooLong).join(" ")).toMatch(/between 12 and 400 characters.*cut to the limit/);
     const stackTooLong = props(3, { reviews: Array.from({ length: 3 }, () => review({ text: "x".repeat(241) })) });
     expect(validateProps("stack", stackTooLong)[0]).toMatch(/240/);
     expect(validateProps("spotlight", props(1, { reviews: [review({ text: "ok" })] }))[0]).toMatch(/between 12/);

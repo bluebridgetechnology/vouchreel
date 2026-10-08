@@ -5,6 +5,8 @@ import {
   posterSrc,
   fitsTemplate,
   pruneSelection,
+  shownText,
+  usableInTemplate,
   reviewPickState,
   shouldPoll,
   templateBlockedReason,
@@ -38,16 +40,19 @@ describe("a font changes what fits", () => {
     expect(fitsTemplate(review("s", [], "short"), tmpl, "outfit")).toBe(false); // under 12 characters
   });
 
-  it("blocks the pick with the font's own limit, and prunes picks that no longer fit", () => {
-    expect(reviewPickState(medium, tmpl, [])).toEqual({ disabled: false, reason: null });
-    expect(reviewPickState(medium, tmpl, [], "jetbrains-mono")).toEqual({ disabled: true, reason: "Too long for Spotlight in this font (max 340 characters)" });
-    expect(pruneSelection(["m"], tmpl, [medium])).toEqual(["m"]);
-    expect(pruneSelection(["m"], tmpl, [medium], "jetbrains-mono")).toEqual([]);
+  it("a pick that no longer fits whole in a wider font stays usable and is flagged as shortened, with that font's limit", () => {
+    expect(reviewPickState(medium, tmpl, [])).toEqual({ disabled: false, reason: null, shortened: false });
+    expect(reviewPickState(medium, tmpl, [], "jetbrains-mono")).toEqual({ disabled: false, reason: "Will be shortened to 340 characters, ending with …", shortened: true });
+    expect(pruneSelection(["m"], tmpl, [medium], "jetbrains-mono")).toEqual(["m"]);
+    expect(shownText(medium, tmpl, "jetbrains-mono").text.length).toBeLessThanOrEqual(340);
   });
 
-  it("explains a template that nothing fits in this font", () => {
-    expect(templateBlockedReason(tmpl, [], [medium], "jetbrains-mono")).toMatch(/None of your reviews/);
-    expect(templateBlockedReason(tmpl, [], [medium])).toBeNull();
+  it("a review under 12 characters cannot be used, in any font", () => {
+    const tiny = review("t", [], "too short");
+    expect(usableInTemplate(tiny, tmpl, "outfit")).toBe(false);
+    expect(pruneSelection(["t"], tmpl, [tiny], "jetbrains-mono")).toEqual([]);
+    expect(templateBlockedReason(tmpl, [], [tiny], "jetbrains-mono")).toMatch(/None of your reviews/);
+    expect(templateBlockedReason(tmpl, [], [medium], "jetbrains-mono")).toBeNull();
   });
 });
 
@@ -60,7 +65,7 @@ describe("templateBlockedReason", () => {
   });
 
   it("blocks a template none of the reviews fit, or with too few suitable reviews", () => {
-    expect(templateBlockedReason(single, [], [review("x", [])])).toMatch(/None of your reviews/);
+    expect(templateBlockedReason(single, [], [review("x", [], "too short")])).toMatch(/None of your reviews/);
     expect(templateBlockedReason(stack, [], reviews)).toMatch(/at least 3/);
     expect(templateBlockedReason(stack, [], [review("a", ["stack"]), review("b", ["stack"]), review("c", ["stack"])])).toBeNull();
   });
@@ -81,9 +86,23 @@ describe("selection", () => {
     expect(toggleSelection(picked, "a", stack)).toEqual(["c", "b", "d", "e"]);
   });
 
-  it("disables reviews that are too long for the template, with a reason", () => {
-    expect(reviewPickState(long, stack, [])).toEqual({ disabled: true, reason: expect.stringContaining("Too long") });
-    expect(reviewPickState(long, single, [])).toEqual({ disabled: false, reason: null });
+  it("a review too long for the template can still be picked, and says it will be shortened", () => {
+    expect(reviewPickState(long, stack, [])).toEqual({ disabled: false, reason: "Will be shortened to 240 characters, ending with …", shortened: true });
+    expect(reviewPickState(long, stack, ["long"])).toMatchObject({ disabled: false, shortened: true });
+    expect(reviewPickState(long, single, [])).toEqual({ disabled: false, reason: null, shortened: false });
+  });
+
+  it("a review that is too short is disabled with a reason", () => {
+    expect(reviewPickState(review("t", [], "tiny"), single, [])).toEqual({ disabled: true, reason: expect.stringContaining("Too short") });
+  });
+
+  it("the text shown is whole when it fits and cut with an ellipsis when it does not", () => {
+    expect(shownText(long, single).shortened).toBe(false);
+    const cut = shownText(long, stack);
+    expect(cut.shortened).toBe(true);
+    expect(cut.text.length).toBeLessThanOrEqual(240);
+    expect(cut.text.endsWith("…")).toBe(true);
+    expect(cut.originalLength).toBe(300);
   });
 
   it("disables more picks once a stack is full, but keeps picked ones clickable", () => {
@@ -92,9 +111,9 @@ describe("selection", () => {
     expect(reviewPickState(review("3", ["stack"]), stack, full).disabled).toBe(false);
   });
 
-  it("drops picks that no longer fit when the template changes", () => {
+  it("keeps picks when the template changes (a longer one is shortened), and drops only what exceeds the new maximum", () => {
     const reviews = [review("a", ["spotlight"]), review("b", ["spotlight", "stack"])];
-    expect(pruneSelection(["a", "b"], stack, reviews)).toEqual(["b"]);
+    expect(pruneSelection(["a", "b"], stack, reviews)).toEqual(["a", "b"]);
     expect(pruneSelection(["a", "b"], single, reviews)).toEqual(["a"]);
   });
 });

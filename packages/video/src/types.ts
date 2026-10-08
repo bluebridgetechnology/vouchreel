@@ -4,12 +4,14 @@ import type { VideoFontId } from "./lib/font-catalog";
 export type ReviewSource = "google" | "trustpilot" | "own";
 export type Aspect = "9:16" | "16:9";
 
-/** One review exactly as the provider returned it. Text is never edited by templates. */
+/** One review as the provider returned it. Templates never edit the text; a review too long for a template is cut before it gets here (see `shortenReviewText`). */
 export interface VideoReview {
   author: string;
   /** Whole stars, 1 to 5. Null for an owner-supplied review, which has no rating (no stars are drawn). */
   rating: number | null;
   text: string;
+  /** Set when `text` is a cut-down copy: the length of the full review. The templates draw `text` as it is. */
+  shortenedFrom?: number;
   /** Pre-formatted, e.g. "March 2026". Optional. */
   date?: string;
   source: ReviewSource;

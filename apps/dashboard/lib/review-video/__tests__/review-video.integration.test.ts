@@ -145,14 +145,46 @@ run("review videos (postgres)", () => {
     expect(await db.select().from(s.reviewVideos)).toHaveLength(0);
   });
 
-  it("rejects bad input: unknown template, other space's review, duplicate, wrong count, too long, bad colour", async () => {
+  it("rejects bad input: unknown template, other space's review, duplicate, wrong count, bad colour", async () => {
     await expect(svc.createReviewVideo(base({ template: "nope" }))).rejects.toMatchObject({ status: 400 });
     await expect(svc.createReviewVideo(base({ reviewIds: [ids.foreign] }))).rejects.toMatchObject({ status: 404 });
     await expect(svc.createReviewVideo(base({ reviewIds: [ids.reviews[0], ids.reviews[0]] }))).rejects.toMatchObject({ status: 400 });
     await expect(svc.createReviewVideo(base({ template: "stack", reviewIds: [ids.reviews[0], ids.reviews[1]] }))).rejects.toMatchObject({ status: 422 });
-    await expect(svc.createReviewVideo(base({ reviewIds: [ids.reviews[4]] }))).rejects.toMatchObject({ status: 422 });
     await expect(svc.createReviewVideo(base({ brandColor: "red" }))).rejects.toMatchObject({ status: 400 });
     expect(await db.select().from(s.jobs)).toHaveLength(0);
+  });
+
+  it("cuts a review that is too long to the template's limit at a word, ends it with an ellipsis, and records how long it was", async () => {
+    const LONG_WORDS = ("The team answered within minutes and fixed it the same day. ".repeat(10)).trim(); // 590 characters
+    const [r] = await db
+      .insert(s.reviews)
+      .values({ spaceId: ids.space, provider: "google", providerReviewId: `g:${crypto.randomUUID()}`, authorName: "Wordy", rating: 5, text: LONG_WORDS, isApproved: true })
+      .returning();
+    const video = await svc.createReviewVideo(base({ reviewIds: [r.id] }));
+    const shown = (video.props as { reviews: { text: string; shortenedFrom?: number }[] }).reviews[0];
+    expect(shown.text.length).toBeLessThanOrEqual(400);
+    expect(shown.text.length).toBeGreaterThan(380); // fills the limit
+    expect(shown.text.endsWith("…")).toBe(true);
+    expect(LONG_WORDS.startsWith(shown.text.slice(0, -1))).toBe(true); // a prefix of the real review, nothing reworded
+    expect(shown.shortenedFrom).toBe(LONG_WORDS.length);
+    // the review itself is untouched
+    const [stored] = await db.select().from(s.reviews).where(eq(s.reviews.id, r.id));
+    expect(stored.text).toBe(LONG_WORDS);
+  });
+
+  it("a review that fits is stored exactly as before, with no shortened marker", async () => {
+    const video = await svc.createReviewVideo(base());
+    expect((video.props as { reviews: { shortenedFrom?: number }[] }).reviews[0].shortenedFrom).toBeUndefined();
+  });
+
+  it("a long review in a stack is cut to the stack's smaller limit", async () => {
+    const order = [ids.reviews[4], ids.reviews[1], ids.reviews[2]];
+    const video = await svc.createReviewVideo(base({ template: "stack", reviewIds: order }));
+    const reviews = (video.props as { reviews: { text: string; shortenedFrom?: number }[] }).reviews;
+    expect(reviews[0].text.length).toBeLessThanOrEqual(240);
+    expect(reviews[0].text.endsWith("…")).toBe(true);
+    expect(reviews[0].shortenedFrom).toBe(450);
+    expect(reviews[1].shortenedFrom).toBeUndefined();
   });
 
   it("keeps the order the owner picked for a stack", async () => {
@@ -248,23 +280,28 @@ run("review videos (postgres)", () => {
       expect(themeOf(await svc.createReviewVideo(base({ font: "caveat" })))).toEqual({ font: "caveat" });
     });
 
-    it("refuses a review that fits in one font but not in another, and says what the limit is", async () => {
-      await expect(svc.createReviewVideo(base({ reviewIds: [mediumId], font: "outfit" }))).resolves.toMatchObject({ status: "queued" });
-      const refused = svc.createReviewVideo(base({ reviewIds: [mediumId], font: "jetbrains-mono" }));
-      await expect(refused).rejects.toMatchObject({ status: 422 });
-      await expect(refused).rejects.toThrow(/340 characters.*in this font/);
+    const shownOf = (video: { props: unknown }) => (video.props as { reviews: { text: string; shortenedFrom?: number }[] }).reviews[0];
+
+    it("a review that fits in one font is cut to the other font's smaller limit", async () => {
+      const whole = shownOf(await svc.createReviewVideo(base({ reviewIds: [mediumId], font: "outfit" })));
+      expect(whole.text).toBe(MEDIUM_TEXT);
+      expect(whole.shortenedFrom).toBeUndefined();
+      const cut = shownOf(await svc.createReviewVideo(base({ reviewIds: [mediumId], font: "jetbrains-mono" })));
+      expect(cut.text.length).toBeLessThanOrEqual(340);
+      expect(cut.text.endsWith("…")).toBe(true);
+      expect(cut.shortenedFrom).toBe(380);
     });
 
     it("the kit's font applies the same limit", async () => {
       await db.insert(s.brandKits).values({ spaceId: ids.space, videoFont: "jetbrains-mono" });
-      await expect(svc.createReviewVideo(base({ reviewIds: [mediumId] }))).rejects.toMatchObject({ status: 422 });
+      expect(shownOf(await svc.createReviewVideo(base({ reviewIds: [mediumId] }))).text.length).toBeLessThanOrEqual(340);
     });
   });
 
   it("lists reviews with the templates each one fits, and the provider stats", async () => {
     const { reviews, stats } = await svc.listReviewOptions(ids.space);
     const long = reviews.find((r) => r.text === LONG_TEXT)!;
-    expect(long.fits).toEqual([]); // 450 chars fits nothing: reviews are never shortened
+    expect(long.fits).toEqual([]); // 450 chars fits no template whole; it is cut to the limit when a video is made
     const short = reviews.find((r) => r.author === "Reviewer 1")!;
     expect(short.fits).toEqual(expect.arrayContaining(["spotlight", "stack", "rating-spotlight"]));
     expect(stats).toEqual([{ source: "google", rating: 4.8, total: 213 }]);
