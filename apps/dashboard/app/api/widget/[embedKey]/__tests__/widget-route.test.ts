@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET as getWidgetData, OPTIONS as optionsWidgetData } from "../route";
 import { db } from "@/lib/db";
+import { DEFAULT_WIDGET_THEME } from "@/lib/validations/widget-config";
 
 vi.mock("@/lib/db", () => ({
   db: {
@@ -366,10 +367,10 @@ describe("Widget Data Public API Route", () => {
     const request = () =>
       getWidgetData(new Request("http://localhost/api/widget/emb_valid_123"), { params: Promise.resolve({ embedKey: "emb_valid_123" }) });
 
-    it("leaves the theme exactly as before when the space has no brand kit", async () => {
+    it("leaves the owner's theme as it is when the space has no brand kit, with defaults for options never set", async () => {
       mockQueries();
       const json = await (await request()).json();
-      expect(json.config.theme).toEqual(config.theme);
+      expect(json.config.theme).toEqual({ ...DEFAULT_WIDGET_THEME, ...config.theme });
       expect(json.config.theme).not.toHaveProperty("fontMode");
     });
 

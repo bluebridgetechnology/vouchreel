@@ -2,6 +2,7 @@ import { filterTestimonials, filterReviews, isPageAllowed, TestimonialItem, Revi
 import { setupTrigger, isDismissed, TriggerType } from "./triggers";
 import { AnalyticsTracker, ConversionGoal, getOrCreateSessionId } from "./analytics";
 import { VouchreelWidget, WidgetConfig } from "./widget";
+import { loadLayout } from "./layout-loader";
 
 export interface ExperimentVariant {
   id: string;
@@ -339,6 +340,9 @@ export async function initLoader(): Promise<void> {
       whiteLabel: data.whiteLabel,
     });
 
+    // Fetch the layout's chunk now, while the trigger waits, so it is usually there before it is needed
+    const layoutReady = loadLayout(data.config.template || "", script?.src, script?.nonce);
+
     // Determine trigger configuration
     const triggerType = data.config.trigger?.type || "delay";
     const triggerValue = data.config.trigger?.value || null;
@@ -349,7 +353,7 @@ export async function initLoader(): Promise<void> {
       value: triggerValue,
       embedKey,
       onTrigger: () => {
-        widget.mount();
+        layoutReady.then(() => widget.mount());
       },
     });
   } catch {

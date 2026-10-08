@@ -339,6 +339,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
         <div className="lg:col-span-5">
           <div className="sticky top-6">
             <LivePreview
+              embedKey={embedKey || undefined}
               template={config.template}
               position={config.position}
               theme={applyBrandKitToTheme(config.theme, brandKit)}

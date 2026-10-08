@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { spaces, widgetConfigs } from "@/lib/db/schema";
 import {
   DEFAULT_WIDGET_CONFIG,
+  normalizeTheme,
   updateWidgetConfigSchema,
 } from "@/lib/validations/widget-config";
 import {
@@ -53,12 +54,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       .where(eq(widgetConfigs.spaceId, space.id));
 
     if (existingConfig) {
-      const theme =
-        existingConfig.theme &&
-        typeof existingConfig.theme === "object" &&
-        Object.keys(existingConfig.theme).length > 0
-          ? { ...DEFAULT_WIDGET_CONFIG.theme, ...existingConfig.theme }
-          : DEFAULT_WIDGET_CONFIG.theme;
+      const theme = normalizeTheme(existingConfig.theme);
 
       const triggerValue =
         existingConfig.triggerValue &&

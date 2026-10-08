@@ -988,42 +988,40 @@ test.describe("platform admin", () => {
     }
   });
 
-  test("widget page: the live preview draws each layout, its cards open the pop-ups, and the phone view works", async ({ browser, baseURL }) => {
+  test("widget page: the live preview runs the real widget for every layout, its cards open the player, and the phone size works", async ({ browser, baseURL }) => {
     test.setTimeout(120_000);
     const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
     await signIn(context.request, baseURL!, USERS.customer.email);
     const page = await context.newPage();
-    // The preview's sample photos come from an outside image host; the test should not depend on it
-    await page.route(/images\.unsplash\.com/, (route) => route.abort());
     const spaces = await (await context.request.get("/api/spaces")).json();
     const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
     const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
     try {
-      for (const [template, heading] of [["wall-of-love", "Wall of Love Preview"], ["carousel", "Carousel Preview"], ["masonry", "Masonry Grid Preview"]] as const) {
+      // The two floating layouts are the regression: the old mock preview drew nothing for them
+      for (const [template, inline] of [["floating-card", false], ["story-strip", false], ["wall-of-love", true], ["carousel", true], ["masonry", true]] as const) {
         await pool.query(`INSERT INTO widget_configs (space_id, template) VALUES ($1, $2) ON CONFLICT (space_id) DO UPDATE SET template = $2`, [space.id, template]);
         await open(page, `/spaces/${space.id}/widget`);
-        const preview = page.getByText("Live Widget Preview").locator("xpath=ancestor::div[contains(@class,'space-y-3')][1]");
-        await expect(preview.getByText(heading)).toBeVisible();
+        const frame = page.frameLocator('iframe[title^="Widget preview"]');
+        const root = frame.locator(".vr-theme-root");
+        await expect(root).toHaveClass(new RegExp(`vr-template-${template}`), { timeout: 15_000 });
+        await expect(frame.locator("#vr-slot .vouchreel-host-container")).toHaveCount(inline ? 1 : 0);
 
-        // A video card opens the video pop-up, which closes again
-        await preview.getByRole("button").filter({ hasText: /Sarah|David/ }).first().dispatchEvent("click"); // (the mock cards are small buttons whose content overlaps their neighbours, so click this one directly)
-        await expect(preview.getByText("Get Started Like Sarah")).toBeVisible();
-        await preview.getByRole("button", { name: "Close preview modal" }).click();
-        await expect(preview.getByText("Get Started Like Sarah")).toHaveCount(0);
+        // Something in the widget opens the player or a review, which closes again
+        await frame.locator(".vr-open-btn, .vr-story-item, .vr-card").first().click();
+        await expect(frame.locator(".vr-expanded-modal")).toBeVisible();
+        await frame.locator(".vr-modal-close-btn").click();
+        await expect(frame.locator(".vr-expanded-modal")).toHaveCount(0);
 
-        // A review card opens the review pop-up with that review's provider and author
-        await preview.getByRole("button").filter({ hasText: /Google|Trustpilot/ }).first().dispatchEvent("click");
-        const closeReview = preview.getByRole("button", { name: "Close review modal" });
-        await expect(closeReview).toBeVisible();
-        await expect(preview.getByText(/Google Maps|Trustpilot/).first()).toBeVisible();
-        await closeReview.click();
-        await expect(closeReview).toHaveCount(0);
-
-        // The phone view is a narrower frame with the same content
-        await preview.getByRole("button", { name: "Mobile", exact: true }).click();
-        await expect(preview.getByText(heading)).toBeVisible();
-        await preview.getByRole("button", { name: "Desktop", exact: true }).click();
+        // The phone size is the same widget in a narrower page
+        await page.getByRole("button", { name: "Mobile", exact: true }).click();
+        await expect(page.locator('iframe[title="Widget preview, mobile size"]')).toBeVisible();
+        await expect(root).toHaveClass(new RegExp(`vr-template-${template}`));
+        await page.getByRole("button", { name: "Desktop", exact: true }).click();
       }
+
+      // A change in the editor reaches the frame without saving or reloading
+      await page.getByRole("button", { name: "Dark Mode" }).click();
+      await expect(page.frameLocator('iframe[title^="Widget preview"]').locator(".vr-theme-root")).toHaveClass(/vr-dark/);
     } finally {
       await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
       await pool.end();
