@@ -152,15 +152,15 @@ fresh link (valid 24 hours). People who sign in with Google are verified by Goog
 
 ## Content Security Policy
 
-Every page is sent with a Content Security Policy built around a fresh random value (a nonce) made for that request by `proxy.ts`: only scripts carrying it run, so a script injected into a page does nothing. It is rolled out in stages with `CSP_MODE`:
+Every page is sent with a Content Security Policy built around a fresh random value (a nonce) made for that request by `proxy.ts`: only scripts carrying it run, so a script injected into a page does nothing. It is enforced by default; `CSP_MODE` switches stages:
 
 | `CSP_MODE` | What happens |
 |---|---|
-| `report-only` (default) | The policy is sent as `Content-Security-Policy-Report-Only`. Nothing is blocked; each violation is posted to `/api/csp-report` and written to the log as `[csp] violation` with the directive, what was blocked, and the page (query strings removed). |
-| `enforce` | The same policy is sent as `Content-Security-Policy` and violations are blocked. |
+| `report-only` | The policy is sent as `Content-Security-Policy-Report-Only`. Nothing is blocked; each violation is posted to `/api/csp-report` and written to the log as `[csp] violation` with the directive, what was blocked, and the page (query strings removed). |
+| `enforce` (default) | The policy is sent as `Content-Security-Policy` and violations are blocked. |
 | `off` | No policy is sent. Use it to rule the policy out when debugging. |
 
-**Roll-out:** leave it on `report-only` for at least a week of real traffic, search your logs (or Grafana/Loki, if you run the observability stack) for `[csp] violation`, fix or allow what shows up, then set `CSP_MODE=enforce`. Things only real use will show: browser extensions (noise, safe to ignore), the in-browser camera recorder, the video preview player, and embeds from sources not listed in `lib/security/csp.ts`.
+**Before launch:** the policy is enforced by default, and the browser tests crawl the public pages and every signed-in page (dashboard, settings, billing, each tab of a space, admin) with it on and fail on any violation. What tests cannot reach is the real third-party flows: the payment checkout redirect, Google sign-in, the browser camera recorder, and direct uploads to your bucket. On a staging copy, set `CSP_MODE=report-only`, click through each once, search the logs for `[csp] violation` (or Grafana/Loki, if you run the observability stack), allow what is legitimate in `lib/security/csp.ts`, then leave it on `enforce`. Browser extensions show up as noise and are safe to ignore. If a page ever breaks in production, `CSP_MODE=report-only` stops blocking at once, with no code change.
 
 What the policy allows: scripts with the nonce; inline styles (the toast library and React style attributes need them, and styles cannot run code); images and videos from any HTTPS host (your customers' logos and your storage/CDN); connections to this site and your S3/R2 bucket (direct video uploads); frames from YouTube and Vimeo. It forbids plugins, changing `<base>`, and form posts to other sites. Who may embed the collection form is unchanged (`next.config.ts`).
 
@@ -294,6 +294,8 @@ Run this once before the first deploy of each release that contains new migratio
 
 | Setting | Why it matters |
 | --- | --- |
+| `REVIEW_VIDEO_SOURCES` | Which reviews a video may be made from: `google`, `trustpilot`, `own`, comma-separated. **Unset means `own` only** (reviews the owner typed in); Google and Trustpilot are off until you list them, because their terms on displaying and altering reviews are unchecked (register P4). The picker shows why a review cannot be used, and the API refuses with 403. |
+| `REVIEW_TEXT_RETENTION_DAYS` | Days to keep review text fetched from Google or Trustpilot (default 30; 0 keeps it). The hourly `/api/cron/sync-reviews` refreshes text the providers still return, then removes text older than this. The review row (author, rating, date) stays; videos already made keep the words they showed. Owner-typed reviews are never purged. Run `db:migrate` first (migration 0036). |
 | `CRON_SECRET` | **Required in production.** `/api/cron/process-webhooks` and `/api/cron/sync-reviews` refuse to run (503) without it. Vercel Cron sends it automatically (`vercel.json` schedules both jobs); the VPS compose file runs a `scheduler` service that calls them every 5 minutes / hourly. Generate with `openssl rand -hex 32`. |
 | `SENTRY_DSN` | Optional. Turns on error tracking for the web app and both workers. Any Sentry-compatible server works (hosted Sentry, GlitchTip). Unset = nothing is sent anywhere. Every event is scrubbed first: email addresses, tokens, cookies, request bodies and the words customers wrote are removed; only the account id is kept. `SENTRY_ENVIRONMENT` (default `NODE_ENV`) and `SENTRY_RELEASE` (for example the git commit) label the events. |
 | `LOG_LEVEL`, `LOG_FORMAT` | `LOG_LEVEL` is `debug`, `info` (default), `warn`, `error` or `silent`. `LOG_FORMAT` is `json` (default in production, one line per event) or `text`. Logs are scrubbed the same way as error events. |

@@ -470,7 +470,16 @@ test.describe("platform admin", () => {
     // (the first review's "Review added" notice can still be on screen, so wait for the new card instead)
     await expect(page.getByText("Long Winded").first()).toBeVisible();
 
+    // A Google review is in the account too (videos from it are off by default, see lib/review-video/sources.ts)
+    const gpool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    await gpool.query(
+      `INSERT INTO reviews (space_id, provider, provider_review_id, author_name, rating, text, text_fetched_at)
+       VALUES ($1, 'google', 'e2e-google-blocked', 'Gail Google', 5, 'A perfectly nice review from Google that cannot become a video yet.', now())`,
+      [space.id]
+    );
+
     // The video picker offers it, and picking it switches the confirmation to the wording for your own reviews
+    await page.reload();
     await page.getByRole("button", { name: "Create review video" }).click();
     const picker = page.getByRole("dialog").last();
     await picker.getByRole("button", { name: /Priya Nair/ }).click();
@@ -486,6 +495,13 @@ test.describe("platform admin", () => {
     await longRow.click(); // a single-review template: this swaps the pick
     await expect(longRow).toContainText("Shortened to 400 characters, ending with …");
     await expect(picker.getByRole("button", { name: /Priya Nair/ })).not.toContainText("shortened");
+
+    // The Google review cannot be picked, and the picker says why and what to do instead
+    const googleRow = picker.getByRole("button", { name: /Gail Google/ });
+    await expect(googleRow).toBeDisabled();
+    await expect(googleRow).toContainText(/Google reviews are not switched on yet/);
+    await gpool.query(`DELETE FROM reviews WHERE provider_review_id = 'e2e-google-blocked'`);
+    await gpool.end();
     await page.keyboard.press("Escape");
 
     // Clean up so the rest of the run is unaffected
@@ -973,7 +989,9 @@ test.describe("platform admin", () => {
     const nonces = new Set<string>();
     for (const path of ["/", "/pricing", "/login", "/signup", "/forgot-password", "/collect/e2e-collect"]) {
       const response = await page.goto(path);
-      const policy = response!.headers()["content-security-policy-report-only"] ?? response!.headers()["content-security-policy"] ?? "";
+      // The policy is enforced (not just reported)
+      expect(response!.headers()["content-security-policy-report-only"], `${path} is not report-only`).toBeUndefined();
+      const policy = response!.headers()["content-security-policy"] ?? "";
       const nonce = /'nonce-([^']+)'/.exec(policy)?.[1];
       expect(nonce, `${path} has a policy with a nonce`).toBeTruthy();
       nonces.add(nonce!);
@@ -993,7 +1011,18 @@ test.describe("platform admin", () => {
     const spaceList = await (await context.request.get("/api/spaces")).json();
     const brandSpace = (spaceList.spaces ?? spaceList).find((sp: { name: string }) => sp.name === "E2E Moderation Space");
     // The Brand page has the live video preview (Remotion's player), which needs data: media
-    for (const path of ["/dashboard", "/settings", "/settings/security", "/notifications", "/settings/webhooks", `/spaces/${brandSpace.id}/brand`]) {
+    for (const path of [
+      "/dashboard",
+      "/settings",
+      "/settings/security",
+      "/notifications",
+      "/settings/webhooks",
+      "/settings/billing",
+      "/settings/team",
+      "/spaces",
+      ...["brand", "reviews", "widget", "experiments", "analytics", "testimonials", "social", "collect"].map((tab) => `/spaces/${brandSpace.id}/${tab}`),
+      "/admin",
+    ]) {
       await page.goto(path);
       await page.waitForLoadState("networkidle");
       expect(await violations(), `${path} violations`).toEqual([]);

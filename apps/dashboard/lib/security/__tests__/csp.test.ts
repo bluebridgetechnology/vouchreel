@@ -46,9 +46,9 @@ describe("Content Security Policy", () => {
     expect(storageOrigin({ STORAGE_PROVIDER: "r2", STORAGE_ENDPOINT: "not a url" })).toBeNull();
   });
 
-  it("starts in report-only, and only enforces when told to", () => {
-    expect(cspMode(undefined)).toBe("report-only");
-    expect(cspMode("nonsense")).toBe("report-only");
+  it("enforces unless told otherwise (an unknown value does not weaken it)", () => {
+    expect(cspMode(undefined)).toBe("enforce");
+    expect(cspMode("nonsense")).toBe("enforce");
     expect(cspMode("enforce")).toBe("enforce");
     expect(cspMode("off")).toBe("off");
     expect(cspHeaderName("report-only")).toBe("Content-Security-Policy-Report-Only");
