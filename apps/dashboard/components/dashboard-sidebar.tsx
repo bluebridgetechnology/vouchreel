@@ -49,6 +49,7 @@ function isItemActive(pathname: string, href: string) {
 
 function getNavItems(isAdmin: boolean): { label: string; href: string; icon: IconName }[] {
   return [
+    { label: "Home", href: "/dashboard", icon: "home-2" },
     { label: "Spaces", href: "/spaces", icon: "layers-minimalistic" },
     { label: "Agency", href: "/agency", icon: "buildings-2" },
     { label: "Billing", href: "/settings/billing", icon: "card" },

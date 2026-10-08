@@ -1029,6 +1029,39 @@ test.describe("platform admin", () => {
     }
   });
 
+  test("home: a signed-in owner lands on Home, with the week's numbers in words, a period switch, and no axe violations", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    let spaceId: string | undefined;
+    try {
+      const { rows: [owner] } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [USERS.customer.email]);
+      const { rows: [space] } = await pool.query(`INSERT INTO spaces (name, owner_id, embed_key) VALUES ('E2E Home Space', $1, 'e2e-home') RETURNING id`, [owner.id]);
+      spaceId = space.id;
+      // Two impressions and a play today, so the numbers row appears
+      await pool.query(`INSERT INTO events (space_id, event_type) VALUES ($1, 'impression'), ($1, 'impression'), ($1, 'play')`, [spaceId]);
+
+      await open(page, "/dashboard");
+      await expect(page).toHaveURL(/\/dashboard$/);
+      await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome back");
+      await expect(page.getByRole("link", { name: "Home" }).first()).toBeVisible();
+      await expect(page.getByText("Play rate")).toBeVisible();
+      await expect(page.getByRole("link", { name: /E2E Home Space/ })).toBeVisible();
+
+      await page.getByRole("link", { name: "30 days" }).click();
+      await expect(page).toHaveURL(/range=30/);
+      await expect(page.getByRole("link", { name: "30 days" })).toHaveAttribute("aria-current", "page");
+
+      const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+      expect(violations.map((v) => `${v.id}: ${v.nodes[0].target.join(" ")}`)).toEqual([]);
+    } finally {
+      if (spaceId) await pool.query(`DELETE FROM spaces WHERE id = $1`, [spaceId]); // events go with it
+      await pool.end();
+      await context.close();
+    }
+  });
+
   test("content security policy: a fresh nonce on every page, and the main pages break none of it", async ({ browser, baseURL }) => {
     const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
     const page = await context.newPage();

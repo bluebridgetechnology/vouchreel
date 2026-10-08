@@ -1,24 +1,18 @@
 import { redirect } from "next/navigation";
-import { eq, count } from "drizzle-orm";
 import { requireSession } from "@/lib/auth/session";
-import { db } from "@/lib/db";
-import { spaces } from "@/lib/db/schema";
+import { getHomeData } from "@/lib/home/queries";
+import { HomeView } from "@/components/home/home-view";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardRootPage() {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const session = await requireSession();
+  const range = (await searchParams).range === "30" ? 30 : 7;
 
-  const [result] = await db
-    .select({ value: count() })
-    .from(spaces)
-    .where(eq(spaces.ownerId, session.user.id));
+  const data = await getHomeData(session.user.id, range);
+  // No space yet: the onboarding flow creates the first one
+  if (!data) redirect("/onboarding");
 
-  const spaceCount = result?.value ?? 0;
-
-  if (spaceCount === 0) {
-    redirect("/onboarding");
-  }
-
-  redirect("/spaces");
+  const firstName = (session.user.name || "").trim().split(/\s+/)[0] || "";
+  return <HomeView data={data} firstName={firstName} />;
 }

@@ -205,6 +205,13 @@ messages from a foreign origin are ignored.
 
 ### B1. Home page at `/dashboard` (M)
 
+**Status (2026-10-08): built on `feat/video-themes`, not yet committed.** `lib/home/queries.ts` (grouped
+queries over the owner's spaces), `lib/home/format.ts` (the wording, tested), `components/home/*`. Differences
+from the outline below: submissions are approved on the Collect tab (Home links there, it does not approve);
+the numbers row is hidden until there is any activity; the spotlight's conversion line counts sessions that
+played the video and converted afterwards, because conversion events carry no testimonial. No widget code
+changed. The Postgres query test and the new browser test need a CI run.
+
 Replace the redirect with a real page. Users with no spaces still go to `/onboarding`. Add "Home" as the first
 sidebar item and make it the post-login landing page.
 
