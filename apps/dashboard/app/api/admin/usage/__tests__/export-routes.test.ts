@@ -8,7 +8,11 @@ vi.mock("@/lib/auth/platform-admin-server", () => ({ isPlatformAdminFresh: async
 vi.mock("@/lib/auth/two-factor-policy", () => ({ adminNeedsTwoFactorSetup: async () => false, TWO_FACTOR_REQUIRED_MESSAGE: "Set up two-factor sign-in" }));
 
 const csv = vi.fn();
-vi.mock("@/lib/admin/usage", async (orig) => ({ ...(await orig<typeof import("@/lib/admin/usage")>()), usageCsv: (...a: unknown[]) => csv(...a) }));
+// No database in the unit-test job: the usage module is replaced whole, with a stand-in for the month parser
+vi.mock("@/lib/admin/usage", () => ({
+  usageCsv: (...a: unknown[]) => csv(...a),
+  parseMonth: (text?: string) => ({ month: text && /^\d{4}-\d{2}$/.test(text) ? text : "2026-10" }),
+}));
 const forExport = vi.fn();
 vi.mock("@/lib/admin/queries", () => ({ AUDIT_EXPORT_LIMIT: 10000, listAuditForExport: (...a: unknown[]) => forExport(...a) }));
 const audit = vi.fn();

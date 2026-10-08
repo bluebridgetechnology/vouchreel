@@ -1,7 +1,7 @@
 name: Install FFmpeg and fonts
 description: >-
   FFmpeg and a font for the real-FFmpeg tests. The downloaded packages are cached, and the package index is only
-  refreshed if installing without it fails (the refresh is the slow, sometimes very slow, part on a runner).
+  refreshed if installing without it fails (the refresh is the slow, sometimes very slow, part on a runner). Each attempt is time-limited so a stalled mirror fails the attempt instead of hanging the job.
 runs:
   using: composite
   steps:
@@ -13,6 +13,8 @@ runs:
       shell: bash
       run: |
         mkdir -p ~/apt-archives/partial
-        install() { sudo apt-get install -y --no-install-recommends -o Dir::Cache::archives="$HOME/apt-archives" ffmpeg fonts-dejavu-core; }
-        install || { sudo apt-get update && install; }
+        # Every attempt has a time limit: an install that stalls on a slow mirror has hung a whole job for 15+ minutes
+        net="-o Acquire::http::Timeout=20 -o Acquire::Retries=2"
+        install() { sudo timeout 240 apt-get install -y --no-install-recommends $net -o Dir::Cache::archives="$HOME/apt-archives" ffmpeg fonts-dejavu-core; }
+        install || { sudo timeout 180 apt-get update $net && install; }
         ffmpeg -hide_banner -filters | grep -q drawtext
