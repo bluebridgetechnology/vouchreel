@@ -6,6 +6,7 @@ import { DEFAULT_WIDGET_CONFIG, normalizeTheme } from "@/lib/validations/widget-
 import { badRequest, notFound, internalError } from "@/lib/api/errors";
 import { canAccess } from "@/lib/auth/feature-gate";
 import { applyBrandKitToTheme, getBrandKit, toValues } from "@/lib/brand-kit/service";
+import { resolveStyleVariant } from "@/lib/experiments/style";
 import { getLiveWidgets, getWallWidget, listWidgets } from "@/lib/widgets/service";
 import { layoutInfo } from "@/lib/widget-editor/layouts";
 import { listWidgetVideos } from "@/lib/widget-videos";
@@ -283,7 +284,16 @@ export async function GET(request: Request, { params }: RouteParams) {
               id: activeExp.id,
               name: activeExp.name,
               type: activeExp.type,
-              variants: activeExp.variants,
+              // A style test's variants become a complete layout and theme (on top of the widget as published, with
+              // the brand kit applied like the widget's own), so the script applies them as plain settings and
+              // nothing else the stored config might hold gets through
+              variants:
+                activeExp.type === "style"
+                  ? activeExp.variants.map((v) => {
+                      const resolved = resolveStyleVariant({ template: config.template, theme: liveWidgets[0]?.theme }, v.config);
+                      return { id: v.id, name: v.name, config: { template: resolved.template, theme: applyBrandKitToTheme(resolved.theme, kitValues) } };
+                    })
+                  : activeExp.variants,
               trafficSplit: activeExp.trafficSplit,
             }
           : null,

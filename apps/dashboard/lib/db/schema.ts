@@ -88,6 +88,7 @@ export const experimentTypeEnum = pgEnum("experiment_type", [
   "trigger",
   "position",
   "template",
+  "style",
 ]);
 
 export const experimentStatusEnum = pgEnum("experiment_status", [

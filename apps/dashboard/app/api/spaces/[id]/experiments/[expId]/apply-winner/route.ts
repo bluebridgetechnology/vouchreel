@@ -12,6 +12,7 @@ import { db } from "@/lib/db";
 import { experiments, spaces, widgetConfigs } from "@/lib/db/schema";
 import { getExperimentTarget } from "@/lib/widgets/service";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
+import { resolveStyleVariant } from "@/lib/experiments/style";
 import { applyWinnerSchema } from "@/lib/validations/experiments";
 import { log } from "@/lib/log";
 
@@ -123,6 +124,14 @@ export async function POST(request: Request, { params }: RouteParams) {
         (typeof vConfig === "string" ? vConfig : undefined);
 
       if (template) widgetUpdates.template = template;
+    } else if (experiment.type === "style") {
+      // The winner's layout and look, on top of the widget as published. Goes live at once, like the other types.
+      const resolved = resolveStyleVariant(
+        { template: existingWidgetConfig?.template ?? DEFAULT_WIDGET_CONFIG.template, theme: existingWidgetConfig?.theme },
+        vConfig
+      );
+      widgetUpdates.template = resolved.template;
+      widgetUpdates.theme = resolved.theme;
     }
 
     // Persist widget config update

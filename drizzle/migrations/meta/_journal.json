@@ -337,6 +337,13 @@
       "when": 1791548332179,
       "tag": "0047_widget_wall",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1791548947572,
+      "tag": "0048_experiment_type_style",
+      "breakpoints": true
     }
   ]
 }

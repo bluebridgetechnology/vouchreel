@@ -13,7 +13,7 @@ export interface ExperimentVariant {
 export interface ActiveExperiment {
   id: string;
   name: string;
-  type: "trigger" | "position" | "template";
+  type: "trigger" | "position" | "template" | "style";
   variants: ExperimentVariant[];
   trafficSplit: number[];
 }

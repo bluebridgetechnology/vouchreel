@@ -1,6 +1,9 @@
 "use client";
 
 import { WIDGET_POSITIONS, WIDGET_TEMPLATES, TRIGGER_TYPES } from "@/lib/validations/widget-config";
+import { LAYOUTS, layoutInfo } from "@/lib/widget-editor/layouts";
+import { STYLE_PRESETS } from "@/lib/widget-editor/presets";
+import { describeStyleVariant, type StyleVariantConfig } from "@/lib/experiments/style";
 import { cn } from "@/lib/utils";
 import { inputClass } from "@/components/ui/input";
 import type { ExperimentFormData } from "./experiment-form";
@@ -45,6 +48,15 @@ export function VariantEditor({ slot, formData, onChange }: VariantEditorProps) 
   const config = formData[s.configKey];
   const traffic = slot === "control" ? formData.split : 100 - formData.split;
   const setConfig = (next: Record<string, unknown>) => onChange({ ...formData, [s.configKey]: next });
+  // A style variant's name follows its choices until the owner types their own
+  const setStyle = (change: StyleVariantConfig) => {
+    const before = config as StyleVariantConfig;
+    const next: StyleVariantConfig = { ...before, ...change };
+    for (const key of Object.keys(next) as (keyof StyleVariantConfig)[]) if (!next[key]) delete next[key];
+    const nameOf = (c: StyleVariantConfig) => describeStyleVariant(c, (t) => layoutInfo(t).name);
+    const followed = formData[s.nameKey] === nameOf(before);
+    onChange({ ...formData, [s.configKey]: next, ...(followed ? { [s.nameKey]: nameOf(next) } : {}) });
+  };
 
   return (
     <div className={cn(cardVariants({ variant: "flat" }), "p-3.5 space-y-3", s.extraClass)}>
@@ -130,6 +142,33 @@ export function VariantEditor({ slot, formData, onChange }: VariantEditorProps) 
               </option>
             ))}
           </select>
+        </div>
+      )}
+
+      {formData.type === "style" && (
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label className="text-2xs text-text-muted">Layout</label>
+            <select value={(config.template as string) || ""} onChange={(e) => setStyle({ template: (e.target.value || undefined) as StyleVariantConfig["template"] })} className={cn(inputClass, "w-full text-xs")}>
+              <option value="">Keep current</option>
+              {LAYOUTS.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-2xs text-text-muted">Look</label>
+            <select value={(config.preset as string) || ""} onChange={(e) => setStyle({ preset: e.target.value || undefined })} className={cn(inputClass, "w-full text-xs")}>
+              <option value="">Keep current</option>
+              {STYLE_PRESETS.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       )}
     </div>

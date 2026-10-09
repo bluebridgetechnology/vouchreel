@@ -435,6 +435,15 @@ no experiment, not tied to the "live" switch) while the page is on. No change to
 in a browser against the CSP: script, data and layout chunk load and the cards render. The page shows the space name
 in its heading and is public by link; turning it off 404s the page and the data.
 
+**Style experiments (E4), built, not yet committed.** New experiment type `style` (enum value, migration 0048). A variant is a
+layout and/or a look (one of the style presets); empty means "keep the widget as it is", so a test is normally
+"current look" against one choice. Only those two choices are stored; the public endpoint turns each variant into a
+complete `{template, theme}` on top of the widget as published (brand kit applied, shape reset if the layout cannot use
+it) and sends nothing else, so the script's existing generic merge applies it and the script needed no change (only a
+type annotation, no bytes; core still 714 bytes under budget). Edits to the widget while a test runs carry into every
+variant. Apply winner writes the winner's layout and look to the widget. Creation rejects any other config for this type;
+a stored bad config means "no change". `lib/experiments/style.ts`. Per-widget targeting is still the first live widget.
+
 **Widgets page and per-widget editor (step 3), committed as `26dfb32`.** `/spaces/[id]/widget` is now the list
 (tab renamed "Widgets"): a card per widget (layout drawing, name, layout and where it sits, Primary / Live / Off /
 Not live yet / Unpublished changes, a "Show on my site" switch, Edit, and a menu with Rename, Duplicate, Delete),

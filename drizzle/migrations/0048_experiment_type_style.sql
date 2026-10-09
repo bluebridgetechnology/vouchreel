@@ -1,0 +1,1 @@
+ALTER TYPE "public"."experiment_type" ADD VALUE 'style';
