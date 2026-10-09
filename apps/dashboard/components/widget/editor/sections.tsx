@@ -12,6 +12,7 @@ import { PositionPicker } from "../position-picker";
 import { TriggerConfig } from "../trigger-config";
 import { PageTargeting } from "../page-targeting";
 import { EmbedSnippet } from "../embed-snippet";
+import { InstallCheck } from "../install-check";
 import { ColorControl, CopyField, Segmented, SliderControl, SwitchRow } from "./controls";
 import { AUTO_BORDER_PREVIEW, WIDGET_MODE_COLOURS } from "@/lib/widget-editor/mode-colours";
 import { applyPreset, matchingPreset, STYLE_PRESETS, type StylePreset } from "@/lib/widget-editor/presets";
@@ -387,7 +388,7 @@ export function BehaviourSection({ config, update }: { config: UpdateWidgetConfi
 /** The spot an inline widget goes in. Placing by id works for every widget, whichever it is in the space. */
 export const widgetSpot = (widgetId: string) => `<div data-vouchreel-widget="${widgetId}"></div>`;
 
-export function InstallSection({ embedKey, template, widgetId }: { embedKey: string; template: WidgetTemplate; widgetId: string }) {
+export function InstallSection({ spaceId, embedKey, template, widgetId }: { spaceId: string; embedKey: string; template: WidgetTemplate; widgetId: string }) {
   const inline = layoutInfo(template).placement === "inline";
   return (
     <>
@@ -403,6 +404,7 @@ export function InstallSection({ embedKey, template, widgetId }: { embedKey: str
       )}
       <p className="text-2xs text-text-muted">{inline ? "2. " : ""}The script is the same for every widget in this space: add it once to each page.</p>
       {embedKey ? <EmbedSnippet compact embedKey={embedKey} /> : <div className="h-32 animate-pulse rounded-card bg-surface-sunken" />}
+      <InstallCheck spaceId={spaceId} widgetId={widgetId} />
     </>
   );
 }

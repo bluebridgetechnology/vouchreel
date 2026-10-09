@@ -106,6 +106,11 @@ Publish your site and open a page in a browser:
 - The widget appears once its trigger fires (see [Trigger types](#trigger-types)).
 - Open the dashboard → **Analytics** tab: views should start appearing within a minute.
 
+In the dashboard, the **Install** step of a widget (and the install help on the Widgets page) has an **Is it on your site?** panel:
+
+- **Last seen** lists the sites where a visitor really saw the widget in the last 30 days (host only, never the page path). This is the surest proof.
+- **Check a page** loads an address you give and looks for your script (and, for a widget that sits in the page, its spot). It reads only the HTML the server sends, so a script added by JavaScript or a tag manager can show as "not found" while working: check **Last seen** after visiting the page yourself.
+
 If nothing appears, see [Troubleshooting](#troubleshooting).
 
 ---

@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { UpgradePromptModal } from "@/components/billing/upgrade-prompt-modal";
 import { EmbedSnippet } from "./embed-snippet";
+import { InstallCheck } from "./install-check";
 import { LayoutSketch } from "./editor/sections";
 
 export interface WidgetListItem {
@@ -264,6 +265,7 @@ export function WidgetsView({ spaceId, embedKey, widgets: initial, quota: initia
             spot from the Install step.
           </p>
           {embedKey ? <EmbedSnippet embedKey={embedKey} compact /> : null}
+          <InstallCheck spaceId={spaceId} />
         </div>
       </details>
 

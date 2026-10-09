@@ -413,6 +413,13 @@ a space has more than one widget) that also applies to the CSV export. Events fr
 conversions (which belong to the page), have no widget and count for the whole space only. The PDF report does
 not take filters (as before).
 
+**Install check (E2), built, not yet committed.** "Is it on your site?" panel in each widget's Install step and in the
+Widgets page install help. *Last seen*: hosts (never paths or queries) of impression events in the last 30 days
+(`lib/install/status.ts`, `GET /api/spaces/[id]/install/status`). *Check a page*: `POST .../install/check` fetches the
+URL with `safeFetch` (private/internal addresses refused, redirects checked, 1 MB, 8 s), 10 checks a minute per
+user, and returns only found/not-found sentences, never the page. Limits: sees server HTML only, so tag-manager
+or JavaScript-added scripts read as "not found" and the panel says so. Widget bundle unchanged.
+
 **Widgets page and per-widget editor (step 3), committed as `26dfb32`.** `/spaces/[id]/widget` is now the list
 (tab renamed "Widgets"): a card per widget (layout drawing, name, layout and where it sits, Primary / Live / Off /
 Not live yet / Unpublished changes, a "Show on my site" switch, Edit, and a menu with Rename, Duplicate, Delete),
