@@ -188,3 +188,28 @@ export function SwitchRow({ label, hint, checked, onChange }: { label: string; h
     </div>
   );
 }
+
+/** A line of code the owner pastes into their site, with a Copy button. */
+export function CopyField({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="space-y-1.5">
+      <span className="block text-xs font-medium text-text">{label}</span>
+      <div className="flex items-stretch gap-2">
+        <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded-control bg-surface-sunken px-3 py-2 font-mono text-2xs text-text">{value}</code>
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard?.writeText(value).then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            });
+          }}
+          className="shrink-0 rounded-control border px-3 text-xs font-medium text-text-muted hover:bg-surface-sunken hover:text-text"
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+    </div>
+  );
+}

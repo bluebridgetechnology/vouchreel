@@ -1,188 +1,27 @@
-"use client";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { spaces } from "@/lib/db/schema";
+import { WidgetsView } from "@/components/widget/widgets-view";
+import { ensurePrimaryWidget, getWidgetQuota, listWidgets, widgetSummary } from "@/lib/widgets/service";
 
-import { use, useCallback, useEffect, useState } from "react";
-import { applyBrandKitToTheme } from "@/lib/brand-kit/theme";
-import { layoutInfo, shapeForLayout } from "@/lib/widget-editor/layouts";
-import { matchingPreset } from "@/lib/widget-editor/presets";
-import { normalizeTheme } from "@/lib/validations/widget-config";
-import { cn } from "@/lib/utils";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icon";
-import { notify } from "@/lib/notify";
-import { useConfirm } from "@/components/ui/confirm";
-import { LivePreview } from "@/components/widget/live-preview";
-import { useWidgetEditor, type SaveState } from "@/components/widget/editor/use-widget-editor";
-import { BehaviourSection, ContentSection, EditorSection, InstallSection, LayoutSection, SHAPE_LABELS, ShapeSection, StyleSection } from "@/components/widget/editor/sections";
+export const dynamic = "force-dynamic";
 
-interface WidgetPageProps {
+interface WidgetsPageProps {
   params: Promise<{ id: string }>;
 }
 
-type SectionId = "layout" | "style" | "shape" | "content" | "behaviour" | "install";
-
-function StatusPill({ unpublished, saveState }: { unpublished: boolean; saveState: SaveState }) {
-  const [text, tone] =
-    saveState === "error"
-      ? ["Draft not saved", "bg-danger-soft text-danger-foreground"]
-      : saveState === "saving"
-        ? ["Saving draft…", "bg-surface-sunken text-text-muted"]
-        : unpublished
-          ? ["Unpublished changes", "bg-warning-soft text-warning-foreground"]
-          : ["Published", "bg-success-soft text-success-foreground"];
-  return (
-    <span role="status" className={cn("inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 text-2xs font-medium", tone)}>
-      {!unpublished && saveState !== "error" && <Icon name="cloud-check" size="sm" />}
-      {text}
-    </span>
-  );
-}
-
-/**
- * The widget editor: settings on the left in steps, the real widget on the right. Every change shows at once
- * and autosaves as a draft; visitors keep the published widget until Publish.
- */
-export default function SpaceWidgetPage({ params }: WidgetPageProps) {
-  const { id: spaceId } = use(params);
-  const confirm = useConfirm();
-  const editor = useWidgetEditor(spaceId);
-  const { config, update, updateTheme, undo, redo } = editor;
-  const [open, setOpen] = useState<Set<SectionId>>(() => new Set(["layout"]));
-  // The last look picked this session, so the editor can say "Glass (edited)" after a tweak
-  const [lastPresetId, setLastPresetId] = useState<string | null>(null);
-  const toggle = (s: SectionId) =>
-    setOpen((prev) => {
-      const next = new Set(prev);
-      if (next.has(s)) next.delete(s);
-      else next.add(s);
-      return next;
-    });
-
-  // Ctrl/Cmd+Z and Shift+Ctrl/Cmd+Z (or Ctrl+Y), except while typing in a text field, which has its own undo
-  const onKey = useCallback(
-    (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target?.closest("input[type=text], input:not([type]), textarea, [contenteditable=true]")) return;
-      if (!(e.metaKey || e.ctrlKey)) return;
-      const key = e.key.toLowerCase();
-      if (key === "z" && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-      } else if ((key === "z" && e.shiftKey) || key === "y") {
-        e.preventDefault();
-        redo();
-      }
-    },
-    [undo, redo]
-  );
-  useEffect(() => {
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onKey]);
-
-  async function handlePublish() {
-    try {
-      await editor.publish();
-      notify.success("Widget published", { description: "Visitors see the new widget from their next page load." });
-    } catch (err) {
-      notify.fromError(err, "Failed to publish the widget");
-    }
-  }
-
-  async function handleDiscard() {
-    if (!(await confirm({ title: "Discard unpublished changes?", description: "The editor goes back to the widget visitors see now. You can still undo this.", confirmLabel: "Discard changes", tone: "default" }))) return;
-    await editor.discard();
-  }
-
-  if (editor.loading) {
-    return (
-      <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-        <div className="h-[560px] animate-pulse rounded-card border bg-surface-sunken/40" />
-        <div className="h-[560px] animate-pulse rounded-card border bg-surface-sunken/40" />
-      </div>
-    );
-  }
-
-  if (editor.error) {
-    return (
-      <div className="rounded-card border border-danger/20 bg-danger-soft p-6 text-center">
-        <h3 className="text-sm font-medium text-danger-foreground">Could not load the widget</h3>
-        <p className="mt-1 text-xs text-text-muted">{editor.error}</p>
-        <button onClick={() => editor.reload()} className={cn(buttonVariants({ variant: "primary", size: "sm" }), "mt-4")}>
-          Try again
-        </button>
-      </div>
-    );
-  }
-
-  const theme = normalizeTheme(config.theme);
-  const brandManaged = Boolean(editor.brandKit);
-  const layout = layoutInfo(config.template);
-  const iconButton = cn(buttonVariants({ variant: "ghost", size: "sm" }), "px-2");
+/** The space's widgets. (The space layout has already checked that the signed-in user owns the space.) */
+export default async function SpaceWidgetsPage({ params }: WidgetsPageProps) {
+  const { id } = await params;
+  await ensurePrimaryWidget(id);
+  const [widgets, quota, [space]] = await Promise.all([listWidgets(id), getWidgetQuota(id), db.select({ embedKey: spaces.embedKey }).from(spaces).where(eq(spaces.id, id))]);
 
   return (
-    <div className="space-y-4">
-      {/* Top bar: one save control for the whole editor */}
-      <div className="sticky top-0 z-20 -mx-1 flex flex-wrap items-center justify-between gap-3 rounded-card border bg-surface/95 px-3 py-2.5 shadow-xs backdrop-blur">
-        <div className="flex items-center gap-3">
-          <h2 className="text-base font-medium text-text">Widget</h2>
-          <StatusPill unpublished={editor.unpublished} saveState={editor.saveState} />
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button type="button" onClick={undo} disabled={!editor.canUndo} aria-label="Undo" title="Undo (Ctrl+Z)" className={iconButton}>
-            <Icon name="undo-left" size="sm" />
-          </button>
-          <button type="button" onClick={redo} disabled={!editor.canRedo} aria-label="Redo" title="Redo (Ctrl+Shift+Z)" className={iconButton}>
-            <Icon name="undo-right" size="sm" />
-          </button>
-          {editor.unpublished && (
-            <button type="button" onClick={handleDiscard} className={buttonVariants({ variant: "outline", size: "sm" })}>
-              Discard
-            </button>
-          )}
-          <Button type="button" size="sm" onClick={handlePublish} disabled={!editor.unpublished || editor.publishing} loading={editor.publishing}>
-            {editor.publishing ? "Publishing…" : "Publish"}
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-        {/* Preview first on phones, beside the panel on wide screens */}
-        <div className="lg:order-2">
-          <div className="lg:sticky lg:top-20">
-            <LivePreview
-              embedKey={editor.embedKey || undefined}
-              template={config.template}
-              position={config.position}
-              theme={applyBrandKitToTheme(theme, editor.brandKit)}
-              triggerType={config.triggerType}
-              triggerValue={config.triggerValue}
-              autoplayPreview={config.autoplayPreview}
-              className="h-[min(78vh,760px)]"
-            />
-          </div>
-        </div>
-
-        <div className="overflow-hidden rounded-card border bg-surface lg:order-1">
-          <EditorSection step={1} title="Layout" summary={layout.name} open={open.has("layout")} onToggle={() => toggle("layout")}>
-            <LayoutSection value={config.template} onChange={(template) => update({ template, theme: { ...config.theme, shape: shapeForLayout(theme.shape, template) } })} />
-          </EditorSection>
-          <EditorSection step={2} title="Style" summary={matchingPreset(theme)?.name ?? `${theme.mode === "dark" ? "Dark" : "Light"}, ${theme.shadow} shadow${theme.glass ? ", glass" : ""}`} open={open.has("style")} onToggle={() => toggle("style")}>
-            <StyleSection theme={theme} updateTheme={updateTheme} brandManaged={brandManaged} brandHref={`/spaces/${spaceId}/brand`} lastPresetId={lastPresetId} onPreset={setLastPresetId} />
-          </EditorSection>
-          <EditorSection step={3} title="Shape and size" summary={`${theme.shape ? SHAPE_LABELS[theme.shape] : "Default shape"}, ${{ sm: "small", md: "medium", lg: "large" }[theme.size]}`} open={open.has("shape")} onToggle={() => toggle("shape")}>
-            <ShapeSection theme={theme} updateTheme={updateTheme} brandManaged={brandManaged} template={config.template} />
-          </EditorSection>
-          <EditorSection step={4} title="Content" summary="What each card shows" open={open.has("content")} onToggle={() => toggle("content")}>
-            <ContentSection theme={theme} updateTheme={updateTheme} template={config.template} />
-          </EditorSection>
-          <EditorSection step={5} title="Behaviour" summary="When and where it appears" open={open.has("behaviour")} onToggle={() => toggle("behaviour")}>
-            <BehaviourSection config={config} update={update} />
-          </EditorSection>
-          <EditorSection step={6} title="Install" summary="Add it to your site" open={open.has("install")} onToggle={() => toggle("install")}>
-            <InstallSection embedKey={editor.embedKey} template={config.template} />
-          </EditorSection>
-        </div>
-      </div>
-    </div>
+    <WidgetsView
+      spaceId={id}
+      embedKey={space?.embedKey ?? ""}
+      widgets={widgets.map((w) => ({ ...widgetSummary(w), publishedAt: w.publishedAt?.toISOString() ?? null, createdAt: w.createdAt.toISOString() }))}
+      quota={quota ? { current: quota.current, limit: Number.isFinite(quota.limit) ? quota.limit : null, allowed: quota.allowed } : { current: widgets.length, limit: null, allowed: true }}
+    />
   );
 }

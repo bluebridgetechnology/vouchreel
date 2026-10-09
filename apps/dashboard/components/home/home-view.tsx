@@ -161,7 +161,8 @@ function Checklist({ steps, hero = false }: { steps: HomeData["checklist"]; hero
         {steps.map((s) => (
           <li key={s.key} className="flex items-center gap-2 text-sm">
             <Icon name={s.done ? "check-circle" : "clock-circle"} size="sm" className={s.done ? "" : "opacity-50"} />
-            <span className={s.done ? "line-through opacity-60" : ""}>{s.label}</span>
+            {/* Done steps are struck through, not faded: faded text on the tint fails the contrast rule */}
+            <span className={s.done ? "line-through" : ""}>{s.label}</span>
           </li>
         ))}
       </ol>

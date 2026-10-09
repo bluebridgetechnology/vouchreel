@@ -27,11 +27,21 @@ function fromApi(c: Record<string, unknown> | null | undefined): UpdateWidgetCon
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
+export interface EditedWidget {
+  id: string;
+  name: string;
+  /** Whether visitors see it. A new widget is off until its first publish. */
+  isLive: boolean;
+}
+
 /**
- * The widget editor's state: the draft being edited (with undo/redo), the published config it is compared
- * with, and saving. Every change autosaves as a draft; visitors keep the published widget until `publish`.
+ * The state of the editor for one widget: the draft being edited (with undo/redo), the published config it is
+ * compared with, and saving. Every change autosaves as a draft; visitors keep the published widget until
+ * `publish` (which also turns a new widget on).
  */
-export function useWidgetEditor(spaceId: string) {
+export function useWidgetEditor(spaceId: string, widgetId: string) {
+  const base = `/api/spaces/${spaceId}/widgets/${widgetId}`;
+  const [widget, setWidget] = useState<EditedWidget | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [embedKey, setEmbedKey] = useState("");
@@ -51,9 +61,11 @@ export function useWidgetEditor(spaceId: string) {
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => setBrandKit(d?.saved ? d.values : null))
         .catch(() => undefined);
-      const res = await fetch(`/api/spaces/${spaceId}/widget-config`);
+      const res = await fetch(base);
+      if (res.status === 404) throw new Error("This widget no longer exists. It may have been deleted.");
       if (!res.ok) throw new Error("Failed to load widget configuration");
       const data = await res.json();
+      setWidget({ id: data.widget.id, name: data.widget.name, isLive: data.widget.isLive });
       const live = fromApi(data.widgetConfig);
       const draft = data.draft ? fromApi(data.draft) : null;
       setPublished(live);
@@ -65,7 +77,7 @@ export function useWidgetEditor(spaceId: string) {
     } finally {
       setLoading(false);
     }
-  }, [spaceId]);
+  }, [spaceId, base]);
 
   useEffect(() => {
     load();
@@ -79,7 +91,7 @@ export function useWidgetEditor(spaceId: string) {
     const timer = setTimeout(async () => {
       setSaveState("saving");
       try {
-        const res = await fetch(`/api/spaces/${spaceId}/widget-config/draft`, {
+        const res = await fetch(`${base}/draft`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(config),
@@ -92,7 +104,7 @@ export function useWidgetEditor(spaceId: string) {
       }
     }, AUTOSAVE_MS);
     return () => clearTimeout(timer);
-  }, [config, loading, spaceId]);
+  }, [config, loading, base]);
 
   // Leaving the page inside the autosave delay still keeps the last change
   const latest = useRef(config);
@@ -100,14 +112,14 @@ export function useWidgetEditor(spaceId: string) {
   useEffect(() => {
     return () => {
       if (savedDraft.current === null || same(latest.current, savedDraft.current)) return;
-      fetch(`/api/spaces/${spaceId}/widget-config/draft`, {
+      fetch(`${base}/draft`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(latest.current),
         keepalive: true,
       }).catch(() => undefined);
     };
-  }, [spaceId]);
+  }, [base]);
 
   /** Applies a change. `key` names the control, so a drag on one slider is one undo step. */
   const update = useCallback((patch: Partial<UpdateWidgetConfigInput>, key?: string) => {
@@ -124,7 +136,7 @@ export function useWidgetEditor(spaceId: string) {
   const publish = useCallback(async () => {
     setPublishing(true);
     try {
-      const res = await fetch(`/api/spaces/${spaceId}/widget-config`, {
+      const res = await fetch(base, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
@@ -132,21 +144,33 @@ export function useWidgetEditor(spaceId: string) {
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error?.message || "Failed to publish the widget");
       setPublished(config);
+      setWidget((w) => (w ? { ...w, isLive: true } : w));
       savedDraft.current = config;
       setSaveState("idle");
       return true;
     } finally {
       setPublishing(false);
     }
-  }, [config, spaceId]);
+  }, [config, base]);
+
+  /** Renames the widget. Throws with the server's message when the name is refused. */
+  const rename = useCallback(
+    async (name: string) => {
+      const res = await fetch(base, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error?.details?.name?.[0] || data?.error?.message || "Failed to rename the widget");
+      setWidget((w) => (w ? { ...w, name: data.widget.name } : w));
+    },
+    [base]
+  );
 
   /** Back to what visitors see now. Undo still has the discarded edits. */
   const discard = useCallback(async () => {
-    await fetch(`/api/spaces/${spaceId}/widget-config/draft`, { method: "DELETE" });
+    await fetch(`${base}/draft`, { method: "DELETE" });
     savedDraft.current = published;
     setHistory((h) => pushHistory(h, published, "discard"));
     setSaveState("idle");
-  }, [published, spaceId]);
+  }, [published, base]);
 
   const unpublished = useMemo(() => !same(config, published), [config, published]);
 
@@ -154,6 +178,8 @@ export function useWidgetEditor(spaceId: string) {
     loading,
     error,
     reload: load,
+    widget,
+    rename,
     embedKey,
     brandKit,
     config,

@@ -403,6 +403,23 @@ with live thumbnails. Each layout ships with keyboard navigation, focus trapping
 **Status (2026-10-09): step 1 (data, API, plan limit) committed; step 2 (the embed script) built, not yet
 committed; the widgets page and the editor wiring are next.**
 
+**Widgets page and per-widget editor (step 3), built, not yet committed.** `/spaces/[id]/widget` is now the list
+(tab renamed "Widgets"): a card per widget (layout drawing, name, layout and where it sits, Primary / Live / Off /
+Not live yet / Unpublished changes, a "Show on my site" switch, Edit, and a menu with Rename, Duplicate, Delete),
+"Add widget" (opens the new widget in the editor; at the plan's limit it asks to upgrade instead), a line saying
+"2 of 3 widgets", and a collapsible "How to put widgets on your site" with the one script. The editor moved to
+`/spaces/[id]/widget/[widgetId]`: a back link, the widget's name (click to rename), a "Not live" state with a
+"Go live" button for a new widget, and an Install step that gives the widget's own spot
+(`<div data-vouchreel-widget="<id>">`, which works for every widget, so the editor never needs to know which is
+the primary) or says that a floating layout needs none. Not done: per-widget numbers on the cards (needs the
+`widget_id` on events), and per-widget experiments.
+Browser tests were run for the first time here (the repo's Playwright browser build is not installed locally, so
+they ran in the installed Chrome against a throwaway Postgres 18 and a production build): the in-widget videos,
+the editor (every layout, sizes, drafts, undo, publish, discard, looks, shapes), Home, the widgets page, the
+page security-policy check, and the admin plans, accessibility and phone-width tests all pass. Running them
+caught two real accessibility defects of mine, now fixed: faded text on completed Home setup steps, and
+brand-coloured links on brand-tinted notices (both failed the colour-contrast rule).
+
 **Embed script (step 2).** One script per page still. `config` now also carries the first live widget's `id`;
 when several are live the response adds `widgets`: the first entry is just its id (its settings are `config`),
 the others carry their own settings, and inline ones are flagged. The script then, per widget: checks its own

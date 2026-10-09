@@ -12,7 +12,7 @@ import { PositionPicker } from "../position-picker";
 import { TriggerConfig } from "../trigger-config";
 import { PageTargeting } from "../page-targeting";
 import { EmbedSnippet } from "../embed-snippet";
-import { ColorControl, Segmented, SliderControl, SwitchRow } from "./controls";
+import { ColorControl, CopyField, Segmented, SliderControl, SwitchRow } from "./controls";
 import { AUTO_BORDER_PREVIEW, WIDGET_MODE_COLOURS } from "@/lib/widget-editor/mode-colours";
 import { applyPreset, matchingPreset, STYLE_PRESETS, type StylePreset } from "@/lib/widget-editor/presets";
 
@@ -58,7 +58,7 @@ export function EditorSection({
 }
 
 /** A small drawing of each layout, so the choice is visual rather than a list of names. */
-function LayoutSketch({ id }: { id: WidgetTemplate }) {
+export function LayoutSketch({ id }: { id: WidgetTemplate }) {
   const block = "rounded-[2px] bg-current";
   return (
     <span className="relative block h-10 w-14 shrink-0 overflow-hidden rounded-control border bg-surface text-brand" aria-hidden>
@@ -161,7 +161,7 @@ function BrandNote({ href }: { href?: string }) {
     <p role="note" className="rounded-card bg-brand-soft/40 p-3 text-2xs text-text-muted">
       <span className="font-medium text-text">Colours, corner radius and fonts come from your Brand settings.</span>{" "}
       {href && (
-        <a href={href} className="font-medium text-brand hover:underline">
+        <a href={href} className="font-medium text-text underline underline-offset-4 hover:text-brand">
           Edit brand
         </a>
       )}
@@ -384,15 +384,24 @@ export function BehaviourSection({ config, update }: { config: UpdateWidgetConfi
   );
 }
 
-export function InstallSection({ embedKey, template }: { embedKey: string; template: WidgetTemplate }) {
+/** The spot an inline widget goes in. Placing by id works for every widget, whichever it is in the space. */
+export const widgetSpot = (widgetId: string) => `<div data-vouchreel-widget="${widgetId}"></div>`;
+
+export function InstallSection({ embedKey, template, widgetId }: { embedKey: string; template: WidgetTemplate; widgetId: string }) {
   const inline = layoutInfo(template).placement === "inline";
   return (
     <>
-      {inline && (
-        <p className="rounded-card bg-surface-sunken p-3 text-2xs text-text-muted">
-          This layout sits in your page. Put <code className="font-mono text-text">{'<div data-vouchreel-embed></div>'}</code> where it should appear, and the script anywhere on the page.
-        </p>
+      {inline ? (
+        <div className="space-y-2">
+          <CopyField label="1. Where it goes" value={widgetSpot(widgetId)} />
+          <p className="text-2xs text-text-muted">
+            This layout sits in your page, not in a corner. Put this where it should appear. Pages that already use <code className="font-mono">data-vouchreel-embed</code> keep working for your first widget.
+          </p>
+        </div>
+      ) : (
+        <p className="rounded-card bg-surface-sunken p-3 text-2xs text-text-muted">This layout floats in a corner of the page, so it needs no spot. Just add the script.</p>
       )}
+      <p className="text-2xs text-text-muted">{inline ? "2. " : ""}The script is the same for every widget in this space: add it once to each page.</p>
       {embedKey ? <EmbedSnippet compact embedKey={embedKey} /> : <div className="h-32 animate-pulse rounded-card bg-surface-sunken" />}
     </>
   );

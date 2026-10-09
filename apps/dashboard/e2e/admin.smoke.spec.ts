@@ -999,11 +999,13 @@ test.describe("platform admin", () => {
     const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
     const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
     try {
+      let lastWidgetId = "";
       // The two floating layouts are the regression: the old mock preview drew nothing for them
       for (const [template, inline] of [["floating-card", false], ["story-strip", false], ["wall-of-love", true], ["carousel", true], ["masonry", true]] as const) {
         await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
-        await pool.query(`INSERT INTO widget_configs (space_id, template) VALUES ($1, $2)`, [space.id, template]);
-        await open(page, `/spaces/${space.id}/widget`);
+        const { rows: [widget] } = await pool.query(`INSERT INTO widget_configs (space_id, template) VALUES ($1, $2) RETURNING id`, [space.id, template]);
+        lastWidgetId = widget.id;
+        await open(page, `/spaces/${space.id}/widget/${widget.id}`);
         const frame = page.frameLocator('iframe[title^="Widget preview"]');
         const root = frame.locator(".vr-theme-root");
         await expect(root).toHaveClass(new RegExp(`vr-template-${template}`), { timeout: 15_000 });
@@ -1025,7 +1027,7 @@ test.describe("platform admin", () => {
       // A change in the editor reaches the frame without saving or reloading
       const previewRoot = page.frameLocator('iframe[title^="Widget preview"]').locator(".vr-theme-root");
       await page.getByRole("button", { name: /^2\s*Style/ }).click();
-      await page.getByRole("radio", { name: "Dark" }).click();
+      await page.getByRole("radiogroup", { name: "Mode" }).getByRole("radio", { name: "Dark" }).click();
       await expect(previewRoot).toHaveClass(/vr-dark/);
 
       // ...is a draft: autosaved, still there after a reload, and not what visitors get until Publish
@@ -1033,13 +1035,19 @@ test.describe("platform admin", () => {
       await expect(page.getByRole("status").filter({ hasText: "Unpublished changes" })).toBeVisible();
       await expect.poll(async () => (await pool.query(`SELECT draft_config FROM widget_configs WHERE space_id = $1`, [space.id])).rows[0]?.draft_config?.theme?.mode, { timeout: 10_000 }).toBe("dark");
       expect(await live()).toBe("light");
-      await open(page, `/spaces/${space.id}/widget`);
+      await open(page, `/spaces/${space.id}/widget/${lastWidgetId}`);
       await expect(previewRoot).toHaveClass(/vr-dark/, { timeout: 15_000 });
 
-      // Undo puts it back; redo again
-      await page.getByRole("button", { name: "Undo" }).click();
+      // Undo history belongs to the open page: a change after the reload can be undone and redone
+      await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
+      await page.getByRole("button", { name: /^2\s*Style/ }).click();
+      await page.getByRole("radiogroup", { name: "Mode" }).getByRole("radio", { name: "Light" }).click();
       await expect(previewRoot).not.toHaveClass(/vr-dark/);
+      await page.getByRole("button", { name: "Undo" }).click();
+      await expect(previewRoot).toHaveClass(/vr-dark/);
       await page.getByRole("button", { name: "Redo" }).click();
+      await expect(previewRoot).not.toHaveClass(/vr-dark/);
+      await page.getByRole("button", { name: "Undo" }).click();
       await expect(previewRoot).toHaveClass(/vr-dark/);
 
       await page.getByRole("button", { name: "Publish" }).click();
@@ -1048,22 +1056,22 @@ test.describe("platform admin", () => {
       expect((await pool.query(`SELECT draft_config FROM widget_configs WHERE space_id = $1`, [space.id])).rows[0].draft_config).toBeNull();
 
       // Discard goes back to the published widget
-      await page.getByRole("radio", { name: "Light" }).click();
+      await page.getByRole("radiogroup", { name: "Mode" }).getByRole("radio", { name: "Light" }).click();
       await page.getByRole("button", { name: "Discard" }).click();
       await page.getByRole("button", { name: "Discard changes" }).click();
       await expect(previewRoot).toHaveClass(/vr-dark/);
       await expect(page.getByRole("status").filter({ hasText: "Published" })).toBeVisible();
 
       // A look sets several options at once, and the label notices a tweak afterwards
-      await page.getByRole("radio", { name: "Outline" }).click();
+      await page.getByRole("radiogroup", { name: "Looks" }).getByRole("radio", { name: /Outline/ }).click();
       await expect(previewRoot).toHaveClass(/vr-shadow-none/);
       await expect(previewRoot).not.toHaveClass(/vr-dark/);
-      await page.getByRole("radio", { name: "Strong" }).click();
+      await page.getByRole("radiogroup", { name: "Shadow" }).getByRole("radio", { name: "Strong" }).click();
       await expect(page.getByText("Outline (edited)")).toBeVisible();
 
       // Shapes: the layout's own look is "Default"; a reel shape reaches the preview
       await page.getByRole("button", { name: /^3\s*Shape and size/ }).click();
-      await page.getByRole("radio", { name: /Reel/ }).click();
+      await page.getByRole("radiogroup", { name: "Shape" }).getByRole("radio", { name: /Reel/ }).click();
       await expect(previewRoot).toHaveClass(/vr-shape-vertical/);
     } finally {
       await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
@@ -1100,6 +1108,79 @@ test.describe("platform admin", () => {
       expect(violations.map((v) => `${v.id}: ${v.nodes[0].target.join(" ")}`)).toEqual([]);
     } finally {
       if (spaceId) await pool.query(`DELETE FROM spaces WHERE id = $1`, [spaceId]); // events go with it
+      await pool.end();
+      await context.close();
+    }
+  });
+
+  test("widgets page: add one (it opens in the editor, not live), switch widgets off and on, rename, delete, and the plan's limit asks to upgrade", async ({ browser, baseURL }) => {
+    test.setTimeout(120_000);
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    let spaceId: string | undefined;
+    let planId: string | undefined;
+    try {
+      const { rows: [owner] } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [USERS.customer.email]);
+      const { rows: [space] } = await pool.query(`INSERT INTO spaces (name, owner_id, embed_key) VALUES ('E2E Widgets Space', $1, 'e2e-widgets') RETURNING id`, [owner.id]);
+      spaceId = space.id;
+      await pool.query(`INSERT INTO widget_configs (space_id) VALUES ($1)`, [spaceId]);
+      // The free tier is the first active plan that costs nothing: for this test it allows two widgets per space
+      const { rows: [plan] } = await pool.query(`INSERT INTO plans (name, price, interval, sort_order, limits) VALUES ('E2E widgets free', 0, 'month', -1000, '{"tier":"free","maxSpaces":5,"maxTestimonialsPerSpace":-1,"maxWidgetsPerSpace":2}') RETURNING id`);
+      planId = plan.id;
+      const live = async () => (await (await context.request.get("/api/widget/e2e-widgets")).json()).config;
+
+      await open(page, `/spaces/${spaceId}/widget`);
+      await expect(page.getByRole("heading", { name: "Widgets", exact: true })).toBeVisible();
+      await expect(page.getByText("1 of 2 widgets")).toBeVisible();
+      await expect(page.getByText("Primary")).toBeVisible();
+
+      // A new widget opens in the editor and is not live until it is published
+      await page.getByRole("button", { name: "Add widget" }).click();
+      await expect(page).toHaveURL(new RegExp(`/spaces/${spaceId}/widget/[0-9a-f-]{36}$`));
+      await expect(page.getByRole("button", { name: "Widget 2", exact: true })).toBeVisible();
+      await expect(page.getByRole("status").filter({ hasText: "Not live" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Go live" })).toBeVisible();
+      expect((await pool.query(`SELECT count(*)::int AS n FROM widget_configs WHERE space_id = $1 AND is_live`, [spaceId])).rows[0].n).toBe(1);
+
+      // Back on the list: two widgets, at the plan's limit, so adding another asks to upgrade
+      await page.getByRole("link", { name: "All widgets" }).click();
+      await expect(page.getByText("2 of 2 widgets")).toBeVisible();
+      await expect(page.getByText("Your plan allows 2 widgets per space")).toBeVisible();
+      await page.getByRole("button", { name: "Add widget" }).click();
+      await expect(page.getByText("Widget Limit Reached")).toBeVisible();
+      await page.getByRole("button", { name: "Maybe Later" }).click();
+      await expect(page.getByText("Widget Limit Reached")).toHaveCount(0);
+
+      // Switching a widget off takes it off the site (here that is the only live one), and back on puts it back
+      expect(await live()).toMatchObject({ template: "floating-card" });
+      await page.getByRole("switch", { name: "Default widget is shown to visitors" }).click();
+      await expect.poll(live, { timeout: 15_000 }).toBeNull();
+      await page.getByRole("switch", { name: "Default widget is shown to visitors" }).click();
+      await expect.poll(live, { timeout: 15_000 }).not.toBeNull();
+
+      // Rename from the menu
+      await page.getByRole("button", { name: "More actions for Widget 2" }).click();
+      await page.getByRole("menuitem", { name: "Rename" }).click();
+      await page.getByLabel("Widget name").fill("Footer wall");
+      await page.getByRole("button", { name: "Save" }).click();
+      await expect(page.getByRole("link", { name: "Footer wall" })).toBeVisible();
+
+      const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+      expect(violations.map((v) => `${v.id}: ${v.nodes[0].target.join(" ")}`)).toEqual([]);
+
+      // Delete one; the last one cannot be deleted
+      await page.getByRole("button", { name: "More actions for Footer wall" }).click();
+      await page.getByRole("menuitem", { name: "Delete" }).click();
+      await page.getByRole("button", { name: "Delete widget" }).click();
+      await expect(page.getByRole("link", { name: "Footer wall" })).toHaveCount(0);
+      await expect(page.getByText("1 of 2 widgets")).toBeVisible();
+      await page.getByRole("button", { name: "More actions for Default widget" }).click();
+      await expect(page.getByRole("menuitem", { name: /Delete/ })).toHaveAttribute("aria-disabled", "true");
+    } finally {
+      if (spaceId) await pool.query(`DELETE FROM spaces WHERE id = $1`, [spaceId]); // widgets go with it
+      if (planId) await pool.query(`DELETE FROM plans WHERE id = $1`, [planId]);
       await pool.end();
       await context.close();
     }
