@@ -6,10 +6,13 @@ import { DEFAULT_WIDGET_CONFIG, normalizeTheme } from "@/lib/validations/widget-
 import { badRequest, notFound, internalError } from "@/lib/api/errors";
 import { canAccess } from "@/lib/auth/feature-gate";
 import { applyBrandKitToTheme, getBrandKit, toValues } from "@/lib/brand-kit/service";
-import { getLiveWidgets, listWidgets } from "@/lib/widgets/service";
+import { getLiveWidgets, getWallWidget, listWidgets } from "@/lib/widgets/service";
 import { layoutInfo } from "@/lib/widget-editor/layouts";
 import { listWidgetVideos } from "@/lib/widget-videos";
 import { log } from "@/lib/log";
+
+/** The key a widget's own public page uses: "wall-" and the widget's id. */
+const WALL_KEY = /^wall-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 
 interface RouteParams {
   params: Promise<{ embedKey: string }>;
@@ -45,15 +48,24 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 
   try {
-    const [space] = await db
-      .select({
-        id: spaces.id,
-        name: spaces.name,
-        ownerId: spaces.ownerId,
-        embedKey: spaces.embedKey,
-      })
-      .from(spaces)
-      .where(eq(spaces.embedKey, embedKey));
+    // A widget's own public page (/wall/{id}) asks for its data under the key "wall-{id}", so the same script serves it
+    // with nothing added to the script. Only that one widget comes back, whatever its page rules say, and only
+    // while the owner has the page turned on.
+    const wallId = WALL_KEY.exec(embedKey)?.[1];
+    const wall = wallId ? await getWallWidget(wallId) : null;
+    if (wallId && !wall) return notFound("Widget not found", corsHeaders);
+
+    const [space] = wall
+      ? [wall.space]
+      : await db
+          .select({
+            id: spaces.id,
+            name: spaces.name,
+            ownerId: spaces.ownerId,
+            embedKey: spaces.embedKey,
+          })
+          .from(spaces)
+          .where(eq(spaces.embedKey, embedKey));
 
     if (!space) {
       return notFound("Widget not found", corsHeaders);
@@ -61,8 +73,8 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     // The widgets visitors see, oldest first. A space with none saved yet gets the default widget, as before; a
     // space whose widgets are all switched off gets nothing, and none of its customers' words are sent
-    const liveWidgets = await getLiveWidgets(space.id);
-    if (liveWidgets.length === 0 && (await listWidgets(space.id)).length > 0) {
+    const liveWidgets = wall ? [{ ...wall.widget, pagesIncluded: ["*"], pagesExcluded: [] as string[] }] : await getLiveWidgets(space.id);
+    if (!wall && liveWidgets.length === 0 && (await listWidgets(space.id)).length > 0) {
       return NextResponse.json(
         { spaceId: space.id, config: null, testimonials: [], reviews: [], conversionGoals: [], activeExperiment: null, whiteLabel: { removeBranding: false, logoUrl: null } },
         { status: 200, headers: { ...corsHeaders, "Cache-Control": "public, max-age=60, s-maxage=60" } }
@@ -216,7 +228,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       .where(eq(conversionGoals.spaceId, space.id));
 
     // Fetch active running experiment for this space if one exists
-    const [activeExp] = await db
+    const [activeExp] = wall ? [] : await db
       .select({
         id: experiments.id,
         name: experiments.name,

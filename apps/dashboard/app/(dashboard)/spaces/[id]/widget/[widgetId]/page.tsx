@@ -191,7 +191,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
             <BehaviourSection config={config} update={update} />
           </EditorSection>
           <EditorSection step={6} title="Install" summary="Add it to your site" open={open.has("install")} onToggle={() => toggle("install")}>
-            <InstallSection spaceId={spaceId} embedKey={editor.embedKey} template={config.template} widgetId={widgetId} />
+            <InstallSection spaceId={spaceId} embedKey={editor.embedKey} template={config.template} widgetId={widgetId} wallEnabled={editor.widget?.wallEnabled} />
           </EditorSection>
         </div>
       </div>

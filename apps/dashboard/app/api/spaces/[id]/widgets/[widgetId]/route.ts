@@ -7,15 +7,15 @@ import { requireSpaceOwner } from "@/lib/ai-video/access";
 import { apiError, badRequest, internalError, notFound, validationError } from "@/lib/api/errors";
 import { log } from "@/lib/log";
 import { updateWidgetConfigSchema, widgetNameSchema } from "@/lib/validations/widget-config";
-import { deleteWidget, getWidget, publishWidget, renameWidget, setWidgetLive, widgetSummary, widgetView } from "@/lib/widgets/service";
+import { deleteWidget, getWidget, publishWidget, renameWidget, setWallEnabled, setWidgetLive, widgetSummary, widgetView } from "@/lib/widgets/service";
 
 interface RouteParams {
   params: Promise<{ id: string; widgetId: string }>;
 }
 
 const patchSchema = z
-  .object({ name: widgetNameSchema.optional(), isLive: z.boolean().optional() })
-  .refine((v) => v.name !== undefined || v.isLive !== undefined, { message: "Nothing to change" });
+  .object({ name: widgetNameSchema.optional(), isLive: z.boolean().optional(), wallEnabled: z.boolean().optional() })
+  .refine((v) => v.name !== undefined || v.isLive !== undefined || v.wallEnabled !== undefined, { message: "Nothing to change" });
 
 /** GET /api/spaces/[id]/widgets/[widgetId]: the widget's live settings, its unpublished draft (if any) and its details. */
 export async function GET(_request: Request, { params }: RouteParams) {
@@ -52,7 +52,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
 }
 
-/** PATCH /api/spaces/[id]/widgets/[widgetId]: renames the widget and/or turns it on or off for visitors. */
+/** PATCH /api/spaces/[id]/widgets/[widgetId]: renames the widget, turns it on or off for visitors, and/or turns its own public page on or off. */
 export async function PATCH(request: Request, { params }: RouteParams) {
   const { id, widgetId } = await params;
   const owner = await requireSpaceOwner(id);
@@ -72,6 +72,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     if (!widget) return notFound("Widget not found");
     if (parsed.data.name !== undefined) widget = (await renameWidget(id, widgetId, parsed.data.name)) ?? widget;
     if (parsed.data.isLive !== undefined) widget = (await setWidgetLive(id, widgetId, parsed.data.isLive)) ?? widget;
+    if (parsed.data.wallEnabled !== undefined) {
+      const result = await setWallEnabled(id, widgetId, parsed.data.wallEnabled);
+      if (result === "not_inline") return apiError(409, "BAD_REQUEST", "Only widgets that sit in a page can have their own page. This layout floats in a corner.", { details: { reason: "not_inline" } });
+      widget = result ?? widget;
+    }
     return NextResponse.json({ widget: widgetSummary(widget) });
   } catch (error) {
     log.error("Failed to update widget:", error);

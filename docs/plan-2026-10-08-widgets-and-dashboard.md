@@ -427,6 +427,14 @@ shape (shape only if the target layout supports it, else the layout's own look);
 stars...) and columns/auto-advance. Builds on a target's existing draft. Targets must be in spaces the user owns;
 others are skipped silently. `lib/widget-editor/copy-style.ts`, `GET/POST .../widgets/[widgetId]/copy-style`. Widget bundle unchanged.
 
+**Hosted wall page (E3), built, not yet committed.** Per widget (inline layouts only): Install step switch "Give it a page of
+its own" (`widget_configs.wall_enabled`, migration 0047, off by default; `PATCH .../widgets/[widgetId] {wallEnabled}`,
+409 for a corner layout). The page is `/wall/{widgetId}`: the real widget placed by id, loading the same script under the
+key `wall-{id}`, which the public endpoint answers with only that widget (published settings, page rules ignored,
+no experiment, not tied to the "live" switch) while the page is on. No change to the widget script (zero bytes). Checked
+in a browser against the CSP: script, data and layout chunk load and the cards render. The page shows the space name
+in its heading and is public by link; turning it off 404s the page and the data.
+
 **Widgets page and per-widget editor (step 3), committed as `26dfb32`.** `/spaces/[id]/widget` is now the list
 (tab renamed "Widgets"): a card per widget (layout drawing, name, layout and where it sits, Primary / Live / Off /
 Not live yet / Unpublished changes, a "Show on my site" switch, Edit, and a menu with Rename, Duplicate, Delete),

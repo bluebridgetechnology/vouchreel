@@ -348,6 +348,11 @@ export const widgetConfigs = pgTable("widget_configs", {
    * starts off and goes live when the owner publishes it, so a half-made widget never reaches the site.
    */
   isLive: boolean("is_live").default(true).notNull(),
+  /**
+   * Whether the widget is also shown on its own public page (/wall/{id}), for owners with no site to embed it in.
+   * Off until the owner turns it on; only widgets that sit in a page (not in a corner) can have one.
+   */
+  wallEnabled: boolean("wall_enabled").default(false).notNull(),
   template: widgetTemplateEnum("template").default("floating-card").notNull(),
   position: widgetPositionEnum("position").default("bottom-right").notNull(),
   theme: jsonb("theme").$type<Record<string, unknown>>().default({}),

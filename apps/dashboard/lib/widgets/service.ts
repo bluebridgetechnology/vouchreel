@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { spaces, widgetConfigs } from "@/lib/db/schema";
 import { apiError } from "@/lib/api/errors";
 import { createNotification } from "@/lib/notifications/service";
+import { layoutInfo } from "@/lib/widget-editor/layouts";
 import { copyStyle } from "@/lib/widget-editor/copy-style";
 import { formatLimit } from "@/lib/payments/plan-limits";
 import { getSubscriptionLimits } from "@/lib/payments/subscription";
@@ -114,6 +115,33 @@ export async function setWidgetLive(spaceId: string, widgetId: string, isLive: b
   return row ?? null;
 }
 
+/** A widget can have its own page only if its layout sits in a page rather than floating in a corner. */
+export function canHaveWall(template: WidgetRow["template"]): boolean {
+  return layoutInfo(template).placement === "inline";
+}
+
+/** Turns the widget's own public page on or off. "not_inline" for a layout that floats in a corner. */
+export async function setWallEnabled(spaceId: string, widgetId: string, enabled: boolean): Promise<WidgetRow | "not_inline" | null> {
+  const widget = await getWidget(spaceId, widgetId);
+  if (!widget) return null;
+  if (enabled && !canHaveWall(widget.template)) return "not_inline";
+  const [row] = await db.update(widgetConfigs).set({ wallEnabled: enabled }).where(eq(widgetConfigs.id, widgetId)).returning();
+  return row ?? null;
+}
+
+/**
+ * The widget behind a public page (/wall/{id}), with its space: only when the owner turned the page on and the
+ * layout still sits in a page. Whether the widget is live on the owner's site does not matter.
+ */
+export async function getWallWidget(widgetId: string): Promise<{ widget: WidgetRow; space: { id: string; name: string; ownerId: string; embedKey: string } } | null> {
+  const [row] = await db
+    .select({ widget: widgetConfigs, space: { id: spaces.id, name: spaces.name, ownerId: spaces.ownerId, embedKey: spaces.embedKey } })
+    .from(widgetConfigs)
+    .innerJoin(spaces, eq(spaces.id, widgetConfigs.spaceId))
+    .where(and(eq(widgetConfigs.id, widgetId), eq(widgetConfigs.wallEnabled, true)));
+  return row && canHaveWall(row.widget.template) ? row : null;
+}
+
 /**
  * Deletes a widget. A space keeps at least one: with none, visitors would get the default widget instead of
  * the owner's choices, which is never what deleting meant.
@@ -219,7 +247,7 @@ export function widgetView(row: WidgetRow, space: { id: string; name: string; em
     },
     // Unpublished edits, when there are any (and still valid), for the editor to resume
     draft: draft?.success ? { ...draft.data, theme: normalizeTheme(draft.data.theme) } : null,
-    widget: { id: row.id, name: row.name, isLive: row.isLive, sortOrder: row.sortOrder, hasDraft: Boolean(draftConfig) },
+    widget: { id: row.id, name: row.name, isLive: row.isLive, wallEnabled: row.wallEnabled, sortOrder: row.sortOrder, hasDraft: Boolean(draftConfig) },
     space,
   };
 }
@@ -231,6 +259,7 @@ export function widgetSummary(row: WidgetRow) {
     name: row.name,
     template: row.template,
     isLive: row.isLive,
+    wallEnabled: row.wallEnabled,
     sortOrder: row.sortOrder,
     hasDraft: Boolean(row.draftConfig),
     publishedAt: row.publishedAt,

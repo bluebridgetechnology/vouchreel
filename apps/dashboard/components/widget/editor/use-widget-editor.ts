@@ -32,6 +32,8 @@ export interface EditedWidget {
   name: string;
   /** Whether visitors see it. A new widget is off until its first publish. */
   isLive: boolean;
+  /** Whether the widget is also shown on its own public page. */
+  wallEnabled: boolean;
 }
 
 /**
@@ -65,7 +67,7 @@ export function useWidgetEditor(spaceId: string, widgetId: string) {
       if (res.status === 404) throw new Error("This widget no longer exists. It may have been deleted.");
       if (!res.ok) throw new Error("Failed to load widget configuration");
       const data = await res.json();
-      setWidget({ id: data.widget.id, name: data.widget.name, isLive: data.widget.isLive });
+      setWidget({ id: data.widget.id, name: data.widget.name, isLive: data.widget.isLive, wallEnabled: Boolean(data.widget.wallEnabled) });
       const live = fromApi(data.widgetConfig);
       const draft = data.draft ? fromApi(data.draft) : null;
       setPublished(live);

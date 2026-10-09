@@ -186,6 +186,14 @@ Use `data-api` when hosting the script somewhere that is *not* your VouchReel ap
 
 ---
 
+## A page of its own (no website needed)
+
+A widget that sits in a page (a wall, grid, carousel, spotlight and so on, not a corner card) can also be shown on a public page of its own, to share by link or put in a link-in-bio. In the widget's **Install** step turn on **Give it a page of its own** and copy the link (`/wall/<widget id>`).
+
+- It is the real widget, as you last published it. Its page rules and "show on my site" switch do not apply to this page.
+- The page is public to anyone with the link, and shows your space's name in its heading. Turn the switch off and the link stops working.
+- Visits are counted like any other, under that widget in Analytics.
+
 ## Troubleshooting
 
 | Symptom | Likely cause / fix |

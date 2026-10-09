@@ -330,6 +330,13 @@
       "when": 1791541748603,
       "tag": "0046_events_widget_id",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1791548332179,
+      "tag": "0047_widget_wall",
+      "breakpoints": true
     }
   ]
 }
