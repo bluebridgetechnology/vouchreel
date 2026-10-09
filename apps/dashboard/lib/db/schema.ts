@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import type { VideoFontId } from "@vouchreel/video";
 import {
   pgTable,
@@ -376,6 +376,11 @@ export const events = pgTable("events", {
   testimonialId: uuid("testimonial_id").references(() => testimonials.id, {
     onDelete: "set null",
   }),
+  /**
+   * Which of the space's widgets recorded it. Null for events from before widgets could be told apart, for page-level
+   * events (conversions), and once its widget is deleted (the events stay, counted for the space).
+   */
+  widgetId: uuid("widget_id").references(() => widgetConfigs.id, { onDelete: "set null" }),
   sessionId: text("session_id"),
   eventType: eventTypeEnum("event_type").notNull(),
   pageUrl: text("page_url"),
@@ -386,6 +391,8 @@ export const events = pgTable("events", {
 }, (table) => [
   index("events_space_type_ts_idx").on(table.spaceId, table.eventType, table.timestamp),
   index("events_space_testimonial_type_idx").on(table.spaceId, table.testimonialId, table.eventType),
+  // Per-widget numbers; only events that name a widget are in it, so it stays small next to the table
+  index("events_widget_type_ts_idx").on(table.widgetId, table.eventType, table.timestamp).where(sql`${table.widgetId} is not null`),
 ]);
 
 /**

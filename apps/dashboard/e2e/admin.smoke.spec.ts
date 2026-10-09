@@ -941,7 +941,7 @@ test.describe("platform admin", () => {
       videoId = rows[0].id;
       // A space can have several widgets now, so there is no upsert on the space: start from none
       await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
-      await pool.query(`INSERT INTO widget_configs (space_id, template, trigger_type, trigger_value) VALUES ($1, 'wall-of-love', 'delay', '{"seconds":0}')`, [space.id]);
+      const { rows: [pageWidget] } = await pool.query(`INSERT INTO widget_configs (space_id, template, trigger_type, trigger_value) VALUES ($1, 'wall-of-love', 'delay', '{"seconds":0}') RETURNING id`, [space.id]);
 
       // Off until the owner turns it on
       expect((await widgetData()).testimonials.filter((t) => t.generated)).toEqual([]);
@@ -976,6 +976,11 @@ test.describe("platform admin", () => {
         await expect(page.locator(".vr-blend-video-card", { hasText: "Ada" })).toHaveCount(1, { timeout: 15_000 }); // the page did load its widget
         await expect(page.locator(".vr-blend-video-card", { hasText: "Review video" })).toHaveCount(0);
       }
+
+      // The widget on that page recorded its views under its own id (events are sent a few seconds after the page loads)
+      await expect
+        .poll(async () => (await pool.query(`SELECT 1 FROM events WHERE space_id = $1 AND widget_id = $2 AND event_type = 'impression'`, [space.id, pageWidget.id])).rowCount, { timeout: 30_000 })
+        .toBeGreaterThan(0);
 
       // And the next response no longer lists it
       await pool.query(`UPDATE review_videos SET moderated_at = now(), output_url = NULL WHERE id = $1`, [videoId]);
@@ -1169,6 +1174,21 @@ test.describe("platform admin", () => {
 
       const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
       expect(violations.map((v) => `${v.id}: ${v.nodes[0].target.join(" ")}`)).toEqual([]);
+
+      // Events that name a widget give its card numbers, and the Analytics page can filter to it
+      const { rows: [first] } = await pool.query(`SELECT id FROM widget_configs WHERE space_id = $1 ORDER BY sort_order, created_at LIMIT 1`, [spaceId]);
+      await pool.query(`INSERT INTO events (space_id, widget_id, event_type) VALUES ($1, $2, 'impression'), ($1, $2, 'impression'), ($1, $2, 'impression'), ($1, $2, 'play')`, [spaceId, first.id]);
+      await open(page, `/spaces/${spaceId}/widget`);
+      await expect(page.getByText("3 views · 1 play · 33% played")).toBeVisible();
+      await open(page, `/spaces/${spaceId}/analytics`);
+      const widgetFilter = page.getByLabel("Widget", { exact: true });
+      await expect(widgetFilter).toBeVisible(); // two widgets, so there is something to choose
+      await expect(widgetFilter.locator("option")).toHaveText(["All Widgets", "Default widget", "Footer wall"]);
+      const filtered = page.waitForRequest((r) => r.url().includes("type=overview") && r.url().includes(`widgetId=${first.id}`));
+      await widgetFilter.selectOption({ label: "Default widget" });
+      await filtered;
+      await open(page, `/spaces/${spaceId}/widget`);
+      await page.waitForLoadState("networkidle"); // the menus work once the page has loaded its scripts
 
       // Delete one; the last one cannot be deleted
       await page.getByRole("button", { name: "More actions for Footer wall" }).click();

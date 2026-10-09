@@ -17,10 +17,10 @@ const widget = (over: Partial<WidgetListItem> = {}): WidgetListItem => ({
   ...over,
 });
 
-const render = (widgets: WidgetListItem[], quota = { current: widgets.length, limit: 3 as number | null, allowed: true }) =>
+const render = (widgets: WidgetListItem[], quota = { current: widgets.length, limit: 3 as number | null, allowed: true }, stats: Record<string, { views: number; plays: number }> = {}) =>
   renderToStaticMarkup(
     <ConfirmProvider>
-      <WidgetsView spaceId="space-1" embedKey="emb-key" widgets={widgets} quota={quota} />
+      <WidgetsView spaceId="space-1" embedKey="emb-key" widgets={widgets} quota={quota} stats={stats} />
     </ConfirmProvider>
   );
 
@@ -80,5 +80,13 @@ describe("widgets page", () => {
 
   it("writes a widget's name as text", () => {
     expect(render([widget({ name: "<img src=x onerror=alert(1)>" })])).not.toContain("<img src=x");
+  });
+
+  it("each card shows its own last-30-days numbers, and a live widget nobody saw says so", () => {
+    const html = render([widget({ name: "A" }), widget({ id: "b", name: "B", sortOrder: 1 }), widget({ id: "c", name: "C", isLive: false, sortOrder: 2 })], undefined, { w1: { views: 1204, plays: 212 } });
+    expect(html).toContain("1,204 views · 212 plays · 18% played");
+    expect(html).toContain("Not seen by anyone in the last 30 days"); // B: live, no events
+    expect(html.match(/Not seen by anyone/g)).toHaveLength(1); // C is off: nothing to say
+    expect(html).toContain("Numbers are for the last 30 days");
   });
 });

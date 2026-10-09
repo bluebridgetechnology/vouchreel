@@ -354,17 +354,19 @@ describe("Analytics Queries & Segmentation", () => {
         { deviceType: "mobile", referrer: "google.com", pageUrl: "/home" },
       ];
 
-      (db.select as any).mockReturnValue({
-        from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            groupBy: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue(mockRows),
-            }),
-          }),
-        }),
+      const mockWidgets = [{ id: "w-1", name: "Hero" }, { id: "w-2", name: "Wall" }];
+      // First query: the events' devices, sources and pages. Second: the space's widgets, in order.
+      let call = 0;
+      (db.select as any).mockImplementation(() => {
+        call++;
+        if (call === 1) {
+          return { from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ groupBy: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue(mockRows) }) }) }) };
+        }
+        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ orderBy: vi.fn().mockResolvedValue(mockWidgets) }) }) };
       });
 
       const options = await getFilterOptions(mockSpaceId, mockDateRange);
+      expect(options.widgets).toEqual(mockWidgets);
       expect(options.devices).toContain("mobile");
       expect(options.devices).toContain("desktop");
       expect(options.trafficSources).toContain("google.com");

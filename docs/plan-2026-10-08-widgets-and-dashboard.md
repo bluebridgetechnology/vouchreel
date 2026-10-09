@@ -403,7 +403,17 @@ with live thumbnails. Each layout ships with keyboard navigation, focus trapping
 **Status (2026-10-09): step 1 (data, API, plan limit) committed; step 2 (the embed script) built, not yet
 committed; the widgets page and the editor wiring are next.**
 
-**Widgets page and per-widget editor (step 3), built, not yet committed.** `/spaces/[id]/widget` is now the list
+**Widget id on events (step 4), built, not yet committed.** `events.widget_id` (migration 0046: nullable, set to
+null if the widget is deleted, with a partial index on the events that name one). The widget puts its id on every
+event it records through one small method that replaced four copies of the same lines (core +42 bytes gzip, now
+14.30 KB, 715 left). The endpoint keeps the id only if that widget belongs to the event's space, so a deleted,
+made-up or another space's id never fails a batch or credits another space. Used in two places: each card on the
+widgets page shows its last 30 days (views, plays, share played), and Analytics has a Widget filter (shown when
+a space has more than one widget) that also applies to the CSV export. Events from before this, and
+conversions (which belong to the page), have no widget and count for the whole space only. The PDF report does
+not take filters (as before).
+
+**Widgets page and per-widget editor (step 3), committed as `26dfb32`.** `/spaces/[id]/widget` is now the list
 (tab renamed "Widgets"): a card per widget (layout drawing, name, layout and where it sits, Primary / Live / Off /
 Not live yet / Unpublished changes, a "Show on my site" switch, Edit, and a menu with Rename, Duplicate, Delete),
 "Add widget" (opens the new widget in the editor; at the plan's limit it asks to upgrade instead), a line saying

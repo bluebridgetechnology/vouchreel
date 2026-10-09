@@ -1,6 +1,6 @@
 import { and, asc, eq, gte, lt, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { events, testimonials } from "@/lib/db/schema";
+import { events, testimonials, widgetConfigs } from "@/lib/db/schema";
 
 export type EventType = "impression" | "play" | "click" | "convert";
 
@@ -11,6 +11,8 @@ export interface DateRange {
 
 export interface AnalyticsFilter {
   testimonialId?: string;
+  /** Only events from this widget (events from before widgets could be told apart, and conversions, have none). */
+  widgetId?: string;
   pageUrl?: string;
   deviceType?: "mobile" | "desktop";
   trafficSource?: string;
@@ -113,6 +115,9 @@ export function buildAnalyticsFilterConditions(filter?: AnalyticsFilter) {
 
   if (filter.testimonialId) {
     conditions.push(eq(events.testimonialId, filter.testimonialId));
+  }
+  if (filter.widgetId) {
+    conditions.push(eq(events.widgetId, filter.widgetId));
   }
   if (filter.pageUrl) {
     conditions.push(eq(events.pageUrl, filter.pageUrl));
@@ -438,6 +443,8 @@ export async function getFilterOptions(
   devices: string[];
   trafficSources: string[];
   pageUrls: string[];
+  /** The space's widgets, for the widget filter (only worth showing when there is more than one). */
+  widgets: { id: string; name: string }[];
 }> {
   const rows = await db
     .select({
@@ -470,10 +477,17 @@ export async function getFilterOptions(
     if (r.pageUrl) pageUrls.add(r.pageUrl);
   }
 
+  const widgets = await db
+    .select({ id: widgetConfigs.id, name: widgetConfigs.name })
+    .from(widgetConfigs)
+    .where(eq(widgetConfigs.spaceId, spaceId))
+    .orderBy(asc(widgetConfigs.sortOrder), asc(widgetConfigs.createdAt));
+
   return {
     devices: Array.from(devices),
     trafficSources: Array.from(trafficSources),
     pageUrls: Array.from(pageUrls),
+    widgets,
   };
 }
 

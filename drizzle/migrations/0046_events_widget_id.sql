@@ -1,0 +1,3 @@
+ALTER TABLE "events" ADD COLUMN "widget_id" uuid;--> statement-breakpoint
+ALTER TABLE "events" ADD CONSTRAINT "events_widget_id_widget_configs_id_fk" FOREIGN KEY ("widget_id") REFERENCES "public"."widget_configs"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "events_widget_type_ts_idx" ON "events" USING btree ("widget_id","event_type","timestamp") WHERE "events"."widget_id" is not null;

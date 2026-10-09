@@ -62,6 +62,8 @@ export interface WidgetOptions {
   reviews?: ReviewItem[];
   analytics?: AnalyticsTracker;
   whiteLabel?: WidgetWhiteLabelConfig;
+  /** This widget's id, put on every event it records so a space's widgets can be told apart in the numbers. */
+  widgetId?: string;
   /** Where an inline widget goes, when the page named a spot for this widget (`data-vouchreel-widget="<id>"`). */
   container?: HTMLElement | null;
   /**
@@ -75,6 +77,7 @@ export interface WidgetOptions {
 export class VouchreelWidget {
   private embedKey: string;
   private container: HTMLElement | null;
+  private widgetId?: string;
   private primary: boolean;
   private config: WidgetConfig;
   private testimonials: TestimonialItem[];
@@ -99,12 +102,18 @@ export class VouchreelWidget {
   constructor(options: WidgetOptions) {
     this.embedKey = options.embedKey;
     this.container = options.container || null;
+    this.widgetId = options.widgetId;
     this.primary = options.primary !== false;
     this.config = options.config || {};
     this.testimonials = options.testimonials || [];
     this.reviews = options.reviews || [];
     this.analytics = options.analytics;
     this.whiteLabel = options.whiteLabel || (options.config as Record<string, unknown>)?.whiteLabel as WidgetWhiteLabelConfig | undefined;
+  }
+
+  /** Records an event, saying which of the space's widgets it came from. */
+  private track(type: "impression" | "play" | "click", testimonialId?: string): void {
+    this.analytics?.track(type, testimonialId, this.widgetId ? { widgetId: this.widgetId } : null);
   }
 
   /**
@@ -220,10 +229,7 @@ export class VouchreelWidget {
     this.applyTypography();
 
     // Track impression
-    if (this.analytics) {
-      const currentTestimonial = this.testimonials[0];
-      this.analytics.track("impression", currentTestimonial?.id);
-    }
+    this.track("impression", this.testimonials[0]?.id);
 
     // Render chosen template
     this.renderTemplate();
@@ -324,7 +330,7 @@ export class VouchreelWidget {
         quote: (item) => this.getEffectiveQuote(item),
         openVideo: (index) => this.expandVideo(index),
         openReview: (review) => this.expandReview(review),
-        track: (type, id) => this.analytics?.track(type, id),
+        track: (type, id) => this.track(type, id),
         theme: this.config.theme,
         dismiss: () => this.dismiss(),
         autoplay: this.config.autoplayPreview !== false,
@@ -450,9 +456,7 @@ export class VouchreelWidget {
     openBtn.appendChild(info);
 
     openBtn.addEventListener("click", () => {
-      if (this.analytics) {
-        this.analytics.track("click", current.id);
-      }
+      this.track("click", current.id);
       this.expandVideo(this.currentIndex);
     });
     card.appendChild(openBtn);
@@ -536,11 +540,7 @@ export class VouchreelWidget {
       autoplayPreview: this.config.autoplayPreview,
       subtitles: cues,
       subtitleLanguage: visitorLang,
-      onPlay: () => {
-        if (this.analytics) {
-          this.analytics.track("play", current.id);
-        }
-      },
+      onPlay: () => this.track("play", current.id),
       onEnded: () => {
         this.next();
       },

@@ -40,6 +40,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
 
   // Segmentation Filters
   const [selectedTestimonial, setSelectedTestimonial] = useState<string>("");
+  const [selectedWidget, setSelectedWidget] = useState<string>("");
   const [selectedDevice, setSelectedDevice] = useState<string>("");
   const [selectedTrafficSource, setSelectedTrafficSource] = useState<string>("");
   const [searchPageUrl, setSearchPageUrl] = useState<string>("");
@@ -52,7 +53,8 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
     devices: string[];
     trafficSources: string[];
     pageUrls: string[];
-  }>({ devices: [], trafficSources: [], pageUrls: [] });
+    widgets: { id: string; name: string }[];
+  }>({ devices: [], trafficSources: [], pageUrls: [], widgets: [] });
 
   // Data states
   const [stats, setStats] = useState<OverviewStats | null>(null);
@@ -76,6 +78,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
       endDate: baseRange.endDate,
     });
     if (selectedTestimonial) params.set("testimonialId", selectedTestimonial);
+    if (selectedWidget) params.set("widgetId", selectedWidget);
     if (selectedDevice) params.set("deviceType", selectedDevice);
     if (selectedTrafficSource) params.set("trafficSource", selectedTrafficSource);
     if (searchPageUrl) params.set("pageUrl", searchPageUrl);
@@ -180,6 +183,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
   }, [
     days,
     selectedTestimonial,
+    selectedWidget,
     selectedDevice,
     selectedTrafficSource,
     searchPageUrl,
@@ -197,6 +201,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
 
   function handleResetFilters() {
     setSelectedTestimonial("");
+    setSelectedWidget("");
     setSelectedDevice("");
     setSelectedTrafficSource("");
     setSearchPageUrl("");
@@ -205,6 +210,7 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
 
   const hasActiveFilters =
     Boolean(selectedTestimonial) ||
+    Boolean(selectedWidget) ||
     Boolean(selectedDevice) ||
     Boolean(selectedTrafficSource) ||
     Boolean(searchPageUrl);
@@ -275,6 +281,9 @@ export function AnalyticsDashboard({ spaceId }: { spaceId: string }) {
         exportPdfUrl={exportPdfUrl}
         rows={rows}
         trafficSources={filterOptions.trafficSources}
+        widgets={filterOptions.widgets}
+        selectedWidget={selectedWidget}
+        setSelectedWidget={setSelectedWidget}
         selectedTestimonial={selectedTestimonial}
         selectedDevice={selectedDevice}
         selectedTrafficSource={selectedTrafficSource}

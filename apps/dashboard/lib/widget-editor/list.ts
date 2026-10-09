@@ -38,3 +38,21 @@ export function widgetStatus(w: WidgetStatusInput): WidgetStatus {
   if (w.isLive) return { label: "Live", tone: "success", pendingChanges: w.hasDraft };
   return w.publishedAt ? { label: "Off", tone: "neutral", pendingChanges: false } : { label: "Not live yet", tone: "info", pendingChanges: false };
 }
+
+export interface WidgetNumbers {
+  views: number;
+  plays: number;
+}
+
+const n = (value: number) => value.toLocaleString("en");
+
+/**
+ * The line of numbers on a widget's card, for the last 30 days. A widget visitors do not see has nothing to
+ * report; one they do see but that was never shown says so, rather than printing zeros.
+ */
+export function numbersLine(w: { isLive: boolean }, stats: WidgetNumbers | undefined): string | null {
+  if (!stats || stats.views + stats.plays === 0) return w.isLive ? "Not seen by anyone in the last 30 days" : null;
+  const parts = [`${n(stats.views)} ${stats.views === 1 ? "view" : "views"}`, `${n(stats.plays)} ${stats.plays === 1 ? "play" : "plays"}`];
+  if (stats.views > 0 && stats.plays <= stats.views) parts.push(`${Math.round((stats.plays / stats.views) * 100)}% played`);
+  return parts.join(" · ");
+}

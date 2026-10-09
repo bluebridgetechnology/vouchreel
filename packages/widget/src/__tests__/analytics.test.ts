@@ -82,6 +82,28 @@ describe("Analytics Module", () => {
       expect(mockSessionStorage["vouchreel_engaged"]).toBe("true");
     });
 
+    /** The events one flush sent. */
+    const sentEvents = async () => JSON.parse(await ((navigator.sendBeacon as any).mock.calls[0][1] as Blob).text()).events as Record<string, any>[];
+
+    it("puts the widget's id on the event, not among its free-form details", async () => {
+      const tracker = new AnalyticsTracker({ spaceId: "space-123", apiBase: "https://api.vouchreel.com" });
+      tracker.track("play", "testi-1", { widgetId: "widget-9", goalId: "g1" });
+      tracker.flush();
+      const [event] = await sentEvents();
+      expect(event.widgetId).toBe("widget-9");
+      expect(event.metadata).toMatchObject({ goalId: "g1", deviceType: "desktop" });
+      expect(event.metadata).not.toHaveProperty("widgetId");
+    });
+
+    it("has no widget id for an event that is not one widget's (or from a widget with no id), and ignores a bad one", async () => {
+      const tracker = new AnalyticsTracker({ spaceId: "space-123", apiBase: "https://api.vouchreel.com" });
+      tracker.track("impression", "testi-1");
+      tracker.track("click", "testi-1", { widgetId: 42 });
+      tracker.track("convert", null, { goalId: "g1" });
+      tracker.flush();
+      expect((await sentEvents()).map((e) => e.widgetId)).toEqual([null, null, null]);
+    });
+
     it("evaluates conversion goals and tracks convert event", () => {
       const tracker = new AnalyticsTracker({
         spaceId: "space-123",

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { WidgetTemplate } from "@/lib/validations/widget-config";
 import { layoutInfo } from "@/lib/widget-editor/layouts";
-import { limitHint, quotaLabel, widgetStatus, type WidgetQuotaView } from "@/lib/widget-editor/list";
+import { limitHint, numbersLine, quotaLabel, widgetStatus, type WidgetNumbers, type WidgetQuotaView } from "@/lib/widget-editor/list";
 import { cn } from "@/lib/utils";
 import { notify } from "@/lib/notify";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,8 @@ interface WidgetsViewProps {
   embedKey: string;
   widgets: WidgetListItem[];
   quota: WidgetQuotaView;
+  /** Last 30 days per widget id, from the events that name their widget. */
+  stats?: Record<string, WidgetNumbers>;
 }
 
 /** The error message the API sent, else a fallback. */
@@ -45,7 +47,7 @@ async function apiMessage(res: Response, fallback: string): Promise<string> {
   return data?.error?.details?.name?.[0] || data?.error?.message || fallback;
 }
 
-export function WidgetsView({ spaceId, embedKey, widgets: initial, quota: initialQuota }: WidgetsViewProps) {
+export function WidgetsView({ spaceId, embedKey, widgets: initial, quota: initialQuota, stats = {} }: WidgetsViewProps) {
   const router = useRouter();
   const confirm = useConfirm();
   const [widgets, setWidgets] = useState(initial);
@@ -228,6 +230,12 @@ export function WidgetsView({ spaceId, embedKey, widgets: initial, quota: initia
                   {status.pendingChanges && <Badge variant="warning">Unpublished changes</Badge>}
                 </div>
 
+                {numbersLine(w, stats[w.id]) && (
+                  <p className="text-xs tabular-nums text-text-muted" aria-label="Last 30 days">
+                    {numbersLine(w, stats[w.id])}
+                  </p>
+                )}
+
                 <div className="mt-auto flex items-center justify-between gap-3 border-t pt-3">
                   <label className="flex items-center gap-2 text-xs text-text-muted">
                     <Switch checked={w.isLive} disabled={working} onCheckedChange={(v) => setLive(w, v)} aria-label={`${w.name} is shown to visitors`} />
@@ -242,6 +250,8 @@ export function WidgetsView({ spaceId, embedKey, widgets: initial, quota: initia
           );
         })}
       </ul>
+
+      <p className="text-xs text-text-muted">Numbers are for the last 30 days. Visits from before widgets were told apart count in Analytics for the whole space.</p>
 
       <details className="group rounded-card border bg-surface">
         <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4 text-sm font-medium text-text">

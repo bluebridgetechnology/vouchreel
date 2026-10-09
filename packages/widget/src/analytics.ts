@@ -7,6 +7,8 @@ export interface AnalyticsEvent {
   testimonialId?: string | null;
   sessionId: string;
   eventType: EventType;
+  /** Which of the space's widgets recorded it (absent for page-level events such as conversions). */
+  widgetId?: string | null;
   pageUrl: string;
   timestamp: string;
   metadata?: Record<string, unknown> | null;
@@ -132,6 +134,9 @@ export class AnalyticsTracker {
       }
     }
 
+    // The widget's id is an event field of its own, not part of the free-form details
+    const { widgetId, ...details } = (metadata || {}) as Record<string, unknown>;
+
     const mergedMetadata: Record<string, unknown> = {
       deviceType,
       referrer,
@@ -139,7 +144,7 @@ export class AnalyticsTracker {
       ...(this.variantIndex !== null && this.variantIndex !== undefined
         ? { variantIndex: this.variantIndex }
         : {}),
-      ...metadata,
+      ...details,
     };
 
     const event: AnalyticsEvent = {
@@ -147,6 +152,7 @@ export class AnalyticsTracker {
       testimonialId: testimonialId || null,
       sessionId: this.sessionId,
       eventType,
+      widgetId: typeof widgetId === "string" ? widgetId : null,
       pageUrl,
       timestamp: new Date().toISOString(),
       metadata: mergedMetadata,

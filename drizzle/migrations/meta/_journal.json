@@ -323,6 +323,13 @@
       "when": 1791534897781,
       "tag": "0045_widgets_per_space",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1791541748603,
+      "tag": "0046_events_widget_id",
+      "breakpoints": true
     }
   ]
 }

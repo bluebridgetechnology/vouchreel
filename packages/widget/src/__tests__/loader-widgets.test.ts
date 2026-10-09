@@ -95,7 +95,7 @@ describe("the embed script with one widget", () => {
   it("shows it exactly as it always did: keyed by the embed key, first in line, no spot of its own", async () => {
     await run();
     expect(created).toHaveLength(1);
-    expect(created[0].options).toMatchObject({ embedKey: "emb-key", primary: true, container: null });
+    expect(created[0].options).toMatchObject({ embedKey: "emb-key", primary: true, container: null, widgetId: "w1" });
     expect(created[0].mount).toHaveBeenCalledTimes(1);
     expect(layoutAsks).toEqual(["floating-card"]);
   });
@@ -137,6 +137,8 @@ describe("the embed script with several widgets", () => {
       ["emb-key-w3", false, "floating-bubble"],
     ]);
     for (const c of created) expect(c.mount).toHaveBeenCalledTimes(1);
+    // Each knows its own id, to put on its events
+    expect(created.map((c) => c.options.widgetId)).toEqual(["w1", "w2", "w3"]);
     // They share one set of testimonials and one analytics tracker
     expect(created[1].options.testimonials).toBe(created[0].options.testimonials);
     expect(created[1].options.analytics).toBe(created[0].options.analytics);

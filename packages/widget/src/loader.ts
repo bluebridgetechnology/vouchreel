@@ -357,6 +357,7 @@ export async function initLoader(): Promise<void> {
         whiteLabel: data.whiteLabel,
         container,
         primary: w.primary,
+        widgetId: w.id,
       });
 
       // Fetch the layout's chunk now, while the trigger waits, so it is usually there before it is needed

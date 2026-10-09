@@ -203,4 +203,49 @@ describe("Analytics Events API Route", () => {
       expect(insert.mock.calls[0][0].map((e: { testimonialId: string | null }) => e.testimonialId)).toEqual([validTestimonialId, null, null]);
     });
   });
+
+  describe("which widget an event came from", () => {
+    const widgetA = "d3bbcc66-6c3b-4fc5-8c0e-3cc6ce050d44";
+    const widgetElsewhere = "e4ccdd55-5d4c-4ab4-9d1f-2dd7df940e55";
+    const widgetDeleted = "f5ddee44-4e5d-4bc3-8e20-1ee8ea830f66";
+    const otherSpace = "b2ffcd88-8b1a-4fe7-aa5c-5aa8ac271b99";
+    const insert = vi.fn().mockResolvedValue(undefined);
+
+    /** First lookup: the space. Second: the named widgets (id and space). */
+    function post(widgetIds: (string | undefined)[], widgetRows: { id: string; spaceId: string }[]) {
+      const rows = [[{ id: validSpaceId }], widgetRows];
+      (db.select as any).mockImplementation(() => ({ from: () => ({ where: () => Promise.resolve(rows.shift() ?? []) }) }));
+      insert.mockClear();
+      (db.insert as any).mockReturnValue({ values: insert });
+      return postEvents(
+        new Request("http://localhost/api/events", {
+          method: "POST",
+          body: JSON.stringify({ events: widgetIds.map((widgetId) => ({ spaceId: validSpaceId, widgetId, sessionId: "s", eventType: "impression" })) }),
+        })
+      );
+    }
+    const stored = () => insert.mock.calls[0][0].map((e: { widgetId: string | null }) => e.widgetId);
+
+    it("is stored with the event when the widget belongs to the event's space", async () => {
+      expect((await post([widgetA], [{ id: widgetA, spaceId: validSpaceId }])).status).toBe(201);
+      expect(stored()).toEqual([widgetA]);
+    });
+
+    it("is dropped, and the event still counted for the space, when the widget is gone, made up, or another space's", async () => {
+      const res = await post([widgetDeleted, widgetElsewhere, widgetA, undefined], [{ id: widgetElsewhere, spaceId: otherSpace }, { id: widgetA, spaceId: validSpaceId }]);
+      expect(res.status).toBe(201);
+      expect(stored()).toEqual([null, null, widgetA, null]);
+    });
+
+    it("asks about the named widgets once, and not at all when none is named", async () => {
+      await post([widgetA, widgetA, widgetA], [{ id: widgetA, spaceId: validSpaceId }]);
+      expect((db.select as any).mock.calls).toHaveLength(2); // the space, then the widgets (not once per event)
+      await post([undefined, undefined], []);
+      expect((db.select as any).mock.calls).toHaveLength(3); // only the space
+    });
+
+    it("refuses an id that is not a UUID", async () => {
+      expect((await post(["not-a-uuid"], [])).status).toBe(400);
+    });
+  });
 });

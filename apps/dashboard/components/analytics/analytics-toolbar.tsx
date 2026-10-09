@@ -15,6 +15,10 @@ interface AnalyticsToolbarProps {
   exportPdfUrl: string;
   rows: PerTestimonialStats[];
   trafficSources: string[];
+  /** The space's widgets; the filter is shown only when there is more than one. */
+  widgets: { id: string; name: string }[];
+  selectedWidget: string;
+  setSelectedWidget: (v: string) => void;
   selectedTestimonial: string;
   selectedDevice: string;
   selectedTrafficSource: string;
@@ -31,7 +35,7 @@ interface AnalyticsToolbarProps {
 }
 
 export function AnalyticsToolbar({
-  spaceId, days, loading, exportCsvUrl, exportPdfUrl, rows, trafficSources,
+  spaceId, days, loading, exportCsvUrl, exportPdfUrl, rows, trafficSources, widgets, selectedWidget, setSelectedWidget,
   selectedTestimonial, selectedDevice, selectedTrafficSource, searchPageUrl, hasActiveFilters, compareMode,
   onRangeChange, setSelectedTestimonial, setSelectedDevice, setSelectedTrafficSource, setSearchPageUrl, setCompareMode, onResetFilters,
 }: AnalyticsToolbarProps) {
@@ -136,6 +140,23 @@ export function AnalyticsToolbar({
           ))}
         </select>
   
+        {/* Widget Filter: only when the space has more than one widget to tell apart */}
+        {widgets.length > 1 && (
+          <select
+            aria-label="Widget"
+            value={selectedWidget}
+            onChange={(e) => setSelectedWidget(e.target.value)}
+            className={cn(inputClass, "h-8 text-xs")}
+          >
+            <option value="">All Widgets</option>
+            {widgets.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name}
+              </option>
+            ))}
+          </select>
+        )}
+
         {/* Device Filter */}
         <select
           value={selectedDevice}

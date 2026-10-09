@@ -25,6 +25,11 @@ export const analyticsQuerySchema = z.object({
     .uuid()
     .optional()
     .or(z.literal("").transform(() => undefined)),
+  widgetId: z
+    .string()
+    .uuid()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   pageUrl: z.string().optional().or(z.literal("").transform(() => undefined)),
   deviceType: z
     .enum(["mobile", "desktop"])
@@ -53,6 +58,11 @@ export const analyticsExportQuerySchema = z.object({
   startDate: isoDate.optional(),
   endDate: isoDate.optional(),
   testimonialId: z
+    .string()
+    .uuid()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  widgetId: z
     .string()
     .uuid()
     .optional()

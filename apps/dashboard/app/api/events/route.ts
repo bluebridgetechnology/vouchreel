@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { events, spaces, testimonials } from "@/lib/db/schema";
+import { events, spaces, testimonials, widgetConfigs } from "@/lib/db/schema";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   apiError,
@@ -45,6 +45,8 @@ const eventItemSchema = z.object({
     .regex(uuidRegex, "Invalid testimonial ID")
     .optional()
     .nullable(),
+  /** Which of the space's widgets recorded it. */
+  widgetId: z.string().regex(uuidRegex, "Invalid widget ID").optional().nullable(),
   sessionId: z.string().optional().nullable(),
   eventType: z.enum(["impression", "play", "click", "convert"]),
   pageUrl: z.string().optional().nullable(),
@@ -156,6 +158,15 @@ export async function POST(request: Request) {
       for (const row of rows ?? []) known.add(row.id);
     }
 
+    // Likewise a widget id counts only if that widget belongs to the event's space: one that was deleted since the
+    // page loaded (or was made up) is dropped, and the event still counts for the space
+    const namedWidgets = Array.from(new Set(eventList.map((e) => e.widgetId).filter((id): id is string => Boolean(id))));
+    const widgetSpace = new Map<string, string>();
+    if (namedWidgets.length > 0) {
+      const rows = await db.select({ id: widgetConfigs.id, spaceId: widgetConfigs.spaceId }).from(widgetConfigs).where(inArray(widgetConfigs.id, namedWidgets));
+      for (const row of rows ?? []) widgetSpace.set(row.id, row.spaceId);
+    }
+
     const insertValues = eventList.map((evt) => {
       let parsedTimestamp = new Date();
       if (evt.timestamp) {
@@ -168,6 +179,7 @@ export async function POST(request: Request) {
       return {
         spaceId: evt.spaceId,
         testimonialId: evt.testimonialId && known.has(evt.testimonialId) ? evt.testimonialId : null,
+        widgetId: evt.widgetId && widgetSpace.get(evt.widgetId) === evt.spaceId ? evt.widgetId : null,
         sessionId: evt.sessionId || null,
         eventType: evt.eventType,
         pageUrl: evt.pageUrl || null,
