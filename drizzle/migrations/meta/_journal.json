@@ -281,6 +281,13 @@
       "when": 1791487834384,
       "tag": "0039_widget_template_bubble",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791531814142,
+      "tag": "0040_widget_template_reel",
+      "breakpoints": true
     }
   ]
 }

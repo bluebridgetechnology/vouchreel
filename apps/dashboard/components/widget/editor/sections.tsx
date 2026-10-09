@@ -64,6 +64,7 @@ function LayoutSketch({ id }: { id: WidgetTemplate }) {
     <span className="relative block h-10 w-14 shrink-0 overflow-hidden rounded-control border bg-surface text-brand" aria-hidden>
       {id === "floating-card" && <span className={cn(block, "absolute bottom-1 right-1 h-2.5 w-6")} />}
       {id === "floating-bubble" && <span className="absolute bottom-1 right-1 size-4 rounded-pill border-2 border-current bg-brand-soft" />}
+      {id === "floating-reel" && <span className="absolute bottom-1 right-1 h-7 w-4 rounded-[3px] border-2 border-current bg-brand-soft" />}
       {id === "story-strip" && (
         <span className="absolute bottom-1 right-1 flex gap-0.5">
           {[0, 1, 2].map((i) => (
