@@ -341,6 +341,12 @@ frames.
 
 ### D2. New layouts (L, one change set per layout, each S to M)
 
+**Progress (2026-10-09):** spotlight built (migration 0042): one large featured testimonial (poster, big quote,
+name and company; reviews as text slides) with up to six small pictures to switch between, two columns wide and
+one on narrow screens. Playback uses the core's pop-up, so the chunk is 2.27 KB gzip and the core is unchanged.
+Optional auto-advance (the editor's auto-scroll control) pauses on hover or focus, stops once the visitor picks
+one, and never runs for reduced motion. Shapes: wide (default), portrait, square, reel, rounded.
+
 **Progress (2026-10-09):** reel feed built (migration 0041): an inline row of up to twelve 9:16 tiles (pictures,
 no video downloaded until one is opened) that open a full-screen vertical player for uploaded videos: swipe up
 or down, arrow keys or buttons, next video on its own when one ends, Escape or the close button to leave, focus

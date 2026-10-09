@@ -12,6 +12,7 @@ const SHEETS: Record<string, string> = {
   "floating-bubble": widgetCss("layouts/floating-bubble.css"),
   "floating-reel": widgetCss("layouts/floating-reel.css"),
   "reel-feed": widgetCss("layouts/reel-feed.css"),
+  spotlight: widgetCss("layouts/spotlight.css"),
   carousel: widgetCss("layouts/cards.css"),
   "wall-of-love": widgetCss("layouts/cards.css"),
   masonry: widgetCss("layouts/cards.css"),

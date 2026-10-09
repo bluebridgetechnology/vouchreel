@@ -295,6 +295,13 @@
       "when": 1791532334995,
       "tag": "0041_widget_template_reel_feed",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1791532948887,
+      "tag": "0042_widget_template_spotlight",
+      "breakpoints": true
     }
   ]
 }

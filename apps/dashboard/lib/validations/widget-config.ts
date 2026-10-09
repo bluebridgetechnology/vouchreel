@@ -17,6 +17,7 @@ export const WIDGET_TEMPLATES = [
   "floating-bubble",
   "floating-reel",
   "reel-feed",
+  "spotlight",
 ] as const;
 
 export const TRIGGER_TYPES = [
