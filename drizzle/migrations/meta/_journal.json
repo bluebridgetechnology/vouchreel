@@ -302,6 +302,13 @@
       "when": 1791532948887,
       "tag": "0042_widget_template_spotlight",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1791533463106,
+      "tag": "0043_widget_template_rating_badge",
+      "breakpoints": true
     }
   ]
 }

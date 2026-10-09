@@ -13,6 +13,7 @@ const SHEETS: Record<string, string> = {
   "floating-reel": widgetCss("layouts/floating-reel.css"),
   "reel-feed": widgetCss("layouts/reel-feed.css"),
   spotlight: widgetCss("layouts/spotlight.css"),
+  "rating-badge": "",
   carousel: widgetCss("layouts/cards.css"),
   "wall-of-love": widgetCss("layouts/cards.css"),
   masonry: widgetCss("layouts/cards.css"),
@@ -21,7 +22,8 @@ const SHEETS: Record<string, string> = {
 describe("shapes", () => {
   it("each layout offers only real shapes, without repeats", () => {
     for (const l of LAYOUTS) {
-      expect(l.shapes.length).toBeGreaterThan(1);
+      // A layout with no picture to shape offers none; otherwise there is a real choice
+      expect(l.shapes.length === 0 || l.shapes.length > 1).toBe(true);
       expect(new Set(l.shapes).size).toBe(l.shapes.length);
       for (const s of l.shapes) expect(WIDGET_SHAPES).toContain(s);
     }

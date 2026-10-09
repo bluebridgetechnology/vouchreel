@@ -89,6 +89,12 @@ function LayoutSketch({ id }: { id: WidgetTemplate }) {
           </span>
         </span>
       )}
+      {id === "rating-badge" && (
+        <span className="absolute inset-x-1.5 top-3.5 flex h-3 items-center gap-1 rounded-pill border-2 border-current px-1">
+          <span className="h-1 w-3 rounded-pill bg-current" />
+          <span className="h-1 w-2 rounded-pill bg-current opacity-50" />
+        </span>
+      )}
       {id === "carousel" && (
         <span className="absolute inset-x-1 top-3 flex gap-1">
           {[0, 1, 2].map((i) => (
@@ -295,27 +301,29 @@ export function ShapeSection({ theme, updateTheme, brandManaged, template }: { t
   const current = theme.shape ?? shapes[0];
   return (
     <>
-      <div className="space-y-1.5">
-        <span className="block text-xs font-medium text-text">Shape of each video</span>
-        <div role="radiogroup" aria-label="Shape" className="grid grid-cols-3 gap-2">
-          {shapes.map((shape, i) => (
-            <button
-              key={shape}
-              type="button"
-              role="radio"
-              aria-checked={current === shape}
-              onClick={() => updateTheme({ shape: i === 0 ? null : shape })}
-              className={cn("flex flex-col items-center gap-1.5 rounded-card border px-2 py-2.5 text-2xs font-medium transition-colors", toggleStyle("choice", current === shape))}
-            >
-              <span className="flex h-7 items-center" aria-hidden>
-                <span className={cn("border-2 border-current bg-brand-soft text-brand", SHAPE_SKETCH[shape])} />
-              </span>
-              {SHAPE_LABELS[shape]}
-              {i === 0 && <span className="-mt-1 text-3xs font-normal text-text-muted">Default</span>}
-            </button>
-          ))}
+      {shapes.length > 0 && (
+        <div className="space-y-1.5">
+          <span className="block text-xs font-medium text-text">Shape of each video</span>
+          <div role="radiogroup" aria-label="Shape" className="grid grid-cols-3 gap-2">
+            {shapes.map((shape, i) => (
+              <button
+                key={shape}
+                type="button"
+                role="radio"
+                aria-checked={current === shape}
+                onClick={() => updateTheme({ shape: i === 0 ? null : shape })}
+                className={cn("flex flex-col items-center gap-1.5 rounded-card border px-2 py-2.5 text-2xs font-medium transition-colors", toggleStyle("choice", current === shape))}
+              >
+                <span className="flex h-7 items-center" aria-hidden>
+                  <span className={cn("border-2 border-current bg-brand-soft text-brand", SHAPE_SKETCH[shape])} />
+                </span>
+                {SHAPE_LABELS[shape]}
+                {i === 0 && <span className="-mt-1 text-3xs font-normal text-text-muted">Default</span>}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
       <Segmented label="Size" value={theme.size} options={[{ value: "sm", label: "Small" }, { value: "md", label: "Medium" }, { value: "lg", label: "Large" }]} onChange={(size) => updateTheme({ size })} />
       {brandManaged ? (
         <p className="text-2xs text-text-muted">Corner radius comes from your Brand settings.</p>

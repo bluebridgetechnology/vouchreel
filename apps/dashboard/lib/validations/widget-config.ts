@@ -18,6 +18,7 @@ export const WIDGET_TEMPLATES = [
   "floating-reel",
   "reel-feed",
   "spotlight",
+  "rating-badge",
 ] as const;
 
 export const TRIGGER_TYPES = [

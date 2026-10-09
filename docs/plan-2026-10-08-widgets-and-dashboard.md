@@ -341,6 +341,14 @@ frames.
 
 ### D2. New layouts (L, one change set per layout, each S to M)
 
+**Progress (2026-10-09):** rating badge built (migration 0043): "4.7 from 3 reviews" with stars filled to the
+average, as a small pill for a header or footer; clicking opens a sheet of up to eight reviews, each opening the
+core's full review. The score is computed in the widget from the approved imported reviews it already receives
+(only valid 1 to 5 ratings count; video testimonials have none), so it needs no new data or request. It names a
+source ("on Google") only when every review comes from it, and says "from N reviews", never a bare rating.
+Chunk 2.06 KB gzip, core unchanged. It is inline only; it has no picture, so the editor hides the shape chips
+for it. Note for owners: the number reflects the reviews they have approved, which is their own selection.
+
 **Progress (2026-10-09):** spotlight built (migration 0042): one large featured testimonial (poster, big quote,
 name and company; reviews as text slides) with up to six small pictures to switch between, two columns wide and
 one on narrow screens. Playback uses the core's pop-up, so the chunk is 2.27 KB gzip and the core is unchanged.

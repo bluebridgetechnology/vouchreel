@@ -17,7 +17,7 @@ export interface LayoutInfo {
   grid: boolean;
   /** Can scroll itself. */
   autoAdvance: boolean;
-  /** Shapes that look right in this layout, the layout's own look first (what "Default" means). */
+  /** Shapes that look right in this layout, the layout's own look first (what "Default" means). Empty when the layout has no picture to shape. */
   shapes: WidgetShape[];
 }
 
@@ -28,6 +28,7 @@ export const LAYOUTS: LayoutInfo[] = [
   { id: "story-strip", name: "Story strip", bestFor: "Mobile visitors: tappable bubbles", placement: "floating", grid: false, autoAdvance: false, shapes: ["circle", "rounded", "vertical"] },
   { id: "reel-feed", name: "Reel feed", bestFor: "Product and landing pages: tall tiles that open full screen", placement: "inline", grid: false, autoAdvance: false, shapes: ["vertical", "portrait", "square", "rounded"] },
   { id: "spotlight", name: "Spotlight", bestFor: "Hero and pricing sections: one big testimonial", placement: "inline", grid: false, autoAdvance: true, shapes: ["landscape", "portrait", "square", "vertical", "rounded"] },
+  { id: "rating-badge", name: "Rating badge", bestFor: "Headers and footers: a small score that opens the reviews", placement: "inline", grid: false, autoAdvance: false, shapes: [] },
   { id: "carousel", name: "Carousel", bestFor: "Landing pages: a swipeable row", placement: "inline", grid: false, autoAdvance: true, shapes: ["landscape", "square", "rounded", "portrait", "vertical"] },
   { id: "wall-of-love", name: "Wall of love", bestFor: "A testimonials page: an even grid", placement: "inline", grid: true, autoAdvance: false, shapes: ["landscape", "square", "rounded", "circle", "portrait", "vertical"] },
   { id: "masonry", name: "Masonry", bestFor: "Mixed quotes and videos: staggered columns", placement: "inline", grid: true, autoAdvance: false, shapes: ["landscape", "square", "rounded", "circle", "portrait", "vertical"] },
