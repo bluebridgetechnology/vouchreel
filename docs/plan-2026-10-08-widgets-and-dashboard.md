@@ -435,7 +435,15 @@ no experiment, not tied to the "live" switch) while the page is on. No change to
 in a browser against the CSP: script, data and layout chunk load and the cards render. The page shows the space name
 in its heading and is public by link; turning it off 404s the page and the data.
 
-**Style experiments (E4), built, not yet committed.** New experiment type `style` (enum value, migration 0048). A variant is a
+**Publish history (E6), built, not yet committed.** `widget_versions` (migration 0049): each time what visitors see changes
+(a publish, or an experiment's winner) the new settings are kept, plus, once, how the widget was before (if it had
+been shown), up to 10 per widget, identical repeats skipped; deleted with the widget. Editor top bar: **History**
+lists versions with what changed since the previous one ("layout, colours"...), marks the live one, and **Restore**
+loads a version into the editor as unpublished changes (one undo step; the site changes only when the owner
+publishes, which is itself kept). A failure to record never blocks a publish. `lib/widgets/history.ts`,
+`GET .../widgets/[widgetId]/versions`. Widget script untouched.
+
+**Style experiments (E4), committed.** New experiment type `style` (enum value, migration 0048). A variant is a
 layout and/or a look (one of the style presets); empty means "keep the widget as it is", so a test is normally
 "current look" against one choice. Only those two choices are stored; the public endpoint turns each variant into a
 complete `{template, theme}` on top of the widget as published (brand kit applied, shape reset if the layout cannot use

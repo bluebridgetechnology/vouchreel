@@ -10,7 +10,7 @@ import {
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { experiments, spaces, widgetConfigs } from "@/lib/db/schema";
-import { getExperimentTarget } from "@/lib/widgets/service";
+import { getExperimentTarget, recordVersion } from "@/lib/widgets/service";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import { resolveStyleVariant } from "@/lib/experiments/style";
 import { applyWinnerSchema } from "@/lib/validations/experiments";
@@ -143,6 +143,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         .where(eq(widgetConfigs.id, existingWidgetConfig.id))
         .returning();
       updatedWidgetConfig = saved;
+      await recordVersion(existingWidgetConfig, saved, "experiment");
     } else {
       const [saved] = await db
         .insert(widgetConfigs)

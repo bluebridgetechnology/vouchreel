@@ -132,6 +132,11 @@ export function useWidgetEditor(spaceId: string, widgetId: string) {
     setHistory((h) => pushHistory(h, { ...h.present, theme: { ...h.present.theme, ...patch } }, key));
   }, []);
 
+  /** Puts a whole config into the editor (a restored version), as one undo step. It stays unpublished until Publish. */
+  const replaceConfig = useCallback((next: UpdateWidgetConfigInput) => {
+    setHistory((h) => pushHistory(h, next, "restore"));
+  }, []);
+
   const undo = useCallback(() => setHistory(undoHistory), []);
   const redo = useCallback(() => setHistory(redoHistory), []);
 
@@ -193,6 +198,7 @@ export function useWidgetEditor(spaceId: string, widgetId: string) {
     canRedo: history.future.length > 0,
     update,
     updateTheme,
+    replaceConfig,
     undo,
     redo,
     publish,

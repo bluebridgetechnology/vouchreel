@@ -14,6 +14,7 @@ import { useConfirm } from "@/components/ui/confirm";
 import { LivePreview } from "@/components/widget/live-preview";
 import { useWidgetEditor, type SaveState } from "@/components/widget/editor/use-widget-editor";
 import { WidgetName } from "@/components/widget/editor/widget-name";
+import { HistoryDialog } from "@/components/widget/editor/history-dialog";
 import { BehaviourSection, ContentSection, EditorSection, InstallSection, LayoutSection, SHAPE_LABELS, ShapeSection, StyleSection } from "@/components/widget/editor/sections";
 
 interface WidgetPageProps {
@@ -53,6 +54,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
   const [open, setOpen] = useState<Set<SectionId>>(() => new Set(["layout"]));
   // The last look picked this session, so the editor can say "Glass (edited)" after a tweak
   const [lastPresetId, setLastPresetId] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const toggle = (s: SectionId) =>
     setOpen((prev) => {
       const next = new Set(prev);
@@ -146,6 +148,9 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           <button type="button" onClick={redo} disabled={!editor.canRedo} aria-label="Redo" title="Redo (Ctrl+Shift+Z)" className={iconButton}>
             <Icon name="undo-right" size="sm" />
           </button>
+          <button type="button" onClick={() => setHistoryOpen(true)} className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            <Icon name="clock-circle" size="sm" /> History
+          </button>
           {editor.unpublished && (
             <button type="button" onClick={handleDiscard} className={buttonVariants({ variant: "outline", size: "sm" })}>
               Discard
@@ -156,6 +161,17 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           </Button>
         </div>
       </div>
+
+      {historyOpen && (
+        <HistoryDialog
+          url={`/api/spaces/${spaceId}/widgets/${widgetId}/versions`}
+          onRestore={(restored) => {
+            editor.replaceConfig(restored);
+            notify.success("Version loaded", { description: "It is in the editor as unpublished changes. Publish to put it on your site, or Undo to go back." });
+          }}
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
         {/* Preview first on phones, beside the panel on wide screens */}

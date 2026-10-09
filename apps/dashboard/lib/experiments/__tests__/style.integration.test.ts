@@ -108,5 +108,8 @@ run("style experiments (postgres)", () => {
     expect(saved.theme).toMatchObject({ mode: "dark", background: "#0c0a09", primaryColor: "#abcdef" });
     const [exp] = await db.select().from(s.experiments).where(eq(s.experiments.id, expId));
     expect(exp).toMatchObject({ status: "completed", winnerVariantIndex: 1 });
+    // The change is in the widget's history, with how it was before, so the owner can go back
+    const kept = await db.select().from(s.widgetVersions).where(eq(s.widgetVersions.widgetId, widget));
+    expect(kept.map((v) => v.source).sort()).toEqual(["before", "experiment"]);
   });
 });

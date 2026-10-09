@@ -372,6 +372,22 @@ export const widgetConfigs = pgTable("widget_configs", {
 }, (table) => [index("widget_configs_space_idx").on(table.spaceId, table.sortOrder, table.createdAt)]);
 
 /**
+ * What a widget looked like each time it changed on the owner's site (a publish, or an experiment's winner), the newest
+ * 10 kept per widget, so a change can be undone. The first row is the widget as it was before history began.
+ * `config` is the whole settings object, as the editor's PUT takes it.
+ */
+export const widgetVersions = pgTable("widget_versions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  widgetId: uuid("widget_id")
+    .notNull()
+    .references(() => widgetConfigs.id, { onDelete: "cascade" }),
+  config: jsonb("config").$type<Record<string, unknown>>().notNull(),
+  /** What made it: a publish, an experiment's winner, or the widget as it was before history began. */
+  source: text("source").$type<"publish" | "experiment" | "before">().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [index("widget_versions_widget_idx").on(table.widgetId, table.createdAt)]);
+
+/**
  * Analytics events — captures widget interactions for the analytics dashboard.
  */
 export const events = pgTable("events", {

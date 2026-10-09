@@ -1,11 +1,12 @@
 import type { NextResponse } from "next/server";
-import { and, asc, count, eq, inArray, max } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, max, notInArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { spaces, widgetConfigs } from "@/lib/db/schema";
+import { spaces, widgetConfigs, widgetVersions } from "@/lib/db/schema";
 import { apiError } from "@/lib/api/errors";
 import { createNotification } from "@/lib/notifications/service";
 import { layoutInfo } from "@/lib/widget-editor/layouts";
 import { copyStyle } from "@/lib/widget-editor/copy-style";
+import { MAX_VERSIONS, sameSettings } from "./history";
 import { formatLimit } from "@/lib/payments/plan-limits";
 import { getSubscriptionLimits } from "@/lib/payments/subscription";
 import { DEFAULT_WIDGET_CONFIG, normalizeTheme, updateWidgetConfigSchema, type UpdateWidgetConfigInput } from "@/lib/validations/widget-config";
@@ -154,8 +155,38 @@ export async function deleteWidget(spaceId: string, widgetId: string): Promise<"
   return "deleted";
 }
 
-/** Makes the settings live: they replace the widget's, the draft is cleared, and the widget is switched on. */
+/**
+ * Remembers a change to what visitors see: the settings the widget had before (once, so the first change can be
+ * undone too) and the ones it has now, unless they are the same as the last one kept. Keeps the newest
+ * MAX_VERSIONS. History is a safety net: a failure here never stops the change itself.
+ */
+export async function recordVersion(before: WidgetRow, after: WidgetRow, source: "publish" | "experiment"): Promise<void> {
+  try {
+    const [latest] = await db.select().from(widgetVersions).where(eq(widgetVersions.widgetId, after.id)).orderBy(desc(widgetVersions.createdAt)).limit(1);
+    const wasShown = before.isLive || before.publishedAt !== null;
+    if (!latest && wasShown) {
+      await db.insert(widgetVersions).values({ widgetId: after.id, config: settingsOf(before), source: "before", createdAt: new Date(Date.now() - 1000) });
+    }
+    const now = settingsOf(after);
+    const last = latest ?? (wasShown ? { config: settingsOf(before) } : null);
+    if (last && sameSettings(last.config, now)) return;
+    await db.insert(widgetVersions).values({ widgetId: after.id, config: now, source });
+
+    const keep = await db.select({ id: widgetVersions.id }).from(widgetVersions).where(eq(widgetVersions.widgetId, after.id)).orderBy(desc(widgetVersions.createdAt)).limit(MAX_VERSIONS);
+    await db.delete(widgetVersions).where(and(eq(widgetVersions.widgetId, after.id), notInArray(widgetVersions.id, keep.map((k) => k.id))));
+  } catch {
+    // A missing history entry must never undo a publish
+  }
+}
+
+/** The kept versions of a widget, newest first. */
+export async function listVersions(widgetId: string) {
+  return db.select().from(widgetVersions).where(eq(widgetVersions.widgetId, widgetId)).orderBy(desc(widgetVersions.createdAt)).limit(MAX_VERSIONS);
+}
+
+/** Makes the settings live: they replace the widget's, the draft is cleared, and the widget is switched on. The change is kept in the widget's history. */
 export async function publishWidget(widgetId: string, data: UpdateWidgetConfigInput): Promise<WidgetRow> {
+  const [before] = await db.select().from(widgetConfigs).where(eq(widgetConfigs.id, widgetId));
   const [row] = await db
     .update(widgetConfigs)
     .set({
@@ -173,6 +204,7 @@ export async function publishWidget(widgetId: string, data: UpdateWidgetConfigIn
     })
     .where(eq(widgetConfigs.id, widgetId))
     .returning();
+  if (before) await recordVersion(before, row, "publish");
   return row;
 }
 
