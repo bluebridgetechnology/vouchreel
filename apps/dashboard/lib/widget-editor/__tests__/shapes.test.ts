@@ -9,6 +9,7 @@ const widgetCss = (file: string) => readFileSync(new URL(`../../../../../package
 const SHEETS: Record<string, string> = {
   "floating-card": widgetCss("styles.css"),
   "story-strip": widgetCss("layouts/story-strip.css"),
+  "floating-bubble": widgetCss("layouts/floating-bubble.css"),
   carousel: widgetCss("layouts/cards.css"),
   "wall-of-love": widgetCss("layouts/cards.css"),
   masonry: widgetCss("layouts/cards.css"),

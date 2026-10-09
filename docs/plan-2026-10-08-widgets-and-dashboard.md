@@ -341,6 +341,11 @@ frames.
 
 ### D2. New layouts (L, one change set per layout, each S to M)
 
+**Progress (2026-10-08):** floating bubble built (migration 0039 adds the enum value). Its chunk is 1.43 KB
+gzip; the core grew 19 bytes for two optional layout-contract members (`dismiss`, `autoplay`). Muted loops play
+only for uploaded videos, when previews are on, and never for visitors who ask for reduced motion or reduced
+data, so the bubble downloads no video for them. Shapes: circle (default), rounded, reel.
+
 Each is a layout chunk from A1. Order by value:
 
 | Layout | Placement | What it is | Why |

@@ -311,6 +311,8 @@ export class VouchreelWidget {
         openReview: (review) => this.expandReview(review),
         track: (type, id) => this.analytics?.track(type, id),
         theme: this.config.theme,
+        dismiss: () => this.dismiss(),
+        autoplay: this.config.autoplayPreview !== false,
       });
       this.maybeRestoreFocus();
     } else {

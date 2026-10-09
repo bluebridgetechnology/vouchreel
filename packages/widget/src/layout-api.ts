@@ -30,6 +30,10 @@ export interface LayoutContext {
   track(type: "click", testimonialId?: string): void;
   /** The widget's theme (normalized by the API), for layout behaviour such as auto-advance. */
   theme?: Record<string, unknown>;
+  /** Floating layouts: hides the widget for the rest of the visit (the close button). */
+  dismiss?(): void;
+  /** False when the owner turned off muted video previews. */
+  autoplay?: boolean;
 }
 
 export interface LayoutDefinition {

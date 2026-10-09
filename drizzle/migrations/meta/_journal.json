@@ -274,6 +274,13 @@
       "when": 1791475800604,
       "tag": "0038_widget_draft",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791487834384,
+      "tag": "0039_widget_template_bubble",
+      "breakpoints": true
     }
   ]
 }

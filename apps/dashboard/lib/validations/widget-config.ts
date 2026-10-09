@@ -14,6 +14,7 @@ export const WIDGET_TEMPLATES = [
   "story-strip",
   "floating-card",
   "masonry",
+  "floating-bubble",
 ] as const;
 
 export const TRIGGER_TYPES = [

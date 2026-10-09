@@ -12,10 +12,10 @@ const compatFile = path.join(outDir, "widget.js");
 const layoutsSrcDir = path.join(srcDir, "layouts");
 const layoutsOutDir = path.join(outDir, "layouts");
 
-/** Every layout chunk is a top-level .ts file in src/layouts (shared helpers like cards.ts are not). */
+/** A layout chunk is a .ts file in src/layouts that registers a layout; the rest (cards.ts, media.ts) are shared helpers. */
 const LAYOUT_NAMES = fs
   .readdirSync(layoutsSrcDir)
-  .filter((f) => f.endsWith(".ts") && f !== "cards.ts")
+  .filter((f) => f.endsWith(".ts") && fs.readFileSync(path.join(layoutsSrcDir, f), "utf8").includes("defineLayout("))
   .map((f) => f.slice(0, -3));
 
 fs.rmSync(layoutsOutDir, { recursive: true, force: true });

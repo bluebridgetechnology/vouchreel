@@ -49,6 +49,7 @@ export const widgetTemplateEnum = pgEnum("widget_template", [
   "story-strip",
   "floating-card",
   "masonry",
+  "floating-bubble",
 ]);
 
 export const widgetPositionEnum = pgEnum("widget_position", [

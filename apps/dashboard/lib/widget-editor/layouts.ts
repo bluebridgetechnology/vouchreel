@@ -23,6 +23,7 @@ export interface LayoutInfo {
 
 export const LAYOUTS: LayoutInfo[] = [
   { id: "floating-card", name: "Floating card", bestFor: "Any page: a small card in the corner", placement: "floating", grid: false, autoAdvance: false, shapes: ["rounded", "square", "circle", "landscape", "portrait", "vertical"] },
+  { id: "floating-bubble", name: "Video bubble", bestFor: "Any page: a round video playing in the corner", placement: "floating", grid: false, autoAdvance: false, shapes: ["circle", "rounded", "vertical"] },
   { id: "story-strip", name: "Story strip", bestFor: "Mobile visitors: tappable bubbles", placement: "floating", grid: false, autoAdvance: false, shapes: ["circle", "rounded", "vertical"] },
   { id: "carousel", name: "Carousel", bestFor: "Landing pages: a swipeable row", placement: "inline", grid: false, autoAdvance: true, shapes: ["landscape", "square", "rounded", "portrait", "vertical"] },
   { id: "wall-of-love", name: "Wall of love", bestFor: "A testimonials page: an even grid", placement: "inline", grid: true, autoAdvance: false, shapes: ["landscape", "square", "rounded", "circle", "portrait", "vertical"] },
