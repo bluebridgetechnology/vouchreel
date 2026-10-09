@@ -15,6 +15,16 @@ export interface TriggerOptions {
   } | null;
   embedKey: string;
   onTrigger: () => void;
+  /**
+   * What this page load already knows about the visitor. Several widgets on one page share one, so the page-view
+   * counter goes up once per page, not once per widget, and "returning visitor" means the same for all of them.
+   */
+  visit?: VisitState;
+}
+
+export interface VisitState {
+  pageviews?: number;
+  returning?: boolean;
 }
 
 export interface TriggerController {
@@ -71,6 +81,7 @@ export function setupTrigger({
   value,
   embedKey,
   onTrigger,
+  visit = {},
 }: TriggerOptions): TriggerController {
   // If dismissed earlier in this session, do not trigger
   if (isDismissed(embedKey)) {
@@ -258,14 +269,17 @@ export function setupTrigger({
           ? value.count
           : 2;
 
-      let currentCount = 1;
-      try {
-        const stored = window.sessionStorage.getItem("vouchreel_pv_count");
-        currentCount = stored ? parseInt(stored, 10) + 1 : 1;
-        window.sessionStorage.setItem("vouchreel_pv_count", currentCount.toString());
-      } catch {
-        // Ignore storage errors
+      if (visit.pageviews === undefined) {
+        visit.pageviews = 1;
+        try {
+          const stored = window.sessionStorage.getItem("vouchreel_pv_count");
+          visit.pageviews = stored ? parseInt(stored, 10) + 1 : 1;
+          window.sessionStorage.setItem("vouchreel_pv_count", visit.pageviews.toString());
+        } catch {
+          // Ignore storage errors
+        }
       }
+      const currentCount = visit.pageviews;
 
       if (currentCount >= targetCount) {
         // Trigger on reaching target count (with a brief delay for page settle)
@@ -281,13 +295,14 @@ export function setupTrigger({
       }
 
       try {
-        const hasVisited = window.localStorage.getItem("vouchreel_visited") === "true";
-        if (hasVisited) {
+        if (visit.returning === undefined) {
+          visit.returning = window.localStorage.getItem("vouchreel_visited") === "true";
+          // First visit: record the flag for next time (once, however many widgets ask)
+          if (!visit.returning) window.localStorage.setItem("vouchreel_visited", "true");
+        }
+        if (visit.returning) {
           // Returning visitor! Trigger after slight delay
           timerId = setTimeout(fire, 1000);
-        } else {
-          // First visit: record flag for next visit
-          window.localStorage.setItem("vouchreel_visited", "true");
         }
       } catch {
         // If storage blocked, fire as fallback

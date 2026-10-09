@@ -1,5 +1,5 @@
 import { filterTestimonials, filterReviews, isPageAllowed, TestimonialItem, ReviewItem } from "./matcher";
-import { setupTrigger, isDismissed, TriggerType } from "./triggers";
+import { setupTrigger, isDismissed, TriggerType, type VisitState } from "./triggers";
 import { AnalyticsTracker, ConversionGoal, getOrCreateSessionId } from "./analytics";
 import { VouchreelWidget, WidgetConfig } from "./widget";
 import { loadLayout } from "./layout-loader";
@@ -21,6 +21,8 @@ export interface ActiveExperiment {
 export interface WidgetApiResponse {
   spaceId: string;
   config: WidgetConfig & {
+    /** The first live widget's id: the page can place it by id (`data-vouchreel-widget`). */
+    id?: string;
     template?: string;
     trigger?: {
       type: TriggerType;
@@ -29,6 +31,11 @@ export interface WidgetApiResponse {
     pagesIncluded?: string[];
     pagesExcluded?: string[];
   };
+  /**
+   * Present only when more than one widget is live. The first is the one in `config` (so it carries only its
+   * id); the others carry their own config.
+   */
+  widgets?: { id: string; config?: WidgetApiResponse["config"]; inline?: boolean }[];
   testimonials: TestimonialItem[];
   reviews?: ReviewItem[];
   conversionGoals?: ConversionGoal[];
@@ -249,11 +256,6 @@ export async function initLoader(): Promise<void> {
       return;
     }
 
-    // Check if dismissed in this session
-    if (isDismissed(embedKey)) {
-      return;
-    }
-
     const apiBase = extractApiBase(script);
     const endpoint = `${apiBase}/api/widget/${encodeURIComponent(embedKey)}`;
 
@@ -271,7 +273,7 @@ export async function initLoader(): Promise<void> {
       return;
     }
 
-    // Process active A/B testing experiment if present
+    // Process active A/B testing experiment if present (it runs on the first widget)
     let activeExperimentId: string | null = null;
     let activeVariantIndex: number | null = null;
 
@@ -291,12 +293,7 @@ export async function initLoader(): Promise<void> {
         ? window.location.pathname
         : "/";
 
-    // Check page targeting rules
-    if (!isPageAllowed(data.config, currentPath)) {
-      return;
-    }
-
-    // Filter matching testimonials and reviews
+    // Filter matching testimonials and reviews (the same for every widget on the page)
     const currentLocation =
       typeof window !== "undefined" ? window.location : { pathname: "/" };
 
@@ -309,6 +306,18 @@ export async function initLoader(): Promise<void> {
     const matchingReviews = filterReviews(rawReviews, currentLocation);
 
     if (matchingTestimonials.length === 0 && matchingReviews.length === 0) {
+      return;
+    }
+
+    // The widgets to show: the first is `config`; any others come with their own
+    const list: { id?: string; config: WidgetApiResponse["config"]; inline?: boolean }[] = [{ id: data.config.id, config: data.config }];
+    for (const w of data.widgets?.slice(1) ?? []) if (w.config) list.push({ id: w.id, config: w.config, inline: w.inline });
+
+    // Each widget has its own page targeting and its own dismissal ("closed" for one leaves the others)
+    const showing = list
+      .map((w, i) => ({ ...w, key: i === 0 ? embedKey : `${embedKey}-${w.id}`, primary: i === 0 }))
+      .filter((w) => !isDismissed(w.key) && isPageAllowed(w.config, currentPath));
+    if (showing.length === 0) {
       return;
     }
 
@@ -330,32 +339,39 @@ export async function initLoader(): Promise<void> {
         };
     }
 
-    // Create widget instance
-    const widget = new VouchreelWidget({
-      embedKey,
-      config: data.config,
-      testimonials: matchingTestimonials,
-      reviews: matchingReviews,
-      analytics,
-      whiteLabel: data.whiteLabel,
-    });
+    // What this page load knows about the visitor, shared so page-view counts and "returning" are counted once
+    const visit: VisitState = {};
 
-    // Fetch the layout's chunk now, while the trigger waits, so it is usually there before it is needed
-    const layoutReady = loadLayout(data.config.template || "", script?.src, script?.nonce);
+    for (const w of showing) {
+      // A spot the page named for this widget: <div data-vouchreel-widget="<id>">
+      const container = w.id ? document.querySelector<HTMLElement>(`[data-vouchreel-widget="${w.id}"]`) : null;
+      // An inline layout that is not the first widget goes only where the page named a spot for it
+      if (w.inline && !container) continue;
 
-    // Determine trigger configuration
-    const triggerType = data.config.trigger?.type || "delay";
-    const triggerValue = data.config.trigger?.value || null;
+      const widget = new VouchreelWidget({
+        embedKey: w.key,
+        config: w.config,
+        testimonials: matchingTestimonials,
+        reviews: matchingReviews,
+        analytics,
+        whiteLabel: data.whiteLabel,
+        container,
+        primary: w.primary,
+      });
 
-    // Activate trigger
-    setupTrigger({
-      type: triggerType,
-      value: triggerValue,
-      embedKey,
-      onTrigger: () => {
-        layoutReady.then(() => widget.mount());
-      },
-    });
+      // Fetch the layout's chunk now, while the trigger waits, so it is usually there before it is needed
+      const layoutReady = loadLayout(w.config.template || "", script?.src, script?.nonce);
+
+      setupTrigger({
+        type: w.config.trigger?.type || "delay",
+        value: w.config.trigger?.value || null,
+        embedKey: w.key,
+        visit,
+        onTrigger: () => {
+          layoutReady.then(() => widget.mount());
+        },
+      });
+    }
   } catch {
     // Fail silently to safeguard host page execution
   }

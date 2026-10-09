@@ -3,6 +3,9 @@ import { layoutRegistry } from "./layout-api";
 /** Replaced at build time with a hash of the build, so a new deploy is never served from a stale cache. */
 declare const __VR_BUILD__: string;
 
+/** Layouts being fetched right now, so two widgets that use one layout ask for its file once. */
+const pending: Record<string, Promise<boolean>> = {};
+
 /**
  * Loads the chunk for a layout. Resolves true once the layout is registered, false when it cannot be
  * (unknown name, network error); the widget then shows the floating card, which lives in the core.
@@ -13,7 +16,7 @@ export function loadLayout(name: string, scriptSrc: string | null | undefined, n
   // The name ends up in a URL, and it can come from an experiment's config: only plain names
   if (!/^[a-z][a-z-]*$/.test(name) || !scriptSrc) return Promise.resolve(false);
 
-  return new Promise((resolve) => {
+  return (pending[name] ||= new Promise((resolve) => {
     try {
       const el = document.createElement("script");
       el.src = new URL(`/widget/layouts/${name}.js?v=${__VR_BUILD__}`, scriptSrc).href;
@@ -26,5 +29,5 @@ export function loadLayout(name: string, scriptSrc: string | null | undefined, n
     } catch {
       resolve(false);
     }
-  });
+  }));
 }

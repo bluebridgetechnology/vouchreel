@@ -7,6 +7,7 @@ import { badRequest, notFound, internalError } from "@/lib/api/errors";
 import { canAccess } from "@/lib/auth/feature-gate";
 import { applyBrandKitToTheme, getBrandKit, toValues } from "@/lib/brand-kit/service";
 import { getLiveWidgets, listWidgets } from "@/lib/widgets/service";
+import { layoutInfo } from "@/lib/widget-editor/layouts";
 import { listWidgetVideos } from "@/lib/widget-videos";
 import { log } from "@/lib/log";
 
@@ -87,10 +88,16 @@ export async function GET(request: Request, { params }: RouteParams) {
       };
     };
 
-    // `config` is the first live widget: all an embed script from before there could be several reads. Only
-    // when more than one is live is the list added, so the usual response is no bigger than it was
-    const config = configFor(liveWidgets[0]);
-    const widgets = liveWidgets.length > 1 ? liveWidgets.map((w) => ({ id: w.id, config: configFor(w) })) : undefined;
+    // `config` is the first live widget, with its id so the page can place it by id: all an embed script from
+    // before there could be several reads. Only when more than one is live is the list added, so the usual
+    // response is no bigger than it was. The list's first entry is that same widget, so it carries only its id
+    const config = { id: liveWidgets[0]?.id, ...configFor(liveWidgets[0]) };
+    // An entry says when its layout sits in the page (not in a corner), so the script does not download a layout the
+    // page has no spot for
+    const widgets =
+      liveWidgets.length > 1
+        ? liveWidgets.map((w, i) => (i === 0 ? { id: w.id } : { id: w.id, config: configFor(w), ...(layoutInfo(w.template).placement === "inline" ? { inline: true } : {}) }))
+        : undefined;
 
     // Fetch active testimonials only, ordered by sortOrder then createdAt
     const activeTestimonials = await db

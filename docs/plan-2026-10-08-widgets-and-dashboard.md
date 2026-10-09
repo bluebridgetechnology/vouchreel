@@ -400,8 +400,24 @@ with live thumbnails. Each layout ships with keyboard navigation, focus trapping
 
 ### D3. Multiple widgets per space (L)
 
-**Status (2026-10-09): step 1 of 3 built (data, API, plan limit); the embed script, the widgets page and the
-editor wiring are next.** Changes from the plan below, all to make it smaller and safer:
+**Status (2026-10-09): step 1 (data, API, plan limit) committed; step 2 (the embed script) built, not yet
+committed; the widgets page and the editor wiring are next.**
+
+**Embed script (step 2).** One script per page still. `config` now also carries the first live widget's `id`;
+when several are live the response adds `widgets`: the first entry is just its id (its settings are `config`),
+the others carry their own settings, and inline ones are flagged. The script then, per widget: checks its own
+page targeting, dismissal (`vouchreel_dismissed_<key>`, key = embed key for the first, `<embed key>-<id>` for
+others, so closing one leaves the rest), trigger and layout. Page views and "returning visitor" are worked out
+once per page load and shared (otherwise two widgets would double-count page views, and the second would see the
+first's "visited" flag and fire on a first visit). A widget goes where the page puts it: `<div
+data-vouchreel-widget="<id>">` for any widget; the first widget also falls back to `data-vouchreel-embed` (and to
+the foot of the page for an inline layout with no spot, as before); any other inline widget with no spot is not
+shown, and its layout file is not downloaded. A floating layout needs no spot. Two widgets with one layout fetch
+its file once. Single-widget pages behave exactly as before (checked in a browser: same host id, same
+downloads). Core cost: about 270 bytes gzip net (now 14.26 KB, 757 bytes left of 15 KB). Not done: the loader
+still uses one shared analytics tracker, so events are per space, not per widget (the `widget_id` step).
+Possible savings to buy that room back, if wanted: load the review pop-up code only when a review is opened
+(about 1 KB, at the price of a small delay on that first click). Changes from the plan below, all to make it smaller and safer:
 - **No new `widgets` table.** `widget_configs` already is one row per widget; the only thing making it one per
   space was a unique constraint. Migration 0045 drops it and adds `name`, `sort_order` and `is_live`. Every
   existing widget keeps its settings, becomes "Default widget", stays live and is the space's primary one (the

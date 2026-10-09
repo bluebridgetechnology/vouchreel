@@ -62,10 +62,20 @@ export interface WidgetOptions {
   reviews?: ReviewItem[];
   analytics?: AnalyticsTracker;
   whiteLabel?: WidgetWhiteLabelConfig;
+  /** Where an inline widget goes, when the page named a spot for this widget (`data-vouchreel-widget="<id>"`). */
+  container?: HTMLElement | null;
+  /**
+   * The space's first widget. Only it falls back to the page's `data-vouchreel-embed` spot, and to the foot of
+   * the page when an inline layout has no spot at all (as the single widget always did); any other inline widget
+   * is shown only where the page named a spot for it.
+   */
+  primary?: boolean;
 }
 
 export class VouchreelWidget {
   private embedKey: string;
+  private container: HTMLElement | null;
+  private primary: boolean;
   private config: WidgetConfig;
   private testimonials: TestimonialItem[];
   private reviews: ReviewItem[];
@@ -88,6 +98,8 @@ export class VouchreelWidget {
 
   constructor(options: WidgetOptions) {
     this.embedKey = options.embedKey;
+    this.container = options.container || null;
+    this.primary = options.primary !== false;
     this.config = options.config || {};
     this.testimonials = options.testimonials || [];
     this.reviews = options.reviews || [];
@@ -138,10 +150,15 @@ export class VouchreelWidget {
     if (this.isMounted || typeof document === "undefined") return;
     if (this.testimonials.length === 0 && this.reviews.length === 0) return;
 
-    // Check if an inline embed target container is present on the host page
+    // A template whose chunk is not loaded (or is unknown) falls back to the floating card
+    this.layout = layoutRegistry()[this.config.template || ""] || null;
+
+    // Where it goes: the spot the page named for this widget, else (for the first widget) the page's embed spot
     const customEmbedContainer =
-      document.querySelector<HTMLElement>("[data-vouchreel-embed]") ||
-      document.getElementById("vouchreel-embed");
+      this.container ||
+      (this.primary ? document.querySelector<HTMLElement>("[data-vouchreel-embed]") || document.getElementById("vouchreel-embed") : null);
+    // An inline widget that is not the first, with no spot named for it, has nowhere to be
+    if (!customEmbedContainer && !this.primary && this.layout?.inline) return;
 
     // Create host container
     this.hostElement = document.createElement("div");
@@ -153,8 +170,6 @@ export class VouchreelWidget {
     // Attach Shadow DOM
     this.shadowRoot = this.hostElement.attachShadow({ mode: "open" });
 
-    // A template whose chunk is not loaded (or is unknown) falls back to the floating card
-    this.layout = layoutRegistry()[this.config.template || ""] || null;
     const template = this.layout ? this.config.template : "floating-card";
 
     // Inject scoped CSS: the core's, plus the layout's own

@@ -486,22 +486,30 @@ describe("Widget Data Public API Route", () => {
     it("one live widget: the response is the one it always was, with no list added", async () => {
       widgets.current = [widget("w1", { template: "carousel" })];
       const json = await (await respond()).json();
-      expect(json.config.template).toBe("carousel");
+      expect(json.config).toMatchObject({ id: "w1", template: "carousel" }); // the id lets the page place it by id
       expect(json).not.toHaveProperty("widgets");
     });
 
     it("several live widgets: `config` is still the first (older embed scripts read only that), and each is listed with its id", async () => {
       widgets.current = [widget("w1", { template: "floating-card" }), widget("w2", { template: "wall-of-love", pagesIncluded: ["/reviews"] })];
       const json = await (await respond()).json();
-      expect(json.config.template).toBe("floating-card");
+      expect(json.config).toMatchObject({ id: "w1", template: "floating-card" });
       expect(json.widgets.map((w: { id: string }) => w.id)).toEqual(["w1", "w2"]);
+      expect(json.widgets[0]).toEqual({ id: "w1" }); // the first is `config`: only its id is repeated
       expect(json.widgets[1].config).toMatchObject({ template: "wall-of-love", pagesIncluded: ["/reviews"], trigger: { type: "delay", value: { seconds: 3 } } });
+      expect(json.widgets[1].inline).toBe(true); // the wall sits in the page, so the script needs a spot for it
+    });
+
+    it("floating widgets are not flagged as inline", async () => {
+      widgets.current = [widget("w1"), widget("w2", { template: "floating-bubble" })];
+      const json = await (await respond()).json();
+      expect(json.widgets[1]).not.toHaveProperty("inline");
     });
 
     it("widgets that are off are not sent: the first live one is `config`, and one live widget means no list", async () => {
       widgets.current = [widget("w1", { isLive: false, template: "masonry" }), widget("w2", { template: "spotlight" }), widget("w3", { isLive: false })];
       const json = await (await respond()).json();
-      expect(json.config.template).toBe("spotlight");
+      expect(json.config).toMatchObject({ id: "w2", template: "spotlight" });
       expect(json).not.toHaveProperty("widgets");
     });
 
@@ -521,6 +529,7 @@ describe("Widget Data Public API Route", () => {
       const json = await (await respond()).json();
       expect(json.config.template).toBe("floating-card");
       expect(json.config.trigger.type).toBe("delay");
+      expect(json.config).not.toHaveProperty("id"); // no saved widget, so nothing to place by id
     });
 
     it("every widget wears the brand kit", async () => {
