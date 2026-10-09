@@ -1,9 +1,10 @@
 import type { NextResponse } from "next/server";
-import { and, asc, count, eq, max } from "drizzle-orm";
+import { and, asc, count, eq, inArray, max } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { spaces, widgetConfigs } from "@/lib/db/schema";
 import { apiError } from "@/lib/api/errors";
 import { createNotification } from "@/lib/notifications/service";
+import { copyStyle } from "@/lib/widget-editor/copy-style";
 import { formatLimit } from "@/lib/payments/plan-limits";
 import { getSubscriptionLimits } from "@/lib/payments/subscription";
 import { DEFAULT_WIDGET_CONFIG, normalizeTheme, updateWidgetConfigSchema, type UpdateWidgetConfigInput } from "@/lib/validations/widget-config";
@@ -153,6 +154,55 @@ export async function saveDraft(widgetId: string, data: UpdateWidgetConfigInput)
 
 export async function discardDraft(widgetId: string): Promise<void> {
   await db.update(widgetConfigs).set({ draftConfig: null }).where(eq(widgetConfigs.id, widgetId));
+}
+
+/** What copying a style onto a widget builds on: its unpublished draft if it has a valid one, else its live settings. */
+function draftBase(row: WidgetRow): UpdateWidgetConfigInput {
+  const draft = row.draftConfig ? updateWidgetConfigSchema.safeParse(row.draftConfig) : null;
+  return draft?.success ? draft.data : settingsOf(row);
+}
+
+/**
+ * Puts the look of `source` (its live settings) into the targets' drafts. Nothing goes live: each target shows
+ * "Unpublished changes" until its owner publishes. Only widgets of spaces `userId` owns are touched; others are
+ * skipped without saying whether they exist. Returns the targets that were updated.
+ */
+export async function copyStyleToWidgets(userId: string, source: WidgetRow, targets: { spaceId: string; widgetId: string }[]): Promise<{ spaceId: string; widgetId: string }[]> {
+  const ids = [...new Set(targets.map((t) => t.widgetId))].filter((id) => id !== source.id);
+  if (!ids.length) return [];
+  const rows = await db
+    .select({ widget: widgetConfigs })
+    .from(widgetConfigs)
+    .innerJoin(spaces, eq(spaces.id, widgetConfigs.spaceId))
+    .where(and(inArray(widgetConfigs.id, ids), eq(spaces.ownerId, userId)));
+
+  const asked = new Set(targets.map((t) => `${t.spaceId}:${t.widgetId}`));
+  const done: { spaceId: string; widgetId: string }[] = [];
+  for (const { widget } of rows) {
+    if (!asked.has(`${widget.spaceId}:${widget.id}`)) continue; // the id exists, but not in the space that was named
+    const base = draftBase(widget);
+    await saveDraft(widget.id, { ...base, theme: copyStyle(source.theme, base.theme, base.template) });
+    done.push({ spaceId: widget.spaceId, widgetId: widget.id });
+  }
+  return done;
+}
+
+/** Every widget of the user's spaces, grouped by space (the current space first), for choosing where to copy a style. */
+export async function listCopyTargets(userId: string, currentSpaceId: string, exceptWidgetId: string) {
+  const rows = await db
+    .select({ spaceId: spaces.id, spaceName: spaces.name, widgetId: widgetConfigs.id, widgetName: widgetConfigs.name, template: widgetConfigs.template })
+    .from(widgetConfigs)
+    .innerJoin(spaces, eq(spaces.id, widgetConfigs.spaceId))
+    .where(eq(spaces.ownerId, userId))
+    .orderBy(asc(spaces.name), asc(widgetConfigs.sortOrder), asc(widgetConfigs.createdAt));
+  const groups = new Map<string, { spaceId: string; spaceName: string; widgets: { id: string; name: string; template: WidgetRow["template"] }[] }>();
+  for (const r of rows) {
+    if (r.widgetId === exceptWidgetId) continue;
+    const g = groups.get(r.spaceId) ?? { spaceId: r.spaceId, spaceName: r.spaceName, widgets: [] };
+    g.widgets.push({ id: r.widgetId, name: r.widgetName, template: r.template });
+    groups.set(r.spaceId, g);
+  }
+  return [...groups.values()].sort((a, b) => Number(b.spaceId === currentSpaceId) - Number(a.spaceId === currentSpaceId));
 }
 
 /** What the editor loads: the live settings, the unpublished draft (if still valid), and which widget this is. */

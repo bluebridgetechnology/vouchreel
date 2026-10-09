@@ -18,6 +18,7 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { UpgradePromptModal } from "@/components/billing/upgrade-prompt-modal";
+import { CopyStyleDialog } from "./copy-style-dialog";
 import { EmbedSnippet } from "./embed-snippet";
 import { InstallCheck } from "./install-check";
 import { LayoutSketch } from "./editor/sections";
@@ -59,6 +60,7 @@ export function WidgetsView({ spaceId, embedKey, widgets: initial, quota: initia
   const [renaming, setRenaming] = useState<WidgetListItem | null>(null);
   const [newName, setNewName] = useState("");
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [copying, setCopying] = useState<WidgetListItem | null>(null);
 
   // The page is rendered on the server; take its numbers again after router.refresh()
   useEffect(() => {
@@ -213,6 +215,9 @@ export function WidgetsView({ spaceId, embedKey, widgets: initial, quota: initia
                       <DropdownMenuItem onSelect={() => create(w.id)}>
                         <Icon name="copy" size="sm" /> Duplicate
                       </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setCopying(w)}>
+                        <Icon name="copy" size="sm" /> Copy style to...
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem destructive disabled={widgets.length <= 1} onSelect={() => remove(w)}>
                         <Icon name="trash-bin-minimalistic" size="sm" /> {widgets.length <= 1 ? "Delete (the last widget stays)" : "Delete"}
@@ -293,6 +298,8 @@ export function WidgetsView({ spaceId, embedKey, widgets: initial, quota: initia
           </form>
         </DialogContent>
       </Dialog>
+
+      {copying && <CopyStyleDialog spaceId={spaceId} widget={copying} onClose={() => setCopying(null)} />}
 
       {upgrade && <UpgradePromptModal feature="widget-limit" onClose={() => setUpgrade(false)} />}
     </div>

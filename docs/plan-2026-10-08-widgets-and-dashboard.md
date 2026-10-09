@@ -420,6 +420,13 @@ URL with `safeFetch` (private/internal addresses refused, redirects checked, 1 M
 user, and returns only found/not-found sentences, never the page. Limits: sees server HTML only, so tag-manager
 or JavaScript-added scripts read as "not found" and the panel says so. Widget bundle unchanged.
 
+**Copy style (E1), built, not yet committed.** Widgets page, card menu: "Copy style to...". Pick widgets in this space or
+the owner's other spaces; the source's live look goes into each target's *draft* (nothing live changes; targets show
+"Unpublished changes"). Copies colours, mode, corners, size, shadow, border, glass, play button, gap, entrance and
+shape (shape only if the target layout supports it, else the layout's own look); keeps what a widget shows (name,
+stars...) and columns/auto-advance. Builds on a target's existing draft. Targets must be in spaces the user owns;
+others are skipped silently. `lib/widget-editor/copy-style.ts`, `GET/POST .../widgets/[widgetId]/copy-style`. Widget bundle unchanged.
+
 **Widgets page and per-widget editor (step 3), committed as `26dfb32`.** `/spaces/[id]/widget` is now the list
 (tab renamed "Widgets"): a card per widget (layout drawing, name, layout and where it sits, Primary / Live / Off /
 Not live yet / Unpublished changes, a "Show on my site" switch, Edit, and a menu with Rename, Duplicate, Delete),
