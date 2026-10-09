@@ -10,6 +10,7 @@ import {
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { experiments, spaces, widgetConfigs } from "@/lib/db/schema";
+import { getExperimentTarget } from "@/lib/widgets/service";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import { applyWinnerSchema } from "@/lib/validations/experiments";
 import { log } from "@/lib/log";
@@ -37,7 +38,7 @@ async function verifySpaceAccess(spaceId: string, userId: string) {
 
 /**
  * POST /api/spaces/[id]/experiments/[expId]/apply-winner
- * Applies the winning variant's configuration to the space's widgetConfigs.
+ * Applies the winning variant's configuration to the widget the experiment ran on: the first one visitors see.
  * Sets the experiment status to 'completed', winnerVariantIndex, and endedAt.
  */
 export async function POST(request: Request, { params }: RouteParams) {
@@ -90,11 +91,8 @@ export async function POST(request: Request, { params }: RouteParams) {
     const winningVariant = variants[winnerIndex];
     const vConfig = winningVariant.config || {};
 
-    // Fetch existing widget configuration
-    const [existingWidgetConfig] = await db
-      .select()
-      .from(widgetConfigs)
-      .where(eq(widgetConfigs.spaceId, spaceId));
+    // The experiment runs on the first widget visitors see (see /api/widget), so that is the one it changes
+    const existingWidgetConfig = await getExperimentTarget(spaceId);
 
     const widgetUpdates: Partial<typeof widgetConfigs.$inferInsert> = {};
 

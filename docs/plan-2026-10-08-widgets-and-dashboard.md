@@ -400,6 +400,32 @@ with live thumbnails. Each layout ships with keyboard navigation, focus trapping
 
 ### D3. Multiple widgets per space (L)
 
+**Status (2026-10-09): step 1 of 3 built (data, API, plan limit); the embed script, the widgets page and the
+editor wiring are next.** Changes from the plan below, all to make it smaller and safer:
+- **No new `widgets` table.** `widget_configs` already is one row per widget; the only thing making it one per
+  space was a unique constraint. Migration 0045 drops it and adds `name`, `sort_order` and `is_live`. Every
+  existing widget keeps its settings, becomes "Default widget", stays live and is the space's primary one (the
+  oldest). No data copy, no second table to keep in step, nothing to drop later.
+- **New widgets start off** (`is_live` false) and go live on Publish, so a half-made widget never reaches the
+  site. Widgets can also be turned off without deleting. A space keeps at least one widget (deleting the last
+  is refused). All widgets off means the embed endpoint returns no widget and none of the space's customer words.
+- **The plain snippet and `data-vouchreel-embed` mean the primary widget**; the old `/widget-config` routes are
+  now aliases for it, so the current editor and anything using them are unchanged. New routes:
+  `/api/spaces/[id]/widgets` (list, create or copy), `.../[widgetId]` (read, publish, rename or switch,
+  delete) and `.../[widgetId]/draft`.
+- **Experiments run on the first widget visitors see.** Per-widget experiments are a later question.
+- **Plan limit `maxWidgetsPerSpace`** (free 1, pro 3, agency and business unlimited; plans saved before the key
+  get their tier's number; editable in /admin). Only creating one more is limited; after a downgrade the extra
+  widgets keep running and stay editable and deletable.
+- **The embed endpoint** still answers old cached scripts unchanged: `config` is the first live widget, and a
+  `widgets` list (id and config each) is added only when more than one is live, so the usual response is no bigger.
+- Found while testing: 200+ integration tests had only ever run in CI. I ran the whole suite against a throwaway
+  local Postgres 18: 1,099 tests pass. Two suites waited for the shared database lock with a 60 s limit; now 600 s.
+- Still to do: the loader showing several widgets (each with its own page targeting, trigger and dismissal; an
+  inline widget by id with `data-vouchreel-widget`), a widgets list page with create, copy, switch and delete, the
+  editor opened per widget, embed snippets per widget, `widget_id` on events (per-widget numbers), and a Playwright
+  run (which still needs the CI environment).
+
 One widget per space blocks the obvious setup: a floating bubble on every page plus a wall of love on the
 testimonials page. More layouts are of limited use without this.
 

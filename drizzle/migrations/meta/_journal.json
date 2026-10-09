@@ -316,6 +316,13 @@
       "when": 1791533814235,
       "tag": "0044_widget_template_marquee",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1791534897781,
+      "tag": "0045_widgets_per_space",
+      "breakpoints": true
     }
   ]
 }

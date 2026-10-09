@@ -91,6 +91,9 @@ export const widgetThemeSchema = z.object({
   entrance: z.enum(WIDGET_ENTRANCES).optional(),
 });
 
+/** What the owner calls a widget in the editor. */
+export const widgetNameSchema = z.string().trim().min(1, "Give the widget a name").max(60, "Keep the name under 60 characters");
+
 export const triggerTypeSchema = z.enum(TRIGGER_TYPES);
 
 export const triggerValueSchema = z

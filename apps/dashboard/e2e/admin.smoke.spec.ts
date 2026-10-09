@@ -939,7 +939,9 @@ test.describe("platform admin", () => {
         [space.id, JSON.stringify(props), objectUrl]
       );
       videoId = rows[0].id;
-      await pool.query(`INSERT INTO widget_configs (space_id, template, trigger_type, trigger_value) VALUES ($1, 'wall-of-love', 'delay', '{"seconds":0}') ON CONFLICT (space_id) DO UPDATE SET template = 'wall-of-love', trigger_type = 'delay', trigger_value = '{"seconds":0}'`, [space.id]);
+      // A space can have several widgets now, so there is no upsert on the space: start from none
+      await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
+      await pool.query(`INSERT INTO widget_configs (space_id, template, trigger_type, trigger_value) VALUES ($1, 'wall-of-love', 'delay', '{"seconds":0}')`, [space.id]);
 
       // Off until the owner turns it on
       expect((await widgetData()).testimonials.filter((t) => t.generated)).toEqual([]);
@@ -999,7 +1001,8 @@ test.describe("platform admin", () => {
     try {
       // The two floating layouts are the regression: the old mock preview drew nothing for them
       for (const [template, inline] of [["floating-card", false], ["story-strip", false], ["wall-of-love", true], ["carousel", true], ["masonry", true]] as const) {
-        await pool.query(`INSERT INTO widget_configs (space_id, template) VALUES ($1, $2) ON CONFLICT (space_id) DO UPDATE SET template = $2`, [space.id, template]);
+        await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
+        await pool.query(`INSERT INTO widget_configs (space_id, template) VALUES ($1, $2)`, [space.id, template]);
         await open(page, `/spaces/${space.id}/widget`);
         const frame = page.frameLocator('iframe[title^="Widget preview"]');
         const root = frame.locator(".vr-theme-root");

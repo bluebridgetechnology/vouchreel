@@ -335,8 +335,19 @@ export const widgetConfigs = pgTable("widget_configs", {
   id: uuid("id").defaultRandom().primaryKey(),
   spaceId: uuid("space_id")
     .notNull()
-    .unique()
     .references(() => spaces.id, { onDelete: "cascade" }),
+  /** What the owner calls this widget in the editor. */
+  name: text("name").default("Default widget").notNull(),
+  /**
+   * A space can have several widgets. The one with the lowest sort order (oldest first) is the space's
+   * primary widget: the one the plain embed snippet, `data-vouchreel-embed` and experiments mean.
+   */
+  sortOrder: integer("sort_order").default(0).notNull(),
+  /**
+   * Whether visitors see this widget. Widgets that existed before there could be several are live; a new one
+   * starts off and goes live when the owner publishes it, so a half-made widget never reaches the site.
+   */
+  isLive: boolean("is_live").default(true).notNull(),
   template: widgetTemplateEnum("template").default("floating-card").notNull(),
   position: widgetPositionEnum("position").default("bottom-right").notNull(),
   theme: jsonb("theme").$type<Record<string, unknown>>().default({}),
@@ -352,7 +363,7 @@ export const widgetConfigs = pgTable("widget_configs", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
-});
+}, (table) => [index("widget_configs_space_idx").on(table.spaceId, table.sortOrder, table.createdAt)]);
 
 /**
  * Analytics events — captures widget interactions for the analytics dashboard.

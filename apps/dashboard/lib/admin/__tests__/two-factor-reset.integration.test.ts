@@ -26,7 +26,7 @@ run("two-factor reset (postgres)", () => {
       { id: member, name: "TF Member", email: `${member}@example.test`, twoFactorEnabled: true },
     ]);
     await db.insert(s.twoFactor).values({ id: `tf-${stamp}`, secret: "x", backupCodes: "y", userId: member });
-  }, 60_000);
+  }, 600_000);
 
   afterAll(async () => {
     await db.delete(s.user).where(eq(s.user.id, admin));

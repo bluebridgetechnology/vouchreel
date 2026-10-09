@@ -70,7 +70,8 @@ run("home page data (postgres)", () => {
       { formId: form.id, type: "video", customerName: "Q", customerEmail: "q@example.test", processingStatus: "failed" },
       { formId: form.id, type: "text", text: "Old", customerName: "R", customerEmail: "r@example.test", status: "approved" },
     ]);
-  });
+    // Waiting for the shared test-database lock can take as long as the other suites hold it
+  }, 600_000);
 
   afterAll(async () => {
     if (db && spaceIds.length) {
@@ -78,7 +79,7 @@ run("home page data (postgres)", () => {
       await db.delete(s.user).where(inArray(s.user.id, [owner, stranger, empty]));
     }
     await releaseLock?.();
-  });
+  }, 60_000);
 
   it("is null for someone with no spaces (the page sends them to onboarding)", async () => {
     expect(await home.getHomeData(empty, 7, now)).toBeNull();
