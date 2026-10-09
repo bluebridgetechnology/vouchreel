@@ -14,6 +14,7 @@ import { useConfirm } from "@/components/ui/confirm";
 import { LivePreview } from "@/components/widget/live-preview";
 import { useWidgetEditor, type SaveState } from "@/components/widget/editor/use-widget-editor";
 import { WidgetName } from "@/components/widget/editor/widget-name";
+import { PerformancePanel } from "@/components/widget/editor/performance-panel";
 import { HistoryDialog } from "@/components/widget/editor/history-dialog";
 import { BehaviourSection, ContentSection, EditorSection, InstallSection, LayoutSection, SHAPE_LABELS, ShapeSection, StyleSection } from "@/components/widget/editor/sections";
 
@@ -161,6 +162,8 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           </Button>
         </div>
       </div>
+
+      <PerformancePanel spaceId={spaceId} widgetId={widgetId} />
 
       {historyOpen && (
         <HistoryDialog

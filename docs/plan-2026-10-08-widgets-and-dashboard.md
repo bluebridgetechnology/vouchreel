@@ -435,7 +435,14 @@ no experiment, not tied to the "live" switch) while the page is on. No change to
 in a browser against the CSP: script, data and layout chunk load and the cards render. The page shows the space name
 in its heading and is public by link; turning it off 404s the page and the data.
 
-**Publish history (E6), built, not yet committed.** `widget_versions` (migration 0049): each time what visitors see changes
+**Editor performance panel (E5), built, not yet committed.** A collapsed "How it is doing" strip under the editor's top bar
+(summary: "1,204 views, 18% played in 30 days"); open it for views, plays, play rate and clicks against the 30 days
+before ("up 20%"), and a bar per day (plays inside) with a mark on the day it was last published. From the events that
+name the widget, whole UTC days so bars and totals agree; `lib/widgets/performance.ts`,
+`GET .../widgets/[widgetId]/performance`. Conversions are not shown: they belong to the page, not a widget, so
+Analytics keeps them. Widget script untouched.
+
+**Publish history (E6), committed.** `widget_versions` (migration 0049): each time what visitors see changes
 (a publish, or an experiment's winner) the new settings are kept, plus, once, how the widget was before (if it had
 been shown), up to 10 per widget, identical repeats skipped; deleted with the widget. Editor top bar: **History**
 lists versions with what changed since the previous one ("layout, colours"...), marks the live one, and **Restore**
