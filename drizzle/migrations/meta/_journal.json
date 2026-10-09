@@ -309,6 +309,13 @@
       "when": 1791533463106,
       "tag": "0043_widget_template_rating_badge",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1791533814235,
+      "tag": "0044_widget_template_marquee",
+      "breakpoints": true
     }
   ]
 }

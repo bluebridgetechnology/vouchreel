@@ -1,0 +1,166 @@
+.vr-mq {
+  width: 100%;
+  padding: 16px 0 8px;
+}
+
+.vr-mq-viewport {
+  overflow: hidden;
+  /* Cards fade in and out at the edges (a mask only reads alpha, so "black" is not a visible colour) */
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 6%, black 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, black 6%, black 94%, transparent);
+}
+
+.vr-mq-track {
+  display: flex;
+  width: max-content;
+  animation: vr-mq-slide var(--vr-mq-dur, 40s) linear infinite;
+}
+
+/* Hovering or focusing a card, or the Pause button, stops it */
+.vr-mq:hover .vr-mq-track,
+.vr-mq:focus-within .vr-mq-track,
+.vr-mq-paused .vr-mq-track {
+  animation-play-state: paused;
+}
+
+@keyframes vr-mq-slide {
+  to {
+    transform: translateX(var(--vr-mq-shift, -50%));
+  }
+}
+
+.vr-mq-set {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--vr-gap);
+  /* The gap between repeats equals the gap between cards, so the loop has no seam */
+  padding-right: var(--vr-gap);
+}
+
+.vr-mq-card {
+  display: flex;
+  flex: 0 0 var(--vr-card-w);
+  width: var(--vr-card-w);
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: var(--vr-border-w) solid var(--vr-border);
+  border-radius: var(--vr-radius);
+  background: var(--vr-bg);
+  color: var(--vr-text);
+  box-shadow: var(--vr-shadow-sm);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.vr-mq-card:focus-visible,
+.vr-mq-pause:focus-visible {
+  outline: 2px solid var(--vr-primary);
+  outline-offset: 2px;
+}
+
+.vr-mq-pic {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--vr-primary);
+  color: var(--vr-accent);
+  font-weight: 600;
+}
+
+.vr-mq-pic img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vr-mq-play {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--vr-primary);
+  color: var(--vr-accent);
+  font-size: 7px;
+}
+
+.vr-mq-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.vr-mq-name {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vr-mq-quote {
+  font-size: 13px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+/* Review cards read as text first: name below the words */
+.vr-mq-review .vr-mq-body {
+  flex: 1;
+}
+
+.vr-hide-name .vr-mq-name,
+.vr-hide-quote .vr-mq-quote {
+  display: none;
+}
+
+.vr-mq-pause {
+  display: block;
+  margin: 8px 16px 0 auto;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--vr-text-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.vr-mq-pause:hover {
+  background: var(--vr-hover);
+}
+
+/* Reduced motion: nothing moves. The strip is one row the visitor scrolls themselves. */
+@media (prefers-reduced-motion: reduce) {
+  .vr-mq-viewport {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .vr-mq-track {
+    animation: none;
+  }
+
+  .vr-mq-clone,
+  .vr-mq-pause {
+    display: none;
+  }
+}

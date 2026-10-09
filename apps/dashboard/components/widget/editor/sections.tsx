@@ -95,6 +95,13 @@ function LayoutSketch({ id }: { id: WidgetTemplate }) {
           <span className="h-1 w-2 rounded-pill bg-current opacity-50" />
         </span>
       )}
+      {id === "marquee" && (
+        <span className="absolute inset-x-0 top-3 flex gap-1">
+          {[0, 1, 2, 3].map((i) => (
+            <span key={i} className={cn(block, "h-4 w-5 shrink-0", i === 0 || i === 3 ? "opacity-40" : "opacity-80")} />
+          ))}
+        </span>
+      )}
       {id === "carousel" && (
         <span className="absolute inset-x-1 top-3 flex gap-1">
           {[0, 1, 2].map((i) => (

@@ -341,6 +341,13 @@ frames.
 
 ### D2. New layouts (L, one change set per layout, each S to M)
 
+**Progress (2026-10-09):** marquee built (migration 0044): a slow strip (40 px/s) of up to sixteen review and
+video cards, alternating, repeated until it covers any screen and sliding by exactly one repeat so the loop has
+no seam (checked by seeking the animation). Accessibility: it stops on hover or focus, has a visible "Pause
+scrolling" button (motion over five seconds needs one), the repeats are hidden from screen readers and the tab
+order, and for visitors who ask for reduced motion it does not move and becomes a row they scroll themselves.
+All motion is CSS. Chunk 1.91 KB gzip, core unchanged. No shape chips (no picture to shape).
+
 **Progress (2026-10-09):** rating badge built (migration 0043): "4.7 from 3 reviews" with stars filled to the
 average, as a small pill for a header or footer; clicking opens a sheet of up to eight reviews, each opening the
 core's full review. The score is computed in the widget from the approved imported reviews it already receives
@@ -381,7 +388,7 @@ Each is a layout chunk from A1. Order by value:
 | **Floating reel** | floating | A vertical 9:16 card in a corner, swipe/tap to the next video, like a story. | Matches the "vertical, like reel" request. |
 | **Reel feed** | inline | A horizontal row of vertical 9:16 tiles; tapping opens a full-screen vertical player with swipe between videos. | Shoppable/social look, strong on mobile. |
 | **Spotlight** | inline | One large featured testimonial (video or quote) with optional thumbnails to switch. | Hero sections and pricing pages. |
-| **Grid** | inline | A fixed, even grid (unlike masonry), columns from the style object. | Clean, predictable layout many users expect. |
+| **Grid** | inline (not planned now: the wall of love is already an even grid; revisit only if a customer asks) | A fixed, even grid (unlike masonry), columns from the style object. | Clean, predictable layout many users expect. |
 | **Marquee** | inline | An auto-scrolling row of text reviews and small video chips; pauses on hover and under reduced motion. | Social-proof strip for landing pages. |
 | **Rating badge** | inline or floating | Aggregate stars and count ("4.9 from 312 reviews"), opens a panel with the reviews. | Tiny, works in headers and footers; uses data we already have. |
 
