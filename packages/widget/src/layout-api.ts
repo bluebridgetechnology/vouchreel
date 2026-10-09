@@ -27,7 +27,7 @@ export interface LayoutContext {
   quote(item: TestimonialItem): EffectiveQuote;
   openVideo(index: number): void;
   openReview(review: ReviewItem): void;
-  track(type: "click", testimonialId?: string): void;
+  track(type: "click" | "play", testimonialId?: string): void;
   /** The widget's theme (normalized by the API), for layout behaviour such as auto-advance. */
   theme?: Record<string, unknown>;
   /** Floating layouts: hides the widget for the rest of the visit (the close button). */

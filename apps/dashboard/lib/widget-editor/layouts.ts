@@ -26,6 +26,7 @@ export const LAYOUTS: LayoutInfo[] = [
   { id: "floating-bubble", name: "Video bubble", bestFor: "Any page: a round video playing in the corner", placement: "floating", grid: false, autoAdvance: false, shapes: ["circle", "rounded", "vertical"] },
   { id: "floating-reel", name: "Video reel", bestFor: "Mobile and social-style sites: a tall card you swipe through", placement: "floating", grid: false, autoAdvance: false, shapes: ["vertical", "portrait", "square", "rounded"] },
   { id: "story-strip", name: "Story strip", bestFor: "Mobile visitors: tappable bubbles", placement: "floating", grid: false, autoAdvance: false, shapes: ["circle", "rounded", "vertical"] },
+  { id: "reel-feed", name: "Reel feed", bestFor: "Product and landing pages: tall tiles that open full screen", placement: "inline", grid: false, autoAdvance: false, shapes: ["vertical", "portrait", "square", "rounded"] },
   { id: "carousel", name: "Carousel", bestFor: "Landing pages: a swipeable row", placement: "inline", grid: false, autoAdvance: true, shapes: ["landscape", "square", "rounded", "portrait", "vertical"] },
   { id: "wall-of-love", name: "Wall of love", bestFor: "A testimonials page: an even grid", placement: "inline", grid: true, autoAdvance: false, shapes: ["landscape", "square", "rounded", "circle", "portrait", "vertical"] },
   { id: "masonry", name: "Masonry", bestFor: "Mixed quotes and videos: staggered columns", placement: "inline", grid: true, autoAdvance: false, shapes: ["landscape", "square", "rounded", "circle", "portrait", "vertical"] },

@@ -153,6 +153,7 @@ describe("each shipped chunk registers itself", () => {
     ["story-strip", false],
     ["floating-bubble", false],
     ["floating-reel", false],
+    ["reel-feed", true],
   ])("%s (inline: %s)", async (name, inline) => {
     await import(`../layouts/${name}.ts`);
     const layout = (window as any).__vrLayouts[name] as LayoutDefinition;

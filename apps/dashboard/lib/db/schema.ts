@@ -51,6 +51,7 @@ export const widgetTemplateEnum = pgEnum("widget_template", [
   "masonry",
   "floating-bubble",
   "floating-reel",
+  "reel-feed",
 ]);
 
 export const widgetPositionEnum = pgEnum("widget_position", [

@@ -341,6 +341,13 @@ frames.
 
 ### D2. New layouts (L, one change set per layout, each S to M)
 
+**Progress (2026-10-09):** reel feed built (migration 0041): an inline row of up to twelve 9:16 tiles (pictures,
+no video downloaded until one is opened) that open a full-screen vertical player for uploaded videos: swipe up
+or down, arrow keys or buttons, next video on its own when one ends, Escape or the close button to leave, focus
+kept inside, page scroll locked while open. YouTube, Vimeo and reviews use the core's pop-up, which is the only
+code that can play them. The player is in the chunk (2.65 KB gzip); core unchanged. Plays are counted
+(`track` now accepts `play` for layouts). Shapes: reel (default), portrait, square, rounded.
+
 **Progress (2026-10-09):** floating reel built too (migration 0040): a 9:16 corner card with story-style
 progress bars, arrows and swipe to move through up to six slides (videos, then reviews as text slides), tap to
 open the player. Chunk 2.25 KB gzip, core unchanged. One video is on the page at a time. It does not
