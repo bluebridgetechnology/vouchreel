@@ -6,6 +6,7 @@ import { LAYOUTS, layoutInfo, type WidgetShape } from "@/lib/widget-editor/layou
 import { contrastBetween, MIN_BUTTON_CONTRAST } from "@/lib/brand-kit/theme";
 import { ACCENT_COLOR_PRESETS, PRIMARY_COLOR_PRESETS } from "@/lib/widget-presets";
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 import { toggleStyle } from "@/components/ui/toggle";
 import { Icon } from "@/components/ui/icon";
 import { PositionPicker } from "../position-picker";
@@ -41,7 +42,7 @@ export function EditorSection({
   return (
     <section className="border-b last:border-b-0">
       <h3>
-        <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={id} className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-sunken/50">
+        <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={id} className={cn(buttonVariants({ variant: "ghost", size: "bare" }), "w-full justify-start gap-3 rounded-none px-4 py-3.5 text-left font-normal text-text")}>
           <span className={cn("flex size-6 shrink-0 items-center justify-center rounded-pill text-2xs font-medium", open ? "bg-brand text-text-on-accent" : "bg-surface-sunken text-text-muted")}>{step}</span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium text-text">{title}</span>

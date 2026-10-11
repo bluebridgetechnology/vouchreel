@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { inputClass } from "@/components/ui/input";
 import { notify } from "@/lib/notify";
 
 /**
@@ -55,7 +57,7 @@ export function WidgetName({ name, onRename }: { name: string; onRename: (name: 
             input.current?.blur();
           }
         }}
-        className="h-8 w-48 rounded-control border bg-surface px-2 text-base font-medium text-text outline-none focus-visible:ring-2 focus-visible:ring-brand sm:w-64"
+        className={cn(inputClass, "h-8 w-48 px-2 text-base font-medium sm:w-64")}
       />
     );
   }
@@ -64,7 +66,7 @@ export function WidgetName({ name, onRename }: { name: string; onRename: (name: 
       type="button"
       onClick={() => setEditing(true)}
       title="Rename"
-      className={cn("group inline-flex max-w-[16rem] items-center gap-1.5 rounded-control px-1 py-0.5 text-base font-medium text-text hover:bg-surface-sunken")}
+      className={cn(buttonVariants({ variant: "ghost", size: "bare" }), "group max-w-[16rem] gap-1.5 px-1 py-0.5 text-base font-medium text-text")}
     >
       <span className="truncate">{name}</span>
       <Icon name="pen" size="sm" className="shrink-0 text-text-subtle opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />

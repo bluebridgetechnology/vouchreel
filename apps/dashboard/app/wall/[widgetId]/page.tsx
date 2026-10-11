@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { normalizeTheme } from "@/lib/validations/widget-config";
+import { WIDGET_MODE_COLOURS } from "@/lib/widget-editor/mode-colours";
 import { getWallWidget } from "@/lib/widgets/service";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export default async function WallPage({ params }: WallPageProps) {
   const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   return (
-    <main style={{ background: theme.background ?? (dark ? "#0c0a09" : "#ffffff"), color: theme.textColor ?? (dark ? "#fafaf9" : "#1c1917"), minHeight: "100vh" }}>
+    <main style={{ background: theme.background ?? WIDGET_MODE_COLOURS[dark ? "dark" : "light"].background, color: theme.textColor ?? WIDGET_MODE_COLOURS[dark ? "dark" : "light"].text, minHeight: "100vh" }}>
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
         <h1 className="mb-8 text-center text-2xl font-medium tracking-tight sm:text-3xl">What customers say about {found.space.name}</h1>
         <div data-vouchreel-widget={found.widget.id} />

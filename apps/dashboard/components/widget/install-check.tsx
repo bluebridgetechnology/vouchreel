@@ -5,7 +5,8 @@ import { seenHeadline, seenRow, suggestedUrl } from "@/lib/install/format";
 import type { InstallCheckResult } from "@/lib/install/check";
 import type { SeenOn } from "@/lib/install/status";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { inputClass } from "@/components/ui/input";
 
@@ -70,11 +71,11 @@ export function InstallCheck({ spaceId, widgetId }: { spaceId: string; widgetId?
   const scope = widgetId ? "widget" : "space";
 
   return (
-    <div className="space-y-4 rounded-card border bg-surface-sunken/40 p-4">
+    <Card variant="sunken" padding="sm" className="space-y-4 border">
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <h4 className="text-sm font-medium text-text">Is it on your site?</h4>
-          <button type="button" onClick={loadSeen} className="text-xs font-medium text-text-muted underline underline-offset-4 hover:text-text">
+          <button type="button" onClick={loadSeen} className={cn(buttonVariants({ variant: "link-muted", size: "bare" }), "text-xs font-medium underline")}>
             Refresh
           </button>
         </div>
@@ -148,6 +149,6 @@ export function InstallCheck({ spaceId, widgetId }: { spaceId: string; widgetId?
           </ul>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

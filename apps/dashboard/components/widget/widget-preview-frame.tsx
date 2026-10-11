@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Card } from "@/components/ui/card";
 import { buildPreviewMessage, DEVICES, fitScale, type PreviewContent, type PreviewDevice, type PreviewDraft, type PreviewPage } from "@/lib/widget-preview";
 
 interface WidgetPreviewFrameProps {
@@ -59,7 +60,7 @@ export function WidgetPreviewFrame({ draft, content, device, page, replay = 0, c
   return (
     <div className={className}>
       <div ref={boxRef} className="flex h-full w-full items-start justify-center">
-        <div className="overflow-hidden rounded-card border border-border bg-surface shadow-float" style={{ width: size.width * scale, height: size.height * scale }}>
+        <Card variant="flat" className="overflow-hidden shadow-float" style={{ width: size.width * scale, height: size.height * scale }}>
           <iframe
             ref={frameRef}
             src="/widget/preview.html"
@@ -70,7 +71,7 @@ export function WidgetPreviewFrame({ draft, content, device, page, replay = 0, c
             // By load the frame's script is listening, even if its "ready" message came before ours was
             onLoad={() => setReady(true)}
           />
-        </div>
+        </Card>
       </div>
     </div>
   );

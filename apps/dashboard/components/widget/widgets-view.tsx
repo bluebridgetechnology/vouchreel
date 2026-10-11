@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { notify } from "@/lib/notify";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, cardVariants } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/confirm";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -259,7 +259,7 @@ export function WidgetsView({ spaceId, embedKey, widgets: initial, quota: initia
 
       <p className="text-xs text-text-muted">Numbers are for the last 30 days. Visits from before widgets were told apart count in Analytics for the whole space.</p>
 
-      <details className="group rounded-card border bg-surface">
+      <details className={cn(cardVariants({ variant: "flat" }), "group")}>
         <summary className="flex cursor-pointer items-center justify-between gap-3 px-5 py-4 text-sm font-medium text-text">
           How to put widgets on your site
           <Icon name="alt-arrow-down" size="sm" className="text-text-subtle transition-transform group-open:rotate-180" />

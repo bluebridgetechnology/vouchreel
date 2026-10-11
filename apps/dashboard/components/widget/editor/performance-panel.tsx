@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { change, dayKey, playRate, type WidgetPerformance } from "@/lib/widgets/performance-math";
 import { timeAgo } from "@/lib/time-ago";
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { cardVariants } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 
 export type Data = WidgetPerformance & { publishedAt: string | null; isLive: boolean };
@@ -91,7 +93,7 @@ export function PerformancePanel({ spaceId, widgetId }: { spaceId: string; widge
           : `${number(data.views)} views${rate === null ? "" : `, ${rate}% played`} in 30 days`;
 
   return (
-    <details className="group rounded-card border bg-surface">
+    <details className={cn(cardVariants({ variant: "flat" }), "group")}>
       <summary className="flex cursor-pointer items-center justify-between gap-3 px-4 py-2.5 text-sm">
         <span className="flex min-w-0 items-center gap-2">
           <Icon name="chart" size="sm" className="shrink-0 text-text-subtle" />
@@ -107,7 +109,7 @@ export function PerformancePanel({ spaceId, widgetId }: { spaceId: string; widge
         {failed ? (
           <p role="alert" className="text-xs text-danger-foreground">
             We could not load the numbers.{" "}
-            <button type="button" onClick={load} className="underline underline-offset-4">
+            <button type="button" onClick={load} className={cn(buttonVariants({ variant: "link", size: "bare" }), "text-xs text-danger-foreground underline")}>
               Try again
             </button>
           </p>

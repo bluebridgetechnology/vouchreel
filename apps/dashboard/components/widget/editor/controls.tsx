@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { toggleStyle } from "@/components/ui/toggle";
 import { Switch } from "@/components/ui/switch";
@@ -129,7 +130,7 @@ export function ColorControl({
           (value === null ? (
             <span className="text-2xs text-text-muted">Auto</span>
           ) : (
-            <button type="button" onClick={onClear} className="text-2xs font-medium text-brand hover:underline">
+            <button type="button" onClick={onClear} className={cn(buttonVariants({ variant: "link", size: "bare" }), "text-2xs font-medium")}>
               Reset to auto
             </button>
           ))}
@@ -205,7 +206,7 @@ export function CopyField({ label, value }: { label: string; value: string }) {
               setTimeout(() => setCopied(false), 2000);
             });
           }}
-          className="shrink-0 rounded-control border px-3 text-xs font-medium text-text-muted hover:bg-surface-sunken hover:text-text"
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-auto shrink-0 px-3 text-text-muted")}
         >
           {copied ? "Copied" : "Copy"}
         </button>

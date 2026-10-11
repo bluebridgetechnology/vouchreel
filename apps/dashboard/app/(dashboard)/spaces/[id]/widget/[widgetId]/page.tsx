@@ -8,6 +8,7 @@ import { matchingPreset } from "@/lib/widget-editor/presets";
 import { normalizeTheme } from "@/lib/validations/widget-config";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, cardVariants } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { notify } from "@/lib/notify";
 import { useConfirm } from "@/components/ui/confirm";
@@ -125,7 +126,6 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
   const theme = normalizeTheme(config.theme);
   const brandManaged = Boolean(editor.brandKit);
   const layout = layoutInfo(config.template);
-  const iconButton = cn(buttonVariants({ variant: "ghost", size: "sm" }), "px-2");
   const isLive = editor.widget?.isLive ?? true;
 
   return (
@@ -137,16 +137,16 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
       </nav>
 
       {/* Top bar: one save control for the whole editor */}
-      <div className="sticky top-0 z-20 -mx-1 flex flex-wrap items-center justify-between gap-3 rounded-card border bg-surface/95 px-3 py-2.5 shadow-xs backdrop-blur">
+      <div className={cn(cardVariants({ variant: "flat" }), "sticky top-0 z-20 -mx-1 flex flex-wrap items-center justify-between gap-3 bg-surface/95 px-3 py-2.5 shadow-xs backdrop-blur")}>
         <div className="flex items-center gap-3">
           {editor.widget && <WidgetName name={editor.widget.name} onRename={editor.rename} />}
           <StatusPill isLive={isLive} unpublished={editor.unpublished} saveState={editor.saveState} />
         </div>
         <div className="flex items-center gap-1.5">
-          <button type="button" onClick={undo} disabled={!editor.canUndo} aria-label="Undo" title="Undo (Ctrl+Z)" className={iconButton}>
+          <button type="button" onClick={undo} disabled={!editor.canUndo} aria-label="Undo" title="Undo (Ctrl+Z)" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "px-2")}>
             <Icon name="undo-left" size="sm" />
           </button>
-          <button type="button" onClick={redo} disabled={!editor.canRedo} aria-label="Redo" title="Redo (Ctrl+Shift+Z)" className={iconButton}>
+          <button type="button" onClick={redo} disabled={!editor.canRedo} aria-label="Redo" title="Redo (Ctrl+Shift+Z)" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "px-2")}>
             <Icon name="undo-right" size="sm" />
           </button>
           <button type="button" onClick={() => setHistoryOpen(true)} className={buttonVariants({ variant: "ghost", size: "sm" })}>
@@ -193,7 +193,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-card border bg-surface lg:order-1">
+        <Card variant="flat" className="overflow-hidden lg:order-1">
           <EditorSection step={1} title="Layout" summary={layout.name} open={open.has("layout")} onToggle={() => toggle("layout")}>
             <LayoutSection value={config.template} onChange={(template) => update({ template, theme: { ...config.theme, shape: shapeForLayout(theme.shape, template) } })} />
           </EditorSection>
@@ -212,7 +212,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
           <EditorSection step={6} title="Install" summary="Add it to your site" open={open.has("install")} onToggle={() => toggle("install")}>
             <InstallSection spaceId={spaceId} embedKey={editor.embedKey} template={config.template} widgetId={widgetId} wallEnabled={editor.widget?.wallEnabled} />
           </EditorSection>
-        </div>
+        </Card>
       </div>
     </div>
   );
