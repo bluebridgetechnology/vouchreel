@@ -1111,6 +1111,9 @@ test.describe("platform admin", () => {
       await expect(page).toHaveURL(/range=30/);
       await expect(page.getByRole("link", { name: "30 days" })).toHaveAttribute("aria-current", "page");
 
+      // The period switch fades between its two looks, and a slower browser (Firefox in CI) was still mid-fade, which axe reads as halfway colours
+      await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))));
+
       const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
       expect(violations.map((v) => `${v.id}: ${v.nodes[0].target.join(" ")}`)).toEqual([]);
     } finally {
