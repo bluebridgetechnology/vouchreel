@@ -1,8 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-vi.mock("@/lib/db", () => ({ db: {} }));
-
-import { change, dayKey, fillSeries, playRate } from "../performance";
+import { change, dayKey, fillSeries, playRate } from "../performance-math";
 
 describe("performance helpers", () => {
   it("names the UTC day of a moment", () => {

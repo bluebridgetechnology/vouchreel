@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { change, dayKey, playRate, type WidgetPerformance } from "@/lib/widgets/performance";
+import { change, dayKey, playRate, type WidgetPerformance } from "@/lib/widgets/performance-math";
 import { timeAgo } from "@/lib/time-ago";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/ui/icon";

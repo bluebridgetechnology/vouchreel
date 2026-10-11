@@ -1016,6 +1016,8 @@ test.describe("platform admin", () => {
         await expect(root).toHaveClass(new RegExp(`vr-template-${template}`), { timeout: 15_000 });
         await expect(frame.locator("#vr-slot .vouchreel-host-container")).toHaveCount(inline ? 1 : 0);
 
+        // The preview sticks to the top as the page scrolls, so bring it up first: a floating widget sits at its bottom edge, below the fold of a short window
+        await page.evaluate(() => window.scrollTo(0, 600));
         // Something in the widget opens the player or a review, which closes again
         await frame.locator(".vr-open-btn, .vr-story-item, .vr-card").first().click();
         await expect(frame.locator(".vr-expanded-modal")).toBeVisible();
@@ -1126,14 +1128,23 @@ test.describe("platform admin", () => {
     const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
     let spaceId: string | undefined;
     let planId: string | undefined;
+    let previousPlanId: string | undefined;
+    let ownerId: string | undefined;
     try {
       const { rows: [owner] } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [USERS.customer.email]);
+      ownerId = owner.id;
       const { rows: [space] } = await pool.query(`INSERT INTO spaces (name, owner_id, embed_key) VALUES ('E2E Widgets Space', $1, 'e2e-widgets') RETURNING id`, [owner.id]);
       spaceId = space.id;
       await pool.query(`INSERT INTO widget_configs (space_id) VALUES ($1)`, [spaceId]);
       // The free tier is the first active plan that costs nothing: for this test it allows two widgets per space
       const { rows: [plan] } = await pool.query(`INSERT INTO plans (name, price, interval, sort_order, limits) VALUES ('E2E widgets free', 0, 'month', -1000, '{"tier":"free","maxSpaces":5,"maxTestimonialsPerSpace":-1,"maxWidgetsPerSpace":2}') RETURNING id`);
       planId = plan.id;
+      // Earlier tests may have put this customer on a paid plan by hand, and a plan with no stored limits allows one widget. Put them on this plan for the test.
+      const { rows: [sub] } = await pool.query(`SELECT plan_id FROM subscriptions WHERE user_id = $1`, [owner.id]);
+      if (sub) {
+        previousPlanId = sub.plan_id;
+        await pool.query(`UPDATE subscriptions SET plan_id = $1 WHERE user_id = $2`, [plan.id, owner.id]);
+      }
       const live = async () => (await (await context.request.get("/api/widget/e2e-widgets")).json()).config;
 
       await open(page, `/spaces/${spaceId}/widget`);
@@ -1199,6 +1210,7 @@ test.describe("platform admin", () => {
       await page.getByRole("button", { name: "More actions for Default widget" }).click();
       await expect(page.getByRole("menuitem", { name: /Delete/ })).toHaveAttribute("aria-disabled", "true");
     } finally {
+      if (previousPlanId && ownerId) await pool.query(`UPDATE subscriptions SET plan_id = $1 WHERE user_id = $2`, [previousPlanId, ownerId]);
       if (spaceId) await pool.query(`DELETE FROM spaces WHERE id = $1`, [spaceId]); // widgets go with it
       if (planId) await pool.query(`DELETE FROM plans WHERE id = $1`, [planId]);
       await pool.end();
