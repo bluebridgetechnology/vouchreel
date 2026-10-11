@@ -30,6 +30,10 @@ export interface BrandKitValues {
  * Without a kit the theme is returned untouched, so existing widgets do not change.
  */
 export function applyBrandKitToTheme<T extends Record<string, unknown>>(theme: T, kit: BrandKitValues | null): T {
+  return withReadablePrimary(applyKit(theme, kit));
+}
+
+function applyKit<T extends Record<string, unknown>>(theme: T, kit: BrandKitValues | null): T {
   if (!kit) return theme;
   return {
     ...theme,
@@ -40,6 +44,47 @@ export function applyBrandKitToTheme<T extends Record<string, unknown>>(theme: T
     ...(kit.fontMode === "custom" && kit.fontFamily ? { fontFamily: kit.fontFamily } : {}),
     inheritTextColor: kit.inheritTextColor,
   };
+}
+
+const HEX = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+const LIGHT_SURFACE = "#ffffff";
+const DARK_SURFACE = "#1c1917";
+
+/** Text in the brand colour (a badge, a link) needs more contrast than a coloured shape does. */
+export const MIN_TEXT_CONTRAST = 4.8;
+
+function mixHex(from: string, to: string, amount: number): string {
+  const full = (hex: string) => (hex.length === 4 ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}` : hex);
+  const [a, b] = [full(from), full(to)];
+  const part = (i: number) => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - amount) + parseInt(b.slice(i, i + 2), 16) * amount);
+  return `#${[1, 3, 5].map((i) => part(i).toString(16).padStart(2, "0")).join("")}`;
+}
+
+/**
+ * The brand colour, moved toward white or black just far enough to read as text on a surface. A colour that
+ * already reads is returned as it is, so a well-chosen brand colour is never dulled.
+ */
+export function readableOn(color: string, surface: string, min = MIN_TEXT_CONTRAST): string {
+  if (!HEX.test(color) || !HEX.test(surface) || contrastBetween(color, surface) >= min) return color;
+  const toward = contrastBetween("#ffffff", surface) > contrastBetween("#000000", surface) ? "#ffffff" : "#000000";
+  for (let step = 1; step <= 20; step++) {
+    const candidate = mixHex(color, toward, step / 20);
+    if (contrastBetween(candidate, surface) >= min) return candidate;
+  }
+  return toward;
+}
+
+/**
+ * Adds `primaryText` to a widget theme when its brand colour is too faint to read as text on the widget's surface
+ * (a dark brand colour in dark mode, a pale one in light). The widget uses it for text in the brand colour and
+ * keeps the brand colour itself for buttons and outlines. Themes whose colour already reads are left untouched.
+ */
+export function withReadablePrimary<T extends Record<string, unknown>>(theme: T): T {
+  const primary = theme.primaryColor;
+  if (typeof primary !== "string") return theme;
+  const surface = typeof theme.background === "string" && HEX.test(theme.background) ? theme.background : theme.mode === "dark" ? DARK_SURFACE : LIGHT_SURFACE;
+  const text = readableOn(primary, surface);
+  return text === primary ? theme : { ...theme, primaryText: text };
 }
 
 function channel(hex: string, from: number): number {

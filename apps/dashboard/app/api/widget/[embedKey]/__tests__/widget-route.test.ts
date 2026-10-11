@@ -372,7 +372,10 @@ describe("Widget Data Public API Route", () => {
     it("leaves the owner's theme as it is when the space has no brand kit, with defaults for options never set", async () => {
       mockQueries();
       const json = await (await request()).json();
-      expect(json.config.theme).toEqual({ ...DEFAULT_WIDGET_THEME, ...config.theme });
+      // (a dark widget whose brand colour is too faint to read as text also gets a readable twin for text)
+      const { primaryText, ...rest } = json.config.theme;
+      expect(rest).toEqual({ ...DEFAULT_WIDGET_THEME, ...config.theme });
+      expect(primaryText === undefined || /^#[0-9a-f]{6}$/.test(primaryText)).toBe(true);
       expect(json.config.theme).not.toHaveProperty("fontMode");
     });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { applyBrandKitToTheme, collectBrandFromKit, contrastBetween, describeFont, type BrandKitValues } from "../theme";
+import { applyBrandKitToTheme, collectBrandFromKit, contrastBetween, describeFont, MIN_TEXT_CONTRAST, readableOn, withReadablePrimary, type BrandKitValues } from "../theme";
 import { VIDEO_FONT_IDS } from "@vouchreel/video";
 import { brandKitSchema, normalizeHex } from "@/lib/validations/brand-kit";
 import { valuesToStore } from "../service";
@@ -24,7 +24,9 @@ const theme = { primaryColor: "#3b82f6", accentColor: "#ffffff", mode: "dark", b
 
 describe("applyBrandKitToTheme", () => {
   it("returns the theme untouched without a kit", () => {
-    expect(applyBrandKitToTheme(theme, null)).toBe(theme);
+    // (a brand colour too faint to read as text gets a readable twin: see "brand colour as text" below)
+    const readable = { ...theme, primaryColor: "#7aa2ff" };
+    expect(applyBrandKitToTheme(readable, null)).toBe(readable);
   });
 
   it("the kit decides colours, radius and typography; the widget keeps its mode", () => {
@@ -37,6 +39,7 @@ describe("applyBrandKitToTheme", () => {
       fontMode: "custom",
       fontFamily: "Poppins",
       inheritTextColor: true,
+      primaryText: expect.stringMatching(/^#[0-9a-f]{6}$/), // #112233 does not read on a dark widget
     });
   });
 
@@ -189,5 +192,50 @@ describe("collectBrandFromKit", () => {
 
   it("falls back (null) when the kit's text colour is unreadable on its colour", () => {
     expect(collectBrandFromKit(undefined, kit({ primaryColor: "#ffee00", accentColor: "#ffffff" })).textColor).toBeNull();
+  });
+});
+
+describe("brand colour as text", () => {
+  it("leaves a colour that already reads on its surface exactly as it is", () => {
+    expect(readableOn("#cf3d0b", "#ffffff")).toBe("#cf3d0b");
+    expect(readableOn("#7aa2ff", "#1c1917")).toBe("#7aa2ff");
+  });
+
+  it("lightens a dark colour on a dark surface and darkens a pale one on a light surface, just enough", () => {
+    const onDark = readableOn("#112233", "#1c1917");
+    expect(contrastBetween(onDark, "#1c1917")).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(contrastBetween(onDark, "#1c1917")).toBeLessThan(MIN_TEXT_CONTRAST + 1.5); // not pushed all the way to white
+    const onLight = readableOn("#ffee00", "#ffffff");
+    expect(contrastBetween(onLight, "#ffffff")).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(onLight).not.toBe("#000000");
+  });
+
+  it("works for short hex, and ignores anything that is not a hex colour", () => {
+    expect(contrastBetween(readableOn("#123", "#1c1917"), "#1c1917")).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    expect(readableOn("red", "#ffffff")).toBe("red");
+    expect(readableOn("#112233", "var(--x)")).toBe("#112233");
+  });
+
+  it("always finds something readable, even from black on black", () => {
+    expect(contrastBetween(readableOn("#000000", "#000000"), "#000000")).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+  });
+
+  it("adds primaryText to a widget theme only when the colour does not read, using its own background or its mode's", () => {
+    expect(withReadablePrimary({ primaryColor: "#cf3d0b", mode: "light" })).toEqual({ primaryColor: "#cf3d0b", mode: "light" });
+    const dark = withReadablePrimary({ primaryColor: "#112233", mode: "dark" }) as { primaryText?: string };
+    expect(contrastBetween(dark.primaryText!, "#1c1917")).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+    // The same colour reads fine on a light surface
+    expect(withReadablePrimary({ primaryColor: "#112233", mode: "light" })).not.toHaveProperty("primaryText");
+    // A custom background decides, not the mode
+    expect(withReadablePrimary({ primaryColor: "#112233", mode: "light", background: "#0c0a09" })).toHaveProperty("primaryText");
+    expect(withReadablePrimary({ mode: "dark" })).toEqual({ mode: "dark" });
+  });
+
+  it("the brand kit's colour is the one made readable, and the theme is not mutated", () => {
+    const theme = { primaryColor: "#cf3d0b", mode: "dark" as const };
+    const out = applyBrandKitToTheme(theme, kit({ primaryColor: "#112233" })) as { primaryColor: string; primaryText?: string };
+    expect(out.primaryColor).toBe("#112233"); // buttons and outlines keep the brand colour
+    expect(out.primaryText).toBeDefined();
+    expect(theme).toEqual({ primaryColor: "#cf3d0b", mode: "dark" });
   });
 });

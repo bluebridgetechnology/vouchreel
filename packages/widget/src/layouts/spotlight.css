@@ -105,7 +105,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--vr-primary);
+  color: var(--vr-primary-text, var(--vr-primary));
   font: inherit;
   font-size: 13px;
   font-weight: 600;

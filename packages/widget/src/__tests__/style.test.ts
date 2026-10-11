@@ -14,6 +14,27 @@ function root() {
   return el;
 }
 
+describe("brand colour as text", () => {
+  it("sets the readable text colour the server worked out, next to the brand colour", () => {
+    const r = root();
+    applyTheme(r, { primaryColor: "#112233", primaryText: "#8a9199" });
+    expect(r.vars["--vr-primary"]).toBe("#112233");
+    expect(r.vars["--vr-primary-text"]).toBe("#8a9199");
+  });
+
+  it("sets nothing when there is none, so text falls back to the brand colour", () => {
+    const r = root();
+    applyTheme(r, { primaryColor: "#cf3d0b" });
+    expect(r.vars).not.toHaveProperty("--vr-primary-text");
+    // Every use of the brand colour as text asks for the readable one first and falls back to the brand colour
+    const dir = new URL("../layouts/", import.meta.url);
+    const css = readdirSync(dir).filter((f) => f.endsWith(".css")).map((f) => readFileSync(new URL(f, dir), "utf8")).join("\n") + readFileSync(new URL("../styles.css", import.meta.url), "utf8");
+    const asText = css.match(/[^-]color:\s*var\(--vr-primary[^;]*;/g) ?? [];
+    expect(asText.length).toBeGreaterThan(0);
+    for (const use of asText) expect(use).toContain("var(--vr-primary-text, var(--vr-primary))");
+  });
+});
+
 describe("applying a widget theme", () => {
   it("does nothing without a theme, so the stylesheet defaults apply", () => {
     const r = root();

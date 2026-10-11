@@ -58,7 +58,7 @@ test.describe("widget tools", () => {
     const { rows: [wall] } = await pool.query(
       `INSERT INTO widget_configs (space_id, name, template, sort_order, is_live, published_at, theme)
        VALUES ($1, 'Wall', 'wall-of-love', 0, true, now() - interval '2 days', $2) RETURNING id`,
-      [spaceId, JSON.stringify({ primaryColor: "#7aa2ff", accentColor: "#ffffff", mode: "dark", borderRadius: 30 })]
+      [spaceId, JSON.stringify({ primaryColor: "#112233", accentColor: "#ffffff", mode: "dark", borderRadius: 30 })]
     );
     wallId = wall.id;
     const { rows: [corner] } = await pool.query(`INSERT INTO widget_configs (space_id, name, template, sort_order) VALUES ($1, 'Corner', 'floating-card', 1) RETURNING id`, [spaceId]);
@@ -261,9 +261,9 @@ test.describe("widget tools", () => {
       await expect(page.getByRole("dialog")).toHaveCount(0);
 
       const { rows: [corner] } = await pool.query(`SELECT theme, draft_config FROM widget_configs WHERE id = $1`, [cornerId]);
-      expect(corner.draft_config.theme).toMatchObject({ primaryColor: "#7aa2ff", mode: "dark", borderRadius: 30 });
+      expect(corner.draft_config.theme).toMatchObject({ primaryColor: "#112233", mode: "dark", borderRadius: 30 });
       expect(corner.draft_config.template).toBe("floating-card"); // its own layout
-      expect(corner.theme.primaryColor).not.toBe("#7aa2ff"); // not live
+      expect(corner.theme.primaryColor).not.toBe("#112233"); // not live
 
       // The target now shows its unpublished changes on the list
       await page.reload();

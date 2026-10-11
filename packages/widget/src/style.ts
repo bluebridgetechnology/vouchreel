@@ -3,6 +3,7 @@ import type { WidgetThemeConfig } from "./widget";
 /** Theme fields that become CSS custom properties on the themed root. */
 const VARS: [key: string, cssVar: string, unit?: string][] = [
   ["primaryColor", "--vr-primary"],
+  ["primaryText", "--vr-primary-text"],
   ["accentColor", "--vr-accent"],
   ["borderRadius", "--vr-radius", "px"],
   ["background", "--vr-bg"],

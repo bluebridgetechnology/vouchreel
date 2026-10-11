@@ -68,7 +68,7 @@
 
 .vr-badge-video {
   background-color: var(--vr-primary-soft);
-  color: var(--vr-primary);
+  color: var(--vr-primary-text, var(--vr-primary));
   border: 1px solid var(--vr-primary-border);
 }
 
