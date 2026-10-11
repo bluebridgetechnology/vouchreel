@@ -22,7 +22,7 @@ interface RouteParams {
 /**
  * GET /api/spaces/[id]/analytics/export
  * Query params: format (csv), startDate, endDate (YYYY-MM-DD),
- * and optional segmentation filters (testimonialId, pageUrl, deviceType, trafficSource, experimentId, variantIndex).
+ * and optional segmentation filters (testimonialId, widgetId, pageUrl, deviceType, trafficSource, experimentId, variantIndex).
  *
  * Returns raw events as CSV attachment.
  */
@@ -39,6 +39,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     startDate: url.searchParams.get("startDate") ?? undefined,
     endDate: url.searchParams.get("endDate") ?? undefined,
     testimonialId: url.searchParams.get("testimonialId") ?? undefined,
+    widgetId: url.searchParams.get("widgetId") ?? undefined,
     pageUrl: url.searchParams.get("pageUrl") ?? undefined,
     deviceType: url.searchParams.get("deviceType") ?? undefined,
     trafficSource: url.searchParams.get("trafficSource") ?? undefined,
@@ -66,6 +67,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const dateRange = resolveDateRange(parsed.data);
     const filter: AnalyticsFilter = {
       testimonialId: parsed.data.testimonialId,
+      widgetId: parsed.data.widgetId,
       pageUrl: parsed.data.pageUrl,
       deviceType: parsed.data.deviceType,
       trafficSource: parsed.data.trafficSource,

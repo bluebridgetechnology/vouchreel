@@ -106,13 +106,18 @@ Publish your site and open a page in a browser:
 - The widget appears once its trigger fires (see [Trigger types](#trigger-types)).
 - Open the dashboard → **Analytics** tab: views should start appearing within a minute.
 
+In the dashboard, the **Install** step of a widget (and the install help on the Widgets page) has an **Is it on your site?** panel:
+
+- **Last seen** lists the sites where a visitor really saw the widget in the last 30 days (host only, never the page path). This is the surest proof.
+- **Check a page** loads an address you give and looks for your script (and, for a widget that sits in the page, its spot). It reads only the HTML the server sends, so a script added by JavaScript or a tag manager can show as "not found" while working: check **Last seen** after visiting the page yourself.
+
 If nothing appears, see [Troubleshooting](#troubleshooting).
 
 ---
 
 ## Trigger types
 
-The widget does not have to appear immediately. Configure this per space in the dashboard (**Widget** tab):
+The widget does not have to appear immediately. Configure this per widget in the dashboard (**Widgets** tab):
 
 | Trigger | Behavior |
 | --- | --- |
@@ -136,6 +141,18 @@ By default the widget shows on **all pages** (`*`). In the dashboard you can res
 | `/blog/**` | Any path under `/blog`, including nested ones |
 
 `pagesIncluded` is checked first, then `pagesExcluded` — a page must match an include and must not match any exclude.
+
+## Several widgets on one site
+
+A space can have several widgets (the number depends on your plan): for example a floating card on every page and a wall of love on one page. Each widget has its own layout, look, trigger and page targeting, is switched on or off on its own, and a new one stays off until you publish it.
+
+**One script serves all of them**: add the script tag once to each page, as in Step 2. Then:
+
+- A widget that floats in a corner (floating card, video bubble, video reel, story strip) needs nothing else.
+- A widget that sits in your page (carousel, wall of love, masonry, reel feed, spotlight, rating badge, marquee) needs a spot. Open the widget in the dashboard, go to its **Install** step and copy its spot, which looks like `<div data-vouchreel-widget="WIDGET_ID"></div>`, to where it should appear. Pages that already use `<div data-vouchreel-embed></div>` keep working for your first widget.
+- An inline widget with no spot on a page is simply not shown there.
+
+Closing one widget does not close the others, and a visitor's page-view count is counted once per page however many widgets use it. The **Widgets** tab shows each widget's views and plays for the last 30 days, and **Analytics** can be filtered to one widget once a space has more than one.
 
 ## Videos made by Vouchreel in the widget
 
@@ -168,6 +185,14 @@ By default the snippet points at the VouchReel app, which serves the script at `
 Use `data-api` when hosting the script somewhere that is *not* your VouchReel app (e.g. an S3 bucket), so the loader knows where to fetch configuration from.
 
 ---
+
+## A page of its own (no website needed)
+
+A widget that sits in a page (a wall, grid, carousel, spotlight and so on, not a corner card) can also be shown on a public page of its own, to share by link or put in a link-in-bio. In the widget's **Install** step turn on **Give it a page of its own** and copy the link (`/wall/<widget id>`).
+
+- It is the real widget, as you last published it. Its page rules and "show on my site" switch do not apply to this page.
+- The page is public to anyone with the link, and shows your space's name in its heading. Turn the switch off and the link stops working.
+- Visits are counted like any other, under that widget in Analytics.
 
 ## Troubleshooting
 

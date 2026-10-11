@@ -1,0 +1,17 @@
+.vr-wall-wrapper {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.vr-wall-grid {
+  display: grid;
+  /* As many columns as fit at the card width, never more than --vr-cols */
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(min(100%, max(var(--vr-card-w), calc((100% - (var(--vr-cols) - 1) * var(--vr-gap)) / var(--vr-cols)))), 1fr)
+  );
+  gap: var(--vr-gap);
+}

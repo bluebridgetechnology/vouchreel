@@ -22,7 +22,7 @@ export interface ExperimentWithStats {
   id: string;
   spaceId: string;
   name: string;
-  type: "trigger" | "position" | "template";
+  type: "trigger" | "position" | "template" | "style";
   status: "draft" | "running" | "completed";
   winnerVariantIndex: number | null;
   startedAt: Date | null;

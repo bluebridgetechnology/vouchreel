@@ -30,7 +30,7 @@ interface RouteParams {
  * Query params:
  *   - type: overview | testimonials | timeseries | funnel | comparison | segment-comparison | filter-options
  *   - startDate, endDate (YYYY-MM-DD), interval (day|week)
- *   - Filters: testimonialId, pageUrl, deviceType, trafficSource, experimentId, variantIndex
+ *   - Filters: testimonialId, widgetId, pageUrl, deviceType, trafficSource, experimentId, variantIndex
  *   - Comparison: compareRange (boolean/string), compareSegment (device), prevStartDate, prevEndDate
  */
 export async function GET(request: Request, { params }: RouteParams) {
@@ -47,6 +47,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     endDate: url.searchParams.get("endDate") ?? undefined,
     interval: url.searchParams.get("interval") ?? undefined,
     testimonialId: url.searchParams.get("testimonialId") ?? undefined,
+    widgetId: url.searchParams.get("widgetId") ?? undefined,
     pageUrl: url.searchParams.get("pageUrl") ?? undefined,
     deviceType: url.searchParams.get("deviceType") ?? undefined,
     trafficSource: url.searchParams.get("trafficSource") ?? undefined,
@@ -78,6 +79,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const dateRange = resolveDateRange(parsed.data);
     const filter: AnalyticsFilter = {
       testimonialId: parsed.data.testimonialId,
+      widgetId: parsed.data.widgetId,
       pageUrl: parsed.data.pageUrl,
       deviceType: parsed.data.deviceType,
       trafficSource: parsed.data.trafficSource,

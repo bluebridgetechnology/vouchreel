@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import type { VideoFontId } from "@vouchreel/video";
 import {
   pgTable,
@@ -49,6 +49,12 @@ export const widgetTemplateEnum = pgEnum("widget_template", [
   "story-strip",
   "floating-card",
   "masonry",
+  "floating-bubble",
+  "floating-reel",
+  "reel-feed",
+  "spotlight",
+  "rating-badge",
+  "marquee",
 ]);
 
 export const widgetPositionEnum = pgEnum("widget_position", [
@@ -82,6 +88,7 @@ export const experimentTypeEnum = pgEnum("experiment_type", [
   "trigger",
   "position",
   "template",
+  "style",
 ]);
 
 export const experimentStatusEnum = pgEnum("experiment_status", [
@@ -329,8 +336,24 @@ export const widgetConfigs = pgTable("widget_configs", {
   id: uuid("id").defaultRandom().primaryKey(),
   spaceId: uuid("space_id")
     .notNull()
-    .unique()
     .references(() => spaces.id, { onDelete: "cascade" }),
+  /** What the owner calls this widget in the editor. */
+  name: text("name").default("Default widget").notNull(),
+  /**
+   * A space can have several widgets. The one with the lowest sort order (oldest first) is the space's
+   * primary widget: the one the plain embed snippet, `data-vouchreel-embed` and experiments mean.
+   */
+  sortOrder: integer("sort_order").default(0).notNull(),
+  /**
+   * Whether visitors see this widget. Widgets that existed before there could be several are live; a new one
+   * starts off and goes live when the owner publishes it, so a half-made widget never reaches the site.
+   */
+  isLive: boolean("is_live").default(true).notNull(),
+  /**
+   * Whether the widget is also shown on its own public page (/wall/{id}), for owners with no site to embed it in.
+   * Off until the owner turns it on; only widgets that sit in a page (not in a corner) can have one.
+   */
+  wallEnabled: boolean("wall_enabled").default(false).notNull(),
   template: widgetTemplateEnum("template").default("floating-card").notNull(),
   position: widgetPositionEnum("position").default("bottom-right").notNull(),
   theme: jsonb("theme").$type<Record<string, unknown>>().default({}),
@@ -339,10 +362,30 @@ export const widgetConfigs = pgTable("widget_configs", {
   pagesIncluded: text("pages_included").array().default([]),
   pagesExcluded: text("pages_excluded").array().default([]),
   autoplayPreview: boolean("autoplay_preview").default(false).notNull(),
+  /** Unpublished edits from the widget editor (the whole config, as the editor's PUT takes it). Visitors never see it. */
+  draftConfig: jsonb("draft_config").$type<Record<string, unknown>>(),
+  /** When the live columns were last published from the editor; null for configs saved before drafts existed. */
+  publishedAt: timestamp("published_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
-});
+}, (table) => [index("widget_configs_space_idx").on(table.spaceId, table.sortOrder, table.createdAt)]);
+
+/**
+ * What a widget looked like each time it changed on the owner's site (a publish, or an experiment's winner), the newest
+ * 10 kept per widget, so a change can be undone. The first row is the widget as it was before history began.
+ * `config` is the whole settings object, as the editor's PUT takes it.
+ */
+export const widgetVersions = pgTable("widget_versions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  widgetId: uuid("widget_id")
+    .notNull()
+    .references(() => widgetConfigs.id, { onDelete: "cascade" }),
+  config: jsonb("config").$type<Record<string, unknown>>().notNull(),
+  /** What made it: a publish, an experiment's winner, or the widget as it was before history began. */
+  source: text("source").$type<"publish" | "experiment" | "before">().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [index("widget_versions_widget_idx").on(table.widgetId, table.createdAt)]);
 
 /**
  * Analytics events — captures widget interactions for the analytics dashboard.
@@ -355,6 +398,11 @@ export const events = pgTable("events", {
   testimonialId: uuid("testimonial_id").references(() => testimonials.id, {
     onDelete: "set null",
   }),
+  /**
+   * Which of the space's widgets recorded it. Null for events from before widgets could be told apart, for page-level
+   * events (conversions), and once its widget is deleted (the events stay, counted for the space).
+   */
+  widgetId: uuid("widget_id").references(() => widgetConfigs.id, { onDelete: "set null" }),
   sessionId: text("session_id"),
   eventType: eventTypeEnum("event_type").notNull(),
   pageUrl: text("page_url"),
@@ -365,6 +413,8 @@ export const events = pgTable("events", {
 }, (table) => [
   index("events_space_type_ts_idx").on(table.spaceId, table.eventType, table.timestamp),
   index("events_space_testimonial_type_idx").on(table.spaceId, table.testimonialId, table.eventType),
+  // Per-widget numbers; only events that name a widget are in it, so it stays small next to the table
+  index("events_widget_type_ts_idx").on(table.widgetId, table.eventType, table.timestamp).where(sql`${table.widgetId} is not null`),
 ]);
 
 /**

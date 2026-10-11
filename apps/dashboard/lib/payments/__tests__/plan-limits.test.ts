@@ -44,6 +44,20 @@ describe("plan limits", () => {
     expect(serializeLimits({ ...PLAN_LIMIT_PRESETS.pro, aiVideoCredits: Infinity }).aiVideoCredits).toBe(-1);
   });
 
+  it("widgets per space: one on free, three on pro, unlimited above, and a stored plan from before the key gets its tier's number", () => {
+    expect(PLAN_LIMIT_PRESETS.free.maxWidgetsPerSpace).toBe(1);
+    expect(PLAN_LIMIT_PRESETS.pro.maxWidgetsPerSpace).toBe(3);
+    expect(PLAN_LIMIT_PRESETS.agency.maxWidgetsPerSpace).toBe(Infinity);
+    expect(PLAN_LIMIT_PRESETS.business.maxWidgetsPerSpace).toBe(Infinity);
+    // limits saved before the key existed carry no maxWidgetsPerSpace
+    expect(normalizeLimits({ maxSpaces: 5, maxTestimonialsPerSpace: -1 }, "Pro Monthly").maxWidgetsPerSpace).toBe(3);
+    expect(normalizeLimits({ maxSpaces: 1 }, "Starter").maxWidgetsPerSpace).toBe(1);
+    // an admin's number wins, and -1 is unlimited
+    expect(normalizeLimits({ maxWidgetsPerSpace: 10 }, "Free").maxWidgetsPerSpace).toBe(10);
+    expect(normalizeLimits({ maxWidgetsPerSpace: -1 }, "Free").maxWidgetsPerSpace).toBe(Infinity);
+    expect(serializeLimits(PLAN_LIMIT_PRESETS.agency).maxWidgetsPerSpace).toBe(-1);
+  });
+
   it("formats limits for messages", () => {
     expect(formatLimit(3)).toBe("3");
     expect(formatLimit(Infinity)).toBe("Unlimited");

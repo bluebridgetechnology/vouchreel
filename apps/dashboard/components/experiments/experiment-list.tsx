@@ -63,7 +63,7 @@ export function ExperimentList({ experiments, filteredExperiments, filter, loadi
           </div>
           <h3 className="text-base font-medium text-text">No experiments found</h3>
           <p className="text-xs text-text-muted max-w-sm mx-auto">
-            Create an experiment to start testing different triggers, positions, or templates on your visitors.
+            Create an experiment to start testing different triggers, positions, layouts, or looks on your visitors.
           </p>
           <button
             onClick={onCreate}

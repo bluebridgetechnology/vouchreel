@@ -27,6 +27,8 @@ interface FormState {
   maxSpacesUnlimited: boolean;
   maxTestimonials: string;
   maxTestimonialsUnlimited: boolean;
+  maxWidgets: string;
+  maxWidgetsUnlimited: boolean;
   flags: Record<(typeof FLAGS)[number]["key"], boolean>;
   stripeProductId: string;
   stripePriceId: string;
@@ -61,6 +63,8 @@ function emptyForm(): FormState {
     maxSpacesUnlimited: false,
     maxTestimonials: "3",
     maxTestimonialsUnlimited: false,
+    maxWidgets: "1",
+    maxWidgetsUnlimited: false,
     flags: Object.fromEntries(FLAGS.map((f) => [f.key, false])) as FormState["flags"],
     stripeProductId: "",
     stripePriceId: "",
@@ -84,6 +88,8 @@ function formFromPlan(plan: AdminPlan): FormState {
     maxSpacesUnlimited: limit("maxSpaces") < 0,
     maxTestimonials: limit("maxTestimonialsPerSpace") < 0 ? "3" : String(limit("maxTestimonialsPerSpace")),
     maxTestimonialsUnlimited: limit("maxTestimonialsPerSpace") < 0,
+    maxWidgets: limit("maxWidgetsPerSpace") < 0 ? "1" : String(limit("maxWidgetsPerSpace")),
+    maxWidgetsUnlimited: limit("maxWidgetsPerSpace") < 0,
     flags: Object.fromEntries(FLAGS.map((f) => [f.key, Boolean(plan.limits[f.key])])) as FormState["flags"],
     stripeProductId: plan.stripeProductId ?? "",
     stripePriceId: plan.stripePriceId ?? "",
@@ -107,6 +113,7 @@ function payloadFromForm(f: FormState, tier: string) {
       tier,
       maxSpaces: f.maxSpacesUnlimited ? -1 : Number(f.maxSpaces),
       maxTestimonialsPerSpace: f.maxTestimonialsUnlimited ? -1 : Number(f.maxTestimonials),
+      maxWidgetsPerSpace: f.maxWidgetsUnlimited ? -1 : Number(f.maxWidgets),
       ...f.flags,
     },
     stripeProductId: f.stripeProductId.trim() || null,
@@ -329,6 +336,15 @@ export function PlansManager({ plans }: { plans: AdminPlan[] }) {
                     <Input id="plan-testimonials" type="number" min="0" disabled={form.maxTestimonialsUnlimited} value={form.maxTestimonials} onChange={(e) => patch({ maxTestimonials: e.target.value })} />
                     <label className="flex shrink-0 items-center gap-2 text-xs text-text-muted">
                       <Switch checked={form.maxTestimonialsUnlimited} onCheckedChange={(v) => patch({ maxTestimonialsUnlimited: v })} aria-label="Unlimited testimonials" />
+                      Unlimited
+                    </label>
+                  </div>
+                </Field>
+                <Field label="Max widgets per space" htmlFor="plan-widgets" hint="Only creating another is limited; existing widgets keep working">
+                  <div className="flex items-center gap-3">
+                    <Input id="plan-widgets" type="number" min="1" disabled={form.maxWidgetsUnlimited} value={form.maxWidgets} onChange={(e) => patch({ maxWidgets: e.target.value })} />
+                    <label className="flex shrink-0 items-center gap-2 text-xs text-text-muted">
+                      <Switch checked={form.maxWidgetsUnlimited} onCheckedChange={(v) => patch({ maxWidgetsUnlimited: v })} aria-label="Unlimited widgets" />
                       Unlimited
                     </label>
                   </div>

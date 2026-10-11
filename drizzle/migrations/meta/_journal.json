@@ -267,6 +267,90 @@
       "when": 1791455938625,
       "tag": "0037_review_sources_oauth",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791475800604,
+      "tag": "0038_widget_draft",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791487834384,
+      "tag": "0039_widget_template_bubble",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791531814142,
+      "tag": "0040_widget_template_reel",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1791532334995,
+      "tag": "0041_widget_template_reel_feed",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1791532948887,
+      "tag": "0042_widget_template_spotlight",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1791533463106,
+      "tag": "0043_widget_template_rating_badge",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1791533814235,
+      "tag": "0044_widget_template_marquee",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1791534897781,
+      "tag": "0045_widgets_per_space",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1791541748603,
+      "tag": "0046_events_widget_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1791548332179,
+      "tag": "0047_widget_wall",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1791548947572,
+      "tag": "0048_experiment_type_style",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1791566789692,
+      "tag": "0049_widget_versions",
+      "breakpoints": true
     }
   ]
 }

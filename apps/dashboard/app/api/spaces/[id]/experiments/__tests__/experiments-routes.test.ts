@@ -22,6 +22,10 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+// Which widget an experiment changes (the first one visitors see) is the widget service's job, tested in lib/widgets
+const experimentTarget = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }));
+vi.mock("@/lib/widgets/service", () => ({ getExperimentTarget: vi.fn(async () => experimentTarget.current), recordVersion: vi.fn(async () => undefined) }));
+
 describe("Experiments API Routes", () => {
   const mockUser = { id: "user-123", email: "tester@vouchreel.com" };
   const mockSpace = { id: "space-456", ownerId: "user-123", name: "Test Space" };
@@ -300,9 +304,9 @@ describe("Experiments API Routes", () => {
           // Experiment lookup
           return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockExperiment]) }) };
         }
-        // WidgetConfigs lookup
-        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([existingConfig]) }) };
+        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) };
       });
+      experimentTarget.current = existingConfig;
 
       let updateCalls = 0;
       (db.update as any).mockImplementation(() => {

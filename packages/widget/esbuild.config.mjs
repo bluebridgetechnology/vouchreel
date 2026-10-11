@@ -1,16 +1,25 @@
 import * as esbuild from "esbuild";
+import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 
 const widgetDir = import.meta.dirname;
-const entryPoint = path.join(widgetDir, "src/index.ts");
+const srcDir = path.join(widgetDir, "src");
+const entryPoint = path.join(srcDir, "index.ts");
 const outDir = path.join(widgetDir, "dist");
 const outFile = path.join(outDir, "vouchreel-widget.js");
 const compatFile = path.join(outDir, "widget.js");
+const layoutsSrcDir = path.join(srcDir, "layouts");
+const layoutsOutDir = path.join(outDir, "layouts");
 
-if (!fs.existsSync(outDir)) {
-  fs.mkdirSync(outDir, { recursive: true });
-}
+/** A layout chunk is a .ts file in src/layouts that registers a layout; the rest (cards.ts, media.ts) are shared helpers. */
+const LAYOUT_NAMES = fs
+  .readdirSync(layoutsSrcDir)
+  .filter((f) => f.endsWith(".ts") && fs.readFileSync(path.join(layoutsSrcDir, f), "utf8").includes("defineLayout("))
+  .map((f) => f.slice(0, -3));
+
+fs.rmSync(layoutsOutDir, { recursive: true, force: true });
+fs.mkdirSync(layoutsOutDir, { recursive: true });
 
 // Widget CSS is inlined as a string. Minify it (strips comments and whitespace) so the
 // documented design-token block costs nothing in the shipped bundle.
@@ -25,29 +34,68 @@ const minifyCss = {
   },
 };
 
-await esbuild.build({
-  entryPoints: [entryPoint],
+// A hash of the sources: the core asks for layout chunks with ?v=<hash>, so a deploy is never
+// answered from a stale cache, and the chunks can be cached for a long time.
+function sourceHash(dir) {
+  const hash = crypto.createHash("sha256");
+  const walk = (d) => {
+    for (const entry of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      if (entry.name === "__tests__") continue;
+      const full = path.join(d, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else hash.update(entry.name).update(fs.readFileSync(full));
+    }
+  };
+  walk(dir);
+  return hash.digest("hex").slice(0, 10);
+}
+const build = sourceHash(srcDir);
+
+const shared = {
   bundle: true,
   minify: true,
   format: "iife",
-  globalName: "Vouchreel",
   plugins: [minifyCss],
-  outfile: outFile,
   legalComments: "none",
+  define: { __VR_BUILD__: JSON.stringify(build) },
+};
+
+await esbuild.build({ ...shared, entryPoints: [entryPoint], globalName: "Vouchreel", outfile: outFile });
+
+await esbuild.build({
+  ...shared,
+  entryPoints: LAYOUT_NAMES.map((name) => path.join(layoutsSrcDir, `${name}.ts`)),
+  outdir: layoutsOutDir,
 });
+
+// The dashboard editor's preview: core plus every layout in one file, driven by postMessage.
+// Never served to customer sites, so it has no size budget.
+await esbuild.build({
+  ...shared,
+  stdin: {
+    contents: [...LAYOUT_NAMES.map((name) => `import "./layouts/${name}";`), `import "./preview";`].join(";"),
+    resolveDir: srcDir,
+    loader: "ts",
+  },
+  outfile: path.join(outDir, "preview.js"),
+});
+fs.copyFileSync(path.join(srcDir, "preview.html"), path.join(outDir, "preview.html"));
 
 // Also create dist/widget.js copy for compatibility
 fs.copyFileSync(outFile, compatFile);
 
-// Sync with dashboard public directory
+// Sync with dashboard public directory (served as /widget/vouchreel-widget.js and /widget/layouts/<name>.js)
 const dashboardPublicDir = path.resolve(widgetDir, "../../apps/dashboard/public/widget");
 try {
-  if (!fs.existsSync(dashboardPublicDir)) {
-    fs.mkdirSync(dashboardPublicDir, { recursive: true });
-  }
+  fs.mkdirSync(dashboardPublicDir, { recursive: true });
   fs.copyFileSync(outFile, path.join(dashboardPublicDir, "vouchreel-widget.js"));
+  fs.copyFileSync(path.join(outDir, "preview.js"), path.join(dashboardPublicDir, "preview.js"));
+  fs.copyFileSync(path.join(outDir, "preview.html"), path.join(dashboardPublicDir, "preview.html"));
+  const publicLayouts = path.join(dashboardPublicDir, "layouts");
+  fs.rmSync(publicLayouts, { recursive: true, force: true });
+  fs.cpSync(layoutsOutDir, publicLayouts, { recursive: true });
 } catch {
   // ignore
 }
 
-console.log("✓ Widget build completed successfully.");
+console.log(`✓ Widget build completed successfully (build ${build}, layouts: ${LAYOUT_NAMES.join(", ")}).`);

@@ -11,6 +11,13 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+:host(.vr-inline) {
+  position: relative;
+  display: block;
+  width: 100%;
+  z-index: auto;
+}
+
 :host * {
   box-sizing: border-box;
   margin: 0;
@@ -30,6 +37,12 @@
   --vr-primary: #cf3d0b;
   --vr-accent: #ffffff;
   --vr-radius: 12px;
+
+  /* Appearance options (style.ts sets these per widget) */
+  --vr-border-w: 1px;
+  --vr-gap: 16px;
+  --vr-cols: 3;
+  --vr-card-w: 280px;
 
   /* Surfaces and text */
   --vr-bg: #ffffff;
@@ -53,6 +66,7 @@
   --vr-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   --vr-shadow-hover: 0 14px 28px -4px rgba(0, 0, 0, 0.18);
   --vr-shadow-hover-lg: 0 16px 32px -4px rgba(0, 0, 0, 0.16);
+  --vr-shadow-strong: 0 24px 48px -8px rgba(0, 0, 0, 0.32), 0 10px 18px -8px rgba(0, 0, 0, 0.2);
   --vr-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
   --vr-shadow-fab: 0 4px 12px rgba(0, 0, 0, 0.4);
   --vr-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
@@ -163,7 +177,7 @@
   display: flex;
   align-items: center;
   background-color: var(--vr-bg);
-  border: 1px solid var(--vr-border);
+  border: var(--vr-border-w) solid var(--vr-border);
   border-radius: var(--vr-radius);
   box-shadow: var(--vr-shadow);
   padding: 8px;
@@ -310,44 +324,6 @@
   justify-content: center;
 }
 
-/* Story Strip Position Styles */
-.vr-pos-story-strip .vr-strip-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background-color: var(--vr-bg);
-  border: 1px solid var(--vr-border);
-  border-radius: 50px;
-  padding: 6px 14px;
-  box-shadow: var(--vr-shadow);
-}
-
-.vr-story-item {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 2px solid var(--vr-primary);
-  padding: 2px;
-  cursor: pointer;
-  overflow: hidden;
-  transition: transform 0.2s;
-  background: transparent;
-  font: inherit;
-}
-
-.vr-story-item:hover {
-  transform: scale(1.08);
-}
-
-.vr-story-item img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  display: block;
-}
-
 /* Expanded Modal & Backdrop */
 .vr-backdrop {
   position: fixed;
@@ -373,7 +349,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--vr-border);
+  border: var(--vr-border-w) solid var(--vr-border);
 }
 
 /* Desktop expanded position */
@@ -623,8 +599,7 @@
 .vr-close-btn:focus-visible,
 .vr-modal-close-btn:focus-visible,
 .vr-nav-btn:focus-visible,
-.vr-player-play-btn:focus-visible,
-.vr-story-item:focus-visible {
+.vr-player-play-btn:focus-visible {
   outline: 2px solid var(--vr-primary);
   outline-offset: 2px;
 }
@@ -632,6 +607,131 @@
 /* Programmatic focus target for the dialog — no visible ring needed */
 .vr-expanded-modal:focus {
   outline: none;
+}
+
+/* Appearance options: each theme field is a class or variable on the root (see style.ts) */
+.vr-size-sm {
+  --vr-card-w: 240px;
+}
+
+.vr-size-lg {
+  --vr-card-w: 340px;
+}
+
+.vr-size-sm .vr-collapsed-card,
+.vr-size-sm .vr-strip-wrapper {
+  zoom: 0.88;
+}
+
+.vr-size-lg .vr-collapsed-card,
+.vr-size-lg .vr-strip-wrapper {
+  zoom: 1.15;
+}
+
+.vr-shadow-none {
+  --vr-shadow: none;
+  --vr-shadow-hover: none;
+  --vr-shadow-hover-lg: none;
+}
+
+.vr-shadow-strong {
+  --vr-shadow: var(--vr-shadow-strong);
+  --vr-shadow-hover: var(--vr-shadow-strong);
+  --vr-shadow-hover-lg: var(--vr-shadow-strong);
+}
+
+.vr-gap-tight {
+  --vr-gap: 8px;
+}
+
+.vr-gap-loose {
+  --vr-gap: 24px;
+}
+
+.vr-glass .vr-collapsed-card,
+.vr-glass .vr-card,
+.vr-glass .vr-strip-wrapper,
+.vr-glass .vr-expanded-modal {
+  background-color: color-mix(in srgb, var(--vr-bg) 72%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+
+.vr-hide-name .vr-card-name,
+.vr-hide-name .vr-card-author-name,
+.vr-hide-name .vr-modal-author,
+.vr-hide-company .vr-card-company,
+.vr-hide-company .vr-modal-company,
+.vr-hide-stars .vr-stars,
+.vr-hide-source .vr-provider-badge,
+.vr-hide-quote .vr-card-quote,
+.vr-hide-quote .vr-card-quote-text,
+.vr-hide-quote .vr-modal-quote {
+  display: none;
+}
+
+/* Shapes of the floating card's picture; null keeps the rounded square. Grid cards and the
+   story strip style their own in their layout files. */
+.vr-shape-circle .vr-thumb-wrapper {
+  border-radius: 50%;
+}
+
+.vr-shape-square .vr-thumb-wrapper {
+  border-radius: 0;
+}
+
+.vr-shape-rounded .vr-thumb-wrapper {
+  border-radius: 16px;
+}
+
+.vr-shape-landscape .vr-thumb-wrapper {
+  width: 80px;
+  height: 45px;
+}
+
+.vr-shape-portrait .vr-thumb-wrapper {
+  width: 48px;
+  height: 60px;
+}
+
+.vr-shape-vertical .vr-thumb-wrapper {
+  width: 44px;
+  height: 78px;
+}
+
+.vr-play-solid .vr-play-badge {
+  width: 32px;
+  border-radius: calc(var(--vr-radius) / 2);
+}
+
+.vr-play-minimal .vr-play-badge {
+  background: none;
+  box-shadow: none;
+  color: var(--vr-on-media);
+  filter: drop-shadow(var(--vr-text-shadow));
+}
+
+.vr-enter-none.vr-animate-enter {
+  animation: none;
+}
+
+.vr-enter-fade.vr-animate-enter {
+  animation: vr-fade-in 0.3s ease forwards;
+}
+
+.vr-enter-pop.vr-animate-enter {
+  animation: vr-pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes vr-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Reduced Motion Support */
@@ -646,63 +746,7 @@
   }
 }
 
-/* ─── Curated Display Templates Styles ──────────────────────────── */
-
-.vr-card {
-  background-color: var(--vr-bg);
-  border: 1px solid var(--vr-border);
-  border-radius: var(--vr-radius);
-  box-shadow: var(--vr-shadow);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
-  user-select: none;
-  position: relative;
-  text-align: left;
-  color: var(--vr-text);
-  font: inherit;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.vr-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--vr-shadow-hover-lg);
-}
-
-.vr-card-video-thumb {
-  position: relative;
-  width: 100%;
-  padding-top: 56.25%;
-  border-radius: calc(var(--vr-radius) - 4px);
-  overflow: hidden;
-  background-color: var(--vr-media);
-}
-
-.vr-card-video-thumb img,
-.vr-card-video-thumb video {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.vr-card-duration {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  background: var(--vr-scrim-chip);
-  color: var(--vr-on-media);
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
+/* Pieces shared by the core review dialog and the layout chunks */
 .vr-provider-badge {
   display: inline-flex;
   align-items: center;
@@ -725,34 +769,12 @@
   border: 1px solid var(--vr-trustpilot-border);
 }
 
-.vr-badge-video {
-  background-color: var(--vr-primary-soft);
-  color: var(--vr-primary);
-  border: 1px solid var(--vr-primary-border);
-}
-
 .vr-stars {
   display: inline-flex;
   align-items: center;
   gap: 2px;
   color: var(--vr-star);
   font-size: 14px;
-}
-
-.vr-card-quote-text {
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--vr-text);
-  word-break: break-word;
-}
-
-.vr-card-author-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid var(--vr-border);
 }
 
 .vr-card-avatar {
@@ -770,148 +792,17 @@
   flex-shrink: 0;
 }
 
-.vr-card-author-name {
-  font-size: 12px;
+/* Review Detail Modal */
+.vr-review-modal-author {
   font-weight: 600;
-  color: var(--vr-text);
+  font-size: 13px;
 }
 
-.vr-card-author-sub {
+.vr-review-modal-date {
   font-size: 11px;
   color: var(--vr-text-muted);
 }
 
-/* 1. Wall of Love Template */
-.vr-wall-wrapper {
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 16px;
-  box-sizing: border-box;
-}
-
-.vr-wall-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-/* 2. Carousel Template */
-.vr-carousel-container {
-  position: relative;
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 16px 44px;
-  box-sizing: border-box;
-}
-
-.vr-carousel-track {
-  display: flex;
-  gap: 16px;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding: 4px;
-}
-
-.vr-carousel-track::-webkit-scrollbar {
-  display: none;
-}
-
-.vr-carousel-track .vr-card {
-  flex: 0 0 290px;
-  scroll-snap-align: start;
-}
-
-.vr-carousel-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: var(--vr-bg);
-  border: 1px solid var(--vr-border);
-  color: var(--vr-text);
-  box-shadow: var(--vr-shadow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 2;
-  transition: transform 0.15s, background-color 0.15s;
-}
-
-.vr-carousel-arrow:hover {
-  background-color: var(--vr-primary);
-  color: var(--vr-accent);
-}
-
-.vr-carousel-prev {
-  left: 4px;
-}
-
-.vr-carousel-next {
-  right: 4px;
-}
-
-/* 3. Masonry Grid Template */
-.vr-masonry-wrapper {
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 16px;
-  column-count: 3;
-  column-gap: 16px;
-  box-sizing: border-box;
-}
-
-@media (max-width: 800px) {
-  .vr-masonry-wrapper {
-    column-count: 2;
-  }
-}
-
-@media (max-width: 500px) {
-  .vr-masonry-wrapper {
-    column-count: 1;
-  }
-}
-
-.vr-masonry-wrapper .vr-card {
-  break-inside: avoid;
-  margin-bottom: 16px;
-}
-
-/* Story Strip Reviews Avatar Ring */
-.vr-story-review-google {
-  border-color: var(--vr-google) !important;
-}
-
-.vr-story-review-trustpilot {
-  border-color: var(--vr-trustpilot) !important;
-}
-
-.vr-story-badge {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--vr-star);
-  color: var(--vr-on-media);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-  border: 1.5px solid var(--vr-bg);
-}
-
-/* Review Detail Modal */
 .vr-review-modal-body {
   padding: 20px;
   overflow-y: auto;

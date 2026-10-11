@@ -202,7 +202,7 @@ export function ExperimentsView({ spaceId }: ExperimentsViewProps) {
             A/B Testing Experiments
           </h2>
           <p className="mt-1 text-sm text-text-muted">
-            Optimize conversion rates by deterministically testing widget triggers, positions, and templates.
+            Optimize conversion rates by deterministically testing widget triggers, positions, templates, and looks.
           </p>
         </div>
 

@@ -6,6 +6,8 @@ import {
   triggerValueSchema,
   updateWidgetConfigSchema,
   DEFAULT_WIDGET_CONFIG,
+  DEFAULT_WIDGET_THEME,
+  normalizeTheme,
 } from "../widget-config";
 
 describe("Widget Config Validations", () => {
@@ -55,7 +57,7 @@ describe("Widget Config Validations", () => {
       expect(result.success).toBe(false);
     });
 
-    it("rejects border radius outside 0-24 range", () => {
+    it("rejects border radius outside 0-48 range (48 allows pill-shaped cards)", () => {
       expect(
         widgetThemeSchema.safeParse({
           primaryColor: "#6366f1",
@@ -70,9 +72,70 @@ describe("Widget Config Validations", () => {
           primaryColor: "#6366f1",
           accentColor: "#ffffff",
           mode: "light",
-          borderRadius: 25,
+          borderRadius: 49,
         }).success
       ).toBe(false);
+
+      expect(
+        widgetThemeSchema.safeParse({
+          primaryColor: "#6366f1",
+          accentColor: "#ffffff",
+          mode: "light",
+          borderRadius: 48,
+        }).success
+      ).toBe(true);
+    });
+
+    it("accepts the appearance options and rejects bad values", () => {
+      const base = { primaryColor: "#6366f1", accentColor: "#ffffff", mode: "light", borderRadius: 12 };
+      expect(
+        widgetThemeSchema.safeParse({
+          ...base,
+          background: "#101010",
+          textColor: null,
+          shape: "vertical",
+          size: "lg",
+          shadow: "none",
+          borderWidth: 2,
+          borderColor: "#abc",
+          glass: true,
+          showName: false,
+          playButtonStyle: "minimal",
+          columns: 4,
+          gap: "loose",
+          autoAdvance: 5,
+          entrance: "pop",
+        }).success
+      ).toBe(true);
+      for (const bad of [{ shape: "hexagon" }, { size: "xl" }, { borderWidth: 9 }, { columns: 0 }, { background: "red" }, { autoAdvance: 31 }]) {
+        expect(widgetThemeSchema.safeParse({ ...base, ...bad }).success, JSON.stringify(bad)).toBe(false);
+      }
+    });
+  });
+
+  describe("normalizeTheme", () => {
+    it("gives a theme saved before the appearance options the original look", () => {
+      const old = { primaryColor: "#112233", accentColor: "#ffffff", mode: "dark", borderRadius: 8 };
+      expect(normalizeTheme(old)).toEqual({ ...DEFAULT_WIDGET_THEME, ...old });
+    });
+
+    it("returns the defaults for nothing, an empty object, or junk", () => {
+      expect(normalizeTheme(null)).toEqual(DEFAULT_WIDGET_THEME);
+      expect(normalizeTheme({})).toEqual(DEFAULT_WIDGET_THEME);
+      expect(normalizeTheme("theme")).toEqual(DEFAULT_WIDGET_THEME);
+    });
+
+    it("replaces only the bad fields, keeping the owner's other choices, and drops unknown keys", () => {
+      const result = normalizeTheme({ primaryColor: "#123456", size: "huge", borderRadius: 99, glass: true, script: "<x>" });
+      expect(result.primaryColor).toBe("#123456");
+      expect(result.glass).toBe(true);
+      expect(result.size).toBe(DEFAULT_WIDGET_THEME.size);
+      expect(result.borderRadius).toBe(DEFAULT_WIDGET_THEME.borderRadius);
+      expect(result).not.toHaveProperty("script");
+    });
+
+    it("the defaults are themselves a valid theme", () => {
+      expect(widgetThemeSchema.safeParse(DEFAULT_WIDGET_THEME).success).toBe(true);
     });
   });
 

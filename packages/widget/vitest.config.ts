@@ -8,6 +8,7 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "src"),
     },
   },
+  define: { __VR_BUILD__: JSON.stringify("test") },
   test: {
     environment: "node",
     include: ["src/**/__tests__/**/*.test.ts"],

@@ -24,13 +24,39 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       { source: '/:path*', headers: commonHeaders },
-      // Everything except the collect form refuses to be framed (clickjacking)
+      // Everything except the collect form and the editor's widget preview refuses to be framed (clickjacking)
       {
-        source: '/:path((?!collect(?:/|$)).*)',
+        source: '/:path((?!collect(?:/|$)|widget/preview\\.html$).*)',
         headers: [
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Content-Security-Policy', value: [...baseCsp, "frame-ancestors 'none'"].join('; ') },
         ],
+      },
+      // The widget editor's live preview: a static page framed by the dashboard only. Its own strict policy,
+      // since the page proxy (and its nonce) does not run for static files.
+      {
+        source: '/widget/preview.html',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              ...baseCsp,
+              "default-src 'none'",
+              "script-src 'self'",
+              "style-src 'self' 'unsafe-inline'",
+              'img-src * data: blob:',
+              'media-src * data: blob:',
+              "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
+              "frame-ancestors 'self'",
+            ].join('; '),
+          },
+        ],
+      },
+      // Widget layout chunks: the core always asks for them with ?v=<build hash>, so a deploy changes the URL
+      {
+        source: '/widget/layouts/:file*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       // The collection form is designed to be embedded as an iframe on customer sites
       {

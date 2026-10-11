@@ -1,187 +1,82 @@
 "use client";
 
-import { useState } from "react";
-import {
-  WidgetPosition,
-  WidgetTemplate,
-  WidgetTheme,
-  TriggerType,
-} from "@/lib/validations/widget-config";
-import { buttonVariants } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
+import type { TriggerType, WidgetPosition, WidgetTemplate, WidgetTheme } from "@/lib/validations/widget-config";
 import { cn } from "@/lib/utils";
 import { toggleStyle } from "@/components/ui/toggle";
-import { Switch } from "@/components/ui/switch";
-import { ReviewPreviewModal, VideoPreviewModal } from "./preview/preview-modals";
-import { CarouselPreview, MasonryPreview, WallOfLovePreview } from "./preview/template-previews";
-import { triggerLabel, type ExpandedReview } from "./preview/preview-types";
+import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/icon";
+import { WidgetPreviewFrame } from "./widget-preview-frame";
+import { DEVICES, previewContentFrom, SAMPLE_CONTENT, triggerLabel, type PreviewContent, type PreviewDevice } from "@/lib/widget-preview";
 
 interface LivePreviewProps {
+  /** The space's embed key: the preview shows its published testimonials and reviews. */
+  embedKey?: string;
   template?: WidgetTemplate;
   position: WidgetPosition;
   theme: WidgetTheme;
   triggerType: TriggerType;
   triggerValue: Record<string, unknown>;
   autoplayPreview: boolean;
-  onAutoplayChange?: (enabled: boolean) => void;
+  className?: string;
 }
 
-export function LivePreview({
-  template = "floating-card",
-  position,
-  theme,
-  triggerType,
-  triggerValue,
-  autoplayPreview,
-  onAutoplayChange,
-}: LivePreviewProps) {
-  const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [expandedReview, setExpandedReview] = useState<ExpandedReview | null>(null);
+const DEVICE_ICONS = { desktop: "monitor", tablet: "tablet", mobile: "smartphone" } as const;
 
-  const isDark = theme.mode === "dark";
+/** The editor's preview: the real widget on a sample page, with screen size, page colour and replay. */
+export function LivePreview({ embedKey, template = "floating-card", position, theme, triggerType, triggerValue, autoplayPreview, className }: LivePreviewProps) {
+  const [device, setDevice] = useState<PreviewDevice>("desktop");
+  const [darkPage, setDarkPage] = useState(false);
+  const [replay, setReplay] = useState(0);
+  const [content, setContent] = useState<PreviewContent>(SAMPLE_CONTENT);
+
+  // What visitors would see: the published items from the public widget endpoint, else samples
+  useEffect(() => {
+    if (!embedKey) return;
+    let cancelled = false;
+    fetch(`/api/widget/${encodeURIComponent(embedKey)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => !cancelled && setContent(previewContentFrom(data)))
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [embedKey]);
+
+  const draft = useMemo(() => ({ template, position, theme, autoplayPreview }), [template, position, theme, autoplayPreview]);
+  const page = useMemo(() => ({ dark: darkPage }), [darkPage]);
+  const tool = "flex items-center rounded-control p-1.5 transition-all";
 
   return (
-    <div className="flex flex-col space-y-3">
-      {/* Viewport & Controls Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="flex h-2 w-2 rounded-pill bg-success animate-pulse" />
-          <span className="text-xs font-medium text-text">Live Widget Preview</span>
-          <span className="hidden rounded-control bg-surface-sunken px-2 py-0.5 text-2xs font-medium text-text-muted sm:inline-block">
-            {triggerLabel(triggerType, triggerValue)}
-          </span>
+    <div className={cn("flex min-h-0 flex-col gap-3", className)}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex h-2 w-2 shrink-0 animate-pulse rounded-pill bg-success" />
+          <span className="text-xs font-medium text-text">Live preview</span>
+          <span className="hidden rounded-control bg-surface-sunken px-2 py-0.5 text-2xs font-medium text-text-muted sm:inline-block">{triggerLabel(triggerType, triggerValue)}</span>
+          {content.sample && <Badge variant="info">Sample content</Badge>}
         </div>
 
-        <div className="flex items-center gap-1.5 rounded-card border bg-surface-sunken/30 p-1">
-          <button
-            type="button"
-            onClick={() => setViewport("desktop")}
-            className={cn("flex items-center gap-1 rounded-control px-2.5 py-1 text-xs font-medium transition-all", toggleStyle("raised", viewport === "desktop"))}
-          >
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            Desktop
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 rounded-card border bg-surface-sunken/30 p-1" role="group" aria-label="Screen size">
+            {(Object.keys(DEVICES) as PreviewDevice[]).map((d) => (
+              <button key={d} type="button" onClick={() => setDevice(d)} aria-pressed={device === d} aria-label={DEVICES[d].label} title={DEVICES[d].label} className={cn(tool, toggleStyle("raised", device === d))}>
+                <Icon name={DEVICE_ICONS[d]} size="sm" />
+              </button>
+            ))}
+          </div>
+          <button type="button" onClick={() => setDarkPage((v) => !v)} aria-pressed={darkPage} aria-label="Dark page background" title={darkPage ? "Show on a light page" : "Show on a dark page"} className={cn(tool, "border", toggleStyle("raised", darkPage))}>
+            <Icon name={darkPage ? "moon" : "sun"} size="sm" />
           </button>
-
-          <button
-            type="button"
-            onClick={() => setViewport("mobile")}
-            className={cn("flex items-center gap-1 rounded-control px-2.5 py-1 text-xs font-medium transition-all", toggleStyle("raised", viewport === "mobile"))}
-          >
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-            Mobile
+          <button type="button" onClick={() => setReplay((n) => n + 1)} aria-label="Replay entrance" title="Replay entrance" className={cn(tool, "border", toggleStyle("raised", false))}>
+            <Icon name="restart" size="sm" />
           </button>
         </div>
       </div>
 
-      {/* Preview Viewport Frame */}
-      <div className="flex items-center justify-center rounded-card border bg-surface-sunken/40 p-4 transition-all min-h-[460px]">
-        <div
-          className={`relative overflow-hidden rounded-card border border-border shadow-float transition-all duration-300 ${
-            viewport === "desktop"
-              ? "h-[500px] w-full bg-surface"
-              : "h-[580px] w-[340px] rounded-[36px] border-[8px] border-border-strong bg-surface shadow-float"
-          }`}
-        >
-          {/* Mobile Speaker / Camera Notch */}
-          {viewport === "mobile" && (
-            <div className="absolute top-2 left-1/2 z-30 h-3.5 w-24 -translate-x-1/2 rounded-pill bg-text-inverse/10" />
-          )}
+      <WidgetPreviewFrame draft={draft} content={content} device={device} page={page} replay={replay} className="min-h-[420px] flex-1 rounded-card border bg-surface-sunken/40 p-3" />
 
-          {/* Browser / App Header */}
-          <div className="flex items-center justify-between border-b bg-surface-sunken/50 px-3 py-2 text-2xs text-text-muted">
-            <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-pill bg-danger" />
-              <div className="h-2 w-2 rounded-pill bg-warning" />
-              <div className="h-2 w-2 rounded-pill bg-success" />
-            </div>
-            <div className="rounded-pill bg-canvas/80 px-4 py-0.5 text-2xs text-text-muted font-mono">
-              https://yourbrand.com
-            </div>
-            <div className="w-6" />
-          </div>
-
-          {/* Mock Website Canvas */}
-          <div className="relative h-[calc(100%-37px)] overflow-y-auto bg-gradient-to-b from-canvas to-surface-sunken/20 p-4 select-none">
-            {/* Mock Navigation */}
-            <div className="flex items-center justify-between pb-4 border-b border-border/40">
-              <div className="flex items-center gap-2">
-                <div className="h-5 w-5 rounded-control bg-brand-soft flex items-center justify-center font-medium text-2xs text-brand">
-                  V
-                </div>
-                <span className="text-xs font-medium text-text">Acme Corp</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-8 rounded-control bg-surface-sunken" />
-                <div className="h-2 w-8 rounded-control bg-surface-sunken" />
-                <div className="h-5 rounded-control bg-brand-soft px-2 text-3xs font-medium text-brand flex items-center">
-                  Sign In
-                </div>
-              </div>
-            </div>
-
-            {/* Mock Hero Section */}
-            <div className="py-8 text-center space-y-2.5">
-              <span className="inline-flex rounded-pill bg-brand-soft px-2.5 py-0.5 text-3xs font-medium text-brand">
-                ★ 4.9/5 stars from 300+ founders
-              </span>
-              <h1 className="text-base font-medium tracking-tight text-text sm:text-lg">
-                Supercharge Growth with Authentic Video Testimonials
-              </h1>
-              <p className="mx-auto max-w-xs text-2xs text-text-muted leading-relaxed">
-                Collect, embed, and showcase trust-building video proof that drives conversion on any site.
-              </p>
-              <div className="pt-2 flex justify-center gap-2">
-                <button
-                  type="button"
-                  className="rounded-control px-3 py-1 text-2xs font-medium text-on-media shadow-xs"
-                  style={{ backgroundColor: theme.primaryColor }}
-                >
-                  Start 14-day Free Trial
-                </button>
-                <button
-                  type="button"
-                  className={buttonVariants({ variant: "outline", size: "sm" })}
-                >
-                  Book Demo
-                </button>
-              </div>
-            </div>
-
-            {/* Mock Content Cards or Curated Templates */}
-            {template === "wall-of-love" && <WallOfLovePreview primaryColor={theme.primaryColor} onVideo={() => setIsExpanded(true)} onReview={setExpandedReview} />}
-
-            {template === "carousel" && <CarouselPreview primaryColor={theme.primaryColor} onVideo={() => setIsExpanded(true)} onReview={setExpandedReview} />}
-
-            {template === "masonry" && <MasonryPreview onVideo={() => setIsExpanded(true)} onReview={setExpandedReview} />}
-
-            {isExpanded && <VideoPreviewModal viewport={viewport} isDark={isDark} theme={theme} onClose={() => setIsExpanded(false)} />}
-
-            {expandedReview && (
-              <ReviewPreviewModal viewport={viewport} isDark={isDark} theme={theme} review={expandedReview} onClose={() => setExpandedReview(null)} />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Autoplay Preview Toggle & Interactive Instructions */}
-      <div className="flex flex-col gap-2 rounded-card border bg-surface p-3 sm:flex-row sm:items-center sm:justify-between text-xs">
-        <div className="space-y-0.5">
-          <span className="font-medium text-text">Autoplay Video Previews</span>
-          <p className="text-2xs text-text-muted">
-            Muted preview loop plays inside the floating bubble to grab visitor attention.
-          </p>
-        </div>
-
-        <Switch checked={autoplayPreview} onCheckedChange={(v) => onAutoplayChange?.(v)} aria-label="Autoplay video previews" />
-      </div>
-
-      <p className="text-center text-2xs text-text-muted">
-        Tip: Click the widget in the preview above to test the interactive video modal experience.
-      </p>
+      <p className="text-center text-2xs text-text-muted">This is the real widget. Click it to try the player; triggers are skipped here so it shows at once.</p>
     </div>
   );
 }

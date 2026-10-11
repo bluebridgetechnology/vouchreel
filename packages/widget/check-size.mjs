@@ -3,38 +3,49 @@ import zlib from "zlib";
 import path from "path";
 
 const widgetDir = import.meta.dirname;
-const targetFile = path.join(widgetDir, "dist/vouchreel-widget.js");
+const coreFile = path.join(widgetDir, "dist/vouchreel-widget.js");
+const layoutsDir = path.join(widgetDir, "dist/layouts");
 
-if (!fs.existsSync(targetFile)) {
-  console.error(`Error: Build file not found at ${targetFile}`);
-  process.exit(1);
-}
-
-const rawBuffer = fs.readFileSync(targetFile);
-const gzippedBuffer = zlib.gzipSync(rawBuffer);
-
-const rawSizeKb = (rawBuffer.length / 1024).toFixed(2);
-const gzipSizeKb = (gzippedBuffer.length / 1024).toFixed(2);
-
-const MAX_GZIP_BYTES = 15 * 1024; // 15 KB = 15,360 bytes
-
-console.log(`Bundle Size Summary:`);
-console.log(`  Raw size:    ${rawSizeKb} KB (${rawBuffer.length} bytes)`);
-console.log(`  Gzip size:   ${gzipSizeKb} KB (${gzippedBuffer.length} bytes)`);
-console.log(`  Size budget: 15.00 KB (${MAX_GZIP_BYTES} bytes)`);
-
-const used = gzippedBuffer.length / MAX_GZIP_BYTES;
-const remaining = MAX_GZIP_BYTES - gzippedBuffer.length;
 // Visible well before the build fails, so a feature is not the one that finds out
 const WARN_AT = 0.95;
 
-if (gzippedBuffer.length > MAX_GZIP_BYTES) {
-  console.error(`\n❌ BUILD FAILED: Gzipped bundle size exceeds 15 KB limit!`);
-  process.exit(1);
-} else {
-  console.log(`\n✓ PASS: Bundle size is within the 15 KB budget (${(used * 100).toFixed(1)}% of budget used, ${remaining} bytes left).`);
-  if (used >= WARN_AT) {
-    // "::warning::" shows as an annotation in GitHub Actions
-    console.log(`::warning::Widget bundle is at ${(used * 100).toFixed(1)}% of its 15 KB budget (${remaining} bytes left). Anything added to the widget must be paid for by removing something else.`);
+/**
+ * Two budgets: the core every page loads (loader, triggers, analytics, player, dialogs and the
+ * default floating card), and each layout chunk, which a page loads only when it shows that layout.
+ */
+const budgets = [{ label: "core", file: coreFile, max: 15 * 1024 }];
+if (fs.existsSync(layoutsDir)) {
+  for (const f of fs.readdirSync(layoutsDir).filter((f) => f.endsWith(".js")).sort()) {
+    budgets.push({ label: `layout ${f.slice(0, -3)}`, file: path.join(layoutsDir, f), max: 5 * 1024 });
   }
+}
+
+let failed = false;
+for (const { label, file, max } of budgets) {
+  if (!fs.existsSync(file)) {
+    console.error(`Error: Build file not found at ${file}`);
+    process.exit(1);
+  }
+  const raw = fs.readFileSync(file);
+  const gzip = zlib.gzipSync(raw).length;
+  const used = gzip / max;
+  const remaining = max - gzip;
+  const budgetKb = (max / 1024).toFixed(0);
+  const line = `${label.padEnd(22)} raw ${(raw.length / 1024).toFixed(2)} KB, gzip ${(gzip / 1024).toFixed(2)} KB of ${budgetKb} KB (${(used * 100).toFixed(1)}%, ${remaining} bytes left)`;
+
+  if (gzip > max) {
+    console.error(`❌ ${line}`);
+    failed = true;
+  } else {
+    console.log(`✓ ${line}`);
+    if (used >= WARN_AT) {
+      // "::warning::" shows as an annotation in GitHub Actions
+      console.log(`::warning::Widget ${label} is at ${(used * 100).toFixed(1)}% of its ${budgetKb} KB budget (${remaining} bytes left). Anything added to it must be paid for by removing something else.`);
+    }
+  }
+}
+
+if (failed) {
+  console.error(`\n❌ BUILD FAILED: a widget bundle exceeds its gzip budget.`);
+  process.exit(1);
 }

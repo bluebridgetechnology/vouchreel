@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { brandKits, widgetConfigs } from "@/lib/db/schema";
+import { brandKits } from "@/lib/db/schema";
+import { getPrimaryWidget } from "@/lib/widgets/service";
 import { DEFAULT_BRAND_HEX } from "@/lib/brand";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
 import type { BrandKitInput } from "@/lib/validations/brand-kit";
@@ -20,7 +21,7 @@ export async function getBrandKit(spaceId: string): Promise<BrandKitRow | null> 
  * the page does not silently change how the widget looks. New kits default to the host site's font.
  */
 export async function suggestedBrandValues(spaceId: string): Promise<BrandKitValues> {
-  const [config] = await db.select({ theme: widgetConfigs.theme }).from(widgetConfigs).where(eq(widgetConfigs.spaceId, spaceId));
+  const config = await getPrimaryWidget(spaceId);
   const theme = { ...DEFAULT_WIDGET_CONFIG.theme, ...((config?.theme as Record<string, unknown> | null) ?? {}) } as Record<string, unknown>;
   return {
     primaryColor: typeof theme.primaryColor === "string" ? theme.primaryColor : DEFAULT_BRAND_HEX,

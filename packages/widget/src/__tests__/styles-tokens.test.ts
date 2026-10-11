@@ -1,7 +1,13 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
+const layoutsDir = new URL("../layouts/", import.meta.url);
+const layoutCss = readdirSync(layoutsDir)
+  .filter((f) => f.endsWith(".css"))
+  .map((f) => [f, readFileSync(new URL(f, layoutsDir), "utf8")] as const);
+
+const COLOUR_LITERAL = /#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)/g;
 
 /** Remove the two token blocks, the only places colour literals may live. */
 function withoutTokenBlocks(source: string): string {
@@ -11,8 +17,11 @@ function withoutTokenBlocks(source: string): string {
 describe("widget design tokens", () => {
   it("keeps colour literals inside the token blocks", () => {
     const rest = withoutTokenBlocks(css);
-    const literals = rest.match(/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)/g) ?? [];
-    expect(literals).toEqual([]);
+    expect(rest.match(COLOUR_LITERAL) ?? []).toEqual([]);
+  });
+
+  it.each(layoutCss)("layout %s uses tokens only, never colour literals", (_name, source) => {
+    expect(source.match(COLOUR_LITERAL) ?? []).toEqual([]);
   });
 
   it("default primary mirrors the dashboard brand colour", () => {

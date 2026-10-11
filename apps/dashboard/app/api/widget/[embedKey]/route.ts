@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import { eq, and, asc, desc, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { spaces, testimonials, widgetConfigs, conversionGoals, reviews, experiments, testimonialTranslations, whiteLabelSettings } from "@/lib/db/schema";
-import { DEFAULT_WIDGET_CONFIG } from "@/lib/validations/widget-config";
+import { spaces, testimonials, conversionGoals, reviews, experiments, testimonialTranslations, whiteLabelSettings } from "@/lib/db/schema";
+import { DEFAULT_WIDGET_CONFIG, normalizeTheme } from "@/lib/validations/widget-config";
 import { badRequest, notFound, internalError } from "@/lib/api/errors";
 import { canAccess } from "@/lib/auth/feature-gate";
 import { applyBrandKitToTheme, getBrandKit, toValues } from "@/lib/brand-kit/service";
+import { resolveStyleVariant } from "@/lib/experiments/style";
+import { getLiveWidgets, getWallWidget, listWidgets } from "@/lib/widgets/service";
+import { layoutInfo } from "@/lib/widget-editor/layouts";
 import { listWidgetVideos } from "@/lib/widget-videos";
 import { log } from "@/lib/log";
+
+/** The key a widget's own public page uses: "wall-" and the widget's id. */
+const WALL_KEY = /^wall-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 
 interface RouteParams {
   params: Promise<{ embedKey: string }>;
@@ -43,64 +49,68 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 
   try {
-    const [space] = await db
-      .select({
-        id: spaces.id,
-        name: spaces.name,
-        ownerId: spaces.ownerId,
-        embedKey: spaces.embedKey,
-      })
-      .from(spaces)
-      .where(eq(spaces.embedKey, embedKey));
+    // A widget's own public page (/wall/{id}) asks for its data under the key "wall-{id}", so the same script serves it
+    // with nothing added to the script. Only that one widget comes back, whatever its page rules say, and only
+    // while the owner has the page turned on.
+    const wallId = WALL_KEY.exec(embedKey)?.[1];
+    const wall = wallId ? await getWallWidget(wallId) : null;
+    if (wallId && !wall) return notFound("Widget not found", corsHeaders);
+
+    const [space] = wall
+      ? [wall.space]
+      : await db
+          .select({
+            id: spaces.id,
+            name: spaces.name,
+            ownerId: spaces.ownerId,
+            embedKey: spaces.embedKey,
+          })
+          .from(spaces)
+          .where(eq(spaces.embedKey, embedKey));
 
     if (!space) {
       return notFound("Widget not found", corsHeaders);
     }
 
-    // Fetch widget configuration
-    const [configRecord] = await db
-      .select()
-      .from(widgetConfigs)
-      .where(eq(widgetConfigs.spaceId, space.id));
-
-    const baseTheme =
-      configRecord?.theme &&
-      typeof configRecord.theme === "object" &&
-      Object.keys(configRecord.theme).length > 0
-        ? { ...DEFAULT_WIDGET_CONFIG.theme, ...configRecord.theme }
-        : DEFAULT_WIDGET_CONFIG.theme;
+    // The widgets visitors see, oldest first. A space with none saved yet gets the default widget, as before; a
+    // space whose widgets are all switched off gets nothing, and none of its customers' words are sent
+    const liveWidgets = wall ? [{ ...wall.widget, pagesIncluded: ["*"], pagesExcluded: [] as string[] }] : await getLiveWidgets(space.id);
+    if (!wall && liveWidgets.length === 0 && (await listWidgets(space.id)).length > 0) {
+      return NextResponse.json(
+        { spaceId: space.id, config: null, testimonials: [], reviews: [], conversionGoals: [], activeExperiment: null, whiteLabel: { removeBranding: false, logoUrl: null } },
+        { status: 200, headers: { ...corsHeaders, "Cache-Control": "public, max-age=60, s-maxage=60" } }
+      );
+    }
 
     // The brand kit, when the owner has saved one, decides colours, radius and typography
     const kit = await getBrandKit(space.id);
-    const theme = applyBrandKitToTheme(baseTheme, kit ? toValues(kit) : null);
-
-    const triggerValue =
-      configRecord?.triggerValue &&
-      typeof configRecord.triggerValue === "object" &&
-      Object.keys(configRecord.triggerValue).length > 0
-        ? configRecord.triggerValue
-        : DEFAULT_WIDGET_CONFIG.triggerValue;
-
-    const pagesIncluded =
-      configRecord?.pagesIncluded && configRecord.pagesIncluded.length > 0
-        ? configRecord.pagesIncluded
-        : DEFAULT_WIDGET_CONFIG.pagesIncluded;
-
-    const pagesExcluded = configRecord?.pagesExcluded || DEFAULT_WIDGET_CONFIG.pagesExcluded;
-
-    const config = {
-      template: configRecord?.template || DEFAULT_WIDGET_CONFIG.template,
-      position: configRecord?.position || DEFAULT_WIDGET_CONFIG.position,
-      theme,
-      trigger: {
-        type: configRecord?.triggerType || DEFAULT_WIDGET_CONFIG.triggerType,
-        value: triggerValue,
-      },
-      pagesIncluded,
-      pagesExcluded,
-      autoplayPreview:
-        configRecord?.autoplayPreview ?? DEFAULT_WIDGET_CONFIG.autoplayPreview,
+    const kitValues = kit ? toValues(kit) : null;
+    const configFor = (configRecord: (typeof liveWidgets)[number] | undefined) => {
+      const triggerValue =
+        configRecord?.triggerValue && typeof configRecord.triggerValue === "object" && Object.keys(configRecord.triggerValue).length > 0
+          ? configRecord.triggerValue
+          : DEFAULT_WIDGET_CONFIG.triggerValue;
+      return {
+        template: configRecord?.template || DEFAULT_WIDGET_CONFIG.template,
+        position: configRecord?.position || DEFAULT_WIDGET_CONFIG.position,
+        theme: applyBrandKitToTheme(normalizeTheme(configRecord?.theme), kitValues),
+        trigger: { type: configRecord?.triggerType || DEFAULT_WIDGET_CONFIG.triggerType, value: triggerValue },
+        pagesIncluded: configRecord?.pagesIncluded && configRecord.pagesIncluded.length > 0 ? configRecord.pagesIncluded : DEFAULT_WIDGET_CONFIG.pagesIncluded,
+        pagesExcluded: configRecord?.pagesExcluded || DEFAULT_WIDGET_CONFIG.pagesExcluded,
+        autoplayPreview: configRecord?.autoplayPreview ?? DEFAULT_WIDGET_CONFIG.autoplayPreview,
+      };
     };
+
+    // `config` is the first live widget, with its id so the page can place it by id: all an embed script from
+    // before there could be several reads. Only when more than one is live is the list added, so the usual
+    // response is no bigger than it was. The list's first entry is that same widget, so it carries only its id
+    const config = { id: liveWidgets[0]?.id, ...configFor(liveWidgets[0]) };
+    // An entry says when its layout sits in the page (not in a corner), so the script does not download a layout the
+    // page has no spot for
+    const widgets =
+      liveWidgets.length > 1
+        ? liveWidgets.map((w, i) => (i === 0 ? { id: w.id } : { id: w.id, config: configFor(w), ...(layoutInfo(w.template).placement === "inline" ? { inline: true } : {}) }))
+        : undefined;
 
     // Fetch active testimonials only, ordered by sortOrder then createdAt
     const activeTestimonials = await db
@@ -219,7 +229,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       .where(eq(conversionGoals.spaceId, space.id));
 
     // Fetch active running experiment for this space if one exists
-    const [activeExp] = await db
+    const [activeExp] = wall ? [] : await db
       .select({
         id: experiments.id,
         name: experiments.name,
@@ -265,6 +275,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       {
         spaceId: space.id,
         config,
+        ...(widgets ? { widgets } : {}),
         testimonials: [...testimonialsWithTranslations, ...madeVideos.map((v) => ({ ...v, translations: [] }))],
         reviews: approvedReviews,
         conversionGoals: goals,
@@ -273,7 +284,16 @@ export async function GET(request: Request, { params }: RouteParams) {
               id: activeExp.id,
               name: activeExp.name,
               type: activeExp.type,
-              variants: activeExp.variants,
+              // A style test's variants become a complete layout and theme (on top of the widget as published, with
+              // the brand kit applied like the widget's own), so the script applies them as plain settings and
+              // nothing else the stored config might hold gets through
+              variants:
+                activeExp.type === "style"
+                  ? activeExp.variants.map((v) => {
+                      const resolved = resolveStyleVariant({ template: config.template, theme: liveWidgets[0]?.theme }, v.config);
+                      return { id: v.id, name: v.name, config: { template: resolved.template, theme: applyBrandKitToTheme(resolved.theme, kitValues) } };
+                    })
+                  : activeExp.variants,
               trafficSplit: activeExp.trafficSplit,
             }
           : null,

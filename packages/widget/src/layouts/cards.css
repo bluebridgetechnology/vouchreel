@@ -1,0 +1,143 @@
+/* Cards shared by the grid-style layouts. Colours come from the core tokens only. */
+.vr-card {
+  background-color: var(--vr-bg);
+  border: var(--vr-border-w) solid var(--vr-border);
+  border-radius: var(--vr-radius);
+  box-shadow: var(--vr-shadow);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  user-select: none;
+  position: relative;
+  text-align: left;
+  color: var(--vr-text);
+  font: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.vr-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--vr-shadow-hover-lg);
+}
+
+.vr-card:focus-visible {
+  outline: 2px solid var(--vr-primary);
+  outline-offset: 2px;
+}
+
+.vr-card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.vr-card-video-thumb {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  border-radius: calc(var(--vr-radius) - 4px);
+  overflow: hidden;
+  background-color: var(--vr-media);
+}
+
+.vr-card-video-thumb img,
+.vr-card-video-thumb video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vr-card-duration {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: var(--vr-scrim-chip);
+  color: var(--vr-on-media);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.vr-badge-video {
+  background-color: var(--vr-primary-soft);
+  color: var(--vr-primary-text, var(--vr-primary));
+  border: 1px solid var(--vr-primary-border);
+}
+
+.vr-card-quote-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--vr-text);
+  word-break: break-word;
+}
+
+.vr-card-author-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--vr-border);
+}
+
+.vr-card-author-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vr-text);
+}
+
+.vr-card-author-sub {
+  font-size: 11px;
+  color: var(--vr-text-muted);
+}
+
+/* Shapes (the theme's shape class on the root); no class keeps 16:9 */
+.vr-shape-square .vr-card-video-thumb,
+.vr-shape-rounded .vr-card-video-thumb,
+.vr-shape-circle .vr-card-video-thumb {
+  padding-top: 100%;
+}
+
+.vr-shape-portrait .vr-card-video-thumb {
+  padding-top: 125%;
+}
+
+.vr-shape-vertical .vr-card-video-thumb {
+  padding-top: 177.78%;
+}
+
+.vr-shape-square .vr-card-video-thumb {
+  border-radius: 0;
+}
+
+.vr-shape-rounded .vr-card-video-thumb {
+  border-radius: 24px;
+}
+
+.vr-shape-circle .vr-card-video-thumb {
+  border-radius: 50%;
+}
+
+/* Tall pictures make narrower cards, still scaled by the size option */
+.vr-shape-portrait,
+.vr-shape-vertical {
+  --vr-card-w: 220px;
+}
+
+.vr-shape-portrait.vr-size-sm,
+.vr-shape-vertical.vr-size-sm {
+  --vr-card-w: 180px;
+}
+
+.vr-shape-portrait.vr-size-lg,
+.vr-shape-vertical.vr-size-lg {
+  --vr-card-w: 260px;
+}

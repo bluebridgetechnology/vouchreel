@@ -10,12 +10,15 @@ interface PageTargetingProps {
   pagesIncluded: string[];
   pagesExcluded: string[];
   onChange: (included: string[], excluded: string[]) => void;
+  /** Inside the widget editor's panel: no heading of its own (the panel section has one) and no card. */
+  compact?: boolean;
 }
 
 export function PageTargeting({
   pagesIncluded,
   pagesExcluded,
   onChange,
+  compact = false,
 }: PageTargetingProps) {
   const [includeInput, setIncludeInput] = useState("");
   const [excludeInput, setExcludeInput] = useState("");
@@ -54,14 +57,16 @@ export function PageTargeting({
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-sm font-medium text-text">Page Targeting</h3>
-        <p className="text-xs text-text-muted">
-          Control which pages display your widget using URL path patterns.
-        </p>
-      </div>
+      {!compact && (
+        <div>
+          <h3 className="text-sm font-medium text-text">Page Targeting</h3>
+          <p className="text-xs text-text-muted">
+            Control which pages display your widget using URL path patterns.
+          </p>
+        </div>
+      )}
 
-      <Card variant="flat" className="space-y-5 p-4 sm:p-5">
+      <Card variant="flat" className={cn("space-y-5 p-4 sm:p-5", compact && "border-0 bg-transparent p-0 sm:p-0")}>
         {/* Wildcard Explanation Callout */}
         <div className="flex items-start gap-2.5 rounded-card bg-surface-sunken/40 p-3 text-xs text-text-muted">
           <svg className="h-4 w-4 shrink-0 text-brand mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

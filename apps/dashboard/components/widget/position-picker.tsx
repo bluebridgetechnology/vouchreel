@@ -7,6 +7,8 @@ import { toggleStyle } from "@/components/ui/toggle";
 interface PositionPickerProps {
   value: WidgetPosition;
   onChange: (position: WidgetPosition) => void;
+  /** Inside the widget editor's panel: no heading of its own (the panel section has one) and no card. */
+  compact?: boolean;
 }
 
 interface PositionOption {
@@ -43,15 +45,17 @@ const POSITIONS: PositionOption[] = [
   },
 ];
 
-export function PositionPicker({ value, onChange }: PositionPickerProps) {
+export function PositionPicker({ value, onChange, compact = false }: PositionPickerProps) {
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-sm font-medium text-text">Widget Position</h3>
-        <p className="text-xs text-text-muted">
-          Choose where and how the video widget appears on your website pages.
-        </p>
-      </div>
+      {!compact && (
+        <div>
+          <h3 className="text-sm font-medium text-text">Widget Position</h3>
+          <p className="text-xs text-text-muted">
+            Choose where and how the video widget appears on your website pages.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {POSITIONS.map((pos) => {

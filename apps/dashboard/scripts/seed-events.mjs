@@ -75,8 +75,8 @@ async function main() {
 
     // Ensure a widget config exists
     await pool.query(
-      `INSERT INTO widget_configs (space_id) VALUES ($1)
-       ON CONFLICT (space_id) DO NOTHING`,
+      `INSERT INTO widget_configs (space_id)
+       SELECT $1::uuid WHERE NOT EXISTS (SELECT 1 FROM widget_configs WHERE space_id = $1::uuid)`,
       [spaceId]
     );
 

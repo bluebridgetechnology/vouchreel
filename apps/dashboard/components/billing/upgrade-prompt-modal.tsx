@@ -11,6 +11,7 @@ interface UpgradePromptModalProps {
     | "white-label"
     | "space-limit"
     | "testimonial-limit"
+    | "widget-limit"
     | "exportable-reports"
     | "agency-dashboard"
     | string;
@@ -44,6 +45,12 @@ const FEATURE_MESSAGES: Record<
     description:
       "You have collected the maximum number of testimonials for this space. Upgrade to unlock unlimited video and written testimonials.",
     targetPlan: "Pro",
+  },
+  "widget-limit": {
+    title: "Widget Limit Reached",
+    description:
+      "You have reached the maximum number of widgets for this space on your current plan. Upgrade to show testimonials in more places and in more ways, such as a floating card on every page and a wall of love on one.",
+    targetPlan: "Pro or Agency",
   },
   "exportable-reports": {
     title: "Export Executive ROI Reports",
@@ -102,6 +109,7 @@ export function UpgradePromptModal({
             <li>✓ Remove Vouchreel branding from all widgets</li>
             <li>✓ Custom CNAME domain for collection links</li>
             <li>✓ Unlimited client spaces & testimonials</li>
+            <li>✓ More widgets per space, each with its own look and pages</li>
           </ul>
         </Card>
 

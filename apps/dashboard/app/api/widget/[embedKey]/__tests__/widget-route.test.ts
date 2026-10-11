@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET as getWidgetData, OPTIONS as optionsWidgetData } from "../route";
 import { db } from "@/lib/db";
+import { DEFAULT_WIDGET_THEME } from "@/lib/validations/widget-config";
 
 vi.mock("@/lib/db", () => ({
   db: {
@@ -23,9 +24,17 @@ vi.mock("@/lib/brand-kit/service", async () => {
 const madeVideos = vi.hoisted(() => ({ current: [] as Record<string, unknown>[] }));
 vi.mock("@/lib/widget-videos", () => ({ listWidgetVideos: vi.fn(async () => madeVideos.current) }));
 
+// The widgets (rows of widget_configs) come from the widget service, so they are not one of the numbered selects below
+const widgets = vi.hoisted(() => ({ current: [] as Record<string, unknown>[] }));
+vi.mock("@/lib/widgets/service", () => ({
+  getLiveWidgets: vi.fn(async () => widgets.current.filter((w) => w.isLive !== false)),
+  listWidgets: vi.fn(async () => widgets.current),
+}));
+
 describe("Widget Data Public API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    widgets.current = [];
     brandKit.current = null;
     madeVideos.current = [];
   });
@@ -130,14 +139,14 @@ describe("Widget Data Public API Route", () => {
       }),
     });
 
+    widgets.current = [mockConfig];
     let queryCount = 0;
     (db.select as any).mockImplementation(() => {
       queryCount++;
       if (queryCount === 1) return createChainable([mockSpace]);
-      if (queryCount === 2) return createChainable([mockConfig]);
-      if (queryCount === 3) return createChainable(mockTestimonials);
-      if (queryCount === 4) return createChainable([]); // Testimonial translations
-      if (queryCount === 5) {
+      if (queryCount === 2) return createChainable(mockTestimonials);
+      if (queryCount === 3) return createChainable([]); // Testimonial translations
+      if (queryCount === 4) {
         // Approved reviews
         return createChainable([
           {
@@ -150,8 +159,8 @@ describe("Widget Data Public API Route", () => {
           },
         ]);
       }
-      if (queryCount === 6) return createChainable(mockGoals); // Conversion goals
-      // Query 7: Active experiment lookup
+      if (queryCount === 5) return createChainable(mockGoals); // Conversion goals
+      // Query 6: Active experiment lookup
       return createChainable([]);
     });
 
@@ -204,15 +213,12 @@ describe("Widget Data Public API Route", () => {
         return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockSpace]) }) };
       }
       if (count === 2) {
-        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) };
+        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ orderBy: vi.fn().mockResolvedValue([]) }) }) };
       }
       if (count === 3) {
         return { from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ orderBy: vi.fn().mockResolvedValue([]) }) }) };
       }
       if (count === 4) {
-        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ orderBy: vi.fn().mockResolvedValue([]) }) }) };
-      }
-      if (count === 5) {
         return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) };
       }
       return {
@@ -270,9 +276,6 @@ describe("Widget Data Public API Route", () => {
         return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockSpace]) }) };
       }
       if (count === 2) {
-        return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) };
-      }
-      if (count === 3) {
         return {
           from: vi.fn().mockReturnValue({
             where: vi.fn().mockReturnValue({
@@ -281,7 +284,7 @@ describe("Widget Data Public API Route", () => {
           }),
         };
       }
-      if (count === 4) {
+      if (count === 3) {
         // Translation query
         return {
           from: vi.fn().mockReturnValue({
@@ -289,7 +292,7 @@ describe("Widget Data Public API Route", () => {
           }),
         };
       }
-      if (count === 5) {
+      if (count === 4) {
         // Reviews
         return {
           from: vi.fn().mockReturnValue({
@@ -299,7 +302,7 @@ describe("Widget Data Public API Route", () => {
           }),
         };
       }
-      if (count === 6) {
+      if (count === 5) {
         // Conversion goals
         return { from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) }) };
       }
@@ -354,11 +357,11 @@ describe("Widget Data Public API Route", () => {
           ),
         }),
       });
+      widgets.current = [config];
       let n = 0;
       (db.select as any).mockImplementation(() => {
         n++;
         if (n === 1) return chain([space]);
-        if (n === 2) return chain([config]);
         return chain([]);
       });
     }
@@ -366,10 +369,13 @@ describe("Widget Data Public API Route", () => {
     const request = () =>
       getWidgetData(new Request("http://localhost/api/widget/emb_valid_123"), { params: Promise.resolve({ embedKey: "emb_valid_123" }) });
 
-    it("leaves the theme exactly as before when the space has no brand kit", async () => {
+    it("leaves the owner's theme as it is when the space has no brand kit, with defaults for options never set", async () => {
       mockQueries();
       const json = await (await request()).json();
-      expect(json.config.theme).toEqual(config.theme);
+      // (a dark widget whose brand colour is too faint to read as text also gets a readable twin for text)
+      const { primaryText, ...rest } = json.config.theme;
+      expect(rest).toEqual({ ...DEFAULT_WIDGET_THEME, ...config.theme });
+      expect(primaryText === undefined || /^#[0-9a-f]{6}$/.test(primaryText)).toBe(true);
       expect(json.config.theme).not.toHaveProperty("fontMode");
     });
 
@@ -445,6 +451,96 @@ describe("Widget Data Public API Route", () => {
       const res = await get();
       expect((await res.json()).testimonials).toEqual([]);
       expect(res.headers.get("Cache-Control")).toBe("public, max-age=60, s-maxage=300");
+    });
+  });
+
+  describe("several widgets per space", () => {
+    const space = { id: "space-uuid-1", name: "Acme", ownerId: "owner-1", embedKey: "emb_valid_123" };
+    const widget = (id: string, over: Record<string, unknown> = {}) => ({
+      id,
+      spaceId: "space-uuid-1",
+      template: "floating-card",
+      position: "bottom-right",
+      theme: { primaryColor: "#3b82f6", accentColor: "#ffffff", mode: "light", borderRadius: 8 },
+      triggerType: "delay",
+      triggerValue: { seconds: 3 },
+      pagesIncluded: ["*"],
+      pagesExcluded: [],
+      autoplayPreview: true,
+      isLive: true,
+      ...over,
+    });
+    const respond = async () => {
+      const chain = (val: unknown) => ({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockImplementation(() =>
+            Object.assign(Promise.resolve(val), {
+              orderBy: vi.fn().mockImplementation(() => Object.assign(Promise.resolve(val), { limit: vi.fn().mockResolvedValue(val) })),
+              limit: vi.fn().mockResolvedValue(val),
+            })
+          ),
+        }),
+      });
+      let n = 0;
+      (db.select as any).mockImplementation(() => chain(++n === 1 ? [space] : []));
+      return getWidgetData(new Request("http://localhost/api/widget/emb_valid_123"), { params: Promise.resolve({ embedKey: "emb_valid_123" }) });
+    };
+
+    it("one live widget: the response is the one it always was, with no list added", async () => {
+      widgets.current = [widget("w1", { template: "carousel" })];
+      const json = await (await respond()).json();
+      expect(json.config).toMatchObject({ id: "w1", template: "carousel" }); // the id lets the page place it by id
+      expect(json).not.toHaveProperty("widgets");
+    });
+
+    it("several live widgets: `config` is still the first (older embed scripts read only that), and each is listed with its id", async () => {
+      widgets.current = [widget("w1", { template: "floating-card" }), widget("w2", { template: "wall-of-love", pagesIncluded: ["/reviews"] })];
+      const json = await (await respond()).json();
+      expect(json.config).toMatchObject({ id: "w1", template: "floating-card" });
+      expect(json.widgets.map((w: { id: string }) => w.id)).toEqual(["w1", "w2"]);
+      expect(json.widgets[0]).toEqual({ id: "w1" }); // the first is `config`: only its id is repeated
+      expect(json.widgets[1].config).toMatchObject({ template: "wall-of-love", pagesIncluded: ["/reviews"], trigger: { type: "delay", value: { seconds: 3 } } });
+      expect(json.widgets[1].inline).toBe(true); // the wall sits in the page, so the script needs a spot for it
+    });
+
+    it("floating widgets are not flagged as inline", async () => {
+      widgets.current = [widget("w1"), widget("w2", { template: "floating-bubble" })];
+      const json = await (await respond()).json();
+      expect(json.widgets[1]).not.toHaveProperty("inline");
+    });
+
+    it("widgets that are off are not sent: the first live one is `config`, and one live widget means no list", async () => {
+      widgets.current = [widget("w1", { isLive: false, template: "masonry" }), widget("w2", { template: "spotlight" }), widget("w3", { isLive: false })];
+      const json = await (await respond()).json();
+      expect(json.config).toMatchObject({ id: "w2", template: "spotlight" });
+      expect(json).not.toHaveProperty("widgets");
+    });
+
+    it("all widgets off: no widget, and none of the space's customers' words are sent", async () => {
+      widgets.current = [widget("w1", { isLive: false }), widget("w2", { isLive: false })];
+      const res = await respond();
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.config).toBeNull();
+      expect(json.testimonials).toEqual([]);
+      expect(json.reviews).toEqual([]);
+      expect(db.select).toHaveBeenCalledTimes(1); // only the space lookup
+    });
+
+    it("a space with no widget saved yet still gets the default one", async () => {
+      widgets.current = [];
+      const json = await (await respond()).json();
+      expect(json.config.template).toBe("floating-card");
+      expect(json.config.trigger.type).toBe("delay");
+      expect(json.config).not.toHaveProperty("id"); // no saved widget, so nothing to place by id
+    });
+
+    it("every widget wears the brand kit", async () => {
+      brandKit.current = { primaryColor: "#112233", accentColor: null, borderRadius: 4, fontMode: "inherit", fontFamily: null, inheritTextColor: false };
+      widgets.current = [widget("w1"), widget("w2", { template: "marquee" })];
+      const json = await (await respond()).json();
+      expect(json.config.theme.primaryColor).toBe("#112233");
+      expect(json.widgets[1].config.theme.primaryColor).toBe("#112233");
     });
   });
 });

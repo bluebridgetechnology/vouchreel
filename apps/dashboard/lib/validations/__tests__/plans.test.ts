@@ -21,6 +21,15 @@ const valid = {
 };
 
 describe("plan validation", () => {
+  it("widgets per space is optional (older admin clients do not send it), unlimited is -1, and nonsense is refused", () => {
+    expect(createPlanSchema.safeParse(valid).success).toBe(true);
+    expect(createPlanSchema.parse({ ...valid, limits: { ...valid.limits, maxWidgetsPerSpace: 3 } }).limits.maxWidgetsPerSpace).toBe(3);
+    expect(createPlanSchema.parse({ ...valid, limits: { ...valid.limits, maxWidgetsPerSpace: -1 } }).limits.maxWidgetsPerSpace).toBe(-1);
+    for (const bad of [-2, 1.5, "3", 2_000_000]) {
+      expect(createPlanSchema.safeParse({ ...valid, limits: { ...valid.limits, maxWidgetsPerSpace: bad } }).success).toBe(false);
+    }
+  });
+
   it("accepts a valid plan and applies defaults", () => {
     const parsed = createPlanSchema.parse(valid);
     expect(parsed.features).toEqual([]);

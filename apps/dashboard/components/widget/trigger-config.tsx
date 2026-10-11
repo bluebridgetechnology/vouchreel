@@ -9,6 +9,8 @@ interface TriggerConfigProps {
   triggerType: TriggerType;
   triggerValue: Record<string, unknown>;
   onChange: (type: TriggerType, value: Record<string, unknown>) => void;
+  /** Inside the widget editor's panel: no heading of its own (the panel section has one) and no card. */
+  compact?: boolean;
 }
 
 interface TriggerMeta {
@@ -49,6 +51,7 @@ export function TriggerConfig({
   triggerType,
   triggerValue,
   onChange,
+  compact = false,
 }: TriggerConfigProps) {
   function handleTypeSelect(newType: TriggerType) {
     let defaultValue: Record<string, unknown> = {};
@@ -74,14 +77,16 @@ export function TriggerConfig({
 
   return (
     <div className="space-y-4">
-      <div>
-        <h3 className="text-sm font-medium text-text">Behavior & Triggers</h3>
-        <p className="text-xs text-text-muted">
-          Define when and how the widget should present itself to website visitors.
-        </p>
-      </div>
+      {!compact && (
+        <div>
+          <h3 className="text-sm font-medium text-text">Behavior & Triggers</h3>
+          <p className="text-xs text-text-muted">
+            Define when and how the widget should present itself to website visitors.
+          </p>
+        </div>
+      )}
 
-      <Card variant="flat" className="space-y-4 p-4 sm:p-5">
+      <Card variant="flat" className={cn("space-y-4 p-4 sm:p-5", compact && "border-0 bg-transparent p-0 sm:p-0")}>
         {/* Trigger Selection Dropdown */}
         <div className="space-y-1.5">
           <label

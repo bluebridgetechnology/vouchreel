@@ -10,6 +10,8 @@ import { createVideoPlayer, VideoPlayerController } from "./player";
 import { AnalyticsTracker } from "./analytics";
 import { markDismissed } from "./triggers";
 import { fontFamilyFor, readableInheritedColor } from "./typography";
+import { applyTheme } from "./style";
+import { layoutRegistry, type EffectiveQuote, type LayoutDefinition } from "./layout-api";
 
 export interface WidgetThemeConfig {
   primaryColor?: string;
@@ -38,6 +40,8 @@ export interface WidgetConfig {
   [key: string]: unknown;
 }
 
+const CLOSE_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+
 export interface WidgetWhiteLabelConfig {
   removeBranding?: boolean;
   logoUrl?: string | null;
@@ -58,10 +62,23 @@ export interface WidgetOptions {
   reviews?: ReviewItem[];
   analytics?: AnalyticsTracker;
   whiteLabel?: WidgetWhiteLabelConfig;
+  /** This widget's id, put on every event it records so a space's widgets can be told apart in the numbers. */
+  widgetId?: string;
+  /** Where an inline widget goes, when the page named a spot for this widget (`data-vouchreel-widget="<id>"`). */
+  container?: HTMLElement | null;
+  /**
+   * The space's first widget. Only it falls back to the page's `data-vouchreel-embed` spot, and to the foot of
+   * the page when an inline layout has no spot at all (as the single widget always did); any other inline widget
+   * is shown only where the page named a spot for it.
+   */
+  primary?: boolean;
 }
 
 export class VouchreelWidget {
   private embedKey: string;
+  private container: HTMLElement | null;
+  private widgetId?: string;
+  private primary: boolean;
   private config: WidgetConfig;
   private testimonials: TestimonialItem[];
   private reviews: ReviewItem[];
@@ -80,14 +97,23 @@ export class VouchreelWidget {
   private liveRegion: HTMLElement | null = null;
   private previouslyFocusedEl: HTMLElement | null = null;
   private restoreFocusOnRender = false;
+  private layout: LayoutDefinition | null = null;
 
   constructor(options: WidgetOptions) {
     this.embedKey = options.embedKey;
+    this.container = options.container || null;
+    this.widgetId = options.widgetId;
+    this.primary = options.primary !== false;
     this.config = options.config || {};
     this.testimonials = options.testimonials || [];
     this.reviews = options.reviews || [];
     this.analytics = options.analytics;
     this.whiteLabel = options.whiteLabel || (options.config as Record<string, unknown>)?.whiteLabel as WidgetWhiteLabelConfig | undefined;
+  }
+
+  /** Records an event, saying which of the space's widgets it came from. */
+  private track(type: "impression" | "play" | "click", testimonialId?: string): void {
+    this.analytics?.track(type, testimonialId, this.widgetId ? { widgetId: this.widgetId } : null);
   }
 
   /**
@@ -97,11 +123,7 @@ export class VouchreelWidget {
     return detectVisitorLocale();
   }
 
-  private getEffectiveQuote(item: TestimonialItem): {
-    text: string | null;
-    isTranslated: boolean;
-    lang?: string;
-  } {
+  private getEffectiveQuote(item: TestimonialItem): EffectiveQuote {
     const visitorLang = this.getVisitorLocale();
     const translation = resolveTestimonialTranslation(item, visitorLang);
     if (translation?.quote) {
@@ -137,10 +159,15 @@ export class VouchreelWidget {
     if (this.isMounted || typeof document === "undefined") return;
     if (this.testimonials.length === 0 && this.reviews.length === 0) return;
 
-    // Check if an inline embed target container is present on the host page
+    // A template whose chunk is not loaded (or is unknown) falls back to the floating card
+    this.layout = layoutRegistry()[this.config.template || ""] || null;
+
+    // Where it goes: the spot the page named for this widget, else (for the first widget) the page's embed spot
     const customEmbedContainer =
-      document.querySelector<HTMLElement>("[data-vouchreel-embed]") ||
-      document.getElementById("vouchreel-embed");
+      this.container ||
+      (this.primary ? document.querySelector<HTMLElement>("[data-vouchreel-embed]") || document.getElementById("vouchreel-embed") : null);
+    // An inline widget that is not the first, with no spot named for it, has nowhere to be
+    if (!customEmbedContainer && !this.primary && this.layout?.inline) return;
 
     // Create host container
     this.hostElement = document.createElement("div");
@@ -152,17 +179,14 @@ export class VouchreelWidget {
     // Attach Shadow DOM
     this.shadowRoot = this.hostElement.attachShadow({ mode: "open" });
 
-    // Inject scoped CSS
+    const template = this.layout ? this.config.template : "floating-card";
+
+    // Inject scoped CSS: the core's, plus the layout's own
     const styleEl = document.createElement("style");
-    styleEl.textContent = styles;
+    styleEl.textContent = styles + (this.layout?.css || "");
     this.shadowRoot.appendChild(styleEl);
 
-    const template = this.config.template || "floating-card";
-    const isInlineTemplate =
-      Boolean(customEmbedContainer) ||
-      template === "wall-of-love" ||
-      template === "masonry" ||
-      template === "carousel";
+    const isInlineTemplate = Boolean(customEmbedContainer) || Boolean(this.layout?.inline);
 
     // Root element for CSS custom properties and layout classes
     this.rootWrapper = document.createElement("div");
@@ -174,27 +198,13 @@ export class VouchreelWidget {
         "vr-animate-enter"
       );
     } else {
+      // In the page flow, as wide as its container (the host is otherwise fixed to a corner)
+      this.hostElement.classList.add("vr-inline");
       this.rootWrapper.style.width = "100%";
       this.rootWrapper.style.position = "relative";
     }
 
-    if (this.config.theme?.mode === "dark") {
-      this.rootWrapper.classList.add("vr-dark");
-    }
-
-    // Apply custom theme properties
-    if (this.config.theme?.primaryColor) {
-      this.rootWrapper.style.setProperty("--vr-primary", this.config.theme.primaryColor);
-    }
-    if (this.config.theme?.accentColor) {
-      this.rootWrapper.style.setProperty("--vr-accent", this.config.theme.accentColor);
-    }
-    if (typeof this.config.theme?.borderRadius === "number") {
-      this.rootWrapper.style.setProperty(
-        "--vr-radius",
-        `${this.config.theme.borderRadius}px`
-      );
-    }
+    applyTheme(this.rootWrapper, this.config.theme);
 
     this.shadowRoot.appendChild(this.rootWrapper);
 
@@ -219,10 +229,7 @@ export class VouchreelWidget {
     this.applyTypography();
 
     // Track impression
-    if (this.analytics) {
-      const currentTestimonial = this.testimonials[0];
-      this.analytics.track("impression", currentTestimonial?.id);
-    }
+    this.track("impression", this.testimonials[0]?.id);
 
     // Render chosen template
     this.renderTemplate();
@@ -304,387 +311,42 @@ export class VouchreelWidget {
   }
 
   /**
-   * Dispatches to the appropriate template renderer.
+   * Draws the collapsed state: the layout chunk when there is one, otherwise the floating card.
    */
   private renderTemplate(): void {
-    const template = this.config.template || "floating-card";
-    switch (template) {
-      case "wall-of-love":
-        this.renderWallOfLove();
-        break;
-      case "carousel":
-        this.renderCarousel();
-        break;
-      case "masonry":
-        this.renderMasonry();
-        break;
-      case "story-strip":
-        this.renderStoryStrip();
-        break;
-      case "floating-card":
-      default:
-        this.renderCollapsed();
-        break;
-    }
-  }
-
-  /**
-   * Helper to create a video card element used in Wall of Love, Carousel, and Masonry.
-   */
-  private createVideoCard(item: TestimonialItem, idx: number): HTMLElement {
-    const card = document.createElement("button");
-    card.type = "button";
-    card.className = "vr-card vr-blend-video-card";
-    card.setAttribute(
-      "aria-label",
-      `Play video testimonial from ${item.customerName || "customer"}`
-    );
-
-    // Media Thumbnail
-    const thumb = document.createElement("div");
-    thumb.className = "vr-card-video-thumb";
-
-    if (item.thumbnailUrl) {
-      const img = document.createElement("img");
-      img.src = item.thumbnailUrl;
-      img.alt = item.customerName || "Video testimonial thumbnail";
-      thumb.appendChild(img);
-    } else if (item.generated) {
-      // A made video has no poster: show its first frames. If the file is gone (taken down), drop the card.
-      const frame = document.createElement("video");
-      frame.src = `${item.videoUrl}#t=1`;
-      frame.preload = "metadata";
-      frame.muted = true;
-      frame.onerror = () => card.remove();
-      thumb.appendChild(frame);
-    }
-
-    const playBadge = document.createElement("div");
-    playBadge.className = "vr-play-badge";
-    playBadge.setAttribute("aria-hidden", "true");
-    playBadge.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
-    thumb.appendChild(playBadge);
-
-    if (item.durationSeconds) {
-      const duration = document.createElement("span");
-      duration.className = "vr-card-duration";
-      const mins = Math.floor(item.durationSeconds / 60);
-      const secs = String(item.durationSeconds % 60).padStart(2, "0");
-      duration.textContent = `${mins}:${secs}`;
-      thumb.appendChild(duration);
-    }
-
-    card.appendChild(thumb);
-
-    // Badge
-    const badgeRow = document.createElement("div");
-    const badge = document.createElement("span");
-    badge.className = "vr-provider-badge vr-badge-video";
-    badge.textContent = (item.badge as string) || "📹 Video Testimonial";
-    badgeRow.appendChild(badge);
-    card.appendChild(badgeRow);
-
-    // Quote / Title (with multi-language translation support)
-    const effective = this.getEffectiveQuote(item);
-    if (effective.text) {
-      const text = document.createElement("p");
-      text.className = "vr-card-quote-text";
-      text.textContent = `"${effective.text}"`;
-      if (effective.isTranslated) {
-        text.setAttribute("data-translated-lang", effective.lang || "");
-      }
-      card.appendChild(text);
-    }
-
-    // Author
-    const authorRow = document.createElement("div");
-    authorRow.className = "vr-card-author-row";
-
-    const initial = (item.customerName || "C").charAt(0).toUpperCase();
-    const avatar = document.createElement("div");
-    avatar.className = "vr-card-avatar";
-    avatar.textContent = initial;
-    authorRow.appendChild(avatar);
-
-    const info = document.createElement("div");
-    info.appendChild(textDiv("vr-card-author-name", item.customerName || "Customer"));
-    if (item.customerCompany) info.appendChild(textDiv("vr-card-author-sub", item.customerCompany));
-    authorRow.appendChild(info);
-    card.appendChild(authorRow);
-
-    card.addEventListener("click", () => {
-      if (this.analytics) {
-        this.analytics.track("click", item.id);
-      }
-      this.expandVideo(idx);
-    });
-
-    return card;
-  }
-
-  /**
-   * Helper to create a text review card used in Wall of Love, Carousel, and Masonry.
-   */
-  private createReviewCard(review: ReviewItem): HTMLElement {
-    const card = document.createElement("button");
-    card.type = "button";
-    card.className = "vr-card vr-blend-review-card";
-    card.setAttribute(
-      "aria-label",
-      `View review from ${review.authorName} on ${review.provider}`
-    );
-
-    // Top Row: Source Badge & Stars
-    const topRow = document.createElement("div");
-    topRow.style.display = "flex";
-    topRow.style.alignItems = "center";
-    topRow.style.justifyContent = "space-between";
-    topRow.style.gap = "8px";
-
-    const badge = document.createElement("span");
-    badge.className = `vr-provider-badge ${
-      review.provider === "google" ? "vr-badge-google" : "vr-badge-trustpilot"
-    }`;
-    badge.textContent = review.provider === "google" ? "Google" : "Trustpilot";
-    topRow.appendChild(badge);
-
-    const stars = document.createElement("div");
-    stars.className = "vr-stars";
-    stars.innerHTML = Array.from({ length: 5 })
-      .map((_, i) => (i < review.rating ? "★" : "☆"))
-      .join("");
-    topRow.appendChild(stars);
-    card.appendChild(topRow);
-
-    // Review Text
-    if (review.text) {
-      const text = document.createElement("p");
-      text.className = "vr-card-quote-text";
-      text.textContent = `"${review.text}"`;
-      card.appendChild(text);
-    }
-
-    // Author Row
-    const authorRow = document.createElement("div");
-    authorRow.className = "vr-card-author-row";
-
-    if (review.authorPhotoUrl) {
-      const img = document.createElement("img");
-      img.src = review.authorPhotoUrl;
-      img.alt = review.authorName;
-      img.className = "vr-card-avatar";
-      authorRow.appendChild(img);
-    } else {
-      const initial = (review.authorName || "A").charAt(0).toUpperCase();
-      const avatar = document.createElement("div");
-      avatar.className = "vr-card-avatar";
-      avatar.textContent = initial;
-      authorRow.appendChild(avatar);
-    }
-
-    const info = document.createElement("div");
-    const dateStr = review.reviewDate
-      ? new Date(review.reviewDate).toLocaleDateString()
-      : "";
-    info.appendChild(textDiv("vr-card-author-name", review.authorName));
-    if (dateStr) info.appendChild(textDiv("vr-card-author-sub", dateStr));
-    authorRow.appendChild(info);
-    card.appendChild(authorRow);
-
-    card.addEventListener("click", () => {
-      this.expandReview(review);
-    });
-
-    return card;
-  }
-
-  /**
-   * Template 1: Wall of Love — responsive grid blending videos and reviews.
-   */
-  private renderWallOfLove(): void {
     if (!this.rootWrapper) return;
     this.rootWrapper.innerHTML = "";
     this.isExpanded = false;
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "vr-wall-wrapper";
-
-    const grid = document.createElement("div");
-    grid.className = "vr-wall-grid";
-
-    // Interleave video testimonials and text reviews
-    const maxLen = Math.max(this.testimonials.length, this.reviews.length);
-    for (let i = 0; i < maxLen; i++) {
-      if (i < this.testimonials.length) {
-        grid.appendChild(this.createVideoCard(this.testimonials[i], i));
-      }
-      if (i < this.reviews.length) {
-        grid.appendChild(this.createReviewCard(this.reviews[i]));
-      }
-    }
-
-    wrapper.appendChild(grid);
-    this.rootWrapper.appendChild(wrapper);
-    this.maybeRestoreFocus();
-  }
-
-  /**
-   * Template 2: Carousel / Slider — horizontal scroll slider with controls.
-   */
-  private renderCarousel(): void {
-    if (!this.rootWrapper) return;
-    this.rootWrapper.innerHTML = "";
-    this.isExpanded = false;
-
-    const container = document.createElement("div");
-    container.className = "vr-carousel-container";
-
-    const prevBtn = document.createElement("button");
-    prevBtn.type = "button";
-    prevBtn.className = "vr-carousel-arrow vr-carousel-prev";
-    prevBtn.setAttribute("aria-label", "Previous items");
-    prevBtn.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <polyline points="15 18 9 12 15 6"></polyline>
-      </svg>
-    `;
-
-    const nextBtn = document.createElement("button");
-    nextBtn.type = "button";
-    nextBtn.className = "vr-carousel-arrow vr-carousel-next";
-    nextBtn.setAttribute("aria-label", "Next items");
-    nextBtn.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <polyline points="9 18 15 12 9 6"></polyline>
-      </svg>
-    `;
-
-    const track = document.createElement("div");
-    track.className = "vr-carousel-track";
-
-    // Interleave videos and reviews
-    const maxLen = Math.max(this.testimonials.length, this.reviews.length);
-    for (let i = 0; i < maxLen; i++) {
-      if (i < this.testimonials.length) {
-        track.appendChild(this.createVideoCard(this.testimonials[i], i));
-      }
-      if (i < this.reviews.length) {
-        track.appendChild(this.createReviewCard(this.reviews[i]));
-      }
-    }
-
-    prevBtn.addEventListener("click", () => {
-      track.scrollBy({ left: -310, behavior: "smooth" });
-    });
-
-    nextBtn.addEventListener("click", () => {
-      track.scrollBy({ left: 310, behavior: "smooth" });
-    });
-
-    container.appendChild(prevBtn);
-    container.appendChild(track);
-    container.appendChild(nextBtn);
-
-    this.rootWrapper.appendChild(container);
-    this.maybeRestoreFocus();
-  }
-
-  /**
-   * Template 3: Story Strip — Instagram-style circles with video/review rings.
-   */
-  private renderStoryStrip(): void {
-    if (!this.rootWrapper) return;
-    this.rootWrapper.innerHTML = "";
-    this.isExpanded = false;
-
-    const stripWrapper = document.createElement("div");
-    stripWrapper.className = "vr-strip-wrapper";
-
-    // Video story circles
-    this.testimonials.slice(0, 4).forEach((item, idx) => {
-      const storyItem = document.createElement("button");
-      storyItem.type = "button";
-      storyItem.className = "vr-story-item";
-      storyItem.setAttribute(
-        "aria-label",
-        `Play video testimonial from ${item.customerName || "Customer"}`
-      );
-      storyItem.setAttribute("title", item.customerName || "Video testimonial");
-
-      if (item.thumbnailUrl) {
-        const img = document.createElement("img");
-        img.src = item.thumbnailUrl;
-        img.alt = item.customerName || "Testimonial";
-        storyItem.appendChild(img);
-      } else {
-        const initial = (item.customerName || "V").charAt(0).toUpperCase();
-        storyItem.textContent = initial;
-      }
-
-      storyItem.addEventListener("click", () => {
-        if (this.analytics) {
-          this.analytics.track("click", item.id);
-        }
-        this.expandVideo(idx);
-      });
-
-      stripWrapper.appendChild(storyItem);
-    });
-
-    // Review story circles
-    this.reviews.slice(0, 3).forEach((review) => {
-      const storyItem = document.createElement("button");
-      storyItem.type = "button";
-      storyItem.className = `vr-story-item ${
-        review.provider === "google"
-          ? "vr-story-review-google"
-          : "vr-story-review-trustpilot"
-      }`;
-      storyItem.setAttribute(
-        "aria-label",
-        `View review from ${review.authorName} on ${review.provider}`
-      );
-      storyItem.setAttribute("title", `${review.authorName} (${review.provider})`);
-
-      if (review.authorPhotoUrl) {
-        const img = document.createElement("img");
-        img.src = review.authorPhotoUrl;
-        img.alt = review.authorName;
-        storyItem.appendChild(img);
-      } else {
-        const initial = (review.authorName || "R").charAt(0).toUpperCase();
-        storyItem.textContent = initial;
-      }
-
-      // Small star badge
-      const starBadge = document.createElement("span");
-      starBadge.className = "vr-story-badge";
-      starBadge.textContent = "★";
-      storyItem.appendChild(starBadge);
-
-      storyItem.addEventListener("click", () => {
-        this.expandReview(review);
-      });
-
-      stripWrapper.appendChild(storyItem);
-    });
-
-    this.rootWrapper.appendChild(stripWrapper);
-    this.maybeRestoreFocus();
-  }
-
-  /**
-   * Template 4: Minimal Floating Card — corner card launcher.
-   */
-  private renderCollapsed(): void {
-    if (!this.rootWrapper) return;
-    this.rootWrapper.innerHTML = "";
-    this.isExpanded = false;
-
     if (this.activePlayer) {
       this.activePlayer.destroy();
       this.activePlayer = null;
     }
+
+    if (this.layout) {
+      this.layout.render({
+        root: this.rootWrapper,
+        testimonials: this.testimonials,
+        reviews: this.reviews,
+        quote: (item) => this.getEffectiveQuote(item),
+        openVideo: (index) => this.expandVideo(index),
+        openReview: (review) => this.expandReview(review),
+        track: (type, id) => this.track(type, id),
+        theme: this.config.theme,
+        dismiss: () => this.dismiss(),
+        autoplay: this.config.autoplayPreview !== false,
+      });
+      this.maybeRestoreFocus();
+    } else {
+      this.renderCollapsed();
+    }
+  }
+
+  /**
+   * The default layout, kept in the core so the most common setup needs no extra download:
+   * a minimal floating card in a corner.
+   */
+  private renderCollapsed(): void {
+    if (!this.rootWrapper) return;
 
     const current = this.testimonials[this.currentIndex] || this.testimonials[0];
 
@@ -732,12 +394,7 @@ export class VouchreelWidget {
       closeBtn.type = "button";
       closeBtn.className = "vr-close-btn";
       closeBtn.setAttribute("aria-label", "Dismiss widget");
-      closeBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      `;
+      closeBtn.innerHTML = CLOSE_ICON;
       closeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         this.dismiss();
@@ -774,11 +431,7 @@ export class VouchreelWidget {
     const playBadge = document.createElement("div");
     playBadge.className = "vr-play-badge";
     playBadge.setAttribute("aria-hidden", "true");
-    playBadge.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M8 5v14l11-7z"/>
-      </svg>
-    `;
+    playBadge.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
     thumbWrap.appendChild(playBadge);
     openBtn.appendChild(thumbWrap);
 
@@ -803,9 +456,7 @@ export class VouchreelWidget {
     openBtn.appendChild(info);
 
     openBtn.addEventListener("click", () => {
-      if (this.analytics) {
-        this.analytics.track("click", current.id);
-      }
+      this.track("click", current.id);
       this.expandVideo(this.currentIndex);
     });
     card.appendChild(openBtn);
@@ -814,12 +465,7 @@ export class VouchreelWidget {
     closeBtn.type = "button";
     closeBtn.className = "vr-close-btn";
     closeBtn.setAttribute("aria-label", "Dismiss testimonial widget");
-    closeBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    `;
+    closeBtn.innerHTML = CLOSE_ICON;
     closeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       this.dismiss();
@@ -827,31 +473,6 @@ export class VouchreelWidget {
     card.appendChild(closeBtn);
 
     this.rootWrapper.appendChild(card);
-    this.maybeRestoreFocus();
-  }
-
-  /**
-   * Template 5: Masonry Grid — Pinterest-style staggered columns.
-   */
-  private renderMasonry(): void {
-    if (!this.rootWrapper) return;
-    this.rootWrapper.innerHTML = "";
-    this.isExpanded = false;
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "vr-masonry-wrapper";
-
-    const maxLen = Math.max(this.testimonials.length, this.reviews.length);
-    for (let i = 0; i < maxLen; i++) {
-      if (i < this.testimonials.length) {
-        wrapper.appendChild(this.createVideoCard(this.testimonials[i], i));
-      }
-      if (i < this.reviews.length) {
-        wrapper.appendChild(this.createReviewCard(this.reviews[i]));
-      }
-    }
-
-    this.rootWrapper.appendChild(wrapper);
     this.maybeRestoreFocus();
   }
 
@@ -900,12 +521,7 @@ export class VouchreelWidget {
     closeBtn.type = "button";
     closeBtn.className = "vr-modal-close-btn";
     closeBtn.setAttribute("aria-label", "Close player");
-    closeBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    `;
+    closeBtn.innerHTML = CLOSE_ICON;
     closeBtn.addEventListener("click", () => this.collapse());
     modal.appendChild(closeBtn);
 
@@ -924,11 +540,7 @@ export class VouchreelWidget {
       autoplayPreview: this.config.autoplayPreview,
       subtitles: cues,
       subtitleLanguage: visitorLang,
-      onPlay: () => {
-        if (this.analytics) {
-          this.analytics.track("play", current.id);
-        }
-      },
+      onPlay: () => this.track("play", current.id),
       onEnded: () => {
         this.next();
       },
@@ -977,22 +589,14 @@ export class VouchreelWidget {
       prevBtn.type = "button";
       prevBtn.className = "vr-nav-btn";
       prevBtn.setAttribute("aria-label", "Previous testimonial");
-      prevBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-      `;
+      prevBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>`;
       prevBtn.addEventListener("click", () => this.prev());
 
       const nextBtn = document.createElement("button");
       nextBtn.type = "button";
       nextBtn.className = "vr-nav-btn";
       nextBtn.setAttribute("aria-label", "Next testimonial");
-      nextBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="9 18 15 12 9 6"></polyline>
-        </svg>
-      `;
+      nextBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
       nextBtn.addEventListener("click", () => this.next());
 
       controls.appendChild(prevBtn);
@@ -1056,12 +660,7 @@ export class VouchreelWidget {
     closeBtn.type = "button";
     closeBtn.className = "vr-modal-close-btn";
     closeBtn.setAttribute("aria-label", "Close review");
-    closeBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    `;
+    closeBtn.innerHTML = CLOSE_ICON;
     closeBtn.addEventListener("click", () => this.collapse());
     modal.appendChild(closeBtn);
 
@@ -1094,10 +693,8 @@ export class VouchreelWidget {
     const dateStr = review.reviewDate
       ? new Date(review.reviewDate).toLocaleDateString()
       : "";
-    nameWrap.innerHTML = `
-      <div style="font-weight: 600; font-size: 13px;">${review.authorName}</div>
-      ${dateStr ? `<div style="font-size: 11px; color: var(--vr-text-muted);">${dateStr}</div>` : ""}
-    `;
+    nameWrap.appendChild(textDiv("vr-review-modal-author", review.authorName));
+    if (dateStr) nameWrap.appendChild(textDiv("vr-review-modal-date", dateStr));
     authorGroup.appendChild(nameWrap);
     header.appendChild(authorGroup);
 
@@ -1114,7 +711,7 @@ export class VouchreelWidget {
     const stars = document.createElement("div");
     stars.className = "vr-stars";
     stars.style.fontSize = "18px";
-    stars.innerHTML = Array.from({ length: 5 })
+    stars.textContent = Array.from({ length: 5 })
       .map((_, i) => (i < review.rating ? "★" : "☆"))
       .join("");
     body.appendChild(stars);
@@ -1177,27 +774,20 @@ export class VouchreelWidget {
 
   public dismiss(): void {
     markDismissed(this.embedKey);
+    if (!this.rootWrapper) return this.destroy();
+    this.rootWrapper.classList.remove("vr-animate-enter");
+    this.rootWrapper.classList.add("vr-animate-leave");
+    // Removed once the leave animation has played
+    setTimeout(() => this.destroy(), 250);
+  }
 
-    if (this.activePlayer) {
-      this.activePlayer.destroy();
-      this.activePlayer = null;
-    }
-
-    if (this.keydownListener) {
-      document.removeEventListener("keydown", this.keydownListener);
-      this.keydownListener = null;
-    }
-
-    if (this.rootWrapper) {
-      this.rootWrapper.classList.remove("vr-animate-enter");
-      this.rootWrapper.classList.add("vr-animate-leave");
-
-      setTimeout(() => {
-        if (this.hostElement && this.hostElement.parentNode) {
-          this.hostElement.parentNode.removeChild(this.hostElement);
-        }
-        this.isMounted = false;
-      }, 250);
-    }
+  /** Removes the widget and everything it listens to (the editor preview re-mounts on every change). */
+  public destroy(): void {
+    this.activePlayer?.destroy();
+    this.activePlayer = null;
+    if (this.keydownListener) document.removeEventListener("keydown", this.keydownListener);
+    this.keydownListener = null;
+    this.hostElement?.remove();
+    this.isMounted = false;
   }
 }

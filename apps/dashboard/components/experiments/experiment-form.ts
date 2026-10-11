@@ -1,4 +1,4 @@
-export type ExperimentType = "trigger" | "position" | "template";
+export type ExperimentType = "trigger" | "position" | "template" | "style";
 
 export interface ExperimentFormData {
   name: string;
@@ -41,6 +41,16 @@ export function formForType(form: ExperimentFormData, type: ExperimentType): Exp
       variantName: "Variant B (Bottom Left)",
       controlConfig: { position: "bottom-right" },
       variantConfig: { position: "bottom-left" },
+    };
+  }
+  if (type === "style") {
+    return {
+      ...form,
+      type,
+      controlName: "Current look",
+      variantName: "Dark cinema",
+      controlConfig: {},
+      variantConfig: { preset: "cinema" },
     };
   }
   return {

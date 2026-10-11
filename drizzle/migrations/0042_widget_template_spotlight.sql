@@ -1,0 +1,1 @@
+ALTER TYPE "public"."widget_template" ADD VALUE 'spotlight';

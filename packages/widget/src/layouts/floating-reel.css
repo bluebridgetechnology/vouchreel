@@ -1,0 +1,189 @@
+.vr-reel {
+  position: relative;
+  width: var(--vr-reel-w, 180px);
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  border-radius: var(--vr-radius);
+  border: var(--vr-border-w) solid var(--vr-border);
+  background: var(--vr-media);
+  box-shadow: var(--vr-shadow);
+  color: var(--vr-on-media);
+}
+
+.vr-size-sm .vr-reel {
+  --vr-reel-w: 150px;
+}
+
+.vr-size-lg .vr-reel {
+  --vr-reel-w: 220px;
+}
+
+.vr-reel-stage {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  touch-action: pan-y;
+}
+
+.vr-reel-stage:focus-visible,
+.vr-reel-arrow:focus-visible,
+.vr-reel-close:focus-visible {
+  outline: 2px solid var(--vr-on-media);
+  outline-offset: -3px;
+}
+
+.vr-reel-media {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 600;
+}
+
+.vr-reel-text {
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 16px;
+  background: var(--vr-primary);
+  color: var(--vr-accent);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+  overflow: hidden;
+}
+
+.vr-reel-text .vr-stars {
+  color: inherit;
+}
+
+/* Story progress bars */
+.vr-reel-bars {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 40px;
+  display: flex;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.vr-reel-bar {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--vr-scrim-strong);
+  opacity: 0.55;
+}
+
+.vr-reel-bar-on {
+  background: var(--vr-on-media);
+  opacity: 1;
+}
+
+.vr-reel-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 36px 12px 12px;
+  background: linear-gradient(to top, var(--vr-scrim-strong), transparent);
+  pointer-events: none;
+}
+
+.vr-reel-name {
+  font-size: 13px;
+  font-weight: 600;
+  text-shadow: var(--vr-text-shadow);
+}
+
+.vr-reel-quote {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: var(--vr-text-shadow);
+}
+
+.vr-hide-name .vr-reel-name,
+.vr-hide-quote .vr-reel-quote {
+  display: none;
+}
+
+.vr-reel-close,
+.vr-reel-arrow {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--vr-scrim);
+  color: var(--vr-on-media);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.vr-reel-close {
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+}
+
+.vr-reel-arrow {
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  margin-top: -14px;
+  font-size: 20px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.vr-reel-prev {
+  left: 6px;
+}
+
+.vr-reel-next {
+  right: 6px;
+}
+
+/* On hover devices the arrows appear with the pointer or focus; on touch screens they are always there */
+.vr-reel:hover .vr-reel-arrow,
+.vr-reel-arrow:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .vr-reel-arrow {
+    opacity: 1;
+  }
+}
+
+.vr-shape-square .vr-reel {
+  aspect-ratio: 1;
+}
+
+.vr-shape-portrait .vr-reel {
+  aspect-ratio: 4 / 5;
+}
+
+.vr-shape-rounded .vr-reel {
+  border-radius: 24px;
+}

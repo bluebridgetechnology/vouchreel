@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { styleVariantConfigSchema } from "@/lib/experiments/style";
 
-export const EXPERIMENT_TYPES = ["trigger", "position", "template"] as const;
+export const EXPERIMENT_TYPES = ["trigger", "position", "template", "style"] as const;
 export const EXPERIMENT_STATUSES = ["draft", "running", "completed"] as const;
 
 export const experimentTypeSchema = z.enum(EXPERIMENT_TYPES);
@@ -24,6 +25,14 @@ export const createExperimentSchema = z
       .min(2, "Traffic split is required for all variants"),
   })
   .superRefine((data, ctx) => {
+    // A style test's variants are a layout and/or a look, nothing else: the server builds the theme from them
+    if (data.type === "style") {
+      data.variants.forEach((v, i) => {
+        if (!styleVariantConfigSchema.safeParse(v.config).success) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Choose a layout and/or a look from the lists", path: ["variants", i, "config"] });
+        }
+      });
+    }
     if (data.variants.length !== data.trafficSplit.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

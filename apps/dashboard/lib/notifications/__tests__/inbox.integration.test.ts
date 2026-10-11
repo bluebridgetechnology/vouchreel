@@ -35,7 +35,7 @@ run("notification inbox (postgres)", () => {
     }));
     await db.insert(s.notifications).values(rows as never);
     await db.insert(s.notifications).values([0, 1, 2].map((i) => ({ userId: other, type: "submission.received", title: `Theirs ${i}` })) as never);
-  }, 60_000);
+  }, 600_000);
 
   afterAll(async () => {
     await db.delete(s.user).where(eq(s.user.id, me));

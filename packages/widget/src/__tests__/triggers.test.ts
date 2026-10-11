@@ -190,4 +190,61 @@ describe("Widget Trigger System", () => {
       expect(onTrigger).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("several widgets on one page load share what is known about the visitor", () => {
+    it("the page-view counter goes up once per page, not once per widget, and each widget compares to its own target", () => {
+      const early = vi.fn();
+      const late = vi.fn();
+      const visit = {};
+      setupTrigger({ type: "pageview-count", value: { count: 1 }, embedKey: "k", onTrigger: early, visit });
+      setupTrigger({ type: "pageview-count", value: { count: 2 }, embedKey: "k-2", onTrigger: late, visit });
+      vi.advanceTimersByTime(1000);
+      expect(mockSessionStorage["vouchreel_pv_count"]).toBe("1"); // not "2"
+      expect(early).toHaveBeenCalledTimes(1); // the first page view meets a target of 1
+      expect(late).not.toHaveBeenCalled(); // and not a target of 2
+
+      // The next page: again once, and now the second widget's target is met
+      const next = {};
+      setupTrigger({ type: "pageview-count", value: { count: 2 }, embedKey: "k-2", onTrigger: late, visit: next });
+      setupTrigger({ type: "pageview-count", value: { count: 1 }, embedKey: "k", onTrigger: early, visit: next });
+      vi.advanceTimersByTime(1000);
+      expect(mockSessionStorage["vouchreel_pv_count"]).toBe("2");
+      expect(late).toHaveBeenCalledTimes(1);
+    });
+
+    it("on a first visit no widget counts the visitor as returning (the first must not mark them for the second)", () => {
+      const a = vi.fn();
+      const b = vi.fn();
+      const visit = {};
+      setupTrigger({ type: "returning-visitor", value: {}, embedKey: "k", onTrigger: a, visit });
+      setupTrigger({ type: "returning-visitor", value: {}, embedKey: "k-2", onTrigger: b, visit });
+      vi.advanceTimersByTime(5000);
+      expect(a).not.toHaveBeenCalled();
+      expect(b).not.toHaveBeenCalled();
+      expect(mockLocalStorage["vouchreel_visited"]).toBe("true");
+    });
+
+    it("on a later visit every returning-visitor widget fires", () => {
+      mockLocalStorage["vouchreel_visited"] = "true";
+      const a = vi.fn();
+      const b = vi.fn();
+      const visit = {};
+      setupTrigger({ type: "returning-visitor", value: {}, embedKey: "k", onTrigger: a, visit });
+      setupTrigger({ type: "returning-visitor", value: {}, embedKey: "k-2", onTrigger: b, visit });
+      vi.advanceTimersByTime(1500);
+      expect(a).toHaveBeenCalledTimes(1);
+      expect(b).toHaveBeenCalledTimes(1);
+    });
+
+    it("dismissing one widget does not dismiss another", () => {
+      markDismissed("k");
+      const gone = vi.fn();
+      const stays = vi.fn();
+      setupTrigger({ type: "delay", value: { seconds: 1 }, embedKey: "k", onTrigger: gone });
+      setupTrigger({ type: "delay", value: { seconds: 1 }, embedKey: "k-2", onTrigger: stays });
+      vi.advanceTimersByTime(1500);
+      expect(gone).not.toHaveBeenCalled();
+      expect(stays).toHaveBeenCalledTimes(1);
+    });
+  });
 });

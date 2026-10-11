@@ -98,6 +98,7 @@ run("brand kit (postgres)", () => {
       fontMode: "custom",
       fontFamily: "Open Sans",
       inheritTextColor: true,
+      primaryText: expect.stringMatching(/^#[0-9a-f]{6}$/), // #112233 is too dark to read as text on a dark widget
     });
   });
 

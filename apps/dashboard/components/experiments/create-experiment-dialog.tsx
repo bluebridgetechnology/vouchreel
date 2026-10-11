@@ -58,7 +58,7 @@ export function CreateExperimentDialog({ formData, setFormData, actionLoading, o
             <label className="text-xs font-medium uppercase tracking-wider text-text-muted">
               Experiment Type
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {EXPERIMENT_TYPES.map((t) => (
                 <button
                   key={t}
@@ -68,7 +68,7 @@ export function CreateExperimentDialog({ formData, setFormData, actionLoading, o
                 >
                   <div className="font-medium text-xs uppercase text-text">{t}</div>
                   <div className="text-2xs text-text-muted mt-0.5 capitalize">
-                    Test {t}s
+                    {t === "style" ? "Test looks and layouts" : `Test ${t}s`}
                   </div>
                 </button>
               ))}

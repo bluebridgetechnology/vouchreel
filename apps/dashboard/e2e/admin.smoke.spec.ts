@@ -939,7 +939,9 @@ test.describe("platform admin", () => {
         [space.id, JSON.stringify(props), objectUrl]
       );
       videoId = rows[0].id;
-      await pool.query(`INSERT INTO widget_configs (space_id, template, trigger_type, trigger_value) VALUES ($1, 'wall-of-love', 'delay', '{"seconds":0}') ON CONFLICT (space_id) DO UPDATE SET template = 'wall-of-love', trigger_type = 'delay', trigger_value = '{"seconds":0}'`, [space.id]);
+      // A space can have several widgets now, so there is no upsert on the space: start from none
+      await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
+      const { rows: [pageWidget] } = await pool.query(`INSERT INTO widget_configs (space_id, template, trigger_type, trigger_value) VALUES ($1, 'wall-of-love', 'delay', '{"seconds":0}') RETURNING id`, [space.id]);
 
       // Off until the owner turns it on
       expect((await widgetData()).testimonials.filter((t) => t.generated)).toEqual([]);
@@ -975,6 +977,11 @@ test.describe("platform admin", () => {
         await expect(page.locator(".vr-blend-video-card", { hasText: "Review video" })).toHaveCount(0);
       }
 
+      // The widget on that page recorded its views under its own id (events are sent a few seconds after the page loads)
+      await expect
+        .poll(async () => (await pool.query(`SELECT 1 FROM events WHERE space_id = $1 AND widget_id = $2 AND event_type = 'impression'`, [space.id, pageWidget.id])).rowCount, { timeout: 30_000 })
+        .toBeGreaterThan(0);
+
       // And the next response no longer lists it
       await pool.query(`UPDATE review_videos SET moderated_at = now(), output_url = NULL WHERE id = $1`, [videoId]);
       expect((await widgetData()).testimonials.filter((t) => t.generated)).toEqual([]);
@@ -988,44 +995,224 @@ test.describe("platform admin", () => {
     }
   });
 
-  test("widget page: the live preview draws each layout, its cards open the pop-ups, and the phone view works", async ({ browser, baseURL }) => {
+  test("widget page: the live preview runs the real widget for every layout, its cards open the player, and the phone size works", async ({ browser, baseURL }) => {
     test.setTimeout(120_000);
     const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
     await signIn(context.request, baseURL!, USERS.customer.email);
     const page = await context.newPage();
-    // The preview's sample photos come from an outside image host; the test should not depend on it
-    await page.route(/images\.unsplash\.com/, (route) => route.abort());
     const spaces = await (await context.request.get("/api/spaces")).json();
     const space = (spaces.spaces ?? spaces).find((s: { name: string }) => s.name === "E2E Moderation Space");
     const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
     try {
-      for (const [template, heading] of [["wall-of-love", "Wall of Love Preview"], ["carousel", "Carousel Preview"], ["masonry", "Masonry Grid Preview"]] as const) {
-        await pool.query(`INSERT INTO widget_configs (space_id, template) VALUES ($1, $2) ON CONFLICT (space_id) DO UPDATE SET template = $2`, [space.id, template]);
-        await open(page, `/spaces/${space.id}/widget`);
-        const preview = page.getByText("Live Widget Preview").locator("xpath=ancestor::div[contains(@class,'space-y-3')][1]");
-        await expect(preview.getByText(heading)).toBeVisible();
+      let lastWidgetId = "";
+      // The two floating layouts are the regression: the old mock preview drew nothing for them
+      for (const [template, inline] of [["floating-card", false], ["story-strip", false], ["wall-of-love", true], ["carousel", true], ["masonry", true]] as const) {
+        await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
+        const { rows: [widget] } = await pool.query(`INSERT INTO widget_configs (space_id, template) VALUES ($1, $2) RETURNING id`, [space.id, template]);
+        lastWidgetId = widget.id;
+        await open(page, `/spaces/${space.id}/widget/${widget.id}`);
+        const frame = page.frameLocator('iframe[title^="Widget preview"]');
+        const root = frame.locator(".vr-theme-root");
+        await expect(root).toHaveClass(new RegExp(`vr-template-${template}`), { timeout: 15_000 });
+        await expect(frame.locator("#vr-slot .vouchreel-host-container")).toHaveCount(inline ? 1 : 0);
 
-        // A video card opens the video pop-up, which closes again
-        await preview.getByRole("button").filter({ hasText: /Sarah|David/ }).first().dispatchEvent("click"); // (the mock cards are small buttons whose content overlaps their neighbours, so click this one directly)
-        await expect(preview.getByText("Get Started Like Sarah")).toBeVisible();
-        await preview.getByRole("button", { name: "Close preview modal" }).click();
-        await expect(preview.getByText("Get Started Like Sarah")).toHaveCount(0);
+        // The preview sticks to the top as the page scrolls, so bring it up first: a floating widget sits at its bottom edge, below the fold of a short window
+        await page.evaluate(() => window.scrollTo(0, 600));
+        // Something in the widget opens the player or a review, which closes again
+        await frame.locator(".vr-open-btn, .vr-story-item, .vr-card").first().click();
+        await expect(frame.locator(".vr-expanded-modal")).toBeVisible();
+        await frame.locator(".vr-modal-close-btn").click();
+        await expect(frame.locator(".vr-expanded-modal")).toHaveCount(0);
 
-        // A review card opens the review pop-up with that review's provider and author
-        await preview.getByRole("button").filter({ hasText: /Google|Trustpilot/ }).first().dispatchEvent("click");
-        const closeReview = preview.getByRole("button", { name: "Close review modal" });
-        await expect(closeReview).toBeVisible();
-        await expect(preview.getByText(/Google Maps|Trustpilot/).first()).toBeVisible();
-        await closeReview.click();
-        await expect(closeReview).toHaveCount(0);
-
-        // The phone view is a narrower frame with the same content
-        await preview.getByRole("button", { name: "Mobile", exact: true }).click();
-        await expect(preview.getByText(heading)).toBeVisible();
-        await preview.getByRole("button", { name: "Desktop", exact: true }).click();
+        // The phone size is the same widget in a narrower page
+        await page.getByRole("button", { name: "Mobile", exact: true }).click();
+        await expect(page.locator('iframe[title="Widget preview, mobile size"]')).toBeVisible();
+        await expect(root).toHaveClass(new RegExp(`vr-template-${template}`));
+        await page.getByRole("button", { name: "Desktop", exact: true }).click();
       }
+
+      // A change in the editor reaches the frame without saving or reloading
+      const previewRoot = page.frameLocator('iframe[title^="Widget preview"]').locator(".vr-theme-root");
+      await page.getByRole("button", { name: /^2\s*Style/ }).click();
+      await page.getByRole("radiogroup", { name: "Mode" }).getByRole("radio", { name: "Dark" }).click();
+      await expect(previewRoot).toHaveClass(/vr-dark/);
+
+      // ...is a draft: autosaved, still there after a reload, and not what visitors get until Publish
+      const live = async () => (await (await context.request.get("/api/widget/e2e-moderation")).json()).config.theme.mode;
+      await expect(page.getByRole("status").filter({ hasText: "Unpublished changes" })).toBeVisible();
+      await expect.poll(async () => (await pool.query(`SELECT draft_config FROM widget_configs WHERE space_id = $1`, [space.id])).rows[0]?.draft_config?.theme?.mode, { timeout: 10_000 }).toBe("dark");
+      expect(await live()).toBe("light");
+      await open(page, `/spaces/${space.id}/widget/${lastWidgetId}`);
+      await expect(previewRoot).toHaveClass(/vr-dark/, { timeout: 15_000 });
+
+      // Undo history belongs to the open page: a change after the reload can be undone and redone
+      await expect(page.getByRole("button", { name: "Undo" })).toBeDisabled();
+      await page.getByRole("button", { name: /^2\s*Style/ }).click();
+      await page.getByRole("radiogroup", { name: "Mode" }).getByRole("radio", { name: "Light" }).click();
+      await expect(previewRoot).not.toHaveClass(/vr-dark/);
+      await page.getByRole("button", { name: "Undo" }).click();
+      await expect(previewRoot).toHaveClass(/vr-dark/);
+      await page.getByRole("button", { name: "Redo" }).click();
+      await expect(previewRoot).not.toHaveClass(/vr-dark/);
+      await page.getByRole("button", { name: "Undo" }).click();
+      await expect(previewRoot).toHaveClass(/vr-dark/);
+
+      await page.getByRole("button", { name: "Publish" }).click();
+      await expect(page.getByRole("status").filter({ hasText: "Published" })).toBeVisible();
+      await expect.poll(live).toBe("dark");
+      expect((await pool.query(`SELECT draft_config FROM widget_configs WHERE space_id = $1`, [space.id])).rows[0].draft_config).toBeNull();
+
+      // Discard goes back to the published widget
+      await page.getByRole("radiogroup", { name: "Mode" }).getByRole("radio", { name: "Light" }).click();
+      await page.getByRole("button", { name: "Discard" }).click();
+      await page.getByRole("button", { name: "Discard changes" }).click();
+      await expect(previewRoot).toHaveClass(/vr-dark/);
+      await expect(page.getByRole("status").filter({ hasText: "Published" })).toBeVisible();
+
+      // A look sets several options at once, and the label notices a tweak afterwards
+      await page.getByRole("radiogroup", { name: "Looks" }).getByRole("radio", { name: /Outline/ }).click();
+      await expect(previewRoot).toHaveClass(/vr-shadow-none/);
+      await expect(previewRoot).not.toHaveClass(/vr-dark/);
+      await page.getByRole("radiogroup", { name: "Shadow" }).getByRole("radio", { name: "Strong" }).click();
+      await expect(page.getByText("Outline (edited)")).toBeVisible();
+
+      // Shapes: the layout's own look is "Default"; a reel shape reaches the preview
+      await page.getByRole("button", { name: /^3\s*Shape and size/ }).click();
+      await page.getByRole("radiogroup", { name: "Shape" }).getByRole("radio", { name: /Reel/ }).click();
+      await expect(previewRoot).toHaveClass(/vr-shape-vertical/);
     } finally {
       await pool.query(`DELETE FROM widget_configs WHERE space_id = $1`, [space.id]);
+      await pool.end();
+      await context.close();
+    }
+  });
+
+  test("home: a signed-in owner lands on Home, with the week's numbers in words, a period switch, and no axe violations", async ({ browser, baseURL }) => {
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    let spaceId: string | undefined;
+    try {
+      const { rows: [owner] } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [USERS.customer.email]);
+      const { rows: [space] } = await pool.query(`INSERT INTO spaces (name, owner_id, embed_key) VALUES ('E2E Home Space', $1, 'e2e-home') RETURNING id`, [owner.id]);
+      spaceId = space.id;
+      // Two impressions and a play today, so the numbers row appears
+      await pool.query(`INSERT INTO events (space_id, event_type) VALUES ($1, 'impression'), ($1, 'impression'), ($1, 'play')`, [spaceId]);
+
+      await open(page, "/dashboard");
+      await expect(page).toHaveURL(/\/dashboard$/);
+      await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome back");
+      await expect(page.getByRole("link", { name: "Home" }).first()).toBeVisible();
+      await expect(page.getByText("Play rate")).toBeVisible();
+      await expect(page.getByRole("link", { name: /E2E Home Space/ })).toBeVisible();
+
+      await page.getByRole("link", { name: "30 days" }).click();
+      await expect(page).toHaveURL(/range=30/);
+      await expect(page.getByRole("link", { name: "30 days" })).toHaveAttribute("aria-current", "page");
+
+      const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+      expect(violations.map((v) => `${v.id}: ${v.nodes[0].target.join(" ")}`)).toEqual([]);
+    } finally {
+      if (spaceId) await pool.query(`DELETE FROM spaces WHERE id = $1`, [spaceId]); // events go with it
+      await pool.end();
+      await context.close();
+    }
+  });
+
+  test("widgets page: add one (it opens in the editor, not live), switch widgets off and on, rename, delete, and the plan's limit asks to upgrade", async ({ browser, baseURL }) => {
+    test.setTimeout(120_000);
+    const context = await browser.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    await signIn(context.request, baseURL!, USERS.customer.email);
+    const page = await context.newPage();
+    const pool = new pg.Pool({ connectionString: process.env.E2E_DATABASE_URL });
+    let spaceId: string | undefined;
+    let planId: string | undefined;
+    let previousPlanId: string | undefined;
+    let ownerId: string | undefined;
+    try {
+      const { rows: [owner] } = await pool.query(`SELECT id FROM "user" WHERE email = $1`, [USERS.customer.email]);
+      ownerId = owner.id;
+      const { rows: [space] } = await pool.query(`INSERT INTO spaces (name, owner_id, embed_key) VALUES ('E2E Widgets Space', $1, 'e2e-widgets') RETURNING id`, [owner.id]);
+      spaceId = space.id;
+      await pool.query(`INSERT INTO widget_configs (space_id) VALUES ($1)`, [spaceId]);
+      // The free tier is the first active plan that costs nothing: for this test it allows two widgets per space
+      const { rows: [plan] } = await pool.query(`INSERT INTO plans (name, price, interval, sort_order, limits) VALUES ('E2E widgets free', 0, 'month', -1000, '{"tier":"free","maxSpaces":5,"maxTestimonialsPerSpace":-1,"maxWidgetsPerSpace":2}') RETURNING id`);
+      planId = plan.id;
+      // Earlier tests may have put this customer on a paid plan by hand, and a plan with no stored limits allows one widget. Put them on this plan for the test.
+      const { rows: [sub] } = await pool.query(`SELECT plan_id FROM subscriptions WHERE user_id = $1`, [owner.id]);
+      if (sub) {
+        previousPlanId = sub.plan_id;
+        await pool.query(`UPDATE subscriptions SET plan_id = $1 WHERE user_id = $2`, [plan.id, owner.id]);
+      }
+      const live = async () => (await (await context.request.get("/api/widget/e2e-widgets")).json()).config;
+
+      await open(page, `/spaces/${spaceId}/widget`);
+      await expect(page.getByRole("heading", { name: "Widgets", exact: true })).toBeVisible();
+      await expect(page.getByText("1 of 2 widgets")).toBeVisible();
+      await expect(page.getByText("Primary")).toBeVisible();
+
+      // A new widget opens in the editor and is not live until it is published
+      await page.getByRole("button", { name: "Add widget" }).click();
+      await expect(page).toHaveURL(new RegExp(`/spaces/${spaceId}/widget/[0-9a-f-]{36}$`));
+      await expect(page.getByRole("button", { name: "Widget 2", exact: true })).toBeVisible();
+      await expect(page.getByRole("status").filter({ hasText: "Not live" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Go live" })).toBeVisible();
+      expect((await pool.query(`SELECT count(*)::int AS n FROM widget_configs WHERE space_id = $1 AND is_live`, [spaceId])).rows[0].n).toBe(1);
+
+      // Back on the list: two widgets, at the plan's limit, so adding another asks to upgrade
+      await page.getByRole("link", { name: "All widgets" }).click();
+      await expect(page.getByText("2 of 2 widgets")).toBeVisible();
+      await expect(page.getByText("Your plan allows 2 widgets per space")).toBeVisible();
+      await page.getByRole("button", { name: "Add widget" }).click();
+      await expect(page.getByText("Widget Limit Reached")).toBeVisible();
+      await page.getByRole("button", { name: "Maybe Later" }).click();
+      await expect(page.getByText("Widget Limit Reached")).toHaveCount(0);
+
+      // Switching a widget off takes it off the site (here that is the only live one), and back on puts it back
+      expect(await live()).toMatchObject({ template: "floating-card" });
+      await page.getByRole("switch", { name: "Default widget is shown to visitors" }).click();
+      await expect.poll(live, { timeout: 15_000 }).toBeNull();
+      await page.getByRole("switch", { name: "Default widget is shown to visitors" }).click();
+      await expect.poll(live, { timeout: 15_000 }).not.toBeNull();
+
+      // Rename from the menu
+      await page.getByRole("button", { name: "More actions for Widget 2" }).click();
+      await page.getByRole("menuitem", { name: "Rename" }).click();
+      await page.getByLabel("Widget name").fill("Footer wall");
+      await page.getByRole("button", { name: "Save" }).click();
+      await expect(page.getByRole("link", { name: "Footer wall" })).toBeVisible();
+
+      const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+      expect(violations.map((v) => `${v.id}: ${v.nodes[0].target.join(" ")}`)).toEqual([]);
+
+      // Events that name a widget give its card numbers, and the Analytics page can filter to it
+      const { rows: [first] } = await pool.query(`SELECT id FROM widget_configs WHERE space_id = $1 ORDER BY sort_order, created_at LIMIT 1`, [spaceId]);
+      await pool.query(`INSERT INTO events (space_id, widget_id, event_type) VALUES ($1, $2, 'impression'), ($1, $2, 'impression'), ($1, $2, 'impression'), ($1, $2, 'play')`, [spaceId, first.id]);
+      await open(page, `/spaces/${spaceId}/widget`);
+      await expect(page.getByText("3 views · 1 play · 33% played")).toBeVisible();
+      await open(page, `/spaces/${spaceId}/analytics`);
+      const widgetFilter = page.getByLabel("Widget", { exact: true });
+      await expect(widgetFilter).toBeVisible(); // two widgets, so there is something to choose
+      await expect(widgetFilter.locator("option")).toHaveText(["All Widgets", "Default widget", "Footer wall"]);
+      const filtered = page.waitForRequest((r) => r.url().includes("type=overview") && r.url().includes(`widgetId=${first.id}`));
+      await widgetFilter.selectOption({ label: "Default widget" });
+      await filtered;
+      await open(page, `/spaces/${spaceId}/widget`);
+      await page.waitForLoadState("networkidle"); // the menus work once the page has loaded its scripts
+
+      // Delete one; the last one cannot be deleted
+      await page.getByRole("button", { name: "More actions for Footer wall" }).click();
+      await page.getByRole("menuitem", { name: "Delete" }).click();
+      await page.getByRole("button", { name: "Delete widget" }).click();
+      await expect(page.getByRole("link", { name: "Footer wall" })).toHaveCount(0);
+      await expect(page.getByText("1 of 2 widgets")).toBeVisible();
+      await page.getByRole("button", { name: "More actions for Default widget" }).click();
+      await expect(page.getByRole("menuitem", { name: /Delete/ })).toHaveAttribute("aria-disabled", "true");
+    } finally {
+      if (previousPlanId && ownerId) await pool.query(`UPDATE subscriptions SET plan_id = $1 WHERE user_id = $2`, [previousPlanId, ownerId]);
+      if (spaceId) await pool.query(`DELETE FROM spaces WHERE id = $1`, [spaceId]); // widgets go with it
+      if (planId) await pool.query(`DELETE FROM plans WHERE id = $1`, [planId]);
       await pool.end();
       await context.close();
     }

@@ -1,0 +1,65 @@
+.vr-carousel-container {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 16px 44px;
+  box-sizing: border-box;
+}
+
+.vr-carousel-track {
+  display: flex;
+  gap: var(--vr-gap);
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 4px;
+}
+
+.vr-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.vr-carousel-track .vr-card {
+  flex: 0 0 calc(var(--vr-card-w) + 10px);
+  scroll-snap-align: start;
+}
+
+.vr-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--vr-bg);
+  border: 1px solid var(--vr-border);
+  color: var(--vr-text);
+  box-shadow: var(--vr-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.vr-carousel-arrow:hover {
+  background-color: var(--vr-primary);
+  color: var(--vr-accent);
+}
+
+.vr-carousel-arrow:focus-visible {
+  outline: 2px solid var(--vr-primary);
+  outline-offset: 2px;
+}
+
+.vr-carousel-prev {
+  left: 4px;
+}
+
+.vr-carousel-next {
+  right: 4px;
+}

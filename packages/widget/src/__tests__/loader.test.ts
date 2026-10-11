@@ -176,5 +176,28 @@ describe("Widget A/B Testing Loader Engine", () => {
       applyVariantConfig(baseConfig, experiment, 1);
       expect(baseConfig.template).toBe("wall-of-love");
     });
+
+    it("a style experiment's variant (a complete layout and theme from the server) replaces both, and leaves the rest", () => {
+      const theme = { primaryColor: "#111111", accentColor: "#ffffff", mode: "dark" as const, borderRadius: 24 };
+      const experiment: ActiveExperiment = {
+        id: "exp-style",
+        name: "Style Test",
+        type: "style",
+        trafficSplit: [50, 50],
+        variants: [
+          { id: "v0", name: "Current look", config: { template: "carousel", theme: { primaryColor: "#000", accentColor: "#fff", mode: "light", borderRadius: 8 } } },
+          { id: "v1", name: "Dark cinema", config: { template: "wall-of-love", theme } },
+        ],
+      };
+      const baseConfig: WidgetApiResponse["config"] = {
+        template: "carousel",
+        position: "bottom-left",
+        theme: { primaryColor: "#000", accentColor: "#fff", mode: "light", borderRadius: 8 },
+        autoplayPreview: true,
+      };
+
+      applyVariantConfig(baseConfig, experiment, 1);
+      expect(baseConfig).toMatchObject({ template: "wall-of-love", theme, position: "bottom-left", autoplayPreview: true });
+    });
   });
 });

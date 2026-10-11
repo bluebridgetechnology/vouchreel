@@ -14,6 +14,8 @@ export interface PlanLimits {
   tier: PlanTier;
   maxSpaces: number;
   maxTestimonialsPerSpace: number;
+  /** Widgets a space can have. Only creating one more is limited; existing widgets keep working after a downgrade. */
+  maxWidgetsPerSpace: number;
   /** AI video generations per month. 0 disables the feature. */
   aiVideoCredits: number;
   /** Styled review videos (Remotion) per month. 0 disables the feature. */
@@ -33,7 +35,7 @@ export type StoredPlanLimits = {
   [K in keyof PlanLimits]?: PlanLimits[K];
 };
 
-export const NUMERIC_LIMIT_KEYS = ["maxSpaces", "maxTestimonialsPerSpace", "aiVideoCredits", "reviewVideoCredits"] as const;
+export const NUMERIC_LIMIT_KEYS = ["maxSpaces", "maxTestimonialsPerSpace", "maxWidgetsPerSpace", "aiVideoCredits", "reviewVideoCredits"] as const;
 
 export const BOOLEAN_LIMIT_KEYS = [
   "removeWatermark",
@@ -67,12 +69,13 @@ const growth = {
 };
 
 export const PLAN_LIMIT_PRESETS: Record<Exclude<PlanTier, "custom">, PlanLimits> = {
-  free: { tier: "free", maxSpaces: 1, maxTestimonialsPerSpace: 3, aiVideoCredits: 0, reviewVideoCredits: 1, ...none },
-  pro: { tier: "pro", maxSpaces: 5, maxTestimonialsPerSpace: Infinity, aiVideoCredits: 10, reviewVideoCredits: 20, ...none, ...growth },
+  free: { tier: "free", maxSpaces: 1, maxTestimonialsPerSpace: 3, maxWidgetsPerSpace: 1, aiVideoCredits: 0, reviewVideoCredits: 1, ...none },
+  pro: { tier: "pro", maxSpaces: 5, maxTestimonialsPerSpace: Infinity, maxWidgetsPerSpace: 3, aiVideoCredits: 10, reviewVideoCredits: 20, ...none, ...growth },
   agency: {
     tier: "agency",
     maxSpaces: Infinity,
     maxTestimonialsPerSpace: Infinity,
+    maxWidgetsPerSpace: Infinity,
     aiVideoCredits: 50,
     reviewVideoCredits: 100,
     ...none,
@@ -84,6 +87,7 @@ export const PLAN_LIMIT_PRESETS: Record<Exclude<PlanTier, "custom">, PlanLimits>
     tier: "business",
     maxSpaces: Infinity,
     maxTestimonialsPerSpace: Infinity,
+    maxWidgetsPerSpace: Infinity,
     aiVideoCredits: 100,
     reviewVideoCredits: 200,
     ...none,

@@ -20,7 +20,8 @@
     "db:start": "docker compose up -d postgres",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
-    "db:studio": "turbo run db:studio"
+    "db:studio": "turbo run db:studio",
+    "db:seed:demo": "turbo run db:seed:demo"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
