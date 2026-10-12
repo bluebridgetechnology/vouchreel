@@ -34,6 +34,8 @@ export interface PreviewContent {
   whiteLabel?: { removeBranding?: boolean; logoUrl?: string | null };
   /** True when the space has nothing published yet and the preview shows made-up items. */
   sample: boolean;
+  /** True when made-up items were added to the space's own, so a layout that needs several still has something to show. */
+  padded?: boolean;
 }
 
 export interface PreviewDraft {
@@ -91,22 +93,38 @@ export const SAMPLE_CONTENT: PreviewContent = {
     { id: "sample-1", platform: "mp4", videoUrl: "", thumbnailUrl: samplePoster("S", "#f97316", "#be185d"), customerName: "Sarah Chen", customerCompany: "Northwind", quote: "We doubled our demo bookings within a month of adding video reviews.", durationSeconds: 42 },
     { id: "sample-2", platform: "mp4", videoUrl: "", thumbnailUrl: samplePoster("D", "#0ea5e9", "#4f46e5"), customerName: "David Okafor", customerCompany: "Brightside", quote: "Setup took five minutes and it looks like part of our site.", durationSeconds: 31 },
     { id: "sample-3", platform: "mp4", videoUrl: "", thumbnailUrl: samplePoster("M", "#10b981", "#0f766e"), customerName: "Maria Lopez", customerCompany: "Fieldnote", quote: "Customers trust a face more than a paragraph.", durationSeconds: 27 },
+    { id: "sample-4", platform: "mp4", videoUrl: "", thumbnailUrl: samplePoster("A", "#8b5cf6", "#c026d3"), customerName: "Aiko Tanaka", customerCompany: "Lumen Labs", quote: "Our trial sign-ups rose the week we put real customers on the page.", durationSeconds: 38 },
+    { id: "sample-5", platform: "mp4", videoUrl: "", thumbnailUrl: samplePoster("L", "#ef4444", "#9a3412"), customerName: "Liam Walsh", customerCompany: "Harbor & Co", quote: "I watched one video and booked a call the same day.", durationSeconds: 24 },
+    { id: "sample-6", platform: "mp4", videoUrl: "", thumbnailUrl: samplePoster("N", "#14b8a6", "#1d4ed8"), customerName: "Nia Adeyemi", customerCompany: "Kite Studio", quote: "It feels like our best salesperson is on every page.", durationSeconds: 45 },
+    { id: "sample-7", platform: "mp4", videoUrl: "", thumbnailUrl: samplePoster("O", "#eab308", "#b45309"), customerName: "Omar Haddad", customerCompany: "Pillar Health", quote: "Clients ask about the video before they ask about the price.", durationSeconds: 33 },
+    { id: "sample-8", platform: "mp4", videoUrl: "", thumbnailUrl: samplePoster("E", "#ec4899", "#6d28d9"), customerName: "Elena Rossi", customerCompany: "Mercato", quote: "Short, honest and exactly what a new customer wants to see.", durationSeconds: 29 },
   ],
   reviews: [
     { id: "sample-r1", provider: "google", authorName: "James W.", rating: 5, text: "Friendly team and a product that just works.", reviewDate: "2026-09-12" },
     { id: "sample-r2", provider: "trustpilot", authorName: "Priya N.", rating: 5, text: "Our conversion rate went up the week we installed it.", reviewDate: "2026-08-28" },
     { id: "sample-r3", provider: "google", authorName: "Tom B.", rating: 4, text: "Great value. Would love even more layouts.", reviewDate: "2026-08-03" },
+    { id: "sample-r4", provider: "trustpilot", authorName: "Hannah L.", rating: 5, text: "Support answered within minutes and the widget looks great.", reviewDate: "2026-07-21" },
+    { id: "sample-r5", provider: "google", authorName: "Ravi K.", rating: 5, text: "Exactly what we needed to show real customers on our pricing page.", reviewDate: "2026-07-02" },
   ],
 };
 
-/** Content for the preview from the public widget endpoint's answer; the samples when it has nothing. */
+/** How many of each the preview shows at least, so a layout built for many does not look empty on a new space. */
+export const MIN_PREVIEW_VIDEOS = 6;
+export const MIN_PREVIEW_REVIEWS = 4;
+
+/** Content for the preview from the public widget endpoint's answer; the samples when it has nothing, and topped up when it has only a few. */
 export function previewContentFrom(data: unknown): PreviewContent {
   const d = (data && typeof data === "object" ? data : {}) as Record<string, unknown>;
   const testimonials = Array.isArray(d.testimonials) ? (d.testimonials as PreviewTestimonial[]) : [];
   const reviews = Array.isArray(d.reviews) ? (d.reviews as PreviewReview[]) : [];
   const whiteLabel = (d.whiteLabel ?? undefined) as PreviewContent["whiteLabel"];
   if (testimonials.length === 0 && reviews.length === 0) return { ...SAMPLE_CONTENT, whiteLabel };
-  return { testimonials, reviews, whiteLabel, sample: false };
+  // A space with only a couple of items would show a wall, a carousel or a masonry of two, which says nothing about
+  // the layout. The preview tops them up with samples (never what visitors see) so the layout can be judged.
+  const videos = [...testimonials, ...SAMPLE_CONTENT.testimonials.slice(0, Math.max(0, MIN_PREVIEW_VIDEOS - testimonials.length))];
+  const rated = [...reviews, ...SAMPLE_CONTENT.reviews.slice(0, Math.max(0, MIN_PREVIEW_REVIEWS - reviews.length))];
+  const padded = videos.length > testimonials.length || rated.length > reviews.length;
+  return { testimonials: videos, reviews: rated, whiteLabel, sample: false, padded };
 }
 
 /** The line next to the preview title that says when the widget would appear. */

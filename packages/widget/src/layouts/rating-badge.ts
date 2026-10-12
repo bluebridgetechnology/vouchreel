@@ -23,7 +23,7 @@ const PROVIDERS: Record<string, string> = { google: "Google", trustpilot: "Trust
 
 /**
  * Rating badge: "4.9 from 312 reviews", small enough for a header or footer. Clicking it opens a sheet with
- * the reviews. The numbers come only from the approved reviews the widget already has, so the badge says
+ * the reviews. With videos but no star ratings it says "Watch 12 customer videos" and opens the first. The numbers come only from the approved reviews the widget already has, so the badge says
  * "from N reviews" and names a source only when every one of them comes from that one source.
  */
 defineLayout("rating-badge", {
@@ -31,7 +31,23 @@ defineLayout("rating-badge", {
   inline: true,
   render(ctx: LayoutContext) {
     const { average, count } = summarize(ctx.reviews);
-    if (count === 0) return;
+    if (count === 0) {
+      // No star ratings to average, but there are videos: say so and open the first
+      const videos = ctx.testimonials.length;
+      if (videos === 0) return;
+      const watch = document.createElement("button");
+      watch.type = "button";
+      watch.className = "vr-badge";
+      watch.setAttribute("aria-label", `Watch ${videos} customer ${videos === 1 ? "video" : "videos"}`);
+      watch.appendChild(textEl("span", "vr-badge-score", "▶"));
+      watch.appendChild(textEl("span", "vr-badge-count", `Watch ${videos.toLocaleString("en")} customer ${videos === 1 ? "video" : "videos"}`));
+      watch.addEventListener("click", () => {
+        ctx.track("click", ctx.testimonials[0].id);
+        ctx.openVideo(0);
+      });
+      ctx.root.appendChild(watch);
+      return;
+    }
     const shown = (Math.round(average * 10) / 10).toFixed(1);
     const providers = Array.from(new Set(ctx.reviews.map((r) => r.provider)));
     const source = providers.length === 1 ? PROVIDERS[providers[0]] : undefined;

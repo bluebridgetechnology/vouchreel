@@ -1,6 +1,7 @@
 import { defineLayout } from "../layout-api";
 import { interleavedCards } from "./cards";
 import cardsCss from "./cards.css";
+import tileCss from "./tile.css";
 import css from "./carousel.css";
 
 function arrow(direction: "prev" | "next"): HTMLButtonElement {
@@ -38,7 +39,7 @@ function autoAdvance(track: HTMLElement, seconds: number): void {
 
 /** Carousel: a horizontal scroll slider with arrow controls and touch swipe. */
 defineLayout("carousel", {
-  css: cardsCss + css,
+  css: cardsCss + tileCss + css,
   inline: true,
   render(ctx) {
     const container = document.createElement("div");

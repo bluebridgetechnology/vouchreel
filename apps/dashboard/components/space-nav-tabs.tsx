@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { isCanvasPath } from "@/lib/dashboard-shell";
 
 interface SpaceNavTabsProps {
   spaceId: string;
@@ -21,15 +22,18 @@ export function SpaceNavTabs({
   const pathname = usePathname();
   const [copied, setCopied] = useState(false);
   const [pendingCount, setPendingCount] = useState<number | null>(null);
+  // The widget editor is a canvas: it has its own slim header, so the space's name and tabs would only cost it height
+  const canvas = isCanvasPath(pathname);
 
   useEffect(() => {
+    if (canvas) return;
     fetch(`/api/spaces/${spaceId}/collection-forms`)
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
         if (data?.collectionForms) setPendingCount(data.collectionForms.reduce((total: number, form: { pendingSubmissionCount?: number }) => total + Number(form.pendingSubmissionCount || 0), 0));
       })
       .catch(() => undefined);
-  }, [spaceId]);
+  }, [spaceId, canvas]);
 
   const tabs = [
     { label: "Testimonials", segment: "testimonials" },
@@ -51,6 +55,8 @@ export function SpaceNavTabs({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
+
+  if (canvas) return null;
 
   return (
     <div className="space-y-5">

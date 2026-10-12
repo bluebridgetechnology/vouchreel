@@ -24,3 +24,25 @@
   break-inside: avoid;
   margin-bottom: var(--vr-gap);
 }
+
+/* Pictures of different heights give the columns their stagger; shapes the owner picks stay as picked */
+.vr-theme-root:not([class*="vr-shape-"]) .vr-masonry-wrapper > .vr-tile:nth-child(3n + 1) {
+  --vr-tile-ratio: 4 / 5;
+}
+
+.vr-theme-root:not([class*="vr-shape-"]) .vr-masonry-wrapper > .vr-tile:nth-child(3n + 2) {
+  --vr-tile-ratio: 1 / 1;
+}
+
+.vr-theme-root:not([class*="vr-shape-"]) .vr-masonry-wrapper > .vr-tile:nth-child(3n) {
+  --vr-tile-ratio: 3 / 4;
+}
+
+.vr-masonry-wrapper .vr-tile {
+  break-inside: avoid;
+  margin-bottom: var(--vr-gap);
+}
+
+.vr-masonry-wrapper .vr-blend-review-card .vr-card-quote-text {
+  font-size: 15px;
+}

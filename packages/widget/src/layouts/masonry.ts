@@ -1,11 +1,12 @@
 import { defineLayout } from "../layout-api";
 import { interleavedCards } from "./cards";
 import cardsCss from "./cards.css";
+import tileCss from "./tile.css";
 import css from "./masonry.css";
 
 /** Masonry: staggered columns. */
 defineLayout("masonry", {
-  css: cardsCss + css,
+  css: cardsCss + tileCss + css,
   inline: true,
   render(ctx) {
     const wrapper = document.createElement("div");

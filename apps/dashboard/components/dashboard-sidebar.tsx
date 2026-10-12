@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "@/lib/auth/auth-client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/components/marketing/logo";
@@ -68,11 +68,11 @@ async function handleSignOut() {
   });
 }
 
-function NavLinks({ user, onNavigate }: DashboardSidebarProps & { onNavigate?: () => void }) {
+function NavLinks({ user, onNavigate, collapsed = false }: DashboardSidebarProps & { onNavigate?: () => void; collapsed?: boolean }) {
   const pathname = usePathname();
   const items = getNavItems(isAdminUser(user));
   return (
-    <nav aria-label="Dashboard" className="flex-1 space-y-1 px-3 py-4">
+    <nav aria-label="Dashboard" className={cn("flex-1 space-y-1 py-4", collapsed ? "px-2" : "px-3")}>
       {items.map((item) => {
         const active = isItemActive(pathname, item.href);
         return (
@@ -81,15 +81,17 @@ function NavLinks({ user, onNavigate }: DashboardSidebarProps & { onNavigate?: (
             href={item.href}
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
+            title={collapsed ? item.label : undefined}
             className={cn(
-              "flex h-11 items-center gap-3 rounded-pill px-4 text-sm font-medium transition-colors",
+              "flex h-11 items-center rounded-pill text-sm font-medium transition-colors",
+              collapsed ? "justify-center" : "gap-3 px-4",
               active
                 ? "bg-brand-soft text-brand-soft-foreground"
                 : "text-text-muted hover:bg-surface-sunken hover:text-text"
             )}
           >
             <Icon name={item.icon} />
-            {item.label}
+            <span className={collapsed ? "sr-only" : undefined}>{item.label}</span>
           </Link>
         );
       })}
@@ -97,8 +99,20 @@ function NavLinks({ user, onNavigate }: DashboardSidebarProps & { onNavigate?: (
   );
 }
 
-function UserPanel({ user }: DashboardSidebarProps) {
+function UserPanel({ user, collapsed = false }: DashboardSidebarProps & { collapsed?: boolean }) {
   const initial = (user.name?.charAt(0) || user.email.charAt(0)).toUpperCase();
+  if (collapsed) {
+    return (
+      <div className="flex flex-col items-center gap-2 border-t py-3">
+        <Avatar title={user.name || user.email}>
+          <AvatarFallback>{initial}</AvatarFallback>
+        </Avatar>
+        <Button variant="ghost" size="icon-sm" onClick={handleSignOut} aria-label="Sign out" title="Sign out">
+          <Icon name="logout" size="sm" />
+        </Button>
+      </div>
+    );
+  }
   return (
     <div className="space-y-3 border-t p-4">
       <div className="flex items-center gap-3">
@@ -122,15 +136,40 @@ function UserPanel({ user }: DashboardSidebarProps) {
   );
 }
 
-export function DashboardSidebar({ user }: DashboardSidebarProps) {
+export function DashboardSidebar({ user, collapsed = false, onToggle }: DashboardSidebarProps & { collapsed?: boolean; onToggle?: () => void }) {
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r bg-surface lg:flex">
-      <div className="flex h-18 items-center justify-between gap-2 px-6">
-        <Logo href="/dashboard" />
-        <NotificationBell align="start" />
-      </div>
-      <NavLinks user={user} />
-      <UserPanel user={user} />
+    <aside
+      aria-label="Sidebar"
+      className={cn("sticky top-0 hidden h-screen shrink-0 flex-col border-r bg-surface transition-[width] duration-200 lg:flex", collapsed ? "w-[4.5rem]" : "w-64")}
+    >
+      {collapsed ? (
+        <div className="flex flex-col items-center gap-3 pb-1 pt-4">
+          <Logo href="/dashboard" mark />
+          <NotificationBell align="start" />
+        </div>
+      ) : (
+        <div className="flex h-18 items-center justify-between gap-2 px-6">
+          <Logo href="/dashboard" />
+          <NotificationBell align="start" />
+        </div>
+      )}
+      <NavLinks user={user} collapsed={collapsed} />
+      {onToggle && (
+        <div className={cn("pb-2", collapsed ? "flex justify-center" : "px-3")}>
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), collapsed ? "size-9 px-0" : "w-full justify-start gap-3 px-4")}
+          >
+            <Icon name={collapsed ? "alt-arrow-right" : "alt-arrow-left"} size="sm" />
+            {!collapsed && "Collapse"}
+          </button>
+        </div>
+      )}
+      <UserPanel user={user} collapsed={collapsed} />
     </aside>
   );
 }

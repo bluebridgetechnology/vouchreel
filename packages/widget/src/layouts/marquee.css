@@ -164,3 +164,14 @@
     display: none;
   }
 }
+
+/* Video tiles are the strip: a little narrower than a review so more faces show at once */
+.vr-mq-set .vr-tile {
+  flex: 0 0 calc(var(--vr-card-w) * 0.72);
+  width: calc(var(--vr-card-w) * 0.72);
+  --vr-tile-lines: 2;
+}
+
+.vr-mq-set .vr-mq-review {
+  align-self: center;
+}

@@ -9,6 +9,9 @@ const solar = JSON.parse(readFileSync(require.resolve("@iconify-json/solar/icons
 
 const ICONS = [
   "sun-outline",
+  "magnifer-zoom-in-outline",
+  "magnifer-zoom-out-outline",
+  "alt-arrow-left-outline",
   "moon-outline",
   "monitor-outline",
   "undo-left-outline",

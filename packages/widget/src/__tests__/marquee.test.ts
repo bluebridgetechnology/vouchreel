@@ -82,11 +82,14 @@ const sets = (ctx: LayoutContext) => all(ctx.root, (n) => n.className.split(" ")
 const track = (ctx: LayoutContext) => byClass(ctx.root, "vr-mq-track")[0];
 
 describe("marquee", () => {
-  it("is an inline layout; videos and reviews alternate; nothing for no content", () => {
+  it("is an inline layout; videos lead (two, then a review); nothing for no content", () => {
     expect(layout.inline).toBe(true);
-    const ctx = render([video(1), video(2)], [review(1), review(2)]);
-    const first = sets(ctx)[0];
-    expect(first.children.map((c: any) => (c.className.includes("vr-mq-review") ? "review" : "video"))).toEqual(["video", "review", "video", "review"]);
+    const kinds = (ctx: LayoutContext) => sets(ctx)[0].children.map((c: any) => (c.className.includes("vr-mq-review") ? "review" : "video"));
+    expect(kinds(render([video(1), video(2), video(3), video(4)], [review(1), review(2), review(3)]))).toEqual(["video", "video", "review", "video", "video", "review", "review"]);
+    // (the third review has no pair of videos left to follow, so it closes the strip)
+    // Reviews still fill the strip when there are few videos
+    expect(kinds(render([video(1)], [review(1), review(2)]))).toEqual(["video", "review", "review"]);
+    expect(kinds(render([video(1), video(2)], [review(1), review(2)]))).toEqual(["video", "video", "review", "review"]);
     expect(render([]).root.children).toHaveLength(0);
   });
 

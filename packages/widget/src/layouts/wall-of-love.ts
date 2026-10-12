@@ -1,11 +1,12 @@
 import { defineLayout } from "../layout-api";
 import { interleavedCards } from "./cards";
 import cardsCss from "./cards.css";
+import tileCss from "./tile.css";
 import css from "./wall-of-love.css";
 
 /** Wall of Love: a responsive grid blending videos and reviews. */
 defineLayout("wall-of-love", {
-  css: cardsCss + css,
+  css: cardsCss + tileCss + css,
   inline: true,
   render(ctx) {
     const wrapper = document.createElement("div");

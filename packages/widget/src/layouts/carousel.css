@@ -22,7 +22,8 @@
   display: none;
 }
 
-.vr-carousel-track .vr-card {
+.vr-carousel-track .vr-card,
+.vr-carousel-track .vr-tile {
   flex: 0 0 calc(var(--vr-card-w) + 10px);
   scroll-snap-align: start;
 }

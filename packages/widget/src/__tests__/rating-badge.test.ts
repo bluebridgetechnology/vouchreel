@@ -78,8 +78,8 @@ afterEach(() => vi.unstubAllGlobals());
 
 const review = (n: number, rating: number, provider = "google"): ReviewItem => ({ id: `r${n}`, provider, authorName: `Person ${n}`, rating, text: `Review ${n}`, reviewDate: null });
 
-function render(reviews: ReviewItem[]) {
-  const ctx = { root: el("div"), testimonials: [], reviews, quote: () => ({ text: null, isTranslated: false }), openVideo: vi.fn(), openReview: vi.fn(), track: vi.fn() } as unknown as LayoutContext;
+function render(reviews: ReviewItem[], testimonials: any[] = []) {
+  const ctx = { root: el("div"), testimonials, reviews, quote: () => ({ text: null, isTranslated: false }), openVideo: vi.fn(), openReview: vi.fn(), track: vi.fn() } as unknown as LayoutContext;
   layout.render(ctx);
   return ctx;
 }
@@ -109,6 +109,21 @@ describe("rating badge", () => {
     expect(text(badge(render(Array.from({ length: 1234 }, (_, i) => review(i, 5)))))).toContain("from 1,234 reviews");
     expect(render([]).root.children).toHaveLength(0);
     expect(render([review(1, 0)]).root.children).toHaveLength(0);
+  });
+
+  it("with videos but no star ratings it says so and opens the first video, instead of drawing nothing", () => {
+    const videos = [{ id: "t1", videoUrl: "v1", platform: "mp4" }, { id: "t2", videoUrl: "v2", platform: "mp4" }];
+    const ctx = render([], videos);
+    expect(text(badge(ctx))).toContain("Watch 2 customer videos");
+    expect(badge(ctx).attrs["aria-label"]).toBe("Watch 2 customer videos");
+    fire(badge(ctx), "click");
+    expect(ctx.openVideo).toHaveBeenCalledWith(0);
+    expect(ctx.track).toHaveBeenCalledWith("click", "t1");
+    expect(text(badge(render([], [videos[0]])))).toContain("Watch 1 customer video");
+    // Reviews with ratings still win: the score is what the badge is for
+    expect(text(badge(render([review(1, 5)], videos)))).toContain("from 1 review");
+    // Unrated reviews and no videos is still nothing
+    expect(render([review(1, 0)], []).root.children).toHaveLength(0);
   });
 
   it("names a source only when every review comes from it", () => {

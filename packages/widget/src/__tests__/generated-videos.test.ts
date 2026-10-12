@@ -112,6 +112,7 @@ describe("a made video (review or AI) as a card", () => {
     expect(frame).toMatchObject({ src: "https://cdn.test/review-videos/s/g1.mp4#t=1", preload: "metadata", muted: true });
     expect(dom.text).toContain("⭐ Review video");
     expect(dom.text).not.toContain("📹 Video Testimonial");
+    expect(dom.created.some((e) => e.className === "vr-tile-badge")).toBe(true);
   });
 
   it("drops the whole card if its file is gone (a video that was taken down)", () => {
@@ -125,7 +126,7 @@ describe("a made video (review or AI) as a card", () => {
     createVideoCard(ctx, { id: "t", videoUrl: "https://v/x.mp4", platform: "mp4", thumbnailUrl: "https://v/x.jpg", customerName: "Jo" } as TestimonialItem, 0);
     expect(dom.created.some((e) => e.tag === "video")).toBe(false);
     expect(dom.created.find((e) => e.tag === "img").src).toBe("https://v/x.jpg");
-    expect(dom.text).toContain("📹 Video Testimonial");
+    expect(dom.created.some((e) => e.className === "vr-tile-badge")).toBe(false); // only made videos carry a label
   });
 });
 

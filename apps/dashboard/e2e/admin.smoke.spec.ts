@@ -966,8 +966,8 @@ test.describe("platform admin", () => {
         const card = page.locator(".vr-blend-video-card", { hasText: "Review video" });
         await expect(card).toHaveCount(1, { timeout: 15_000 });
         // The name is text, not markup: the <b> is shown as typed
-        await expect(card.locator(".vr-card-author-name")).toHaveText("Alice <b>M.</b>");
-        await expect(card.locator(".vr-card-author-name b")).toHaveCount(0);
+        await expect(card.locator(".vr-tile-name")).toHaveText("Alice <b>M.</b>");
+        await expect(card.locator(".vr-tile-name b")).toHaveCount(0);
         await expect.poll(() => card.locator("video").evaluate((v: HTMLVideoElement) => v.readyState)).toBeGreaterThanOrEqual(1);
 
         // The file goes (a takedown deletes it at once) while the list still names it: the tile drops itself

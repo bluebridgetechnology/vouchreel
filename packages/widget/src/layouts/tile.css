@@ -1,0 +1,236 @@
+/* The video tile: a picture first, with the person's words on a soft shade along the bottom. Tokens only. */
+.vr-tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--vr-tile-ratio, 4 / 5);
+  padding: 0;
+  border: 0;
+  border-radius: var(--vr-radius);
+  overflow: hidden;
+  isolation: isolate;
+  box-sizing: border-box;
+  cursor: pointer;
+  user-select: none;
+  text-align: left;
+  font: inherit;
+  color: var(--vr-on-media);
+  /* No picture yet: the brand colour, deepened, with the initial on it */
+  background: linear-gradient(145deg, var(--vr-primary), color-mix(in srgb, var(--vr-primary) 45%, var(--vr-media)));
+  box-shadow: var(--vr-shadow);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+}
+
+.vr-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--vr-shadow-hover-lg);
+}
+
+.vr-tile:focus-visible {
+  outline: 2px solid var(--vr-primary);
+  outline-offset: 2px;
+}
+
+.vr-tile-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vr-tile:hover .vr-tile-img {
+  transform: scale(1.04);
+}
+
+.vr-tile-img.vr-media-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 30%;
+  font-size: 88px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--vr-on-media) 38%, transparent);
+}
+
+.vr-tile-play {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--vr-on-media) 92%, transparent);
+  color: var(--vr-media);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--vr-media) 35%, transparent);
+  transition: transform 0.2s ease;
+}
+
+.vr-tile:hover .vr-tile-play {
+  transform: scale(1.1);
+}
+
+.vr-tile-play svg {
+  width: 22px;
+  height: 22px;
+  margin-left: 3px;
+}
+
+.vr-tile-time {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--vr-scrim-chip);
+  color: var(--vr-on-media);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.vr-tile-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  max-width: 60%;
+  padding: 2px 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--vr-scrim-chip);
+  color: var(--vr-on-media);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.vr-tile-info {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 64px 16px 16px;
+  background: linear-gradient(to top, color-mix(in srgb, var(--vr-media) 84%, transparent) 0%, color-mix(in srgb, var(--vr-media) 52%, transparent) 55%, transparent 100%);
+}
+
+.vr-tile-quote {
+  display: -webkit-box;
+  -webkit-line-clamp: var(--vr-tile-lines, 3);
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.vr-tile-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vr-tile-avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--vr-on-media) 22%, transparent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vr-tile-names {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.vr-tile-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vr-tile-co {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+/* Shapes (the theme's shape class on the root); no class keeps the tall 4:5 picture */
+.vr-shape-landscape {
+  --vr-tile-ratio: 16 / 9;
+}
+
+.vr-shape-square,
+.vr-shape-rounded,
+.vr-shape-circle {
+  --vr-tile-ratio: 1 / 1;
+}
+
+.vr-shape-portrait {
+  --vr-tile-ratio: 4 / 5;
+}
+
+.vr-shape-vertical {
+  --vr-tile-ratio: 9 / 16;
+}
+
+.vr-shape-square .vr-tile {
+  border-radius: 0;
+}
+
+.vr-shape-rounded .vr-tile {
+  border-radius: 24px;
+}
+
+/* A round picture has no corners for words: they go below it */
+.vr-shape-circle .vr-tile {
+  aspect-ratio: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  background: none;
+  box-shadow: none;
+  color: var(--vr-text);
+}
+
+.vr-shape-circle .vr-tile-img {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--vr-primary), color-mix(in srgb, var(--vr-primary) 45%, var(--vr-media)));
+}
+
+.vr-shape-circle .vr-tile-play {
+  top: 40%;
+  left: 50%;
+}
+
+.vr-shape-circle .vr-tile-time {
+  display: none;
+}
+
+.vr-shape-circle .vr-tile-info {
+  position: static;
+  padding: 0;
+  background: none;
+  align-items: center;
+  text-align: center;
+}
+
+.vr-shape-circle .vr-tile-quote {
+  --vr-tile-lines: 2;
+}

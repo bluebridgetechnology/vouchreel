@@ -1,5 +1,8 @@
 import { defineLayout, type LayoutContext } from "../layout-api";
+import type { ReviewItem } from "../matcher";
 import css from "./marquee.css";
+import tileCss from "./tile.css";
+import { videoTile } from "./tile";
 
 const MAX_ITEMS = 16;
 /** Scroll speed, in pixels per second: slow enough to read. */
@@ -14,77 +17,50 @@ const textEl = (tag: string, className: string, text: string): HTMLElement => {
   return el;
 };
 
+function reviewCard(ctx: LayoutContext, review: ReviewItem): (clone: boolean) => HTMLElement {
+  return (clone) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "vr-mq-card vr-mq-review";
+    card.setAttribute("aria-label", `View review from ${review.authorName}`);
+    const body = document.createElement("span");
+    body.className = "vr-mq-body";
+    body.appendChild(textEl("span", "vr-stars", "★".repeat(Math.max(0, Math.min(5, review.rating)))));
+    if (review.text) body.appendChild(textEl("span", "vr-mq-quote", `"${review.text}"`));
+    body.appendChild(textEl("span", "vr-mq-name", review.authorName));
+    card.appendChild(body);
+    if (clone) card.tabIndex = -1;
+    card.addEventListener("click", () => ctx.openReview(review));
+    return card;
+  };
+}
+
 /**
- * Marquee: a slowly scrolling strip of reviews and short video cards, for a landing page. The motion is plain
+ * Marquee: a slowly scrolling strip of video pictures, with a few reviews between them, for a landing page. The motion is plain
  * CSS: the strip repeats and slides by one repeat. It pauses when the visitor hovers or focuses a card and has
  * a visible Pause button; for visitors who ask for reduced motion it does not move at all and becomes a row
  * they scroll themselves (see the stylesheet). The repeats are hidden from screen readers and the keyboard.
  */
 defineLayout("marquee", {
-  css,
+  css: tileCss + css,
   inline: true,
   render(ctx: LayoutContext) {
-    // Videos and reviews alternate so neither bunches up
+    // Videos lead: two pictures, then a review, so the strip reads as people first
     const cards: ((clone: boolean) => HTMLElement)[] = [];
     const videos = ctx.testimonials;
     const reviews = ctx.reviews;
-    for (let i = 0; i < Math.max(videos.length, reviews.length) && cards.length < MAX_ITEMS; i++) {
-      if (i < videos.length) {
-        const item = videos[i];
-        cards.push((clone) => {
-          const card = document.createElement("button");
-          card.type = "button";
-          card.className = "vr-mq-card";
-          card.setAttribute("aria-label", `Play video testimonial${item.customerName ? ` from ${item.customerName}` : ""}`);
-          const pic = document.createElement("span");
-          pic.className = "vr-mq-pic";
-          if (item.thumbnailUrl) {
-            const img = document.createElement("img");
-            img.src = item.thumbnailUrl;
-            img.alt = "";
-            pic.appendChild(img);
-          } else {
-            pic.textContent = (item.customerName || "V").charAt(0).toUpperCase();
-          }
-          const play = document.createElement("span");
-          play.className = "vr-mq-play";
-          play.setAttribute("aria-hidden", "true");
-          play.textContent = "▶";
-          pic.appendChild(play);
-          card.appendChild(pic);
-          const body = document.createElement("span");
-          body.className = "vr-mq-body";
-          if (item.customerName) body.appendChild(textEl("span", "vr-mq-name", item.customerName));
-          const quote = ctx.quote(item).text;
-          if (quote) body.appendChild(textEl("span", "vr-mq-quote", `"${quote}"`));
-          card.appendChild(body);
-          if (clone) card.tabIndex = -1;
-          card.addEventListener("click", () => {
-            ctx.track("click", item.id);
-            ctx.openVideo(i);
-          });
-          return card;
-        });
-      }
-      if (i < reviews.length && cards.length < MAX_ITEMS) {
-        const review = reviews[i];
-        cards.push((clone) => {
-          const card = document.createElement("button");
-          card.type = "button";
-          card.className = "vr-mq-card vr-mq-review";
-          card.setAttribute("aria-label", `View review from ${review.authorName}`);
-          const body = document.createElement("span");
-          body.className = "vr-mq-body";
-          body.appendChild(textEl("span", "vr-stars", "★".repeat(Math.max(0, Math.min(5, review.rating)))));
-          if (review.text) body.appendChild(textEl("span", "vr-mq-quote", `"${review.text}"`));
-          body.appendChild(textEl("span", "vr-mq-name", review.authorName));
-          card.appendChild(body);
-          if (clone) card.tabIndex = -1;
-          card.addEventListener("click", () => ctx.openReview(review));
-          return card;
-        });
-      }
+    let next = 0;
+    for (let i = 0; i < videos.length && cards.length < MAX_ITEMS; i++) {
+      const item = videos[i];
+      cards.push((clone) => {
+        const tile = videoTile(ctx, item, i);
+        if (clone) tile.tabIndex = -1;
+        return tile;
+      });
+      if (i % 2 === 1 && next < reviews.length && cards.length < MAX_ITEMS) cards.push(reviewCard(ctx, reviews[next++]));
     }
+    // With few videos the reviews still fill the strip
+    while (next < reviews.length && cards.length < MAX_ITEMS) cards.push(reviewCard(ctx, reviews[next++]));
     if (cards.length === 0) return;
 
     const set = (clone: boolean) => {
