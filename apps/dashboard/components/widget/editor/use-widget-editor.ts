@@ -47,6 +47,7 @@ export function useWidgetEditor(spaceId: string, widgetId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [embedKey, setEmbedKey] = useState("");
+  const [spaceName, setSpaceName] = useState("");
   const [brandKit, setBrandKit] = useState<BrandKitValues | null>(null);
   const [published, setPublished] = useState<UpdateWidgetConfigInput>(DEFAULT_WIDGET_CONFIG);
   const [history, setHistory] = useState<History<UpdateWidgetConfigInput>>(() => createHistory(DEFAULT_WIDGET_CONFIG));
@@ -74,6 +75,7 @@ export function useWidgetEditor(spaceId: string, widgetId: string) {
       savedDraft.current = draft ?? live;
       setHistory(createHistory(draft ?? live));
       setEmbedKey(data.space?.embedKey ?? "");
+      setSpaceName(data.space?.name ?? "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load widget settings");
     } finally {
@@ -188,6 +190,7 @@ export function useWidgetEditor(spaceId: string, widgetId: string) {
     widget,
     rename,
     embedKey,
+    spaceName,
     brandKit,
     config,
     published,

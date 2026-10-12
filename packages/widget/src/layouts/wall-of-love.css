@@ -15,3 +15,18 @@
   );
   gap: var(--vr-gap);
 }
+
+/* Pictures lead and reviews fill the gaps: a review stretches to the height of the row it lands in, its words centred */
+.vr-wall-grid {
+  grid-auto-flow: dense;
+}
+
+.vr-wall-grid .vr-blend-review-card {
+  justify-content: center;
+  padding: 22px;
+}
+
+.vr-wall-grid .vr-blend-review-card .vr-card-quote-text {
+  font-size: 16px;
+  line-height: 1.5;
+}

@@ -15,9 +15,9 @@ const SHEETS: Record<string, string> = {
   spotlight: widgetCss("layouts/spotlight.css"),
   "rating-badge": "",
   marquee: "",
-  carousel: widgetCss("layouts/cards.css"),
-  "wall-of-love": widgetCss("layouts/cards.css"),
-  masonry: widgetCss("layouts/cards.css"),
+  carousel: widgetCss("layouts/tile.css"),
+  "wall-of-love": widgetCss("layouts/tile.css"),
+  masonry: widgetCss("layouts/tile.css"),
 };
 
 describe("shapes", () => {

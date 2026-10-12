@@ -30,9 +30,9 @@ export const LAYOUTS: LayoutInfo[] = [
   { id: "spotlight", name: "Spotlight", bestFor: "Hero and pricing sections: one big testimonial", placement: "inline", grid: false, autoAdvance: true, shapes: ["landscape", "portrait", "square", "vertical", "rounded"] },
   { id: "rating-badge", name: "Rating badge", bestFor: "Headers and footers: a small score that opens the reviews", placement: "inline", grid: false, autoAdvance: false, shapes: [] },
   { id: "marquee", name: "Marquee", bestFor: "Landing pages: a slow strip of reviews and videos", placement: "inline", grid: false, autoAdvance: false, shapes: [] },
-  { id: "carousel", name: "Carousel", bestFor: "Landing pages: a swipeable row", placement: "inline", grid: false, autoAdvance: true, shapes: ["landscape", "square", "rounded", "portrait", "vertical"] },
-  { id: "wall-of-love", name: "Wall of love", bestFor: "A testimonials page: an even grid", placement: "inline", grid: true, autoAdvance: false, shapes: ["landscape", "square", "rounded", "circle", "portrait", "vertical"] },
-  { id: "masonry", name: "Masonry", bestFor: "Mixed quotes and videos: staggered columns", placement: "inline", grid: true, autoAdvance: false, shapes: ["landscape", "square", "rounded", "circle", "portrait", "vertical"] },
+  { id: "carousel", name: "Carousel", bestFor: "Landing pages: a swipeable row", placement: "inline", grid: false, autoAdvance: true, shapes: ["portrait", "landscape", "square", "rounded", "vertical"] },
+  { id: "wall-of-love", name: "Wall of love", bestFor: "A testimonials page: an even grid", placement: "inline", grid: true, autoAdvance: false, shapes: ["portrait", "landscape", "square", "rounded", "circle", "vertical"] },
+  { id: "masonry", name: "Masonry", bestFor: "Mixed quotes and videos: staggered columns", placement: "inline", grid: true, autoAdvance: false, shapes: ["portrait", "landscape", "square", "rounded", "circle", "vertical"] },
 ];
 
 export function layoutInfo(id: WidgetTemplate): LayoutInfo {

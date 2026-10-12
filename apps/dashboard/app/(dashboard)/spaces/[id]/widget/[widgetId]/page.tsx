@@ -104,7 +104,7 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
 
   if (editor.loading) {
     return (
-      <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
         <div className="h-[560px] animate-pulse rounded-card border bg-surface-sunken/40" />
         <div className="h-[560px] animate-pulse rounded-card border bg-surface-sunken/40" />
       </div>
@@ -129,11 +129,17 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
   const isLive = editor.widget?.isLive ?? true;
 
   return (
-    <div className="space-y-4">
-      <nav aria-label="Breadcrumb" className="text-xs text-text-muted">
+    <div className="space-y-3">
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-text-muted">
         <Link href={`/spaces/${spaceId}/widget`} className="inline-flex items-center gap-1 hover:text-text">
           <Icon name="arrow-left" size="sm" /> All widgets
         </Link>
+        {editor.spaceName && (
+          <>
+            <span aria-hidden="true">/</span>
+            <span className="truncate">{editor.spaceName}</span>
+          </>
+        )}
       </nav>
 
       {/* Top bar: one save control for the whole editor */}
@@ -176,10 +182,10 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
         />
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
         {/* Preview first on phones, beside the panel on wide screens */}
         <div className="lg:order-2">
-          <div className="lg:sticky lg:top-20">
+          <div className="lg:sticky lg:top-[4.5rem]">
             <LivePreview
               embedKey={editor.embedKey || undefined}
               template={config.template}
@@ -188,12 +194,12 @@ export default function SpaceWidgetPage({ params }: WidgetPageProps) {
               triggerType={config.triggerType}
               triggerValue={config.triggerValue}
               autoplayPreview={config.autoplayPreview}
-              className="h-[min(78vh,760px)]"
+              className="h-[70vh] lg:h-[calc(100vh-9.5rem)]"
             />
           </div>
         </div>
 
-        <Card variant="flat" className="overflow-hidden lg:order-1">
+        <Card variant="flat" className="overflow-hidden lg:sticky lg:top-[4.5rem] lg:order-1 lg:h-[calc(100vh-9.5rem)] lg:overflow-y-auto">
           <EditorSection step={1} title="Layout" summary={layout.name} open={open.has("layout")} onToggle={() => toggle("layout")}>
             <LayoutSection value={config.template} onChange={(template) => update({ template, theme: { ...config.theme, shape: shapeForLayout(theme.shape, template) } })} />
           </EditorSection>

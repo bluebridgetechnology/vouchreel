@@ -435,7 +435,23 @@ no experiment, not tied to the "live" switch) while the page is on. No change to
 in a browser against the CSP: script, data and layout chunk load and the cards render. The page shows the space name
 in its heading and is public by link; turning it off 404s the page and the data.
 
-**Editor performance panel (E5), built, not yet committed.** A collapsed "How it is doing" strip under the editor's top bar
+**UI polish round after hands-on testing (2026-10-11), built, not yet committed.** Seven findings from using the editor:
+1. *Small floating previews* (floating card, bubble, story strip): the editor shows them as a **close-up** (the page enlarged 1.5 times
+   and cropped to the corner the widget sits in); a zoom button in the preview toolbar returns to the whole page. Inline layouts show the
+   whole page, now as tall as the space allows.
+2. *Rating badge showed nothing*: it needs star-rated reviews, which a new space does not have. The preview now tops thin spaces up with
+   sample items (labelled "Samples added"; visitors see only the space's own), and with videos but no ratings the badge says "Watch N
+   customer videos" and opens the first.
+3. *Marquee was text*: the strip is now video pictures (poster, play button, name and words on a shade), two videos to a review.
+4. *Carousel showed two*: the sample top-up gives it six videos and four reviews to scroll.
+5. *Wall of love looked poor*: videos are now tall picture tiles (`layouts/tile.ts`, `tile.css`, shared by wall, masonry, carousel and
+   marquee; poster only, never a loop) with reviews stretching to the row between them.
+6. *Masonry looked empty*: same cause as 4; its tiles now alternate heights so the columns stagger.
+7. *Sidebar*: collapsible to an icon rail (remembered in the `vr-sidebar` cookie). The widget editor is a **canvas**: the rail by default
+   (openable), no space header, no width limit, controls in their own scrolling column beside a preview that fills the window.
+No change to the core script (704 bytes under budget); each affected layout chunk is still under 3.4 KB of its 5 KB.
+
+**Editor performance panel (E5), committed.** A collapsed "How it is doing" strip under the editor's top bar
 (summary: "1,204 views, 18% played in 30 days"); open it for views, plays, play rate and clicks against the 30 days
 before ("up 20%"), and a bar per day (plays inside) with a mark on the day it was last published. From the events that
 name the widget, whole UTC days so bars and totals agree; `lib/widgets/performance.ts`,

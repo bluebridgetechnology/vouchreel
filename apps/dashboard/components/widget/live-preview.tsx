@@ -7,6 +7,7 @@ import { toggleStyle } from "@/components/ui/toggle";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { WidgetPreviewFrame } from "./widget-preview-frame";
+import { layoutInfo } from "@/lib/widget-editor/layouts";
 import { DEVICES, previewContentFrom, SAMPLE_CONTENT, triggerLabel, type PreviewContent, type PreviewDevice } from "@/lib/widget-preview";
 
 interface LivePreviewProps {
@@ -28,6 +29,10 @@ export function LivePreview({ embedKey, template = "floating-card", position, th
   const [device, setDevice] = useState<PreviewDevice>("desktop");
   const [darkPage, setDarkPage] = useState(false);
   const [replay, setReplay] = useState(0);
+  // A widget that floats in a corner is small on a whole shrunken page: it opens as a close-up of its corner, and an inline one as the whole page
+  const floating = layoutInfo(template).placement === "floating";
+  const [closeUpChoice, setCloseUpChoice] = useState<boolean | null>(null);
+  const closeUp = (closeUpChoice ?? floating) && floating;
   const [content, setContent] = useState<PreviewContent>(SAMPLE_CONTENT);
 
   // What visitors would see: the published items from the public widget endpoint, else samples
@@ -55,6 +60,11 @@ export function LivePreview({ embedKey, template = "floating-card", position, th
           <span className="text-xs font-medium text-text">Live preview</span>
           <span className="hidden rounded-control bg-surface-sunken px-2 py-0.5 text-2xs font-medium text-text-muted sm:inline-block">{triggerLabel(triggerType, triggerValue)}</span>
           {content.sample && <Badge variant="info">Sample content</Badge>}
+          {content.padded && !content.sample && (
+            <Badge variant="info" title="Your space has only a few items, so sample ones are added here to show how the layout looks with more. Visitors see only yours.">
+              Samples added
+            </Badge>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5">
@@ -65,6 +75,18 @@ export function LivePreview({ embedKey, template = "floating-card", position, th
               </button>
             ))}
           </div>
+          {floating && device !== "mobile" && (
+            <button
+              type="button"
+              onClick={() => setCloseUpChoice(!closeUp)}
+              aria-pressed={closeUp}
+              aria-label="Close-up of the widget"
+              title={closeUp ? "Show the whole page" : "Zoom in on the widget"}
+              className={cn(tool, "border", toggleStyle("raised", closeUp))}
+            >
+              <Icon name={closeUp ? "magnifer-zoom-out" : "magnifer-zoom-in"} size="sm" />
+            </button>
+          )}
           <button type="button" onClick={() => setDarkPage((v) => !v)} aria-pressed={darkPage} aria-label="Dark page background" title={darkPage ? "Show on a light page" : "Show on a dark page"} className={cn(tool, "border", toggleStyle("raised", darkPage))}>
             <Icon name={darkPage ? "moon" : "sun"} size="sm" />
           </button>
@@ -74,7 +96,7 @@ export function LivePreview({ embedKey, template = "floating-card", position, th
         </div>
       </div>
 
-      <WidgetPreviewFrame draft={draft} content={content} device={device} page={page} replay={replay} className="min-h-[420px] flex-1 rounded-card border bg-surface-sunken/40 p-3" />
+      <WidgetPreviewFrame draft={draft} content={content} device={device} page={page} replay={replay} closeUp={closeUp} className="min-h-[420px] flex-1 rounded-card border bg-surface-sunken/40 p-3" />
 
       <p className="text-center text-2xs text-text-muted">This is the real widget. Click it to try the player; triggers are skipped here so it shows at once.</p>
     </div>

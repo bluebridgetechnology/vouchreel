@@ -311,4 +311,117 @@ test.describe("widget tools", () => {
       await context.close();
     }
   });
+
+  test("the editor is a canvas: the sidebar is a rail there and opens on request, the space header gives way, and the sidebar choice is remembered elsewhere", async ({ browser, baseURL }) => {
+    const { context, page } = await owner(browser, baseURL!);
+    const sidebarWidth = async () => (await page.locator("aside").first().boundingBox())!.width;
+    try {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      // A normal page: the full sidebar, and the space's name and tabs on a space page
+      await open(page, `/spaces/${spaceId}/widget`);
+      await expect(page.getByRole("heading", { level: 1, name: SPACE_NAME })).toBeVisible();
+      expect(await sidebarWidth()).toBeGreaterThan(200);
+
+      // The editor: a rail, no space header, and the page uses the full width
+      await open(page, `/spaces/${spaceId}/widget/${wallId}`);
+      await expect(page.getByRole("button", { name: "Expand sidebar" })).toBeVisible();
+      await expect.poll(sidebarWidth).toBeLessThan(90);
+      await expect(page.getByRole("heading", { level: 1, name: SPACE_NAME })).toHaveCount(0);
+      await expect(page.getByRole("navigation", { name: "Space sections" })).toHaveCount(0);
+      await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText(SPACE_NAME);
+      // The rail's links still have names
+      await expect(page.getByRole("link", { name: "Spaces" }).first()).toBeVisible();
+      const preview = await page.locator('iframe[title^="Widget preview"]').boundingBox();
+      expect(preview!.width).toBeGreaterThan(800); // about 900 at this window; the old layout gave about 520
+
+      // Open it for a while; it goes back to a rail when the page is reloaded
+      await page.getByRole("button", { name: "Expand sidebar" }).click();
+      await expect.poll(sidebarWidth).toBeGreaterThan(200);
+      await expect(page.getByRole("button", { name: "Collapse sidebar" })).toHaveAttribute("aria-expanded", "true");
+
+      // On a normal page the owner's choice sticks, across a reload
+      await open(page, `/spaces/${spaceId}/widget`);
+      expect(await sidebarWidth()).toBeGreaterThan(200); // opening it on the canvas did not change the choice
+      await page.getByRole("button", { name: "Collapse sidebar" }).click();
+      await expect.poll(sidebarWidth).toBeLessThan(90);
+      await page.reload();
+      expect(await sidebarWidth()).toBeLessThan(90);
+      await expect(page.getByRole("link", { name: "Billing" })).toBeVisible(); // reachable by name
+      await page.getByRole("button", { name: "Expand sidebar" }).click();
+      await expect.poll(sidebarWidth).toBeGreaterThan(200);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("layouts show video first, with samples added so a thin space still shows what the layout is", async ({ browser, baseURL }) => {
+    const { context, page } = await owner(browser, baseURL!);
+    try {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await open(page, `/spaces/${spaceId}/widget/${wallId}`);
+      await page.waitForLoadState("networkidle");
+      const frame = page.frameLocator('iframe[title^="Widget preview"]');
+      await expect(page.getByText("Samples added")).toBeVisible();
+
+      const choose = async (name: RegExp, template: string) => {
+        await page.getByRole("radio", { name }).click();
+        await expect(frame.locator(".vr-theme-root")).toHaveClass(new RegExp(`vr-template-${template}`), { timeout: 15_000 });
+      };
+
+      // Wall of love: video pictures with a play button, and reviews between them
+      await choose(/^Wall of love/, "wall-of-love");
+      await expect.poll(() => frame.locator(".vr-tile").count()).toBeGreaterThanOrEqual(6);
+      await expect(frame.locator(".vr-tile .vr-tile-play").first()).toBeVisible();
+      await expect(frame.locator(".vr-blend-review-card").first()).toBeVisible();
+      await expect(frame.getByText("Setup took ten minutes and our demo requests doubled.").first()).toBeVisible(); // the space's own comes first
+
+      // Masonry: the same pictures, in staggered columns (their heights differ)
+      await choose(/^Masonry/, "masonry");
+      const heights = await frame.locator(".vr-tile").evaluateAll((tiles) => tiles.slice(0, 6).map((t) => Math.round(t.getBoundingClientRect().height)));
+      expect(new Set(heights).size).toBeGreaterThan(1);
+
+      // Carousel: more than the two a thin space has
+      await choose(/^Carousel/, "carousel");
+      expect(await frame.locator(".vr-tile").count()).toBeGreaterThanOrEqual(6);
+
+      // Marquee: the strip is made of video pictures, with a few reviews
+      await choose(/^Marquee/, "marquee");
+      const tiles = await frame.locator(".vr-mq-set").first().locator(".vr-tile").count();
+      const reviews = await frame.locator(".vr-mq-set").first().locator(".vr-mq-review").count();
+      expect(tiles).toBeGreaterThan(reviews);
+
+      // Rating badge: something shows (the sample reviews give it a score)
+      await choose(/^Rating badge/, "rating-badge");
+      await expect(frame.locator(".vr-badge").first()).toBeVisible();
+      await expect(frame.locator(".vr-badge").first()).toContainText(/from \d+ reviews?/);
+    } finally {
+      await context.close();
+    }
+  });
+
+  test("a widget that floats in a corner opens as a close-up of that corner, and the whole page is one click away", async ({ browser, baseURL }) => {
+    const { context, page } = await owner(browser, baseURL!);
+    try {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await open(page, `/spaces/${spaceId}/widget/${cornerId}`);
+      await page.waitForLoadState("networkidle");
+      const frame = page.frameLocator('iframe[title^="Widget preview"]');
+      await expect(page.locator('iframe[title*="close-up"]')).toBeVisible();
+      await expect(frame.locator(".vr-theme-root")).toHaveClass(/vr-template-floating-card/, { timeout: 15_000 });
+
+      // A smaller window enlarged to fill the space, so the widget is bigger than on the shrunken whole page (which is scaled down)
+      const scale = () => page.locator('iframe[title^="Widget preview"]').evaluate((f) => Number(/^matrix\(([\d.]+),/.exec(getComputedStyle(f).transform)?.[1] ?? 1));
+      expect(await scale()).toBeGreaterThan(1);
+
+      await page.getByRole("button", { name: "Close-up of the widget" }).click();
+      await expect(page.locator('iframe[title*="close-up"]')).toHaveCount(0);
+      expect(await scale()).toBeLessThan(1);
+
+      // An inline layout has no close-up: it is already the whole page
+      await page.getByRole("radio", { name: /^Wall of love/ }).click();
+      await expect(page.getByRole("button", { name: "Close-up of the widget" })).toHaveCount(0);
+    } finally {
+      await context.close();
+    }
+  });
 });

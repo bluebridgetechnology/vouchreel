@@ -966,8 +966,8 @@ test.describe("platform admin", () => {
         const card = page.locator(".vr-blend-video-card", { hasText: "Review video" });
         await expect(card).toHaveCount(1, { timeout: 15_000 });
         // The name is text, not markup: the <b> is shown as typed
-        await expect(card.locator(".vr-card-author-name")).toHaveText("Alice <b>M.</b>");
-        await expect(card.locator(".vr-card-author-name b")).toHaveCount(0);
+        await expect(card.locator(".vr-tile-name")).toHaveText("Alice <b>M.</b>");
+        await expect(card.locator(".vr-tile-name b")).toHaveCount(0);
         await expect.poll(() => card.locator("video").evaluate((v: HTMLVideoElement) => v.readyState)).toBeGreaterThanOrEqual(1);
 
         // The file goes (a takedown deletes it at once) while the list still names it: the tile drops itself
@@ -1110,6 +1110,9 @@ test.describe("platform admin", () => {
       await page.getByRole("link", { name: "30 days" }).click();
       await expect(page).toHaveURL(/range=30/);
       await expect(page.getByRole("link", { name: "30 days" })).toHaveAttribute("aria-current", "page");
+
+      // The period switch fades between its two looks, and a slower browser (Firefox in CI) was still mid-fade, which axe reads as halfway colours
+      await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))));
 
       const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
       expect(violations.map((v) => `${v.id}: ${v.nodes[0].target.join(" ")}`)).toEqual([]);
