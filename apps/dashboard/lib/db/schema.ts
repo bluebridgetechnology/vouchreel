@@ -643,6 +643,8 @@ export const reviews = pgTable("reviews", {
   reviewDate: timestamp("review_date", { withTimezone: true }),
   providerReviewId: text("provider_review_id").notNull().unique(),
   isApproved: boolean("is_approved").default(true).notNull(),
+  /** Which pages show this review (same shape as testimonials.matchRules). Null means every page. */
+  matchRules: jsonb("match_rules").$type<Record<string, unknown>>(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

@@ -26,6 +26,8 @@ import { EditTestimonialDialog } from "@/components/testimonials/edit-testimonia
 import { SocialExportModal } from "@/components/social/social-export-modal";
 import { AiVideoModal } from "@/components/ai-video/ai-video-modal";
 import { TranslationsModal } from "@/components/testimonials/translations-modal";
+import { PagePreview } from "@/components/testimonials/page-preview";
+import { BulkPagesDialog } from "@/components/testimonials/bulk-pages-dialog";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ModalOverlay } from "@/components/ui/modal";
@@ -51,6 +53,10 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
   const [aiVideoTestimonial, setAiVideoTestimonial] = useState<TestimonialItem | null>(null);
   const [translatingTestimonial, setTranslatingTestimonial] = useState<TestimonialItem | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  // Choosing several testimonials to give the same page rules
+  const [selecting, setSelecting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
 
   function captureFocus() {
@@ -240,6 +246,18 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+        {testimonials.length > 1 && (
+          <button
+            type="button"
+            onClick={() => {
+              setSelecting((s) => !s);
+              setSelectedIds(new Set());
+            }}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            {selecting ? "Done selecting" : "Select"}
+          </button>
+        )}
         <a
           href={`/api/spaces/${spaceId}/consents/export`}
           download
@@ -263,6 +281,24 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
       {error && (
         <div className="rounded-control bg-danger-soft p-4 text-xs text-danger-foreground">
           {error}
+        </div>
+      )}
+
+      {selecting && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-card border bg-surface-sunken/40 p-3" role="status">
+          <p className="text-xs text-text">
+            {selectedIds.size} selected
+            <button
+              type="button"
+              className="ml-3 underline"
+              onClick={() => setSelectedIds(selectedIds.size === testimonials.length ? new Set() : new Set(testimonials.map((t) => t.id)))}
+            >
+              {selectedIds.size === testimonials.length ? "Clear" : "Select all"}
+            </button>
+          </p>
+          <Button type="button" variant="primary" size="sm" disabled={selectedIds.size === 0} onClick={() => setBulkOpen(true)}>
+            Set pages
+          </Button>
         </div>
       )}
 
@@ -328,11 +364,41 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
                   onExportSocial={(t) => setExportingTestimonial(t)}
                   onGenerateVideo={(t) => setAiVideoTestimonial(t)}
                   onManageTranslations={(t) => setTranslatingTestimonial(t)}
+                  selected={selectedIds.has(testimonial.id)}
+                  onSelectChange={
+                    selecting
+                      ? (t, on) =>
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (on) next.add(t.id);
+                            else next.delete(t.id);
+                            return next;
+                          })
+                      : undefined
+                  }
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
+      )}
+
+      {!loading && testimonials.length > 1 && <PagePreview items={testimonials} />}
+
+      {bulkOpen && (
+        <BulkPagesDialog
+          spaceId={spaceId}
+          ids={[...selectedIds]}
+          onClose={() => setBulkOpen(false)}
+          onSaved={(ids, rules) => {
+            const done = new Set(ids);
+            setTestimonials((prev) => prev.map((t) => (done.has(t.id) ? { ...t, matchRules: rules } : t)));
+            setBulkOpen(false);
+            setSelecting(false);
+            setSelectedIds(new Set());
+            notify.success(`Page rules set on ${ids.length} ${ids.length === 1 ? "testimonial" : "testimonials"}`);
+          }}
+        />
       )}
 
       {/* Add Testimonial Dialog */}

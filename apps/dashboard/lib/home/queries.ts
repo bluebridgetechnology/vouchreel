@@ -37,7 +37,7 @@ export interface HomeData {
     /** Sessions that played this video and converted afterwards, in the same period. */
     convertingViewers: number;
   } | null;
-  checklist: { key: string; label: string; done: boolean; href: string }[];
+  checklist: { key: string; label: string; hint: string; done: boolean; href: string }[];
   needs: {
     pending: { spaceId: string; spaceName: string; count: number }[];
     pendingThumbnails: string[];
@@ -219,11 +219,11 @@ export async function getHomeData(userId: string, range: HomeRange, now = new Da
   const first = owned[0].id;
   const [hasTestimonial, hasWidget, hasImpression, hasForm] = setup.map((rows) => rows.length > 0);
   const checklist = [
-    { key: "space", label: "Create a space", done: true, href: "/spaces/new" },
-    { key: "testimonial", label: "Add your first testimonial", done: hasTestimonial, href: `/spaces/${first}/testimonials` },
-    { key: "widget", label: "Style your widget", done: hasWidget, href: `/spaces/${first}/widget` },
-    { key: "install", label: "Put the widget on your site", done: hasImpression, href: `/spaces/${first}/widget` },
-    { key: "collect", label: "Ask customers for a video", done: hasForm, href: `/spaces/${first}/collect` },
+    { key: "space", label: "Create a space", hint: "A space holds one brand's videos, widget and collection forms.", done: true, href: "/spaces/new" },
+    { key: "testimonial", label: "Add your first testimonial", hint: "Paste a video link or upload a file. It takes under a minute.", done: hasTestimonial, href: `/spaces/${first}/testimonials` },
+    { key: "widget", label: "Style your widget", hint: "Pick a layout and your brand colours, and see it live as you go.", done: hasWidget, href: `/spaces/${first}/widget` },
+    { key: "install", label: "Put the widget on your site", hint: "Copy one line of code into your site. This step ticks once a visitor sees it.", done: hasImpression, href: `/spaces/${first}/widget` },
+    { key: "collect", label: "Ask customers for a video", hint: "Share a link or form so customers can record their own testimonial.", done: hasForm, href: `/spaces/${first}/collect` },
   ];
 
   // Limits close to full

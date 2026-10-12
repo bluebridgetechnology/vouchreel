@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Card, cardVariants } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export interface TestimonialItem {
   id: string;
@@ -34,6 +35,9 @@ interface TestimonialCardProps {
   onExportSocial?: (t: TestimonialItem) => void;
   onManageTranslations?: (t: TestimonialItem) => void;
   onGenerateVideo?: (t: TestimonialItem) => void;
+  /** When given, the card shows a checkbox so several can be changed at once */
+  selected?: boolean;
+  onSelectChange?: (t: TestimonialItem, selected: boolean) => void;
 }
 
 export function TestimonialCard({
@@ -44,6 +48,8 @@ export function TestimonialCard({
   onExportSocial,
   onManageTranslations,
   onGenerateVideo,
+  selected = false,
+  onSelectChange,
 }: TestimonialCardProps) {
   const {
     attributes,
@@ -81,6 +87,15 @@ export function TestimonialCard({
         !testimonial.isActive && "opacity-75 bg-surface-sunken/20"
       )}
     >
+      {onSelectChange && (
+        <Checkbox
+          checked={selected}
+          onCheckedChange={(v) => onSelectChange(testimonial, v === true)}
+          aria-label={`Select ${testimonial.title || "testimonial"}`}
+          className="self-center sm:self-auto"
+        />
+      )}
+
       {/* Drag Handle */}
       <button
         {...attributes}

@@ -202,6 +202,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         rating: reviews.rating,
         text: reviews.text,
         reviewDate: reviews.reviewDate,
+        matchRules: reviews.matchRules,
       })
       .from(reviews)
       .where(

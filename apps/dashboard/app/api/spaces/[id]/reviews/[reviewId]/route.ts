@@ -65,7 +65,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     const [updated] = await db
       .update(reviews)
-      .set({ isApproved: validated.data.isApproved })
+      .set({
+        ...(validated.data.isApproved !== undefined && { isApproved: validated.data.isApproved }),
+        ...(validated.data.matchRules !== undefined && { matchRules: validated.data.matchRules }),
+      })
       .where(eq(reviews.id, review.id))
       .returning();
 

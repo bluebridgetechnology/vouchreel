@@ -219,6 +219,37 @@ describe("Reviews API Routes", () => {
     });
   });
 
+  describe("PATCH match rules", () => {
+    const patch = (body: unknown) =>
+      updateReview(
+        new Request("http://localhost/api/spaces/space-abc/reviews/rev-1", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }),
+        { params: Promise.resolve({ id: "space-abc", reviewId: "rev-1" }) }
+      );
+
+    it("saves the pages a review shows on, without touching moderation", async () => {
+      (db.select as any)
+        .mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockSpace]) }) })
+        .mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([{ id: "rev-1" }]) }) });
+      const set = vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: "rev-1" }]) }) });
+      (db.update as any).mockReturnValue({ set });
+
+      const rules = { mode: "specific", urlPatterns: ["/pricing"], tags: [] };
+      const res = await patch({ matchRules: rules });
+
+      expect(res.status).toBe(200);
+      expect(set).toHaveBeenCalledWith({ matchRules: rules });
+    });
+
+    it("rejects a body that changes nothing", async () => {
+      (db.select as any).mockReturnValueOnce({ from: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockSpace]) }) });
+      expect((await patch({})).status).toBe(400);
+    });
+  });
+
   describe("DELETE /api/spaces/[id]/reviews/[reviewId]", () => {
     it("deletes the review successfully", async () => {
       (db.select as any).mockReturnValue({

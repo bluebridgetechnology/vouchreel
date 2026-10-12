@@ -5,7 +5,7 @@ import type { HomeData } from "@/lib/home/queries";
 
 const metric = (current: number, previous: number) => ({ current, previous, series: [current] });
 const steps = (done: boolean[]) =>
-  ["space", "testimonial", "widget", "install", "collect"].map((key, i) => ({ key, label: `Step ${key}`, done: done[i], href: `/go/${key}` }));
+  ["space", "testimonial", "widget", "install", "collect"].map((key, i) => ({ key, label: `Step ${key}`, hint: `Hint ${key}`, done: done[i], href: `/go/${key}` }));
 
 const base: HomeData = {
   range: 7,
@@ -34,6 +34,8 @@ describe("home page", () => {
     expect(html).toContain("1 of 5 done");
     expect(html).toContain('href="/go/testimonial"');
     expect(html).not.toContain("Spotlight");
+    expect(html).toContain("Hint testimonial"); // only the next step explains itself
+    expect(html).not.toContain("Hint widget");
   });
 
   it("leaves out the numbers until there has been any activity", () => {
