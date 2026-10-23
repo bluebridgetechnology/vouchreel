@@ -12,6 +12,7 @@ import { CollectMock, ReportMock, TargetMock } from "@/components/marketing/mock
 import { Agencies } from "@/components/marketing/agencies";
 import { BetaCta } from "@/components/marketing/beta-cta";
 import { BrandSlider } from "@/components/marketing/brand-slider";
+import { Faq } from "@/components/marketing/faq";
 import { HeroSection } from "@/components/marketing/hero";
 import { LayoutPicker } from "@/components/marketing/landing-demo";
 import { StackBeam } from "@/components/marketing/stack-beam";
@@ -122,37 +123,6 @@ const rows = [
 ];
 
 
-
-const faqs = [
-  {
-    q: "Do my customers need an account to give a testimonial?",
-    a: "No. You send a link. They record in their browser or upload a video, and agree to how it will be used as part of the same form. There is nothing to install.",
-  },
-  {
-    q: "Will it slow my site down?",
-    a: "The embed is one async script under 10 KB gzipped. The widget holds a fixed position, so it does not shift your layout, and it loads after your page.",
-  },
-  {
-    q: "What can I show in the widget?",
-    a: "Videos you collect, YouTube, Vimeo or MP4 links you paste in, text testimonials, and Google or Trustpilot reviews. There are ten ways to lay them out.",
-  },
-  {
-    q: "Does it work with my website builder?",
-    a: "It works anywhere you can add a script tag, including Shopify, WordPress, Webflow and Framer. Zapier, Make, an API and webhooks cover the rest.",
-  },
-  {
-    q: "Can I remove the Vouchreel branding?",
-    a: "Yes. Paid plans remove the Vouchreel watermark and let you set your own colours. The free plan keeps it.",
-  },
-  {
-    q: "What happens to my customers' data?",
-    a: "Each testimonial keeps a record of the consent given, and people can withdraw it. You can delete one person's data, or your whole account, from your settings. Analytics are first-party, with no third-party cookies.",
-  },
-  {
-    q: "Can I try it before paying?",
-    a: "Yes. The free plan needs no credit card, so you can collect and embed your first testimonials and decide after.",
-  },
-];
 
 export default async function LandingPage() {
   const session = await getSession();
@@ -366,30 +336,7 @@ export default async function LandingPage() {
         </Container>
       </Section>
 
-      {/* FAQ */}
-      <Section id="faq" className="pt-0">
-        <Container>
-          <div className="mx-auto max-w-3xl">
-            <div className="text-center">
-              <Badge variant="eyebrow">Questions</Badge>
-              <h2 className="mt-5 text-4xl font-medium sm:text-5xl">
-                Good to <Em>know</Em>
-              </h2>
-            </div>
-            <div className="mt-12 divide-y rounded-panel border bg-surface">
-              {faqs.map((item) => (
-                <details key={item.q} className="group px-5 py-4 sm:px-7">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium [&::-webkit-details-marker]:hidden">
-                    {item.q}
-                    <Icon name="alt-arrow-down" size="sm" className="shrink-0 text-text-subtle transition-transform group-open:rotate-180" />
-                  </summary>
-                  <p className="mt-3 text-sm leading-relaxed text-text-muted">{item.a}</p>
-                </details>
-              ))}
-            </div>
-          </div>
-        </Container>
-      </Section>
+      <Faq />
 
       {/* Final CTA */}
       <Section className="pt-0">
