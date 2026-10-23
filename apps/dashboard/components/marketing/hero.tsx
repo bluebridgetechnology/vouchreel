@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowButton } from "@/components/marketing/arrow-button";
 import { buttonVariants } from "@/components/ui/button";
 import { Em } from "@/components/ui/em";
 import { Icon } from "@/components/ui/icon";
@@ -31,18 +32,9 @@ export function HeroSection() {
           </div>
 
           <div className="hero-rise flex flex-col items-center gap-5 sm:flex-row sm:gap-8" style={{ animationDelay: "0.2s" }}>
-            <Link
-              href="/signup"
-              className={cn(
-                buttonVariants({ size: "xl" }),
-                "group relative w-fit overflow-hidden p-1 ps-7 pe-16 transition-all duration-500 hover:ps-16 hover:pe-7",
-              )}
-            >
-              <span className="relative z-10 transition-all duration-500">Start free</span>
-              <span className="absolute right-1 flex size-12 items-center justify-center rounded-pill bg-surface text-text transition-all duration-500 group-hover:right-[calc(100%-3.25rem)]">
-                <Icon name="arrow-right" size="sm" className="-rotate-45 transition-transform duration-500 group-hover:rotate-0" />
-              </span>
-            </Link>
+            <ArrowButton href="/signup" size="xl">
+              Start free
+            </ArrowButton>
             <Link href="/#demo" className={cn(buttonVariants({ variant: "ghost", size: "lg" }), "text-text")}>
               <Icon name="play-circle" /> Try the live demo
             </Link>

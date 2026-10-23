@@ -9,6 +9,7 @@ import { Container, Section } from "@/components/ui/layout";
 import type { IconName } from "@/lib/icons.generated";
 import { cn } from "@/lib/utils";
 import { CollectMock, ReportMock, TargetMock } from "@/components/marketing/mocks";
+import { BetaCta } from "@/components/marketing/beta-cta";
 import { BrandSlider } from "@/components/marketing/brand-slider";
 import { HeroSection } from "@/components/marketing/hero";
 import { LayoutPicker } from "@/components/marketing/landing-demo";
@@ -373,33 +374,7 @@ export default async function LandingPage() {
         </Container>
       </Section>
 
-      {/* Beta */}
-      <section className="bg-surface-inverse py-(--space-section) text-text-inverse">
-        <Container>
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge className="bg-text-inverse/10 text-text-inverse">
-              <Icon name="rocket" size="sm" /> Now in beta
-            </Badge>
-            <h2 className="mt-8 text-3xl font-medium leading-snug sm:text-5xl">
-              Be one of the <Em>first teams</Em> on Vouchreel
-            </h2>
-            <p className="mx-auto mt-6 max-w-2xl opacity-80">
-              We&apos;re working with a small group of beta teams. Their real video testimonials will replace the samples on this
-              page, and you can help shape what we build next.
-            </p>
-            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button asChild size="xl">
-                <Link href="/signup">
-                  Join the beta <Icon name="arrow-right" size="sm" />
-                </Link>
-              </Button>
-              <Button asChild size="xl" variant="outline">
-                <a href="mailto:support@vouchreel.com?subject=Vouchreel%20beta">Talk to us first</a>
-              </Button>
-            </div>
-          </div>
-        </Container>
-      </section>
+      <BetaCta />
 
       {/* Pricing teaser */}
       <Section id="pricing">
