@@ -1,2 +1,6 @@
 # Third-party logos are used exactly as supplied: never convert their line endings
 packages/video/src/assets/*.svg -text
+
+# Shell scripts and the Caddyfile run on Linux: keep LF endings even when checked out on Windows
+*.sh text eol=lf
+deploy/Caddyfile text eol=lf

@@ -80,6 +80,24 @@ All variables are listed in `.env.example` (development) and `.env.production.ex
 
 Everything the app needs — Postgres, migrations, and the dashboard — runs from the repo root with two compose files.
 
+### One-command install (recommended)
+
+On a fresh Ubuntu 22.04+ or Debian 12+ server (2 GB RAM minimum, 4 GB comfortable), point an A record for your domain at the server, then run one script. It asks for the domain and does everything else: Docker, firewall (ssh, 80, 443), fail2ban, automatic security updates, swap, generated secrets in `.env.production`, Postgres, bundled MinIO storage, the app and workers, HTTPS through Caddy and Let's Encrypt, nightly database backups, and a `vouchreel` command.
+
+```bash
+# from your computer: packages this checkout, uploads it and installs it
+bash deploy/install.sh root@203.0.113.10
+
+# or on the server itself, from a copy of the repo
+sudo bash deploy/install.sh
+```
+
+When it finishes it prints the site address, where the database, storage and secrets live, and the next steps (create your account, then `vouchreel admin you@example.com`). A copy is saved in `/opt/vouchreel/INSTALL_SUMMARY.txt`.
+
+Running it again keeps the existing secrets and rebuilds with the current code, so it is also the update command. Set `DOMAIN=app.example.com` to skip the prompt, and `SSH_OPTS="-p 2222 -i ~/.ssh/key"` for custom ssh settings.
+
+Afterwards, fill in `SMTP_*` (or `RESEND_API_KEY`), Stripe, Dodo and Google keys with `vouchreel env` then `vouchreel restart`. Media files live in the `vouchreel_miniodata` volume, which the database backup does not cover; switch to S3 or R2 later by changing the `STORAGE_*` values. The manual steps below are for setups that do not fit the script.
+
 ### 1. Prepare the server
 
 - Docker Engine with **Docker Compose v2.24+** (the production override uses the `!reset` YAML tag).

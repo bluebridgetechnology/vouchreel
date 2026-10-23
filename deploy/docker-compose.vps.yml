@@ -1,0 +1,88 @@
+# VPS overlay, used by deploy/install.sh on top of the other two files:
+#
+#   docker compose -p vouchreel --env-file .env.production \
+#     -f docker-compose.yml -f docker-compose.production.yml -f deploy/docker-compose.vps.yml up -d
+#
+# It adds what a single server needs that the other files leave to you:
+#   - Caddy: the only thing reachable from the internet. It gets and renews the HTTPS certificate by itself and sends
+#     traffic to the app, or, for the media bucket's path, to MinIO.
+#   - MinIO: S3-compatible storage for testimonial videos, thumbnails and exports, so a first install needs no cloud
+#     account. Switch to S3 or R2 later by changing the STORAGE_* values in .env.production.
+# The app, the workers and the database are not published on any port.
+
+services:
+  app:
+    # Reached through Caddy only (the base file publishes 3000)
+    ports: !reset []
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: vouchreel-caddy
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN must be set}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-vouchreel-media}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # The certificate lives here: keep this volume or a new one has to be requested
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+      - minio
+    networks:
+      default:
+        # The app and the workers reach the bucket at the public address (that is the address handed to browsers),
+        # so inside the compose network the domain points at Caddy
+        aliases:
+          - ${DOMAIN}
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: vouchreel-minio
+    restart: always
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_KEY:?STORAGE_KEY must be set}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET:?STORAGE_SECRET must be set}
+      # Browsers upload straight to the bucket (presigned form posts), which needs the app's origin allowed
+      MINIO_API_CORS_ALLOW_ORIGIN: ${NEXT_PUBLIC_APP_URL:?NEXT_PUBLIC_APP_URL must be set}
+    volumes:
+      - miniodata:/data
+
+  # One-shot: makes the bucket, lets anyone read files from it (testimonial videos are shown on customers' sites),
+  # and clears abandoned uploads after two days. Safe to run again.
+  minio-init:
+    image: quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z
+    container_name: vouchreel-minio-init
+    restart: 'no'
+    environment:
+      STORAGE_KEY: ${STORAGE_KEY}
+      STORAGE_SECRET: ${STORAGE_SECRET}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-vouchreel-media}
+    depends_on:
+      - minio
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        set -e
+        # MinIO takes a few seconds to accept logins after it starts
+        i=0
+        until (mc alias set local http://minio:9000 "$$STORAGE_KEY" "$$STORAGE_SECRET" >/dev/null 2>&1 && mc ls local >/dev/null 2>&1); do
+          i=$$((i + 1))
+          [ "$$i" -lt 60 ] || { echo "minio did not become ready"; exit 1; }
+          sleep 2
+        done
+        mc mb --ignore-existing "local/$$STORAGE_BUCKET"
+        mc anonymous set download "local/$$STORAGE_BUCKET"
+        mc ilm rule add --prefix "uploads/pending/" --expire-days 2 "local/$$STORAGE_BUCKET" || true
+        echo "bucket $$STORAGE_BUCKET ready"
+
+volumes:
+  caddy_data:
+  caddy_config:
+  miniodata:
