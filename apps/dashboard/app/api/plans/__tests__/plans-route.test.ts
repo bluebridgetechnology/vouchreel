@@ -48,7 +48,7 @@ describe("GET /api/plans", () => {
   });
 
   it("answers with a server error, not a crash, when the database fails", async () => {
-    findMany.mockRejectedValue(new Error("db down"));
+    findMany.mockRejectedValueOnce(new Error("db down"));
     expect((await GET()).status).toBe(500);
   });
 });

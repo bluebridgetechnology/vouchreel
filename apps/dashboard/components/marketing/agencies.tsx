@@ -62,7 +62,7 @@ export function Agencies() {
               <Icon name="star-ring" size="sm" /> Managing many sites? One account covers them all.
             </p>
             <Button asChild>
-              <Link href="/pricing">See agency plans</Link>
+              <Link href="/pricing">See plans</Link>
             </Button>
           </div>
         </div>

@@ -126,7 +126,9 @@ export function PricingTable({ plans, user, currentPlanId, layout = "wide" }: Pr
       {/* Plans */}
       <div
         className={cn(
-          compact ? "mx-auto grid max-w-7xl gap-6 sm:grid-cols-2 xl:grid-cols-4" : "mx-auto flex max-w-6xl flex-wrap justify-center gap-6",
+          compact
+            ? cn("mx-auto grid gap-6 sm:grid-cols-2", displayPlans.length === 3 ? "max-w-6xl xl:grid-cols-3" : "max-w-7xl xl:grid-cols-4")
+            : "mx-auto flex max-w-6xl flex-wrap justify-center gap-6",
         )}
       >
         {displayPlans.map((plan, index) => {

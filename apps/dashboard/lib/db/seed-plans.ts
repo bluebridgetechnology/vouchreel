@@ -87,7 +87,7 @@ export const DEFAULT_PLANS = [
     stripePriceId: "price_agency_monthly",
     dodoProductId: "pdt_agency_monthly",
     dodoPriceId: "price_agency_monthly",
-    isActive: true,
+    isActive: false, // Retired from public pricing: Business takes its place (existing subscribers keep it)
   },
   {
     name: "Agency",
@@ -106,23 +106,40 @@ export const DEFAULT_PLANS = [
     stripePriceId: "price_agency_yearly",
     dodoProductId: "pdt_agency_yearly",
     dodoPriceId: "price_agency_yearly",
-    isActive: true,
+    isActive: false, // Retired from public pricing: Business takes its place (existing subscribers keep it)
   },
   {
     name: "Business",
-    price: 4900,
+    price: 4900, // $49.00
     interval: "month" as const,
     features: [
-      "Unlimited spaces",
-      "Multi-seat accounts",
-      "White-label branding",
-      "Priority support",
+      "Everything in Pro",
+      "Advanced page-targeting match rules",
+      "Custom CSS styling",
+      "Priority email & chat support",
     ],
     stripeProductId: "prod_biz_monthly",
     stripePriceId: "price_biz_monthly",
     dodoProductId: "pdt_biz_monthly",
     dodoPriceId: "price_biz_monthly",
-    isActive: false, // Legacy tier superseded by Agency
+    isActive: true,
+  },
+  {
+    name: "Business",
+    price: 49000, // $490.00 (2 months free)
+    interval: "year" as const,
+    features: [
+      "Everything in Pro",
+      "Advanced page-targeting match rules",
+      "Custom CSS styling",
+      "Priority email & chat support",
+      "2 months free included",
+    ],
+    stripeProductId: "prod_biz_yearly",
+    stripePriceId: "price_biz_yearly",
+    dodoProductId: "pdt_biz_yearly",
+    dodoPriceId: "price_biz_yearly",
+    isActive: true,
   },
 ];
 
