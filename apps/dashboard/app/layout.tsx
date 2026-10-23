@@ -1,7 +1,7 @@
 import "./globals.css";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
-import { fontSans, fontMono } from "@/lib/fonts";
+import { fontSans, fontHeading, fontMono } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { ConfirmProvider } from "@/components/ui/confirm";
@@ -45,7 +45,7 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fontSans.variable} ${fontMono.variable}`}
+      className={`${fontSans.variable} ${fontHeading.variable} ${fontMono.variable}`}
       suppressHydrationWarning
     >
       <body suppressHydrationWarning>

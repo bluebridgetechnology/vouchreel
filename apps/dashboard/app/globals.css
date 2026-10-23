@@ -19,7 +19,8 @@
 /* ------------------------------------------------------------------ */
 @theme inline {
   /* Fonts */
-  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-urbanist), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-accent: var(--font-playfair, "Playfair Display"), ui-serif, Georgia, serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
@@ -136,7 +137,7 @@
   --text-display--line-height: 1.02;
   --text-display--letter-spacing: -0.035em;
 
-  /* Outfit tops out at 500 in this product. Heavier utilities are clamped to 500
+  /* Inter and Urbanist top out at 500 in this product. Heavier utilities are clamped to 500
      so legacy font-semibold / font-bold render correctly until Phase 5 removes them. */
   --font-weight-light: 300;
   --font-weight-normal: 400;
@@ -345,6 +346,15 @@
   }
   body {
     @apply bg-canvas text-text font-sans antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .text-display {
+    font-family: var(--font-heading);
   }
   input[type="checkbox"],
   input[type="radio"],
