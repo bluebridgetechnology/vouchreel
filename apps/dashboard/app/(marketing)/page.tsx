@@ -9,6 +9,7 @@ import { Container, Section } from "@/components/ui/layout";
 import type { IconName } from "@/lib/icons.generated";
 import { cn } from "@/lib/utils";
 import { CollectMock, ReportMock, TargetMock } from "@/components/marketing/mocks";
+import { Agencies } from "@/components/marketing/agencies";
 import { BetaCta } from "@/components/marketing/beta-cta";
 import { BrandSlider } from "@/components/marketing/brand-slider";
 import { HeroSection } from "@/components/marketing/hero";
@@ -119,12 +120,6 @@ const rows = [
 ];
 
 
-const agencyPoints: { title: string; description: string; icon: IconName }[] = [
-  { title: "Teams with roles", description: "Invite owners, editors and viewers.", icon: "users-group-rounded" },
-  { title: "White label", description: "Your branding and your own domain.", icon: "buildings-2" },
-  { title: "One view of every client", description: "A cockpit across all the sites you run.", icon: "layers-minimalistic" },
-  { title: "Reports clients read", description: "ROI reports as PDF and CSV.", icon: "chart-square" },
-];
 
 const faqs = [
   {
@@ -339,40 +334,7 @@ export default async function LandingPage() {
         </Container>
       </Section>
 
-      {/* Agencies */}
-      <Section className="pt-0">
-        <Container>
-          <Card variant="cream" padding="lg" className="grid gap-10 sm:p-10 lg:grid-cols-[1fr_1.2fr] lg:items-center lg:gap-14">
-            <div>
-              <Badge variant="eyebrow">For agencies</Badge>
-              <h2 className="mt-5 text-4xl font-medium sm:text-5xl">
-                Run it for <Em>every client</Em>
-              </h2>
-              <p className="mt-5 opacity-70">
-                One account for all the sites you manage, under your own brand, with the numbers to show clients it works.
-              </p>
-              <Button asChild variant="ink" className="mt-8">
-                <Link href="/pricing">
-                  See agency plans <Icon name="arrow-right" size="sm" />
-                </Link>
-              </Button>
-            </div>
-            <ul className="grid gap-4 sm:grid-cols-2">
-              {agencyPoints.map((point) => (
-                <li key={point.title} className="flex gap-3">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-surface text-text">
-                    <Icon name={point.icon} />
-                  </span>
-                  <div>
-                    <p className="font-medium">{point.title}</p>
-                    <p className="mt-0.5 text-sm opacity-70">{point.description}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </Container>
-      </Section>
+      <Agencies />
 
       <BetaCta />
 

@@ -79,6 +79,7 @@ const ICONS = [
   "stopwatch-outline",
   "star-fall-outline",
   "chat-round-like-outline",
+  "star-ring-outline",
 ];
 
 const subset = getIcons(solar, ICONS);
