@@ -9,6 +9,8 @@ import { Container, Section } from "@/components/ui/layout";
 import type { IconName } from "@/lib/icons.generated";
 import { cn } from "@/lib/utils";
 import { CollectMock, ReportMock, TargetMock } from "@/components/marketing/mocks";
+import { BrandSlider } from "@/components/marketing/brand-slider";
+import { HeroSection } from "@/components/marketing/hero";
 import { LayoutPicker } from "@/components/marketing/landing-demo";
 import { StackBeam } from "@/components/marketing/stack-beam";
 import { getStartingMonthlyPrice } from "@/lib/marketing/plans";
@@ -158,34 +160,8 @@ export default async function LandingPage() {
   const fromPrice = await getStartingMonthlyPrice();
   return (
     <>
-      {/* Hero */}
-      <Section className="pb-10 pt-16 sm:pt-24">
-        <Container>
-          <div className="mx-auto max-w-4xl text-center">
-            <Badge variant="eyebrow">Video testimonials, embedded in minutes</Badge>
-            <h1 className="mt-6 text-display font-medium">
-              Video testimonials that show up where buyers <Em>decide</Em>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-text-muted">
-              Collect customer videos with one link. Vouchreel shows the right story on the right page, from pricing to
-              product, with one script tag that never slows your site down.
-            </p>
-            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button asChild size="xl">
-                <Link href="/signup">
-                  Start free <Icon name="arrow-right" size="sm" />
-                </Link>
-              </Button>
-              <Button asChild size="xl" variant="ink">
-                <Link href="/#demo">
-                  <Icon name="play-circle" /> Try the live demo
-                </Link>
-              </Button>
-            </div>
-            <p className="mt-5 text-xs text-text-subtle">No credit card needed · Free plan, cancel anytime</p>
-          </div>
-        </Container>
-      </Section>
+      <HeroSection />
+      <BrandSlider />
 
       {/* Layout picker */}
       <Section id="demo" className="scroll-mt-20 pt-8 sm:pt-12">
