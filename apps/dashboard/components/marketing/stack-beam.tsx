@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * "Fits the stack you already have": the Vouchreel mark at the centre, the tools it works with around it, and a
- * light pulse travelling from each one into the centre. The logos are in public/integrations (from brand_logo/).
+ * light pulse travelling out from the centre to each one. The logos are in public/integrations (from brand_logo/).
  * Width and height are each file's own proportions, so nothing shifts while they load.
  */
 const brands = [
@@ -24,7 +24,7 @@ const CENTER_X = WIDTH / 2;
 const CENTER_Y = HEIGHT / 2;
 const RADIUS_X = 225;
 const RADIUS_Y = 140;
-// One beam per second, so each beam lands on the hub as its ring pulses
+// One beam per second, so each beam leaves the hub as its ring pulses
 const STAGGER = 1;
 
 const spokes = brands.map((brand, index) => {
@@ -32,7 +32,7 @@ const spokes = brands.map((brand, index) => {
   const angle = (index / brands.length) * Math.PI * 2 - Math.PI / 2;
   const x = CENTER_X + RADIUS_X * Math.cos(angle);
   const y = CENTER_Y + RADIUS_Y * Math.sin(angle);
-  return { ...brand, x, y, path: `M${x.toFixed(2)} ${y.toFixed(2)} L${CENTER_X} ${CENTER_Y}` };
+  return { ...brand, x, y, path: `M${CENTER_X} ${CENTER_Y} L${x.toFixed(2)} ${y.toFixed(2)}` };
 });
 
 function BrandMark({ brand, className }: { brand: (typeof brands)[number]; className?: string }) {
@@ -66,7 +66,7 @@ export function StackBeam() {
       </ul>
 
       <div className="relative mx-auto mt-12 hidden w-full max-w-3xl sm:block" style={{ aspectRatio: `${WIDTH} / ${HEIGHT}` }}>
-        {/* Orbit and spokes, with a pulse of light on each spoke */}
+        {/* Orbit and spokes, with a pulse of light travelling out along each spoke (each path starts at the hub) */}
         <svg aria-hidden="true" viewBox={`0 0 ${WIDTH} ${HEIGHT}`} fill="none" className="absolute inset-0 size-full">
           <ellipse
             cx={CENTER_X}
