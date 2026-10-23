@@ -10,6 +10,7 @@ import type { IconName } from "@/lib/icons.generated";
 import { cn } from "@/lib/utils";
 import { CollectMock, ReportMock, TargetMock } from "@/components/marketing/mocks";
 import { LayoutPicker } from "@/components/marketing/landing-demo";
+import { StackBeam } from "@/components/marketing/stack-beam";
 import { getStartingMonthlyPrice } from "@/lib/marketing/plans";
 
 export const metadata: Metadata = {
@@ -114,16 +115,6 @@ const rows = [
   },
 ];
 
-/** Logo files are in public/integrations (from brand_logo/). Width and height are the file's own proportions, so the row does not shift while they load. */
-const stack = [
-  { name: "Shopify", file: "shopify", width: 99, height: 28 },
-  { name: "WordPress", file: "wordpress", width: 28, height: 28, label: true },
-  { name: "Webflow", file: "webflow", width: 168, height: 28 },
-  { name: "Framer", file: "framer", width: 124, height: 28 },
-  { name: "Zapier", file: "zapier", width: 103, height: 28 },
-  { name: "Make", file: "make", width: 136, height: 28 },
-  { name: "API and webhooks", file: "api-webhook", width: 28, height: 28, label: true },
-];
 
 const agencyPoints: { title: string; description: string; icon: IconName }[] = [
   { title: "Teams with roles", description: "Invite owners, editors and viewers.", icon: "users-group-rounded" },
@@ -367,22 +358,7 @@ export default async function LandingPage() {
               webhooks.
             </p>
           </div>
-          <ul className="mx-auto mt-12 flex max-w-5xl flex-wrap items-center justify-center gap-x-10 gap-y-8">
-            {stack.map((brand) => (
-              <li key={brand.name} className="flex items-center gap-2.5">
-                {/* Plain <img>: these are small vector files, so there is nothing for the image optimiser to do */}
-                <img
-                  src={`/integrations/${brand.file}.svg`}
-                  alt={brand.label ? "" : brand.name}
-                  width={brand.width}
-                  height={brand.height}
-                  loading="lazy"
-                  className="h-6 w-auto opacity-70 grayscale transition duration-(--duration-base) hover:opacity-100 hover:grayscale-0 dark:invert dark:hover:invert-0"
-                />
-                {brand.label && <span className="text-base font-medium text-text-muted">{brand.name}</span>}
-              </li>
-            ))}
-          </ul>
+          <StackBeam />
         </Container>
       </Section>
 

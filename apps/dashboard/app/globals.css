@@ -380,6 +380,51 @@
   letter-spacing: -0.01em;
 }
 
+/* Stack section: a pulse of light travels along each spoke into the hub, which rings as it lands */
+.stack-beam-pulse {
+  stroke-dasharray: 16 200;
+  stroke-dashoffset: 16;
+  animation: stack-beam-flow 7s linear infinite;
+}
+
+/* Each spoke travels in a short slot of the cycle, staggered with animation-delay */
+@keyframes stack-beam-flow {
+  0% {
+    stroke-dashoffset: 16;
+  }
+  14%,
+  100% {
+    stroke-dashoffset: -100;
+  }
+}
+
+.stack-beam-hub-ring {
+  animation: stack-beam-ring 1s ease-out 0.6s infinite;
+  opacity: 0;
+}
+
+@keyframes stack-beam-ring {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stack-beam-pulse {
+    animation: none;
+    stroke-dasharray: none;
+    opacity: 0.4;
+  }
+  .stack-beam-hub-ring {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
