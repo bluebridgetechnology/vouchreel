@@ -15,7 +15,9 @@ import { BrandSlider } from "@/components/marketing/brand-slider";
 import { HeroSection } from "@/components/marketing/hero";
 import { LayoutPicker } from "@/components/marketing/landing-demo";
 import { StackBeam } from "@/components/marketing/stack-beam";
-import { getStartingMonthlyPrice } from "@/lib/marketing/plans";
+import { getSession } from "@/lib/auth/session";
+import { getCurrentPlanId, loadLandingPlans } from "@/lib/marketing/plans";
+import { PricingTable } from "./pricing/pricing-table";
 
 export const metadata: Metadata = {
   title: { absolute: "Vouchreel — Turn customer love into conversions" },
@@ -153,7 +155,11 @@ const faqs = [
 ];
 
 export default async function LandingPage() {
-  const fromPrice = await getStartingMonthlyPrice();
+  const session = await getSession();
+  const [plans, currentPlanId] = await Promise.all([
+    loadLandingPlans(),
+    session?.user ? getCurrentPlanId(session.user.id) : Promise.resolve(null),
+  ]);
   return (
     <>
       <HeroSection />
@@ -338,37 +344,25 @@ export default async function LandingPage() {
 
       <BetaCta />
 
-      {/* Pricing teaser */}
+      {/* Pricing */}
       <Section id="pricing">
         <Container>
-          <Card variant="sunken" className="grid items-center gap-8 rounded-panel p-8 sm:p-12 lg:grid-cols-[1.4fr_1fr]">
-            <div>
-              <Badge variant="eyebrow">Pricing</Badge>
-              <h2 className="mt-5 text-4xl font-medium sm:text-5xl">
-                Simple, <Em>transparent</Em> pricing
-              </h2>
-              <p className="mt-4 max-w-xl text-text-muted">
-                Start free and upgrade when your testimonial wall starts paying for itself.
-              </p>
-              <ul className="mt-6 space-y-3 text-sm">
-                {[
-                  "A free plan to collect and embed your first testimonials",
-                  fromPrice ? `Paid plans from $${fromPrice} a month, with more spaces and team features` : "Higher limits, more spaces, and team features as you grow",
-                  "Cancel anytime, no long-term contracts",
-                ].map((t) => (
-                  <li key={t} className="flex items-center gap-3">
-                    <Icon name="check-circle" size="sm" className="text-success" />
-                    {t}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="flex flex-col items-start gap-3 lg:items-end">
+          <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-4 text-center">
+            <Badge variant="eyebrow">Pricing</Badge>
+            <h2 className="text-4xl font-medium sm:text-5xl">
+              Simple, <Em>transparent</Em> pricing
+            </h2>
+            <p className="text-text-muted">Start free and upgrade when your testimonial wall starts paying for itself. Cancel anytime.</p>
+          </div>
+          {plans.length > 0 ? (
+            <PricingTable plans={plans} user={session?.user ? { id: session.user.id, email: session.user.email } : null} currentPlanId={currentPlanId} />
+          ) : (
+            <div className="text-center">
               <Button asChild size="lg">
                 <Link href="/pricing">View pricing</Link>
               </Button>
             </div>
-          </Card>
+          )}
         </Container>
       </Section>
 
