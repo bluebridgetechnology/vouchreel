@@ -371,9 +371,10 @@
   }
 }
 
-/* Editorial emphasis: Playfair Display Italic, used sparingly inside headlines */
+/* Editorial emphasis: Playfair Display Italic in the brand colour, used sparingly inside headlines */
 @utility accent-italic {
   font-family: var(--font-accent);
+  color: var(--brand);
   font-style: italic;
   font-weight: 400;
   letter-spacing: -0.01em;

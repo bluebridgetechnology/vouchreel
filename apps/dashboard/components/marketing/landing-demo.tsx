@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { toggleStyle } from "@/components/ui/toggle";
 import { WidgetPreviewFrame } from "@/components/widget/widget-preview-frame";
@@ -12,6 +14,32 @@ import type { PreviewDevice } from "@/lib/widget-preview";
 import type { WidgetTemplate } from "@/lib/validations/widget-config";
 
 const LIGHT_PAGE = { dark: false };
+
+const GROUPS = [
+  { label: "Floats on your page", placement: "floating" },
+  { label: "Sits in your page", placement: "inline" },
+] as const;
+
+/** A browser window drawn around the demo, so it reads as a real site and not a card. */
+function BrowserFrame({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("overflow-hidden rounded-panel border bg-surface shadow-float", className)}>
+      <div className="flex items-center gap-3 border-b bg-surface-sunken px-4 py-2.5" aria-hidden="true">
+        <span className="flex gap-1.5">
+          <span className="size-2.5 rounded-pill bg-border-strong" />
+          <span className="size-2.5 rounded-pill bg-border-strong" />
+          <span className="size-2.5 rounded-pill bg-border-strong" />
+        </span>
+        <span className="flex h-7 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-pill bg-surface px-3 text-xs text-text-subtle">
+          <Icon name="shield-check" size="sm" />
+          <span className="truncate">yourwebsite.com</span>
+        </span>
+        <span className="hidden w-10 sm:block" />
+      </div>
+      {children}
+    </div>
+  );
+}
 
 /** Below Tailwind's `md`, a phone-sized page; a desktop page shrunk to a phone's width would make the widget unreadable. */
 function useDevice(): PreviewDevice {
@@ -26,34 +54,6 @@ function useDevice(): PreviewDevice {
   return device;
 }
 
-function SampleLabel({ className }: { className?: string }) {
-  return (
-    <Badge variant="info" className={className}>
-      <Icon name="play-circle" size="sm" /> Live demo · sample content
-    </Badge>
-  );
-}
-
-/** The hero's demo: the real widget on a phone-sized sample page, playing sample videos. */
-export function HeroDemo() {
-  const draft = useMemo(() => landingDemoDraft("floating-reel"), []);
-  return (
-    <figure className="relative mx-auto w-full min-w-0 max-w-sm">
-      <SampleLabel className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 shadow-sm" />
-      <WidgetPreviewFrame
-        draft={draft}
-        content={LANDING_DEMO_CONTENT}
-        device="mobile"
-        page={LIGHT_PAGE}
-        className="h-[38rem] rounded-panel bg-surface-sunken p-3"
-      />
-      <figcaption className="mt-3 text-center text-xs text-text-subtle">
-        The real widget. Tap a video to play it. People and businesses are made up.
-      </figcaption>
-    </figure>
-  );
-}
-
 /** Pick a layout and see the real widget draw it with the same sample videos. */
 export function LayoutPicker() {
   const detected = useDevice();
@@ -64,35 +64,43 @@ export function LayoutPicker() {
   const draft = useMemo(() => landingDemoDraft(template), [template]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[17rem_1fr] lg:gap-8">
-      <div className="min-w-0">
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0" role="group" aria-label="Widget layout">
-          {LANDING_DEMO_LAYOUTS.map((id) => {
-            const layout = layoutInfo(id);
-            const active = id === template;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTemplate(id)}
-                aria-pressed={active}
-                className={cn("shrink-0 rounded-card border px-4 py-2.5 text-left text-sm transition-colors lg:py-3", toggleStyle("choice", active))}
-              >
-                <span className="block font-medium">{layout.name}</span>
-                <span className="mt-0.5 hidden text-xs text-text-muted lg:block">{layout.placement === "floating" ? "Floats in a corner" : "Sits in your page"}</span>
-              </button>
-            );
-          })}
-        </div>
+    <div className="space-y-6">
+      {/* Layouts, grouped by where they sit */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-center lg:gap-10">
+        {GROUPS.map((group) => (
+          <div key={group.placement} className="min-w-0">
+            <p className="mb-2 text-center text-2xs uppercase tracking-widest text-text-subtle lg:text-left">{group.label}</p>
+            <div
+              className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 lg:justify-start"
+              role="group"
+              aria-label={group.label}
+            >
+              {LANDING_DEMO_LAYOUTS.filter((id) => layoutInfo(id).placement === group.placement).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setTemplate(id)}
+                  aria-pressed={id === template}
+                  className={cn("shrink-0 rounded-pill border px-4 py-2 text-sm transition-colors", toggleStyle("choice", id === template))}
+                >
+                  {layoutInfo(id).name}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="min-w-0 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="flex flex-wrap items-center gap-2 font-medium">
-              {info.name} <SampleLabel />
-            </p>
-            <p className="text-sm text-text-muted">{info.bestFor}</p>
+      {/* The stage */}
+      <div>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <Badge variant="info">
+              <Icon name="play-circle" size="sm" /> Live demo · sample content
+            </Badge>
+            <span className="text-sm text-text-muted">
+              <span className="font-medium text-text">{info.name}</span> · {info.bestFor.split(": ")[1] ?? info.bestFor}
+            </span>
           </div>
           <div className="flex items-center gap-1 rounded-control bg-surface-sunken p-1" role="group" aria-label="Screen size">
             {(["desktop", "mobile"] as const).map((d) => (
@@ -101,7 +109,7 @@ export function LayoutPicker() {
                 type="button"
                 onClick={() => setDeviceChoice(d)}
                 aria-pressed={device === d}
-                className={cn("flex items-center gap-1.5 rounded-control px-3 py-1.5 text-xs", toggleStyle("raised", device === d))}
+                className={cn("flex items-center gap-1.5 rounded-control px-3 py-1.5 text-xs", toggleStyle("solid", device === d))}
               >
                 <Icon name={d === "desktop" ? "monitor" : "smartphone"} size="sm" />
                 {d === "desktop" ? "Desktop" : "Phone"}
@@ -109,14 +117,28 @@ export function LayoutPicker() {
             ))}
           </div>
         </div>
-        <WidgetPreviewFrame
+        <BrowserFrame className={cn(device === "mobile" && "mx-auto max-w-sm")}>
+          <WidgetPreviewFrame
             draft={draft}
             content={LANDING_DEMO_CONTENT}
             device={device}
             page={LIGHT_PAGE}
             closeUp={info.placement === "floating"}
-            className="h-[36rem] rounded-panel bg-surface-sunken p-3 sm:p-4"
+            bare
+            className="h-[32rem] sm:h-[38rem]"
           />
+        </BrowserFrame>
+      </div>
+
+      <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
+        <p className="text-sm text-text-muted">
+          This is the real widget. Click a video to play it. The people and businesses are made up.
+        </p>
+        <Button asChild variant="outline">
+          <Link href="/signup">
+            Use {info.name.toLowerCase()} on your site <Icon name="arrow-right" size="sm" />
+          </Link>
+        </Button>
       </div>
     </div>
   );

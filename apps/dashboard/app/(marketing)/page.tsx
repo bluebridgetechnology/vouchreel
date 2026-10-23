@@ -9,7 +9,7 @@ import { Container, Section } from "@/components/ui/layout";
 import type { IconName } from "@/lib/icons.generated";
 import { cn } from "@/lib/utils";
 import { CollectMock, ReportMock, TargetMock } from "@/components/marketing/mocks";
-import { HeroDemo, LayoutPicker } from "@/components/marketing/landing-demo";
+import { LayoutPicker } from "@/components/marketing/landing-demo";
 
 export const metadata: Metadata = {
   title: { absolute: "Vouchreel — Turn customer love into conversions" },
@@ -18,11 +18,11 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-const stats = [
-  ["< 10 KB", "Embed script, gzipped"],
-  ["Zero", "Layout shift on your site"],
-  ["Minutes", "From signup to live"],
-  ["Free", "Plan to get started"],
+const stats: { value: string; label: string; icon: IconName }[] = [
+  { value: "< 10 KB", label: "Embed script, gzipped", icon: "bolt" },
+  { value: "No shift", label: "Layout shift on your site", icon: "window-frame" },
+  { value: "Minutes", label: "From signup to live", icon: "stopwatch" },
+  { value: "Free", label: "Plan to get started", icon: "gift" },
 ];
 
 const steps = [
@@ -129,68 +129,69 @@ export default function LandingPage() {
   return (
     <>
       {/* Hero */}
-      <Section className="pb-12 pt-12 sm:pt-16">
+      <Section className="pb-10 pt-16 sm:pt-24">
         <Container>
-          <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
-            <div className="text-center lg:text-left">
-              <Badge variant="eyebrow">Video testimonials, embedded in minutes</Badge>
-              <h1 className="mt-6 text-display font-medium">
-                Turn customer love into <Em>conversions</Em>
-              </h1>
-              <p className="mx-auto mt-6 max-w-xl text-lg text-text-muted lg:mx-0">
-                Vouchreel collects your customers&apos; video testimonials and shows the right story to the right visitor,
-                automatically. No editing, no code, no layout shift.
-              </p>
-              <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
-                <Button asChild size="xl">
-                  <Link href="/signup">
-                    Get started <Icon name="arrow-right" size="sm" />
-                  </Link>
-                </Button>
-                <Button asChild size="xl" variant="ink">
-                  <Link href="/#demo">
-                    <Icon name="play-circle" /> Try every layout
-                  </Link>
-                </Button>
-              </div>
-              <p className="mt-5 text-xs text-text-subtle">No credit card needed · Free plan, cancel anytime</p>
+          <div className="mx-auto max-w-4xl text-center">
+            <Badge variant="eyebrow">Video testimonials, embedded in minutes</Badge>
+            <h1 className="mt-6 text-display font-medium">
+              Video testimonials that show up where buyers <Em>decide</Em>
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-text-muted">
+              Collect customer videos with one link. Vouchreel shows the right story on the right page, from pricing to
+              product, with one script tag that never slows your site down.
+            </p>
+            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Button asChild size="xl">
+                <Link href="/signup">
+                  Start free <Icon name="arrow-right" size="sm" />
+                </Link>
+              </Button>
+              <Button asChild size="xl" variant="ink">
+                <Link href="/#demo">
+                  <Icon name="play-circle" /> Try the live demo
+                </Link>
+              </Button>
             </div>
-            <HeroDemo />
+            <p className="mt-5 text-xs text-text-subtle">No credit card needed · Free plan, cancel anytime</p>
+          </div>
+        </Container>
+      </Section>
+
+      {/* Layout picker */}
+      <Section id="demo" className="scroll-mt-20 pt-8 sm:pt-12">
+        <Container>
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-4xl font-medium sm:text-5xl">
+              See it on a page, <Em>live</Em>
+            </h2>
+            <p className="mt-4 text-text-muted">
+              Pick a layout and watch the real widget draw it. Switch to a phone to see how it adapts.
+            </p>
+          </div>
+          <div className="mt-10">
+            <LayoutPicker />
           </div>
         </Container>
       </Section>
 
       {/* Stats strip */}
       <Container>
-        <Card variant="sunken" className="rounded-panel px-6 py-10 sm:px-10">
-          <dl className="grid grid-cols-2 gap-8 text-center md:grid-cols-4">
-            {stats.map(([value, label]) => (
-              <div key={label}>
-                <dd className="text-4xl font-medium tracking-tight">{value}</dd>
-                <dt className="mt-1 text-sm text-text-muted">{label}</dt>
+        <Card variant="sunken" className="rounded-panel px-6 py-8 sm:px-10 sm:py-10">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4">
+            {stats.map((stat) => (
+              <div key={stat.label} className="flex flex-col items-center gap-3 text-center">
+                <span className="flex size-12 items-center justify-center rounded-control bg-brand-soft text-brand-soft-foreground">
+                  <Icon name={stat.icon} size="lg" />
+                </span>
+                <div>
+                  <dd className="text-3xl font-medium tracking-tight sm:text-4xl">{stat.value}</dd>
+                  <dt className="mt-1 text-sm text-text-muted">{stat.label}</dt>
+                </div>
               </div>
             ))}
           </dl>
         </Card>
       </Container>
-
-      {/* Layout picker */}
-      <Section id="demo" className="scroll-mt-20">
-        <Container>
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-4xl font-medium sm:text-5xl">
-              Pick a layout, see it <Em>live</Em>
-            </h2>
-            <p className="mt-4 text-text-muted">
-              Every layout below is the real widget, playing the same sample videos. Choose one that fits your site,
-              then switch to a phone to see how it adapts.
-            </p>
-          </div>
-          <div className="mt-12">
-            <LayoutPicker />
-          </div>
-        </Container>
-      </Section>
 
       {/* How it works */}
       <Section id="how-it-works">
