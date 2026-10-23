@@ -319,22 +319,27 @@ export default async function LandingPage() {
       {/* More than a widget */}
       <Section className="pt-0">
         <Container>
-          <div className="mx-auto max-w-2xl text-center">
+          <div className="mb-10 max-w-2xl">
             <h2 className="text-4xl font-medium sm:text-5xl">
               More than a <Em>widget</Em>
             </h2>
-            <p className="mt-4 text-text-muted">The rest of what you need to collect, reuse and share customer proof.</p>
+            <p className="mt-4 max-w-xl text-text-muted">The rest of what you need to collect, reuse and share customer proof.</p>
           </div>
-          <ul className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {more.map((f) => (
-              <li key={f.title}>
-                <Card interactive padding="md" className="h-full">
-                  <span className="flex size-11 items-center justify-center rounded-control bg-brand-soft text-brand-soft-foreground">
-                    <Icon name={f.icon} />
-                  </span>
-                  <h3 className="mt-6 text-lg font-medium">{f.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-text-muted">{f.description}</p>
-                </Card>
+          <ul className="grid grid-cols-1 border-l border-t sm:grid-cols-2 lg:grid-cols-3">
+            {more.map((f, i) => (
+              <li
+                key={f.title}
+                className={cn(
+                  "relative flex flex-col gap-3 border-b border-r p-6 transition-colors duration-(--duration-base) md:p-8",
+                  i === 0 ? "bg-linear-to-b from-surface to-brand-soft" : "bg-surface hover:bg-linear-to-b hover:from-surface hover:to-brand-soft",
+                )}
+              >
+                {i === 1 && <span aria-hidden="true" className="absolute inset-y-10 left-0 w-1 rounded-r-control bg-brand" />}
+                <div className="flex items-center gap-2.5">
+                  <Icon name={f.icon} className="text-brand" />
+                  <h3 className="text-base font-medium leading-snug">{f.title}</h3>
+                </div>
+                <p className="text-sm leading-relaxed text-text-muted">{f.description}</p>
               </li>
             ))}
           </ul>
