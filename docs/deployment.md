@@ -143,7 +143,7 @@ The `migrate` service re-runs on every `up`, applying only new migrations. To re
 
 New accounts can be required to confirm their email address before they can sign in. It is off by default.
 
-1. Make sure email is delivered: set `RESEND_API_KEY` and `EMAIL_FROM`, and check that the password reset email arrives.
+1. Make sure email is delivered: set `SMTP_HOST` (with `SMTP_USER`/`SMTP_PASS`) or `RESEND_API_KEY`, plus `EMAIL_FROM`, and check that the password reset email arrives.
 2. Mark everyone who already has an account as verified, so they are not locked out:
    `npm run auth:verify-existing -w @vouchreel/dashboard` (shows the count), then add `-- --apply`.
 3. Set `REQUIRE_EMAIL_VERIFICATION=true` and restart the app.
@@ -285,7 +285,7 @@ In *Project → Settings → Environment Variables*, add every variable from `.e
 - `NEXT_PUBLIC_APP_URL` — same public origin.
 - `NEXT_PUBLIC_WIDGET_URL` — leave empty to serve the widget from the app, or point at your CDN.
 - Payment/storage provider keys as needed.
-- `RESEND_API_KEY` and `EMAIL_FROM` for password-reset, invite and notification emails. Without a key emails are only logged to the server console, so password reset will not reach users.
+- `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS` or `RESEND_API_KEY`, plus `EMAIL_FROM`, for password-reset, invite and notification emails. Without either, emails are only logged to the server console, so password reset will not reach users.
 
 `NEXT_PUBLIC_*` changes require a redeploy (they are inlined at build time).
 
@@ -324,7 +324,8 @@ Run this once before the first deploy of each release that contains new migratio
 | Worker heartbeat | Both workers write a row to `worker_heartbeats` every 15 seconds (migration 0023: run `db:migrate`). Admin > System lists each process as Online, Not responding (silent for 45 seconds) or Stopped, shows what it found at start-up (FFmpeg version; whether Chromium can start), and Admin > Video & jobs shows a warning at the top when jobs are waiting and nothing is alive to run them. The video worker launches Chromium once at start-up and logs `Chromium could not start` if it cannot. A failed heartbeat write is logged and never stops a worker. A process that is killed without a clean shutdown shows as Not responding, not Stopped. |
 | Video worker | Styled review videos (Remotion) render in a separate `video-worker` service built from the `video-worker` Dockerfile target (Debian + Chromium + pre-built compositions). The regular `worker` never claims these jobs, and neither does the cron fallback, so without a video worker review-video jobs simply wait in the queue. Memory: about 1-2 GB per render (`mem_limit: 3g`, one render at a time by default; tune `VIDEO_WORKER_CONCURRENCY` and `VIDEO_RENDER_CONCURRENCY`). Remotion is free for companies of up to 3 people; a larger for-profit company needs its Company License (see remotion.dev/docs/license). Migrations 0020 adds the `review_videos` table. |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Shared rate-limit counters. Without them limits are per process: fine for a single Docker container, **not** effective on Vercel or with several replicas. |
-| `RESEND_API_KEY`, `EMAIL_FROM` | Password reset, invites and notification emails. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` | Send email through your own SMTP server. Used whenever `SMTP_HOST` is set. Port defaults to 587 (STARTTLS when offered); `SMTP_SECURE` defaults to `true` only on port 465. User and password are optional for relays without auth. If an SMTP send fails and `RESEND_API_KEY` is also set, the email is retried through Resend. |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Password reset, invites and notification emails through Resend (when SMTP is not set, or as the SMTP fallback). `EMAIL_FROM` is the sender for both. |
 | Egress filtering | Webhook and video-source fetches reject private/loopback/link-local addresses (including via DNS and redirects). DNS rebinding between the check and the connection is a residual risk; block private ranges at the network edge as well. |
 | `ALLOW_PRIVATE_WEBHOOK_TARGETS=true` | Development only: lets webhooks point at `localhost`. Ignored in production. |
 

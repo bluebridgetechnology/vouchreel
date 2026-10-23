@@ -30,7 +30,7 @@ export function createInviteToken(): { token: string; expiresAt: Date } {
 
 /**
  * Sends a team invitation email with magic link.
- * In development or when no external SMTP/Resend key is configured,
+ * In development or when neither SMTP_HOST nor RESEND_API_KEY is configured,
  * logs the email and invite link to stdout for immediate developer testing.
  */
 export async function sendTeamInviteEmail(
