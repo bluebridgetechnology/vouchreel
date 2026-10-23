@@ -1,4 +1,8 @@
+import type { Metadata } from "next";
 import { Logo } from "@/components/marketing/logo";
+
+// Sign-in and sign-up pages are not for search results
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default function AuthLayout({
   children,

@@ -6,6 +6,8 @@ import { seedPlans } from "@/lib/db/seed-plans";
 import { getSession } from "@/lib/auth/session";
 import { FinalCta } from "@/components/marketing/final-cta";
 import { Faq, type FaqItem } from "@/components/marketing/faq";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbSchema, faqSchema, pageMetadata, softwareApplicationSchema } from "@/lib/seo";
 import { Badge } from "@/components/ui/badge";
 import { Icon } from "@/components/ui/icon";
 import { Em } from "@/components/ui/em";
@@ -42,12 +44,11 @@ const PRICING_FAQS: FaqItem[] = [
   },
 ];
 
-export const metadata = {
-  title: "Pricing",
-  description:
-    "Simple, transparent pricing for Vouchreel. Collect and showcase video testimonials on any plan — start free, upgrade when you grow.",
-  alternates: { canonical: "/pricing" },
-};
+export const metadata = pageMetadata({
+  title: "Pricing and plans",
+  description: "Simple, transparent pricing for Vouchreel. Collect and showcase video testimonials on any plan: start free, upgrade when you grow.",
+  path: "/pricing",
+});
 
 export default async function PricingPage() {
   const session = await getSession();
@@ -74,6 +75,7 @@ export default async function PricingPage() {
 
   return (
     <>
+      <JsonLd data={[breadcrumbSchema([{ name: "Pricing", path: "/pricing" }]), softwareApplicationSchema(plainPlans), faqSchema(PRICING_FAQS)]} />
       <Container className="pb-8 pt-16 sm:pt-24">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-5 text-center">
           <Badge variant="eyebrow">Pricing</Badge>

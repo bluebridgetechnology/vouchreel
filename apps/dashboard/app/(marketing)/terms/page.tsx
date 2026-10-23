@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { LegalPage, type LegalSection } from "@/components/marketing/legal-page";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Terms of service",
   description: "The terms for using Vouchreel to collect and show customer testimonials.",
-  alternates: { canonical: "/terms" },
-};
+  path: "/terms",
+});
 
 /*
  * Plain-language terms covering how the product works. It names no company and has no sections on warranties,

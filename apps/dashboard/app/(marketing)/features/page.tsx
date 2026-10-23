@@ -11,14 +11,16 @@ import { Icon } from "@/components/ui/icon";
 import { Container, Section } from "@/components/ui/layout";
 import type { IconName } from "@/lib/icons.generated";
 import type { WidgetTemplate } from "@/lib/validations/widget-config";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbSchema, pageMetadata } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Features",
+export const metadata: Metadata = pageMetadata({
+  title: "Features and widget layouts",
   description:
     "Every Vouchreel widget layout, live: floating bubbles and reels, carousels, walls of love and more, with rules for when and where each one appears.",
-  alternates: { canonical: "/features" },
-};
+  path: "/features",
+});
 
 interface LayoutEntry {
   id: WidgetTemplate;
@@ -156,6 +158,7 @@ function RuledGrid({ items, columns }: { items: { title: string; description: st
 export default function FeaturesPage() {
   return (
     <>
+      <JsonLd data={breadcrumbSchema([{ name: "Features", path: "/features" }])} />
       {/* Intro */}
       <Section className="pb-8 pt-16 sm:pt-24">
         <Container>

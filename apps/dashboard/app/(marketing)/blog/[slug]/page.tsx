@@ -7,7 +7,9 @@ import { ArrowButton } from "@/components/marketing/arrow-button";
 import { FinalCta } from "@/components/marketing/final-cta";
 import { Icon } from "@/components/ui/icon";
 import { Container } from "@/components/ui/layout";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getPublishedPost, readingMinutes } from "@/lib/blog";
+import { SITE_NAME, SOCIAL_IMAGE, absoluteUrl, blogPostingSchema, breadcrumbSchema } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -23,13 +25,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: post.title,
     description: post.excerpt ?? undefined,
     alternates: { canonical: `/blog/${post.slug}` },
+    twitter: { card: "summary_large_image", title: `${post.title} · ${SITE_NAME}`, description: post.excerpt ?? undefined, images: [post.coverImageUrl ?? SOCIAL_IMAGE.url] },
     openGraph: {
       type: "article",
-      title: post.title,
+      siteName: SITE_NAME,
+      url: absoluteUrl(`/blog/${post.slug}`),
+      locale: "en_US",
+      title: `${post.title} · ${SITE_NAME}`,
       description: post.excerpt ?? undefined,
       publishedTime: post.publishedAt?.toISOString(),
       authors: post.authorName ? [post.authorName] : undefined,
-      images: post.coverImageUrl ? [post.coverImageUrl] : undefined,
+      images: post.coverImageUrl ? [post.coverImageUrl] : [SOCIAL_IMAGE],
     },
   };
 }
@@ -43,6 +49,15 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   return (
     <>
+      <JsonLd
+        data={[
+          breadcrumbSchema([
+            { name: "Blog", path: "/blog" },
+            { name: post.title, path: `/blog/${post.slug}` },
+          ]),
+          blogPostingSchema(post),
+        ]}
+      />
       <article>
         <Container className="pb-12 pt-12 sm:pt-16">
           <div className="mx-auto max-w-3xl">

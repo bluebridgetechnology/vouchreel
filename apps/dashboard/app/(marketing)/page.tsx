@@ -11,7 +11,9 @@ import { cn } from "@/lib/utils";
 import { CollectMock, ReportMock, TargetMock } from "@/components/marketing/mocks";
 import { BetaCta } from "@/components/marketing/beta-cta";
 import { BrandSlider } from "@/components/marketing/brand-slider";
-import { Faq } from "@/components/marketing/faq";
+import { Faq, HOME_FAQS } from "@/components/marketing/faq";
+import { JsonLd } from "@/components/seo/json-ld";
+import { SITE_DESCRIPTION, faqSchema, organizationSchema, softwareApplicationSchema, websiteSchema } from "@/lib/seo";
 import { FinalCta } from "@/components/marketing/final-cta";
 import { HeroSection } from "@/components/marketing/hero";
 import { LayoutPicker } from "@/components/marketing/landing-demo";
@@ -22,8 +24,7 @@ import { PricingTable } from "./pricing/pricing-table";
 
 export const metadata: Metadata = {
   title: { absolute: "Vouchreel — Turn customer love into conversions" },
-  description:
-    "Collect video testimonials with one link, customize a lightweight widget, and embed social proof anywhere. Contextual matching, smart triggers, and conversion tracking built in.",
+  description: SITE_DESCRIPTION,
   alternates: { canonical: "/" },
 };
 
@@ -132,6 +133,7 @@ export default async function LandingPage() {
   ]);
   return (
     <>
+      <JsonLd data={[organizationSchema(), websiteSchema(), softwareApplicationSchema(plans), faqSchema(HOME_FAQS)]} />
       <HeroSection />
       <BrandSlider />
 

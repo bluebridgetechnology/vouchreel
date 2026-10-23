@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { LegalPage, type LegalSection } from "@/components/marketing/legal-page";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Privacy policy",
   description: "What Vouchreel collects, why, how long it is kept, and how to have it removed.",
-  alternates: { canonical: "/privacy" },
-};
+  path: "/privacy",
+});
 
 /*
  * This describes what the software does today (see docs/retention.md). It is not legal advice and it names no

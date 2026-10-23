@@ -9,14 +9,19 @@ import { Icon } from "@/components/ui/icon";
 import { Container, Section } from "@/components/ui/layout";
 import { listPublishedPosts } from "@/lib/blog";
 import { buttonVariants } from "@/components/ui/button";
+import { JsonLd } from "@/components/seo/json-ld";
+import { blogSchema, breadcrumbSchema, pageMetadata } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Blog",
-  description: "Practical ideas on collecting customer video testimonials and putting them to work on your website.",
-  alternates: { canonical: "/blog" },
+  ...pageMetadata({
+    title: "Blog",
+    description: "Practical ideas on collecting customer video testimonials and putting them to work on your website.",
+    path: "/blog",
+  }),
+  alternates: { canonical: "/blog", types: { "application/rss+xml": "/blog/feed.xml" } },
 };
 
 export default async function BlogPage() {
@@ -26,6 +31,7 @@ export default async function BlogPage() {
 
   return (
     <>
+      <JsonLd data={[breadcrumbSchema([{ name: "Blog", path: "/blog" }]), blogSchema(posts)]} />
       <Section className="pb-8 pt-16 sm:pt-24">
         <Container>
           <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
