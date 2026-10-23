@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowButton } from "@/components/marketing/arrow-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
 
 export interface PlanItem {
   id: string;
@@ -20,6 +20,9 @@ export interface PlanItem {
   sortOrder?: number;
   isActive: boolean;
 }
+
+/** The card background of each plan in turn: the app's soft tints, so they follow light and dark mode. */
+const TINTS = ["pink", "lime", "peach", "cream"] as const;
 
 interface PricingTableProps {
   plans: PlanItem[];
@@ -112,74 +115,63 @@ export function PricingTable({ plans, user, currentPlanId }: PricingTableProps) 
         </div>
       )}
 
-      {/* Cards grid */}
-      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-3">
-        {displayPlans.map((plan) => {
-          const isFeatured = Boolean(plan.badge);
+      {/* Plans: wide cards two to a row, an odd one out sits in the middle */}
+      <div className="mx-auto flex max-w-6xl flex-wrap justify-center gap-6">
+        {displayPlans.map((plan, index) => {
           const isCurrent = currentPlanId === plan.id;
           const isLoading = loadingPlanId === plan.id;
 
           const formattedPrice = plan.price === 0 ? "$0" : `$${(plan.price / 100).toFixed(0)}`;
           const priceSubtext = plan.price === 0 ? "forever free" : interval === "year" ? "/year" : "/month";
+          const label =
+            isLoading ? "Redirecting…" : plan.price === 0 ? (user ? "Use free plan" : "Get started free") : `Subscribe to ${plan.name}`;
 
           return (
             <Card
               key={plan.id}
-              variant={isFeatured ? "inverse" : "default"}
-              padding="lg"
-              className={cn("relative flex flex-col justify-between", isFeatured && "shadow-float")}
+              variant={TINTS[index % TINTS.length]}
+              className="flex w-full flex-col gap-6 p-8 sm:flex-row sm:gap-10 sm:p-10 lg:w-[calc(50%-0.75rem)]"
             >
-              {isFeatured && (
-                <Badge variant="brand" className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-text-on-accent">
-                  {plan.badge}
-                </Badge>
-              )}
-
-              <div>
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-medium">{plan.name}</h2>
-                  {isCurrent && <Badge variant="brand">Current plan</Badge>}
+              <div className="flex flex-col items-start justify-between gap-6 sm:self-stretch">
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge className="h-7 bg-surface-inverse px-3 text-sm font-normal text-text-inverse">{plan.name}</Badge>
+                    {plan.badge && <Badge variant="brand">{plan.badge}</Badge>}
+                    {isCurrent && <Badge variant="brand">Current plan</Badge>}
+                  </div>
+                  <p className="max-w-56 text-sm opacity-70">{plan.description}</p>
                 </div>
 
-                <p className={cn("mt-2 text-sm", isFeatured ? "opacity-70" : "text-text-muted")}>
-                  {plan.description}
-                </p>
-
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-5xl font-medium tracking-tight tabular-nums">{formattedPrice}</span>
-                  <span className={cn("text-sm", isFeatured ? "opacity-70" : "text-text-muted")}>{priceSubtext}</span>
+                <div className="flex flex-col gap-4">
+                  <p className="flex items-end gap-1">
+                    <span className="text-4xl font-medium tracking-tight tabular-nums sm:text-5xl">{formattedPrice}</span>
+                    <span className="pb-1 text-base opacity-70">{priceSubtext}</span>
+                  </p>
+                  {isCurrent ? (
+                    <Button type="button" size="lg" variant="soft" className="w-fit" disabled>
+                      Current plan
+                    </Button>
+                  ) : (
+                    <ArrowButton size="lg" disabled={isLoading} onClick={() => handleSelectPlan(plan)}>
+                      {label}
+                    </ArrowButton>
+                  )}
                 </div>
+              </div>
 
-                <ul className="mt-8 space-y-3.5 text-sm">
+              <div aria-hidden="true" className="hidden w-px self-stretch bg-current opacity-10 sm:block" />
+              <div aria-hidden="true" className="h-px w-full bg-current opacity-10 sm:hidden" />
+
+              <div className="flex grow flex-col items-start gap-3">
+                <p className="text-base font-medium sm:text-xl">Features</p>
+                <ul className="flex flex-col items-start gap-3 self-stretch">
                   {(plan.features || []).map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <Icon name="check-circle" size="sm" className={cn("mt-0.5", isFeatured ? "text-brand" : "text-success")} />
+                    <li key={idx} className="flex items-start gap-3 text-sm">
+                      <Icon name="check-circle" size="sm" className="mt-0.5 text-success" />
                       <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
-              </div>
-
-              <div className="mt-8 border-t border-current/10 pt-6">
-                <Button
-                  type="button"
-                  size="lg"
-                  variant={isCurrent ? "soft" : isFeatured ? "primary" : "outline"}
-                  className="w-full"
-                  loading={isLoading}
-                  disabled={isCurrent}
-                  onClick={() => handleSelectPlan(plan)}
-                >
-                  {isLoading
-                    ? "Redirecting…"
-                    : isCurrent
-                      ? "Current plan"
-                      : plan.price === 0
-                        ? user
-                          ? "Use free plan"
-                          : "Get started free"
-                        : `Subscribe to ${plan.name}`}
-                </Button>
               </div>
             </Card>
           );
