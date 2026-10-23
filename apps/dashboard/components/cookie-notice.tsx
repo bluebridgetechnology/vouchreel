@@ -11,10 +11,13 @@ import { Icon } from "@/components/ui/icon";
 const SEEN_KEY = "vouchreel:cookie-notice-seen";
 
 /**
- * Pages a customer's own visitors land on (the testimonial form, the shared wall, the widget frames, the consent page):
- * they belong to the business that sent the link, so Vouchreel's own notice stays off them.
+ * Pages the notice stays off:
+ *  - a customer's own visitors' pages (the testimonial form, the shared wall, the widget frames, the consent page),
+ *    which belong to the business that sent the link;
+ *  - the signed-in app, where a person has already been through the sign-in page that shows it, and where a card pinned
+ *    to a corner would sit on top of the controls near the bottom of a long page.
  */
-const SKIP_PREFIXES = ["/collect", "/wall", "/widget", "/consent"];
+const SKIP_PREFIXES = ["/collect", "/wall", "/widget", "/consent", "/dashboard", "/spaces", "/settings", "/admin", "/account", "/notifications", "/onboarding", "/agency"];
 
 /**
  * A short notice that Vouchreel sets cookies, shown once per browser. The only cookies are the ones the site needs to

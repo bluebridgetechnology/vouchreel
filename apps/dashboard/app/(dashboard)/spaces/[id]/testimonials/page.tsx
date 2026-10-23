@@ -285,21 +285,23 @@ export default function TestimonialsPage({ params }: TestimonialsPageProps) {
       )}
 
       {selecting && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-card border bg-surface-sunken/40 p-3" role="status">
+        <Card variant="flat" className="flex flex-wrap items-center justify-between gap-2 bg-surface-sunken/40 p-3" role="status">
           <p className="text-xs text-text">
             {selectedIds.size} selected
-            <button
+            <Button
               type="button"
-              className="ml-3 underline"
+              variant="link-muted"
+              size="bare"
+              className="ml-3 text-text underline"
               onClick={() => setSelectedIds(selectedIds.size === testimonials.length ? new Set() : new Set(testimonials.map((t) => t.id)))}
             >
               {selectedIds.size === testimonials.length ? "Clear" : "Select all"}
-            </button>
+            </Button>
           </p>
           <Button type="button" variant="primary" size="sm" disabled={selectedIds.size === 0} onClick={() => setBulkOpen(true)}>
             Set pages
           </Button>
-        </div>
+        </Card>
       )}
 
       {/* Loading state */}

@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_BRAND_HEX, readableOn } from "@/lib/brand";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -30,9 +31,7 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 
 /** Black or white, whichever reads on the colour (for the preview button only) */
 function textOn(hex: string) {
-  if (!HEX.test(hex)) return "#ffffff";
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-  return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? "#1c1917" : "#ffffff";
+  return readableOn(HEX.test(hex) ? hex : DEFAULT_BRAND_HEX);
 }
 
 /** Segmented choice on a soft track: one outline for the group instead of one box per option */
@@ -68,7 +67,7 @@ interface Props {
 
 export function CollectionFormEditor({ draft, editing, onChange, onSubmit, onCancel }: Props) {
   const accentOk = HEX.test(draft.accentColor);
-  const accent = accentOk ? draft.accentColor : "#cf3d0b";
+  const accent = accentOk ? draft.accentColor : DEFAULT_BRAND_HEX;
   // Short labels fit three across; the full wording stays in the form list below
   const SHORT: Record<CollectMode, string> = { both: "Video or written", video: "Video only", text: "Written only" };
   const modeOptions = COLLECT_MODES.map((m) => ({ value: m, label: SHORT[m] }));
