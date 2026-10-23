@@ -250,7 +250,7 @@ export function PlansManager({ plans }: { plans: AdminPlan[] }) {
                 <Badge variant={plan.isActive ? "success" : "neutral"}>{plan.isActive ? "Active" : "Archived"}</Badge>
               </TableCell>
               <TableCell>
-                <div className="flex justify-end gap-2">
+                <div className="flex flex-wrap justify-end gap-2">
                   <Button size="sm" variant="outline" onClick={() => openEdit(plan)}>
                     Edit
                   </Button>
