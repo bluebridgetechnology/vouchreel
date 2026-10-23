@@ -18,7 +18,7 @@ export function FinalCta() {
       <div aria-hidden="true" className="absolute -left-24 top-0 -z-10 size-72 rounded-pill bg-brand opacity-25 blur-3xl" />
       <div aria-hidden="true" className="absolute -bottom-24 -right-24 -z-10 size-72 rounded-pill bg-brand opacity-20 blur-3xl" />
 
-      <Container className="flex flex-col items-center gap-6 py-10 text-center lg:flex-row lg:justify-between lg:gap-12 lg:py-12 lg:text-left">
+      <Container className="flex flex-col items-center gap-6 py-14 text-center lg:flex-row lg:justify-between lg:gap-12 lg:py-20 lg:text-left">
         <div className="flex max-w-2xl flex-col gap-3">
           <h2 className="text-3xl font-medium sm:text-4xl">
             Your happiest customers are

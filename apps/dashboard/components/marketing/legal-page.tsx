@@ -3,6 +3,8 @@ import { Container } from "@/components/ui/layout";
 
 export interface LegalSection {
   title: string;
+  /** An anchor so a link such as /privacy#cookies lands on this section. */
+  id?: string;
   /** Paragraphs, then an optional list. */
   body: string[];
   list?: string[];
@@ -19,7 +21,7 @@ export function LegalPage({ title, intro, updated, sections }: { title: string; 
         <p className="mt-8 text-lg text-text-muted">{intro}</p>
         <div className="mt-12 space-y-10">
           {sections.map((section, i) => (
-            <section key={section.title} aria-labelledby={`legal-${i}`}>
+            <section key={section.title} id={section.id} aria-labelledby={`legal-${i}`} className="scroll-mt-28">
               <h2 id={`legal-${i}`} className="text-2xl font-medium">
                 {i + 1}. {section.title}
               </h2>

@@ -48,7 +48,7 @@ async function open(page: Page, url: string) {
   }
 }
 
-const TABS = ["Plans & pricing", "Payments", "Users", "Video & jobs", "Usage", "Moderation", "Audit log", "System"] as const;
+const TABS = ["Plans & pricing", "Payments", "Announcement", "Users", "Video & jobs", "Usage", "Moderation", "Audit log", "System"] as const;
 
 const tab = (page: Page, name: string) => page.getByRole("navigation", { name: "Admin sections" }).getByRole("link", { name });
 const row = (page: Page, text: string | RegExp) => page.getByRole("row").filter({ hasText: text });

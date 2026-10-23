@@ -21,6 +21,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AdminPanel } from "./admin-panel";
+import { AnnouncementManager } from "./announcement-manager";
+import { readAnnouncement } from "@/lib/marketing/announcement";
 import { AuditTypeSelect } from "./audit-type-select";
 import { FormSelect } from "./form-select";
 import { ModerationManager } from "./moderation-manager";
@@ -35,6 +37,7 @@ export const metadata = { title: "Admin" };
 const TABS = [
   { id: "plans", label: "Plans & pricing" },
   { id: "payments", label: "Payments" },
+  { id: "announcement", label: "Announcement" },
   { id: "users", label: "Users" },
   { id: "videos", label: "Video & jobs" },
   { id: "usage", label: "Usage" },
@@ -91,6 +94,7 @@ export default async function AdminPage({
 
       {tab === "plans" && <PlansTab />}
       {tab === "payments" && <PaymentsTab />}
+      {tab === "announcement" && <AnnouncementTab />}
       {tab === "users" && <UsersTab q={q} page={Number(rawPage) || 1} currentUserId={session.user.id} />}
       {tab === "videos" && <VideosTab />}
       {tab === "usage" && <UsageTab month={month} page={Number(rawPage) || 1} />}
@@ -104,6 +108,10 @@ export default async function AdminPage({
 async function PlansTab() {
   const plans = await listAdminPlans();
   return <PlansManager plans={plans} />;
+}
+
+async function AnnouncementTab() {
+  return <AnnouncementManager initial={await readAnnouncement()} />;
 }
 
 async function PaymentsTab() {

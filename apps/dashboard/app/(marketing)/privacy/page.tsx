@@ -43,6 +43,19 @@ const sections: LegalSection[] = [
     ],
   },
   {
+    id: "cookies",
+    title: "Cookies",
+    body: [
+      "Vouchreel sets only the cookies it needs to work. We do not use advertising, tracking or analytics cookies from other companies.",
+    ],
+    list: [
+      "A sign-in cookie that keeps you signed in to your account.",
+      "A cookie that remembers whether you collapsed the dashboard sidebar.",
+      "A short-lived cookie used while you connect a Google reviews account.",
+      "Your choice of light or dark appearance, and that you have read the cookie notice, are kept in your browser's own storage.",
+    ],
+  },
+  {
     title: "How long we keep things",
     body: [],
     list: [

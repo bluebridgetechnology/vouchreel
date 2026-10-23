@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { fontSans, fontHeading, fontMono } from "@/lib/fonts";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
+import { CookieNotice } from "@/components/cookie-notice";
 import { ConfirmProvider } from "@/components/ui/confirm";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -55,6 +56,7 @@ export default async function RootLayout({
           </TooltipProvider>
           <NavigationProgress />
           <Toaster />
+          <CookieNotice />
         </ThemeProvider>
       </body>
     </html>

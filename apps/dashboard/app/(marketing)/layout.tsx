@@ -1,12 +1,15 @@
+import { AnnouncementBar } from "@/components/marketing/announcement-bar";
 import { SiteHeader } from "@/components/marketing/site-header";
+import { announcementId, getActiveAnnouncement } from "@/lib/marketing/announcement";
 import { fontAccent } from "@/lib/fonts-accent";
 import { SiteFooter } from "@/components/marketing/site-footer";
 
-export default function MarketingLayout({
+export default async function MarketingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const announcement = await getActiveAnnouncement();
   return (
     <div className={`${fontAccent.variable} flex min-h-screen flex-col bg-canvas text-text`}>
       <a
@@ -15,6 +18,9 @@ export default function MarketingLayout({
       >
         Skip to content
       </a>
+      {announcement && (
+        <AnnouncementBar id={announcementId(announcement)} message={announcement.message} linkText={announcement.linkText} linkUrl={announcement.linkUrl} />
+      )}
       <SiteHeader />
       <main id="main" className="flex flex-1 flex-col">
         {children}
