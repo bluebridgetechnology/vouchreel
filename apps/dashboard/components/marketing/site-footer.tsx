@@ -7,9 +7,11 @@ const columns = [
   {
     title: "Product",
     links: [
-      { href: "/#features", label: "Features" },
-      { href: "/#how-it-works", label: "How it works" },
+      { href: "/features", label: "Features" },
       { href: "/pricing", label: "Pricing" },
+      { href: "/blog", label: "Blog" },
+      { href: "/#how-it-works", label: "How it works" },
+      { href: "/#faq", label: "FAQ" },
     ],
   },
   {
@@ -63,6 +65,14 @@ export function SiteFooter() {
       <div className="border-t">
         <Container className="flex flex-col items-center justify-between gap-4 py-6 text-xs text-text-subtle sm:flex-row">
           <p>© {new Date().getFullYear()} Vouchreel. All rights reserved.</p>
+          <nav aria-label="Legal" className="flex gap-5">
+            <Link href="/privacy" className="transition-colors hover:text-text">
+              Privacy
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-text">
+              Terms
+            </Link>
+          </nav>
           <ThemeToggle />
         </Container>
       </div>

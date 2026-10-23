@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
 
   // Workspace package shipped as TypeScript source; only its Remotion-free registry is imported here
-  transpilePackages: ['@vouchreel/video'],
+  transpilePackages: ['@vouchreel/video', '@vouchreel/widget'],
 
   async headers() {
     return [

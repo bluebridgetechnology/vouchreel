@@ -1,0 +1,19 @@
+# Caddy: HTTPS for the domain, and the two places traffic goes. Written for deploy/docker-compose.vps.yml.
+# DOMAIN and STORAGE_BUCKET come from the container's environment.
+#
+# Caddy asks Let's Encrypt for the certificate the first time the domain is requested, and renews it on its own.
+# The domain's DNS must already point at this server, or the request fails and Caddy keeps retrying.
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Files in the media bucket (path-style S3 addresses start with the bucket name)
+	handle /{$STORAGE_BUCKET}/* {
+		reverse_proxy minio:9000
+	}
+
+	# Everything else is the app
+	handle {
+		reverse_proxy app:3000
+	}
+}

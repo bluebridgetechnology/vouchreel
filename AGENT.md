@@ -234,13 +234,13 @@ Every build must be deployable to **both** VPS and Vercel:
 
 All dashboard, marketing and auth UI is built from the token system in `apps/dashboard/app/globals.css` and the primitives in `apps/dashboard/components/ui`. Reference page: `/design` (dev only). `npm run lint` enforces this:
 
-- No raw Tailwind palette classes (`bg-emerald-500`, `text-white`), no hex/`rgb()`/`hsl()` literals in TSX, no arbitrary text sizes (`text-[11px]`), no `font-semibold`/`font-bold` (Outfit max weight is 500), no legacy radius (`rounded-md/lg/xl/full`) and no shadcn alias classes (`bg-card`, `text-muted-foreground`, `bg-primary`).
+- No raw Tailwind palette classes (`bg-emerald-500`, `text-white`), no hex/`rgb()`/`hsl()` literals in TSX, no arbitrary text sizes (`text-[11px]`), no `font-semibold`/`font-bold` (Inter and Urbanist max weight is 500), no legacy radius (`rounded-md/lg/xl/full`) and no shadcn alias classes (`bg-card`, `text-muted-foreground`, `bg-primary`).
 - Use semantic utilities instead: `bg-surface`, `text-text-muted`, `bg-brand`, `bg-success-soft`, `rounded-card`, `rounded-pill`, `text-sm`, `font-medium`.
 - Every `<button>`, `<input>`, `<select>`, `<textarea>` must use a primitive (`Button`/`buttonVariants`, `toggleStyle`, `Switch`, `Input`/`inputClass`). Modals use `Dialog` or `ModalOverlay`.
 - Icons are Solar Outline via `<Icon name="..." />`; add names in `apps/dashboard/scripts/build-icons.mjs` and run `npm run icons:build -w apps/dashboard`.
 - User-chosen colours (widget theme, collect-form accent, social brand colour) are data: apply with `userAccentStyle()` and `bg-(--user-accent)`. Server defaults use `DEFAULT_BRAND_HEX` from `lib/brand.ts`.
 - Changing `--palette-coral-600` in `globals.css` also requires updating `DEFAULT_BRAND_HEX`, the widget's `--vr-primary` and the DB default (tests catch a mismatch). Contrast of every token pair is checked by `scripts/check-contrast.mjs`.
-- Headlines are Outfit; Playfair Italic is only for one or two emphasised words (`<Em>`) on marketing/auth screens.
+- Headlines are Urbanist, body is Inter; Playfair Italic is only for one or two emphasised words (`<Em>`) on marketing/auth screens.
 - Feedback: use `notify.success/error/fromError/promise` from `lib/notify.ts` (Sonner) for results of async actions, and `useConfirm()` for confirmations. `alert()`, `confirm()` and `window.confirm()` are banned by the lint guard. Keep inline messages only for field-level form validation.
 - Loading: every route that fetches has a `loading.tsx` built from `components/ui/page-skeleton` (shape of the content, not a spinner); client lists show `SkeletonRegion` + a skeleton, never plain "Loading…" text; async buttons use `<Button loading={...}>`; navigation shows the top progress bar (`NavigationProgress`).
 

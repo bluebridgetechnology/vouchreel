@@ -351,6 +351,20 @@
       "when": 1791566789692,
       "tag": "0049_widget_versions",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1791776995798,
+      "tag": "0050_review_match_rules",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1792766169884,
+      "tag": "0051_blog_posts",
+      "breakpoints": true
     }
   ]
 }

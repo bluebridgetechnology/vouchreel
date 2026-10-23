@@ -1,9 +1,13 @@
 import { ImageResponse } from "next/og";
-import { DEFAULT_BRAND_HEX } from "@/lib/brand";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 export const alt = "Vouchreel — Turn customer love into conversions";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+
+// The white-wordmark logo, inlined because the image renderer cannot fetch from the app itself.
+const logoDataUri = `data:image/png;base64,${readFileSync(path.join(process.cwd(), "public/brand/logo-dark.png")).toString("base64")}`;
 
 export default function OpengraphImage() {
   return new ImageResponse(
@@ -21,27 +25,7 @@ export default function OpengraphImage() {
           padding: "72px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "64px",
-              height: "64px",
-              borderRadius: "16px",
-              background: DEFAULT_BRAND_HEX,
-              color: "#ffffff",
-              fontSize: "34px",
-              fontWeight: 500,
-            }}
-          >
-            V
-          </div>
-          <div style={{ display: "flex", color: "#ffffff", fontSize: "34px", fontWeight: 500 }}>
-            Vouchreel
-          </div>
-        </div>
+        <img src={logoDataUri} alt="" width={337} height={48} />
 
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
           <div

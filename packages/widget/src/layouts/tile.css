@@ -234,3 +234,10 @@
 .vr-shape-circle .vr-tile-quote {
   --vr-tile-lines: 2;
 }
+
+/* Content toggles (Show name / company / quote in the editor) */
+.vr-hide-name .vr-tile-name,
+.vr-hide-company .vr-tile-co,
+.vr-hide-quote .vr-tile-quote {
+  display: none;
+}

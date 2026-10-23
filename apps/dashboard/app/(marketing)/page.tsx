@@ -8,31 +8,42 @@ import { Icon } from "@/components/ui/icon";
 import { Container, Section } from "@/components/ui/layout";
 import type { IconName } from "@/lib/icons.generated";
 import { cn } from "@/lib/utils";
-import { CollectMock, HeroCluster, ReportMock, TargetMock } from "@/components/marketing/mocks";
+import { CollectMock, ReportMock, TargetMock } from "@/components/marketing/mocks";
+import { BetaCta } from "@/components/marketing/beta-cta";
+import { BrandSlider } from "@/components/marketing/brand-slider";
+import { Faq, HOME_FAQS } from "@/components/marketing/faq";
+import { JsonLd } from "@/components/seo/json-ld";
+import { SITE_DESCRIPTION, faqSchema, organizationSchema, softwareApplicationSchema, websiteSchema } from "@/lib/seo";
+import { FinalCta } from "@/components/marketing/final-cta";
+import { HeroSection } from "@/components/marketing/hero";
+import { LayoutPicker } from "@/components/marketing/landing-demo";
+import { StackBeam } from "@/components/marketing/stack-beam";
+import { getSession } from "@/lib/auth/session";
+import { getCurrentPlanId, loadLandingPlans } from "@/lib/marketing/plans";
+import { PricingTable } from "./pricing/pricing-table";
 
 export const metadata: Metadata = {
   title: { absolute: "Vouchreel — Turn customer love into conversions" },
-  description:
-    "Collect video testimonials with one link, customize a lightweight widget, and embed social proof anywhere. Contextual matching, smart triggers, and conversion tracking built in.",
+  description: SITE_DESCRIPTION,
   alternates: { canonical: "/" },
 };
 
-const stats = [
-  ["< 10 KB", "Embed script, gzipped"],
-  ["Zero", "Layout shift on your site"],
-  ["Minutes", "From signup to live"],
-  ["Free", "Plan to get started"],
+const stats: { value: string; label: string; icon: IconName }[] = [
+  { value: "< 10 KB", label: "Embed script, gzipped", icon: "bolt" },
+  { value: "No shift", label: "Layout shift on your site", icon: "window-frame" },
+  { value: "Minutes", label: "From signup to live", icon: "stopwatch" },
+  { value: "Free", label: "Plan to get started", icon: "gift" },
 ];
 
 const steps = [
   {
-    title: "Paste a video link",
-    description: "Add YouTube, Vimeo, or MP4 testimonials from happy customers. No editing or hosting required.",
+    title: "Collect or import",
+    description: "Send customers one link to record or upload a video. Or paste a YouTube, Vimeo, or MP4 link you already have.",
     tint: "pink",
   },
   {
-    title: "Customize your widget",
-    description: "Pick a theme and position, choose when it appears, and decide which pages show which stories.",
+    title: "Pick a layout and rules",
+    description: "Choose how it looks, when it appears, and which pages show which stories. See it live before you publish.",
     tint: "lime",
   },
   {
@@ -42,35 +53,36 @@ const steps = [
   },
 ] as const;
 
-const features: { title: string; description: string; icon: IconName }[] = [
+/** What the page has not already shown: the three rows below cover collecting, matching and measuring. */
+const more: { title: string; description: string; icon: IconName }[] = [
   {
-    title: "Contextual matching",
-    description: "Match by path, tags, or campaigns so every visitor sees the most relevant story.",
-    icon: "tag",
+    title: "Google and Trustpilot reviews",
+    description: "Pull in the reviews you already have and show them next to your videos.",
+    icon: "star-fall",
   },
   {
-    title: "Smart triggers",
-    description: "Reveal proof after a delay, on scroll depth, or after repeat visits, and never after a dismissal.",
-    icon: "clock-circle",
+    title: "Review videos",
+    description: "Turn a written review into a styled video in your brand colours, ready to play or share.",
+    icon: "videocamera-record",
   },
   {
-    title: "Conversion tracking",
-    description: "Watch impressions, plays, and clicks turn into goal completions with built-in funnels.",
-    icon: "chart-square",
+    title: "Social clips",
+    description: "Export any testimonial as a 9:16 clip for TikTok, Instagram Reels and YouTube Shorts.",
+    icon: "share",
   },
   {
-    title: "Page targeting",
-    description: "Include or exclude any path. Keep the widget off checkout, or run campaigns on landing pages.",
-    icon: "global",
+    title: "Wall of love page",
+    description: "A shareable page of all your testimonials, hosted for you. Link to it from anywhere.",
+    icon: "heart",
   },
   {
-    title: "Feather-light embed",
-    description: "A single async script under 10 KB gzipped, with fixed positioning and no layout shift.",
-    icon: "bolt",
+    title: "Your brand, once",
+    description: "Set your colours and fonts a single time and use them across widgets and videos.",
+    icon: "palette",
   },
   {
-    title: "Privacy-friendly analytics",
-    description: "First-party event tracking with no third-party cookies, so you see what works.",
+    title: "Consent built in",
+    description: "Every testimonial carries a consent record, and the people in them can withdraw it.",
     icon: "shield-check",
   },
 ];
@@ -83,7 +95,7 @@ const rows = [
         Collect stories with <Em>one link</Em>
       </>
     ),
-    body: "Send customers a single link. They record on their phone or upload a video, and it lands in your inbox ready to approve. No accounts, no downloads, no back-and-forth.",
+    body: "Send customers a single link. They record on their phone or upload a video, and it lands in your inbox ready to approve. No downloads and no back-and-forth.",
     bullets: ["Record in the browser or upload", "Optional incentives and custom prompts", "Approve, edit, or reject in one click"],
     mock: <CollectMock />,
   },
@@ -111,63 +123,48 @@ const rows = [
   },
 ];
 
-const quotes = [
-  {
-    quote: "The contextual matching is the killer feature. Pricing page visitors see ROI stories, not random praise.",
-    name: "Founder",
-    company: "E-commerce",
-  },
-  {
-    quote: "One script tag, zero layout shift, and the analytics finally told us which stories actually sell.",
-    name: "Marketing Lead",
-    company: "Agency",
-  },
-];
 
-export default function LandingPage() {
+
+export default async function LandingPage() {
+  const session = await getSession();
+  const [plans, currentPlanId] = await Promise.all([
+    loadLandingPlans(),
+    session?.user ? getCurrentPlanId(session.user.id) : Promise.resolve(null),
+  ]);
   return (
     <>
-      {/* Hero */}
-      <Section className="pb-12 pt-16 sm:pt-24">
-        <Container>
-          <div className="mx-auto max-w-4xl text-center">
-            <Badge variant="eyebrow">Video testimonials, embedded in minutes</Badge>
-            <h1 className="mt-6 text-display font-medium">
-              Turn customer love into <Em>conversions</Em>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-text-muted">
-              Vouchreel collects your customers&apos; video testimonials and shows the right story to the right visitor,
-              automatically. No editing, no code, no layout shift.
-            </p>
-            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button asChild size="xl">
-                <Link href="/signup">
-                  Get started <Icon name="arrow-right" size="sm" />
-                </Link>
-              </Button>
-              <Button asChild size="xl" variant="ink">
-                <Link href="/#how-it-works">
-                  <Icon name="play-circle" /> See how it works
-                </Link>
-              </Button>
-            </div>
-            <p className="mt-5 text-xs text-text-subtle">No credit card needed · Free plan, cancel anytime</p>
-          </div>
+      <JsonLd data={[organizationSchema(), websiteSchema(), softwareApplicationSchema(plans), faqSchema(HOME_FAQS)]} />
+      <HeroSection />
+      <BrandSlider />
 
-          <div className="mt-16">
-            <HeroCluster />
+      {/* Layout picker */}
+      <Section id="demo" className="scroll-mt-20 pt-8 sm:pt-12">
+        <Container>
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-4xl font-medium sm:text-5xl">
+              See it on a page, <Em>live</Em>
+            </h2>
+            <p className="mt-4 text-text-muted">
+              Pick a layout and watch the real widget draw it. Switch to a phone to see how it adapts.
+            </p>
+          </div>
+          <div className="mt-10">
+            <LayoutPicker />
           </div>
         </Container>
       </Section>
 
       {/* Stats strip */}
       <Container>
-        <Card variant="sunken" className="rounded-panel px-6 py-10 sm:px-10">
-          <dl className="grid grid-cols-2 gap-8 text-center md:grid-cols-4">
-            {stats.map(([value, label]) => (
-              <div key={label}>
-                <dd className="text-4xl font-medium tracking-tight">{value}</dd>
-                <dt className="mt-1 text-sm text-text-muted">{label}</dt>
+        <Card variant="sunken" className="rounded-panel px-6 py-8 sm:px-10 sm:py-10">
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4">
+            {stats.map((stat) => (
+              <div key={stat.label} className="flex flex-col items-center gap-3 text-center">
+                <Icon name={stat.icon} size="xl" className="size-10 text-brand" />
+                <div>
+                  <dd className="text-xl font-medium tracking-tight sm:text-2xl">{stat.value}</dd>
+                  <dt className="mt-1 text-xs text-text-muted sm:text-sm">{stat.label}</dt>
+                </div>
               </div>
             ))}
           </dl>
@@ -201,35 +198,8 @@ export default function LandingPage() {
         </Container>
       </Section>
 
-      {/* Features grid */}
+      {/* Collect, match, measure */}
       <Section id="features" className="pt-0">
-        <Container>
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-4xl font-medium sm:text-5xl">
-              Social proof that does the <Em>selling</Em>
-            </h2>
-            <p className="mt-4 text-text-muted">
-              Everything you need to collect, target, and measure video testimonials. Nothing you don&apos;t.
-            </p>
-          </div>
-          <ul className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((f) => (
-              <li key={f.title}>
-                <Card interactive padding="md" className="h-full">
-                  <span className="flex size-11 items-center justify-center rounded-control bg-brand-soft text-brand-soft-foreground">
-                    <Icon name={f.icon} />
-                  </span>
-                  <h3 className="mt-6 text-lg font-medium">{f.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-text-muted">{f.description}</p>
-                </Card>
-              </li>
-            ))}
-          </ul>
-        </Container>
-      </Section>
-
-      {/* Alternating feature rows */}
-      <Section className="pt-0">
         <Container className="space-y-24 sm:space-y-32">
           {rows.map((row, i) => (
             <div key={row.eyebrow} className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
@@ -246,97 +216,129 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Button asChild variant="outline" className="mt-8">
-                  <Link href="/signup">
-                    Learn more <Icon name="arrow-right" size="sm" />
-                  </Link>
-                </Button>
               </div>
             </div>
           ))}
         </Container>
       </Section>
 
-      {/* Testimonial band */}
-      <section className="bg-surface-inverse py-(--space-section) text-text-inverse">
+      {/* Reviews into video */}
+      <Section className="pt-0">
         <Container>
-          <div className="mx-auto max-w-3xl text-center">
-            <Badge className="bg-text-inverse/10 text-text-inverse">What teams say</Badge>
-            <blockquote className="mt-8 text-3xl font-medium leading-snug sm:text-4xl">
-              &ldquo;We replaced three static testimonial screenshots with Vouchreel and our demo-page conversion rate
-              went up within a <Em>month</Em>.&rdquo;
-            </blockquote>
-            <p className="mt-6 text-sm opacity-70">Head of Growth, B2B SaaS</p>
-          </div>
-          <div className="mt-14 grid gap-5 md:grid-cols-2">
-            {quotes.map((q) => (
-              <figure key={q.quote} className="rounded-panel border border-text-inverse/15 p-7">
-                <blockquote className="text-base leading-relaxed opacity-90">&ldquo;{q.quote}&rdquo;</blockquote>
-                <figcaption className="mt-5 text-sm opacity-60">
-                  {q.name}, {q.company}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      {/* Pricing teaser */}
-      <Section id="pricing">
-        <Container>
-          <Card variant="sunken" className="grid items-center gap-8 rounded-panel p-8 sm:p-12 lg:grid-cols-[1.4fr_1fr]">
+          <Card variant="sunken" className="grid items-center gap-10 rounded-panel p-6 sm:p-10 lg:grid-cols-[1fr_1.1fr] lg:gap-14">
             <div>
-              <Badge variant="eyebrow">Pricing</Badge>
+              <Badge variant="eyebrow">Reviews to video</Badge>
               <h2 className="mt-5 text-4xl font-medium sm:text-5xl">
-                Simple, <Em>transparent</Em> pricing
+                Already have <Em>reviews</Em>? Make them move
               </h2>
-              <p className="mt-4 max-w-xl text-text-muted">
-                Start free and upgrade when your testimonial wall starts paying for itself. Paid plans include a 14-day
-                money-back guarantee.
+              <p className="mt-5 text-text-muted">
+                Import your Google and Trustpilot reviews, pick a style, and Vouchreel turns each one into a short video you
+                can play on your site or post on social.
               </p>
               <ul className="mt-6 space-y-3 text-sm">
-                {[
-                  "Free plan for your first spaces and testimonials",
-                  "Higher limits, more spaces, and team features as you grow",
-                  "Cancel anytime, no long-term contracts",
-                ].map((t) => (
-                  <li key={t} className="flex items-center gap-3">
+                {["Import reviews from Google and Trustpilot", "Five video styles in your brand colours", "Export 9:16 clips for TikTok, Reels and Shorts"].map((b) => (
+                  <li key={b} className="flex items-center gap-3">
                     <Icon name="check-circle" size="sm" className="text-success" />
-                    {t}
+                    {b}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="flex flex-col items-start gap-3 lg:items-end">
-              <Button asChild size="lg">
-                <Link href="/pricing">View pricing</Link>
-              </Button>
-              <p className="max-w-xs text-xs text-text-subtle lg:text-right">
-                Pay by card via Stripe, or choose local payment methods via Dodo Payments.
-              </p>
+            <div>
+              <div aria-hidden="true" className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                {[1, 2, 4].map((n, i) => (
+                  <video
+                    key={n}
+                    className={cn("aspect-[9/16] w-full rounded-panel bg-surface-sunken object-cover shadow-card", i === 2 && "hidden sm:block")}
+                    src={`/demo/sample-${n}.mp4`}
+                    poster={`/demo/sample-${n}.jpg`}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                  />
+                ))}
+              </div>
+              <p className="mt-3 text-center text-xs text-text-subtle">Sample videos. The people and businesses are made up.</p>
             </div>
           </Card>
         </Container>
       </Section>
 
-      {/* Final CTA */}
+      {/* More than a widget */}
       <Section className="pt-0">
         <Container>
-          <Card variant="peach" padding="lg" className="px-6 py-16 text-center sm:py-24">
-            <h2 className="mx-auto max-w-3xl text-4xl font-medium sm:text-5xl">
-              Your happiest customers are your best <Em>salespeople</Em>
+          <div className="mb-10 max-w-2xl">
+            <h2 className="text-4xl font-medium sm:text-5xl">
+              More than a <Em>widget</Em>
             </h2>
-            <p className="mx-auto mt-5 max-w-xl opacity-70">
-              Give them a stage. Collect their story, embed it on your site, and watch it work.
-            </p>
-            <Button asChild size="xl" variant="ink" className="mt-9">
-              <Link href="/signup">
-                Get started free <Icon name="arrow-right" size="sm" />
-              </Link>
-            </Button>
-          </Card>
+            <p className="mt-4 max-w-xl text-text-muted">The rest of what you need to collect, reuse and share customer proof.</p>
+          </div>
+          <ul className="grid grid-cols-1 border-l border-t sm:grid-cols-2 lg:grid-cols-3">
+            {more.map((f, i) => (
+              <li
+                key={f.title}
+                className={cn(
+                  "relative flex flex-col gap-3 border-b border-r p-6 transition-colors duration-(--duration-base) md:p-8",
+                  i === 0 ? "bg-linear-to-b from-surface to-brand-soft" : "bg-surface hover:bg-linear-to-b hover:from-surface hover:to-brand-soft",
+                )}
+              >
+                {i === 1 && <span aria-hidden="true" className="absolute inset-y-10 left-0 w-1 rounded-r-control bg-brand" />}
+                <div className="flex items-center gap-2.5">
+                  <Icon name={f.icon} className="text-brand" />
+                  <h3 className="text-base font-medium leading-snug">{f.title}</h3>
+                </div>
+                <p className="text-sm leading-relaxed text-text-muted">{f.description}</p>
+              </li>
+            ))}
+          </ul>
         </Container>
       </Section>
+
+      {/* Fits your stack */}
+      <Section className="pt-0">
+        <Container>
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-4xl font-medium sm:text-5xl">
+              Fits the <Em>stack</Em> you already have
+            </h2>
+            <p className="mt-4 text-text-muted">
+              Paste one script tag anywhere you can edit HTML. Connect Zapier or Make, or build your own with the API and
+              webhooks.
+            </p>
+          </div>
+          <StackBeam />
+        </Container>
+      </Section>
+
+      <BetaCta />
+
+      {/* Pricing */}
+      <Section id="pricing">
+        <Container>
+          <div className="mx-auto mb-12 flex max-w-3xl flex-col items-center gap-4 text-center">
+            <Badge variant="eyebrow">Pricing</Badge>
+            <h2 className="text-4xl font-medium sm:text-5xl">
+              Simple, <Em>transparent</Em> pricing
+            </h2>
+            <p className="max-w-xl text-text-muted">Start free and upgrade when your testimonial wall starts paying for itself. Cancel anytime.</p>
+          </div>
+          {plans.length > 0 ? (
+            <PricingTable layout="compact" plans={plans} user={session?.user ? { id: session.user.id, email: session.user.email } : null} currentPlanId={currentPlanId} />
+          ) : (
+            <div className="text-center">
+              <Button asChild size="lg">
+                <Link href="/pricing">View pricing</Link>
+              </Button>
+            </div>
+          )}
+        </Container>
+      </Section>
+
+      <Faq />
+
+      <FinalCta />
     </>
   );
 }

@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { toggleStyle } from "@/components/ui/toggle";
 import { Sparkline } from "./sparkline";
 import { SpotlightVideo } from "./spotlight-video";
+import { DismissibleSetup } from "./dismissible-setup";
 
 /**
  * The home page: half showcase, half instrument panel. One focal point at the top (the week's best video,
@@ -38,7 +39,11 @@ export function HomeView({ data, firstName }: { data: HomeData; firstName: strin
           {data.spotlight ? <Spotlight spotlight={data.spotlight} /> : !setupDone ? <Checklist steps={data.checklist} hero /> : <QuietWeek spaceId={data.spaces[0]?.id} />}
         </div>
         <div className="space-y-4">
-          {data.spotlight && !setupDone && <Checklist steps={data.checklist} />}
+          {data.spotlight && !setupDone && (
+            <DismissibleSetup>
+              <Checklist steps={data.checklist} />
+            </DismissibleSetup>
+          )}
           {needsCount > 0 ? <NeedsYou needs={data.needs} /> : <AllClear />}
         </div>
       </div>
@@ -157,12 +162,17 @@ function Checklist({ steps, hero = false }: { steps: HomeData["checklist"]; hero
           </p>
         </div>
       </div>
-      <ol className="space-y-2">
+      <ol className="space-y-1">
         {steps.map((s) => (
-          <li key={s.key} className="flex items-center gap-2 text-sm">
-            <Icon name={s.done ? "check-circle" : "clock-circle"} size="sm" className={s.done ? "" : "opacity-50"} />
-            {/* Done steps are struck through, not faded: faded text on the tint fails the contrast rule */}
-            <span className={s.done ? "line-through" : ""}>{s.label}</span>
+          <li key={s.key}>
+            <Link href={s.href} className="flex items-start gap-2 py-1 text-sm hover:underline">
+              <Icon name={s.done ? "check-circle" : "clock-circle"} size="sm" className={cn("mt-0.5 shrink-0", !s.done && "opacity-50")} />
+              <span>
+                {/* Done steps are struck through, not faded: faded text on the tint fails the contrast rule */}
+                <span className={s.done ? "line-through" : ""}>{s.label}</span>
+                {s === next && <span className="block text-xs opacity-80">{s.hint}</span>}
+              </span>
+            </Link>
           </li>
         ))}
       </ol>

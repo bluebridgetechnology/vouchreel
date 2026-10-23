@@ -14,5 +14,9 @@
     "esbuild": "latest",
     "typescript": "latest",
     "vitest": "^5.0.0"
+  },
+  "exports": {
+    ".": "./dist/widget.js",
+    "./matcher": "./src/matcher.ts"
   }
 }

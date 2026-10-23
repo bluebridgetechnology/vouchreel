@@ -18,6 +18,8 @@ interface WidgetPreviewFrameProps {
    * pop-ups still open in the middle of what is shown, not off to the side.
    */
   closeUp?: boolean;
+  /** No card of its own (border, shadow, rounded corners): for a page that draws its own frame around the preview. */
+  bare?: boolean;
   className?: string;
 }
 
@@ -32,7 +34,7 @@ const SEND_DEBOUNCE_MS = 100;
  * The real widget on a sample page, at a device's size, scaled to fit. The page (`/widget/preview.html`) is
  * built with the widget itself, so the preview cannot drift from what visitors see.
  */
-export function WidgetPreviewFrame({ draft, content, device, page, replay = 0, closeUp = false, className }: WidgetPreviewFrameProps) {
+export function WidgetPreviewFrame({ draft, content, device, page, replay = 0, closeUp = false, bare = false, className }: WidgetPreviewFrameProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
@@ -40,11 +42,17 @@ export function WidgetPreviewFrame({ draft, content, device, page, replay = 0, c
   const size = DEVICES[device];
   // A phone is already shown at its own size, so a close-up only means something for the wider screens
   const zoomed = closeUp && device !== "mobile";
-  const scale = zoomed ? Math.min(CLOSE_UP_MAX_SCALE, Math.max(1, box.width / CLOSE_UP_MIN_WIDTH)) : fitScale(box, size);
+  // A bare preview fills the width of the frame drawn around it and takes its height from that frame, so it never leaves side gutters
+  const fillWidth = bare && !zoomed;
+  const scale = zoomed
+    ? Math.min(CLOSE_UP_MAX_SCALE, Math.max(1, box.width / CLOSE_UP_MIN_WIDTH))
+    : fillWidth
+      ? box.width > 0 ? Math.min(1, box.width / size.width) : 1
+      : fitScale(box, size);
   // The page is as wide as the device but as tall as the space allows, so the preview fills its area (a tall column of
   // cards, a wall) instead of leaving an empty band under a 16:10 page
   const pageWidth = zoomed && box.width > 0 ? Math.floor(box.width / scale) : size.width;
-  const pageHeight = box.height <= 0 ? size.height : zoomed ? Math.floor(box.height / scale) : Math.max(size.height, Math.floor(box.height / scale));
+  const pageHeight = box.height <= 0 ? size.height : zoomed || fillWidth ? Math.floor(box.height / scale) : Math.max(size.height, Math.floor(box.height / scale));
 
   // The frame says when its script is listening; only messages from our own frame count
   useEffect(() => {
@@ -53,6 +61,9 @@ export function WidgetPreviewFrame({ draft, content, device, page, replay = 0, c
       if (event.data?.type === "vouchreel:preview-ready") setReady(true);
     };
     window.addEventListener("message", onMessage);
+    // On a server-rendered page the frame can finish loading before React hydrates, so both its "ready"
+    // message and its load event come before anyone is listening: a frame that has already loaded is ready
+    if (frameRef.current?.contentDocument?.readyState === "complete" && frameRef.current.contentWindow?.location.href !== "about:blank") setReady(true);
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
@@ -79,8 +90,9 @@ export function WidgetPreviewFrame({ draft, content, device, page, replay = 0, c
       <div ref={boxRef} className="flex h-full w-full items-start justify-center">
         <Card
           variant="flat"
-          className="overflow-hidden shadow-float"
-          style={zoomed ? { width: "100%", height: "100%" } : { width: size.width * scale, height: pageHeight * scale }}
+          className={bare ? "overflow-hidden rounded-none border-0 bg-transparent" : "overflow-hidden shadow-float"}
+          // Empty until measured: server-rendered, it would first paint at full device size (wider than a phone) and then shrink
+          style={box.width <= 0 ? { width: 0, height: 0, visibility: "hidden" } : zoomed ? { width: "100%", height: "100%" } : { width: size.width * scale, height: pageHeight * scale }}
         >
           <iframe
             ref={frameRef}

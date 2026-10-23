@@ -9,7 +9,7 @@ import { SUSPENDED_MESSAGE, getSuspension } from "./suspended";
 
 /**
  * New accounts must confirm their email before they can sign in. Off until the email provider is
- * known to deliver (RESEND_API_KEY) and the accounts that already exist have been marked verified
+ * known to deliver (SMTP_HOST or RESEND_API_KEY) and the accounts that already exist have been marked verified
  * (`npm run auth:verify-existing`). See docs/deployment.md.
  */
 export const REQUIRE_EMAIL_VERIFICATION = process.env.REQUIRE_EMAIL_VERIFICATION === "true";

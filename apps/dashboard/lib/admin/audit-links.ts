@@ -20,6 +20,8 @@ export function auditEntryLink(entry: AuditLinkInput): AuditLink | null {
       return entry.entityId ? { href: `/admin?tab=users&q=${encodeURIComponent(entry.entityId)}`, label: "Open user" } : null;
     case "plan":
       return { href: "/admin?tab=plans", label: "Open plans" };
+    case "blog_post":
+      return { href: "/admin?tab=blog", label: "Open blog" };
     case "job":
       return { href: "/admin?tab=videos", label: "Open jobs" };
     case "video": {

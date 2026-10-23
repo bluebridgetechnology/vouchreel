@@ -6,7 +6,7 @@
 //   palette   raw Tailwind palette classes (bg-emerald-500, text-white, ...)
 //   hex       hex / rgb() / hsl() colour literals in TSX
 //   size      arbitrary text sizes (text-[11px])
-//   weight    font-semibold / bold / extrabold / black (Outfit max weight is 500)
+//   weight    font-semibold / bold / extrabold / black (Inter and Urbanist max weight is 500)
 //   radius    legacy radius classes (rounded, rounded-md/lg/xl/2xl/full/sm/xs)
 //   legacy    shadcn alias names (bg-card, text-foreground, text-muted-foreground, bg-primary ...)
 //   feedback  alert(), confirm(), window.confirm(): use notify.* (lib/notify.ts) and useConfirm()

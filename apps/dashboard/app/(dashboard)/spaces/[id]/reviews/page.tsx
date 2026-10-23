@@ -2,6 +2,8 @@
 
 import { use, useEffect, useState } from "react";
 import { ReviewVideoModal } from "@/components/review-video/review-video-modal";
+import { ReviewPagesDialog } from "@/components/reviews/review-pages-dialog";
+import type { MatchRules } from "@/lib/validations/testimonials";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { inputClass, textareaClass } from "@/components/ui/input";
@@ -52,6 +54,7 @@ interface ReviewItem {
   reviewDate: string | null;
   providerReviewId: string;
   isApproved: boolean;
+  matchRules?: MatchRules | null;
   createdAt: string;
 }
 
@@ -78,6 +81,7 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
 
   // Filter state
   const [filter, setFilter] = useState<"all" | "approved" | "hidden">("all");
+  const [pagesFor, setPagesFor] = useState<ReviewItem | null>(null);
   const [search, setSearch] = useState("");
 
   // Modal / Form state for connecting a provider
@@ -989,6 +993,13 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
                     )}
                     <button
                       type="button"
+                      onClick={() => setPagesFor(review)}
+                      className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-7 px-2.5 text-2xs")}
+                    >
+                      {review.matchRules?.mode === "specific" ? "Some pages" : "All pages"}
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleToggleApprove(review)}
                       className={cn(buttonVariants({ variant: review.isApproved ? "outline" : "primary", size: "sm" }), "h-7 px-2.5 text-2xs")}
                     >
@@ -1011,6 +1022,21 @@ export default function SpaceReviewsPage({ params }: ReviewsPageProps) {
           </div>
         )}
       </div>
+
+      {pagesFor && (
+        <ReviewPagesDialog
+          spaceId={spaceId}
+          reviewId={pagesFor.id}
+          authorName={pagesFor.authorName}
+          initial={pagesFor.matchRules ?? null}
+          onClose={() => setPagesFor(null)}
+          onSaved={(rules) => {
+            setReviewsList((prev) => prev.map((r) => (r.id === pagesFor.id ? { ...r, matchRules: rules } : r)));
+            setPagesFor(null);
+            notify.success("Pages saved");
+          }}
+        />
+      )}
     </div>
   );
 }

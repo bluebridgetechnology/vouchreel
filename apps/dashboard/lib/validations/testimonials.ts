@@ -52,3 +52,9 @@ export const reorderTestimonialsSchema = z
 export type CreateTestimonialInput = z.infer<typeof createTestimonialSchema>;
 export type UpdateTestimonialInput = z.infer<typeof updateTestimonialSchema>;
 export type ReorderItem = z.infer<typeof reorderItemSchema>;
+
+/** Set the same page rules on several testimonials in one go. */
+export const bulkMatchRulesSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1, "Pick at least one testimonial").max(200),
+  matchRules: matchRulesSchema,
+});

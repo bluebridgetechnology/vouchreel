@@ -96,7 +96,9 @@ export async function runWorker(signal: AbortSignal, options: RunOptions = {}): 
     } catch (error) {
       log.error("[worker] poll failed:", error);
     }
-    if (processed === 0) {
+    // A shutdown that arrived during the poll must not wait out a whole poll interval first: the abort event does not fire
+    // again for a signal that is already aborted
+    if (processed === 0 && !stop.aborted) {
       await new Promise<void>((resolve) => {
         const t = setTimeout(resolve, pollMs);
         stop.addEventListener(

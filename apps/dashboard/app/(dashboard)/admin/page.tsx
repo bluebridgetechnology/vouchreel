@@ -21,6 +21,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AdminPanel } from "./admin-panel";
+import { AnnouncementManager } from "./announcement-manager";
+import { BlogManager } from "./blog-manager";
+import { listPostsForAdmin } from "@/lib/blog";
+import { readAnnouncement } from "@/lib/marketing/announcement";
 import { AuditTypeSelect } from "./audit-type-select";
 import { FormSelect } from "./form-select";
 import { ModerationManager } from "./moderation-manager";
@@ -35,6 +39,8 @@ export const metadata = { title: "Admin" };
 const TABS = [
   { id: "plans", label: "Plans & pricing" },
   { id: "payments", label: "Payments" },
+  { id: "announcement", label: "Announcement" },
+  { id: "blog", label: "Blog" },
   { id: "users", label: "Users" },
   { id: "videos", label: "Video & jobs" },
   { id: "usage", label: "Usage" },
@@ -91,6 +97,8 @@ export default async function AdminPage({
 
       {tab === "plans" && <PlansTab />}
       {tab === "payments" && <PaymentsTab />}
+      {tab === "announcement" && <AnnouncementTab />}
+      {tab === "blog" && <BlogTab />}
       {tab === "users" && <UsersTab q={q} page={Number(rawPage) || 1} currentUserId={session.user.id} />}
       {tab === "videos" && <VideosTab />}
       {tab === "usage" && <UsageTab month={month} page={Number(rawPage) || 1} />}
@@ -104,6 +112,26 @@ export default async function AdminPage({
 async function PlansTab() {
   const plans = await listAdminPlans();
   return <PlansManager plans={plans} />;
+}
+
+async function BlogTab() {
+  const posts = await listPostsForAdmin();
+  return (
+    <BlogManager
+      posts={posts.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        title: p.title,
+        isPublished: p.isPublished,
+        publishedAt: p.publishedAt?.toISOString() ?? null,
+        updatedAt: p.updatedAt.toISOString(),
+      }))}
+    />
+  );
+}
+
+async function AnnouncementTab() {
+  return <AnnouncementManager initial={await readAnnouncement()} />;
 }
 
 async function PaymentsTab() {

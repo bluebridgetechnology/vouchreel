@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { matchRulesSchema } from "./testimonials";
 
 export const reviewProviderSchema = z.enum(["google", "trustpilot"]);
 
@@ -14,9 +15,12 @@ export const connectReviewSourceSchema = z.object({
   syncNow: z.boolean().default(true),
 });
 
-export const updateReviewSchema = z.object({
-  isApproved: z.boolean(),
-});
+export const updateReviewSchema = z
+  .object({
+    isApproved: z.boolean().optional(),
+    matchRules: matchRulesSchema.optional(),
+  })
+  .refine((v) => v.isApproved !== undefined || v.matchRules !== undefined, { message: "Nothing to update" });
 
 export type ReviewProvider = z.infer<typeof reviewProviderSchema>;
 export type ConnectReviewSourceInput = z.infer<typeof connectReviewSourceSchema>;

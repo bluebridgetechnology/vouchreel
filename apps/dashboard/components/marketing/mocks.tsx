@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
-import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
 /* Decorative product mock-ups for the landing page. They are static, aria-hidden
@@ -28,93 +27,6 @@ export function BarChartMock({ className }: { className?: string }) {
           <span className="text-2xs text-text-subtle">{x.d}</span>
         </div>
       ))}
-    </div>
-  );
-}
-
-function Person({ initials, name, role, status, tone }: { initials: string; name: string; role: string; status: string; tone: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-card bg-surface-sunken p-3">
-      <span className={cn("flex size-9 items-center justify-center rounded-pill text-xs font-medium text-tint-foreground", tone)}>
-        {initials}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{name}</p>
-        <p className="truncate text-xs text-text-muted">{role}</p>
-      </div>
-      <Badge variant={status === "Approved" ? "success" : "warning"}>{status}</Badge>
-    </div>
-  );
-}
-
-export function HeroCluster() {
-  return (
-    <div aria-hidden="true" className="rounded-panel bg-surface-sunken p-4 sm:p-6">
-      <div className="grid gap-4 md:grid-cols-[1.1fr_1fr_1fr]">
-        <Card padding="md" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">Testimonials</p>
-            <Badge variant="brand">3 new</Badge>
-          </div>
-          <div className="space-y-2.5">
-            <Person initials="SC" name="Sarah Chen" role="Head of Growth, Acme" status="Approved" tone="bg-tint-pink" />
-            <Person initials="MO" name="Maya Okafor" role="Founder, Bloom" status="Pending" tone="bg-tint-lime" />
-            <Person initials="DR" name="Daniel Reyes" role="Marketing Lead" status="Approved" tone="bg-tint-peach" />
-          </div>
-        </Card>
-
-        <Card padding="md" className="flex flex-col gap-4">
-          <p className="text-sm font-medium">Activity report</p>
-          <div className="h-36 flex-1">
-            <BarChartMock />
-          </div>
-          <div className="flex items-end justify-between border-t pt-3">
-            <div>
-              <p className="text-2xs text-text-subtle">Plays</p>
-              <p className="text-xl font-medium tabular-nums">1,284</p>
-            </div>
-            <div className="text-right">
-              <p className="text-2xs text-text-subtle">Avg watch</p>
-              <p className="text-xl font-medium tabular-nums">0:42</p>
-            </div>
-          </div>
-        </Card>
-
-        <div className="flex flex-col gap-4">
-          <Card padding="md" className="space-y-3">
-            <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-control bg-tint-pink text-tint-foreground">
-                <Icon name="tag" />
-              </span>
-              <div>
-                <p className="text-sm font-medium">Pricing page</p>
-                <p className="text-xs text-text-muted">ROI stories</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs text-text-muted">
-              <span>Conversion goal</span>
-              <span className="tabular-nums">75%</span>
-            </div>
-            <Progress value={75} />
-          </Card>
-          <Card padding="md" className="space-y-3">
-            <div className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-control bg-tint-lime text-tint-foreground">
-                <Icon name="global" />
-              </span>
-              <div>
-                <p className="text-sm font-medium">Homepage</p>
-                <p className="text-xs text-text-muted">Founder stories</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-xs text-text-muted">
-              <span>Conversion goal</span>
-              <span className="tabular-nums">50%</span>
-            </div>
-            <Progress value={50} />
-          </Card>
-        </div>
-      </div>
     </div>
   );
 }
