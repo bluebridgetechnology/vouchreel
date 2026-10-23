@@ -1466,3 +1466,29 @@ export const dataExports = pgTable(
   },
   (table) => [index("data_exports_user_idx").on(table.userId, table.createdAt)]
 );
+
+/**
+ * Blog posts, written in Admin > Blog. The body is Markdown, rendered with raw HTML switched off. A post shows on the
+ * public blog only while it is published and its date has arrived.
+ */
+export const blogPosts = pgTable(
+  "blog_posts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    /** The address of the post: /blog/<slug>. Lower-case letters, digits and hyphens; unique. */
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    /** A sentence or two shown on the blog list and in search results. */
+    excerpt: text("excerpt"),
+    /** Markdown. */
+    content: text("content").notNull().default(""),
+    coverImageUrl: text("cover_image_url"),
+    authorName: text("author_name"),
+    isPublished: boolean("is_published").default(false).notNull(),
+    /** When the post goes (or went) live; a future date holds it back. Null while a draft. */
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex("blog_posts_slug_idx").on(table.slug), index("blog_posts_published_idx").on(table.isPublished, table.publishedAt)],
+);
