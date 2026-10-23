@@ -9,10 +9,10 @@ import { Container, Section } from "@/components/ui/layout";
 import type { IconName } from "@/lib/icons.generated";
 import { cn } from "@/lib/utils";
 import { CollectMock, ReportMock, TargetMock } from "@/components/marketing/mocks";
-import { Agencies } from "@/components/marketing/agencies";
 import { BetaCta } from "@/components/marketing/beta-cta";
 import { BrandSlider } from "@/components/marketing/brand-slider";
 import { Faq } from "@/components/marketing/faq";
+import { FinalCta } from "@/components/marketing/final-cta";
 import { HeroSection } from "@/components/marketing/hero";
 import { LayoutPicker } from "@/components/marketing/landing-demo";
 import { StackBeam } from "@/components/marketing/stack-beam";
@@ -310,8 +310,6 @@ export default async function LandingPage() {
         </Container>
       </Section>
 
-      <Agencies />
-
       <BetaCta />
 
       {/* Pricing */}
@@ -338,24 +336,7 @@ export default async function LandingPage() {
 
       <Faq />
 
-      {/* Final CTA */}
-      <Section className="pt-0">
-        <Container>
-          <Card variant="peach" padding="lg" className="px-6 py-16 text-center sm:py-24">
-            <h2 className="mx-auto max-w-3xl text-4xl font-medium sm:text-5xl">
-              Your happiest customers are your best <Em>salespeople</Em>
-            </h2>
-            <p className="mx-auto mt-5 max-w-xl opacity-70">
-              Give them a stage. Collect their story, embed it on your site, and watch it work.
-            </p>
-            <Button asChild size="xl" variant="ink" className="mt-9">
-              <Link href="/signup">
-                Start free <Icon name="arrow-right" size="sm" />
-              </Link>
-            </Button>
-          </Card>
-        </Container>
-      </Section>
+      <FinalCta />
     </>
   );
 }
