@@ -4,8 +4,13 @@ import { Em } from "@/components/ui/em";
 import { Icon } from "@/components/ui/icon";
 import { Container } from "@/components/ui/layout";
 
-/** Each answer says only what the product does today. */
-const faqs = [
+export interface FaqItem {
+  q: string;
+  a: string;
+}
+
+/** The homepage's questions. Each answer says only what the product does today. */
+export const HOME_FAQS: FaqItem[] = [
   {
     q: "Do my customers need an account to give a testimonial?",
     a: "No. You send them a link. They record in their browser or upload a video, and agree to how it will be used as part of the same form. There is nothing for them to install.",
@@ -40,23 +45,38 @@ const faqs = [
   },
 ];
 
+interface FaqProps {
+  items?: FaqItem[];
+  /** The anchor other pages link to, such as /#faq. */
+  id?: string;
+  eyebrow?: string;
+  title?: React.ReactNode;
+  intro?: string;
+}
+
 /**
  * Frequently asked questions: the heading and a way to ask on the left, the questions on the right as an accordion
  * where opening one closes the others (the shared `name` on the details elements does that, with no script).
  */
-export function Faq() {
+export function Faq({
+  items = HOME_FAQS,
+  id = "faq",
+  eyebrow = "FAQ",
+  title = (
+    <>
+      Frequently asked <Em>questions</Em>
+    </>
+  ),
+  intro = "The answers to what people ask before they start. Can't find yours? Write to us and a person will reply.",
+}: FaqProps) {
   return (
-    <section id="faq" className="scroll-mt-24">
+    <section id={id} className="scroll-mt-24">
       <Container className="py-8 sm:py-16 lg:py-20">
         <div className="grid gap-10 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
           <div className="lg:sticky lg:top-28 lg:self-start">
-            <Badge variant="eyebrow">FAQ</Badge>
-            <h2 className="mt-5 text-4xl font-medium sm:text-5xl">
-              Frequently asked <Em>questions</Em>
-            </h2>
-            <p className="mt-4 max-w-sm text-text-muted">
-              The answers to what people ask before they start. Can&apos;t find yours? Write to us and a person will reply.
-            </p>
+            <Badge variant="eyebrow">{eyebrow}</Badge>
+            <h2 className="mt-5 text-4xl font-medium sm:text-5xl">{title}</h2>
+            <p className="mt-4 max-w-sm text-text-muted">{intro}</p>
             <Button asChild variant="outline" className="mt-6">
               <a href="mailto:support@vouchreel.com?subject=Vouchreel%20question">
                 <Icon name="chat-round-like" size="sm" /> Ask a question
@@ -65,8 +85,8 @@ export function Faq() {
           </div>
 
           <div className="divide-y rounded-panel border bg-surface">
-            {faqs.map((item) => (
-              <details key={item.q} name="faq" className="group">
+            {items.map((item) => (
+              <details key={item.q} name={id} className="group">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-panel px-5 py-5 text-base font-medium transition-colors hover:bg-surface-sunken focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring sm:px-7 [&::-webkit-details-marker]:hidden">
                   {item.q}
                   <Icon name="alt-arrow-down" size="sm" className="shrink-0 text-text-subtle transition-transform duration-200 group-open:rotate-180" />
