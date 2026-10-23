@@ -347,15 +347,15 @@ export default async function LandingPage() {
       {/* Pricing */}
       <Section id="pricing">
         <Container>
-          <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-4 text-center">
+          <div className="mx-auto mb-12 flex max-w-3xl flex-col items-center gap-4 text-center">
             <Badge variant="eyebrow">Pricing</Badge>
             <h2 className="text-4xl font-medium sm:text-5xl">
               Simple, <Em>transparent</Em> pricing
             </h2>
-            <p className="text-text-muted">Start free and upgrade when your testimonial wall starts paying for itself. Cancel anytime.</p>
+            <p className="max-w-xl text-text-muted">Start free and upgrade when your testimonial wall starts paying for itself. Cancel anytime.</p>
           </div>
           {plans.length > 0 ? (
-            <PricingTable plans={plans} user={session?.user ? { id: session.user.id, email: session.user.email } : null} currentPlanId={currentPlanId} />
+            <PricingTable layout="compact" plans={plans} user={session?.user ? { id: session.user.id, email: session.user.email } : null} currentPlanId={currentPlanId} />
           ) : (
             <div className="text-center">
               <Button asChild size="lg">

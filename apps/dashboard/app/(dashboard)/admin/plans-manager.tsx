@@ -315,8 +315,8 @@ export function PlansManager({ plans }: { plans: AdminPlan[] }) {
               </Field>
             </div>
 
-            <Field label="Feature bullets" htmlFor="plan-features" hint="One per line, shown on the pricing card">
-              <Textarea id="plan-features" rows={5} value={form.features} onChange={(e) => patch({ features: e.target.value })} />
+            <Field label="Feature bullets" htmlFor="plan-features" hint="One per line, shown on the pricing card and the homepage. A plan's monthly and yearly versions each have their own list.">
+              <Textarea id="plan-features" rows={8} value={form.features} onChange={(e) => patch({ features: e.target.value })} />
             </Field>
 
             <fieldset className="space-y-4 rounded-card border p-4">

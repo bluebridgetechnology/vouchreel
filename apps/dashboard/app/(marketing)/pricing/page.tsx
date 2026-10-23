@@ -1,12 +1,13 @@
-import { asc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { plans, subscriptions } from "@/lib/db/schema";
+import { subscriptions } from "@/lib/db/schema";
+import { queryActivePlans } from "@/lib/marketing/plans";
 import { seedPlans } from "@/lib/db/seed-plans";
 import { getSession } from "@/lib/auth/session";
 import { Badge } from "@/components/ui/badge";
 import { Em } from "@/components/ui/em";
 import { Container } from "@/components/ui/layout";
-import { PricingTable, PlanItem } from "./pricing-table";
+import { PricingTable } from "./pricing-table";
 
 export const dynamic = "force-dynamic";
 
@@ -20,15 +21,13 @@ export const metadata = {
 export default async function PricingPage() {
   const session = await getSession();
 
-  let dbPlans = await db.query.plans.findMany({
-    where: eq(plans.isActive, true),
-    orderBy: [asc(plans.sortOrder), asc(plans.price)],
-  });
+  let plainPlans = await queryActivePlans();
 
   // Automatically seed initial plans if table is empty
-  if (dbPlans.length === 0) {
+  if (plainPlans.length === 0) {
     try {
-      dbPlans = await seedPlans();
+      await seedPlans();
+      plainPlans = await queryActivePlans();
     } catch (e) {
       console.error("Failed to auto-seed plans on pricing page:", e);
     }
@@ -41,18 +40,6 @@ export default async function PricingPage() {
     });
     currentPlanId = userSub?.planId || null;
   }
-
-  const plainPlans: PlanItem[] = dbPlans.map((p) => ({
-    id: p.id,
-    name: p.name,
-    price: p.price,
-    interval: p.interval as "month" | "year",
-    features: (p.features as string[]) || [],
-    description: p.description,
-    badge: p.badge,
-    sortOrder: p.sortOrder,
-    isActive: p.isActive,
-  }));
 
   return (
     <Container className="py-16 sm:py-24">

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 export interface PlanItem {
   id: string;
@@ -28,9 +29,14 @@ interface PricingTableProps {
   plans: PlanItem[];
   user: { id: string; email: string } | null;
   currentPlanId?: string | null;
+  /**
+   * "wide": each plan is a wide card (details and price beside the features), two to a row; room to read, but four plans
+   * take two rows. "compact": each plan is a tall card with the features underneath, so up to four fit in one row.
+   */
+  layout?: "wide" | "compact";
 }
 
-export function PricingTable({ plans, user, currentPlanId }: PricingTableProps) {
+export function PricingTable({ plans, user, currentPlanId, layout = "wide" }: PricingTableProps) {
   const [interval, setInterval] = useState<"month" | "year">("month");
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -87,6 +93,8 @@ export function PricingTable({ plans, user, currentPlanId }: PricingTableProps) 
     }
   }
 
+  const compact = layout === "compact";
+
   return (
     <div className="w-full">
       {/* Interval toggle */}
@@ -115,8 +123,12 @@ export function PricingTable({ plans, user, currentPlanId }: PricingTableProps) 
         </div>
       )}
 
-      {/* Plans: wide cards two to a row, an odd one out sits in the middle */}
-      <div className="mx-auto flex max-w-6xl flex-wrap justify-center gap-6">
+      {/* Plans */}
+      <div
+        className={cn(
+          compact ? "mx-auto grid max-w-7xl gap-6 sm:grid-cols-2 xl:grid-cols-4" : "mx-auto flex max-w-6xl flex-wrap justify-center gap-6",
+        )}
+      >
         {displayPlans.map((plan, index) => {
           const isCurrent = currentPlanId === plan.id;
           const isLoading = loadingPlanId === plan.id;
@@ -130,16 +142,19 @@ export function PricingTable({ plans, user, currentPlanId }: PricingTableProps) 
             <Card
               key={plan.id}
               variant={TINTS[index % TINTS.length]}
-              className="flex w-full flex-col gap-6 p-8 sm:flex-row sm:gap-10 sm:p-10 lg:w-[calc(50%-0.75rem)]"
+              className={cn(
+                "flex flex-col gap-6 p-8",
+                compact ? "h-full" : "w-full sm:flex-row sm:gap-8 sm:p-10 lg:w-[calc(50%-0.75rem)]",
+              )}
             >
-              <div className="flex flex-col items-start justify-between gap-6 sm:self-stretch">
+              <div className={cn("flex flex-col items-start justify-between gap-6", !compact && "sm:w-48 sm:shrink-0 sm:self-stretch")}>
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge className="h-7 bg-surface-inverse px-3 text-sm font-normal text-text-inverse">{plan.name}</Badge>
                     {plan.badge && <Badge variant="brand">{plan.badge}</Badge>}
                     {isCurrent && <Badge variant="brand">Current plan</Badge>}
                   </div>
-                  <p className="max-w-56 text-sm opacity-70">{plan.description}</p>
+                  <p className="text-sm opacity-70">{plan.description}</p>
                 </div>
 
                 <div className="flex flex-col gap-4">
@@ -148,26 +163,26 @@ export function PricingTable({ plans, user, currentPlanId }: PricingTableProps) 
                     <span className="pb-1 text-base opacity-70">{priceSubtext}</span>
                   </p>
                   {isCurrent ? (
-                    <Button type="button" size="lg" variant="soft" className="w-fit" disabled>
+                    <Button type="button" size={compact ? "md" : "lg"} variant="soft" className="w-fit" disabled>
                       Current plan
                     </Button>
                   ) : (
-                    <ArrowButton size="lg" disabled={isLoading} onClick={() => handleSelectPlan(plan)}>
+                    <ArrowButton size={compact ? "md" : "lg"} disabled={isLoading} onClick={() => handleSelectPlan(plan)}>
                       {label}
                     </ArrowButton>
                   )}
                 </div>
               </div>
 
-              <div aria-hidden="true" className="hidden w-px self-stretch bg-current opacity-10 sm:block" />
-              <div aria-hidden="true" className="h-px w-full bg-current opacity-10 sm:hidden" />
+              <div aria-hidden="true" className={cn("hidden w-px self-stretch bg-current opacity-10", !compact && "sm:block")} />
+              <div aria-hidden="true" className={cn("h-px w-full bg-current opacity-10", !compact && "sm:hidden")} />
 
-              <div className="flex grow flex-col items-start gap-3">
-                <p className="text-base font-medium sm:text-xl">Features</p>
+              <div className="flex min-w-0 grow flex-col items-start gap-3">
+                <p className={cn("text-base font-medium", !compact && "sm:text-xl")}>Features</p>
                 <ul className="flex flex-col items-start gap-3 self-stretch">
                   {(plan.features || []).map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-3 text-sm">
-                      <Icon name="check-circle" size="sm" className="mt-0.5 text-success" />
+                      <Icon name="check-circle" size="sm" className="mt-0.5 shrink-0 text-brand" />
                       <span>{feature}</span>
                     </li>
                   ))}
