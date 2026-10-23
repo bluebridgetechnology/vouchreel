@@ -46,6 +46,7 @@ export function SiteHeaderBar({ links, signedIn }: { links: HeaderLink[]; signed
   }, []);
 
   const close = () => setOpen(false);
+  const isCurrent = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
     <header className="sticky top-0 z-(--z-nav) flex h-20 items-center justify-center px-4">
@@ -63,10 +64,10 @@ export function SiteHeaderBar({ links, signedIn }: { links: HeaderLink[]; signed
               <li key={l.href}>
                 <Link
                   href={l.href}
-                  aria-current={pathname === l.href ? "page" : undefined}
+                  aria-current={isCurrent(l.href) ? "page" : undefined}
                   className={cn(
                     "block rounded-pill px-3 py-2 text-sm font-medium text-text-muted transition hover:bg-surface hover:text-text hover:shadow-xs lg:px-4",
-                    pathname === l.href && "bg-surface text-text",
+                    isCurrent(l.href) && "bg-surface text-text",
                   )}
                 >
                   {l.label}
@@ -121,14 +122,14 @@ export function SiteHeaderBar({ links, signedIn }: { links: HeaderLink[]; signed
                           onClick={close}
                           className={cn(
                             "group/nav flex items-center text-2xl font-medium tracking-tight transition-all",
-                            pathname === l.href ? "text-brand" : "text-text-muted hover:translate-x-2 hover:text-text",
+                            isCurrent(l.href) ? "text-brand" : "text-text-muted hover:translate-x-2 hover:text-text",
                           )}
                         >
                           <span
                             aria-hidden="true"
                             className={cn(
                               "h-0.5 overflow-hidden bg-brand transition-all duration-300",
-                              pathname === l.href ? "mr-2 w-4 opacity-100" : "w-0 opacity-0 group-hover/nav:mr-2 group-hover/nav:w-4 group-hover/nav:opacity-100",
+                              isCurrent(l.href) ? "mr-2 w-4 opacity-100" : "w-0 opacity-0 group-hover/nav:mr-2 group-hover/nav:w-4 group-hover/nav:opacity-100",
                             )}
                           />
                           {l.label}

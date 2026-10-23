@@ -2,9 +2,9 @@ import { getSession } from "@/lib/auth/session";
 import { SiteHeaderBar } from "@/components/marketing/site-header-bar";
 
 const links = [
-  { href: "/#features", label: "Features" },
-  { href: "/#how-it-works", label: "How it works" },
+  { href: "/features", label: "Features" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/blog", label: "Blog" },
 ];
 
 export async function SiteHeader() {
