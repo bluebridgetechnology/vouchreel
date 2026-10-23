@@ -53,6 +53,9 @@ export function WidgetPreviewFrame({ draft, content, device, page, replay = 0, c
       if (event.data?.type === "vouchreel:preview-ready") setReady(true);
     };
     window.addEventListener("message", onMessage);
+    // On a server-rendered page the frame can finish loading before React hydrates, so both its "ready"
+    // message and its load event come before anyone is listening: a frame that has already loaded is ready
+    if (frameRef.current?.contentDocument?.readyState === "complete" && frameRef.current.contentWindow?.location.href !== "about:blank") setReady(true);
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
@@ -80,7 +83,8 @@ export function WidgetPreviewFrame({ draft, content, device, page, replay = 0, c
         <Card
           variant="flat"
           className="overflow-hidden shadow-float"
-          style={zoomed ? { width: "100%", height: "100%" } : { width: size.width * scale, height: pageHeight * scale }}
+          // Empty until measured: server-rendered, it would first paint at full device size (wider than a phone) and then shrink
+          style={box.width <= 0 ? { width: 0, height: 0, visibility: "hidden" } : zoomed ? { width: "100%", height: "100%" } : { width: size.width * scale, height: pageHeight * scale }}
         >
           <iframe
             ref={frameRef}

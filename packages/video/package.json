@@ -19,7 +19,8 @@
     "test:render": "VIDEO_RENDER_TESTS=1 vitest run render.integration",
     "typecheck": "tsc --noEmit",
     "swatches:compare": "tsx scripts/compare-swatches.mts",
-    "fonts:measure": "tsx scripts/measure-fonts.mts"
+    "fonts:measure": "tsx scripts/measure-fonts.mts",
+    "landing-demo": "tsx scripts/landing-demo.ts"
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "5.3.0",

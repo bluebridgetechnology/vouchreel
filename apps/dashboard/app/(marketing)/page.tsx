@@ -8,7 +8,8 @@ import { Icon } from "@/components/ui/icon";
 import { Container, Section } from "@/components/ui/layout";
 import type { IconName } from "@/lib/icons.generated";
 import { cn } from "@/lib/utils";
-import { CollectMock, HeroCluster, ReportMock, TargetMock } from "@/components/marketing/mocks";
+import { CollectMock, ReportMock, TargetMock } from "@/components/marketing/mocks";
+import { HeroDemo, LayoutPicker } from "@/components/marketing/landing-demo";
 
 export const metadata: Metadata = {
   title: { absolute: "Vouchreel — Turn customer love into conversions" },
@@ -128,34 +129,33 @@ export default function LandingPage() {
   return (
     <>
       {/* Hero */}
-      <Section className="pb-12 pt-16 sm:pt-24">
+      <Section className="pb-12 pt-12 sm:pt-16">
         <Container>
-          <div className="mx-auto max-w-4xl text-center">
-            <Badge variant="eyebrow">Video testimonials, embedded in minutes</Badge>
-            <h1 className="mt-6 text-display font-medium">
-              Turn customer love into <Em>conversions</Em>
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-text-muted">
-              Vouchreel collects your customers&apos; video testimonials and shows the right story to the right visitor,
-              automatically. No editing, no code, no layout shift.
-            </p>
-            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button asChild size="xl">
-                <Link href="/signup">
-                  Get started <Icon name="arrow-right" size="sm" />
-                </Link>
-              </Button>
-              <Button asChild size="xl" variant="ink">
-                <Link href="/#how-it-works">
-                  <Icon name="play-circle" /> See how it works
-                </Link>
-              </Button>
+          <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
+            <div className="text-center lg:text-left">
+              <Badge variant="eyebrow">Video testimonials, embedded in minutes</Badge>
+              <h1 className="mt-6 text-display font-medium">
+                Turn customer love into <Em>conversions</Em>
+              </h1>
+              <p className="mx-auto mt-6 max-w-xl text-lg text-text-muted lg:mx-0">
+                Vouchreel collects your customers&apos; video testimonials and shows the right story to the right visitor,
+                automatically. No editing, no code, no layout shift.
+              </p>
+              <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
+                <Button asChild size="xl">
+                  <Link href="/signup">
+                    Get started <Icon name="arrow-right" size="sm" />
+                  </Link>
+                </Button>
+                <Button asChild size="xl" variant="ink">
+                  <Link href="/#demo">
+                    <Icon name="play-circle" /> Try every layout
+                  </Link>
+                </Button>
+              </div>
+              <p className="mt-5 text-xs text-text-subtle">No credit card needed · Free plan, cancel anytime</p>
             </div>
-            <p className="mt-5 text-xs text-text-subtle">No credit card needed · Free plan, cancel anytime</p>
-          </div>
-
-          <div className="mt-16">
-            <HeroCluster />
+            <HeroDemo />
           </div>
         </Container>
       </Section>
@@ -173,6 +173,24 @@ export default function LandingPage() {
           </dl>
         </Card>
       </Container>
+
+      {/* Layout picker */}
+      <Section id="demo" className="scroll-mt-20">
+        <Container>
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-4xl font-medium sm:text-5xl">
+              Pick a layout, see it <Em>live</Em>
+            </h2>
+            <p className="mt-4 text-text-muted">
+              Every layout below is the real widget, playing the same sample videos. Choose one that fits your site,
+              then switch to a phone to see how it adapts.
+            </p>
+          </div>
+          <div className="mt-12">
+            <LayoutPicker />
+          </div>
+        </Container>
+      </Section>
 
       {/* How it works */}
       <Section id="how-it-works">
